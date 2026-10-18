@@ -5,11 +5,12 @@
         <item name="android:windowBackground">@color/porcelain</item>
     </style>
 
-    <!-- SplashScreen API: porcelain background, logo foreground on a pine circle. -->
+    <!-- SplashScreen API: porcelain background with the full adaptive icon (pine gradient + white fork).
+         The white foreground alone is invisible on porcelain, and the icon-background attribute
+         isn't applied to a 108dp adaptive-size foreground. -->
     <style name="Theme.Forkcast.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/porcelain</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/pine</item>
+        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
         <item name="postSplashScreenTheme">@style/Theme.Forkcast</item>
     </style>
 </resources>

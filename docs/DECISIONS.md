@@ -16,6 +16,8 @@ One dated line per non-obvious choice. Newest at the bottom.
 - 2026-10-18 · **Meal time windows (defaults):** Breakfast 04:00–11:00, Lunch 11:00–15:00, Dinner 17:00–22:00, Snacks = no window (fallback). Stored as minutes after midnight on `meal_slot`.
 - 2026-10-18 · **Robolectric tests run with `--add-exports java.base/jdk.internal.access`** (needed for its Android 16 runtime on JDK 21); Room migration tests use the file+driver `MigrationTestHelper` because the name-based one mis-compares Windows paths.
 - 2026-10-18 · **No INTERNET permission in Phase 0** (no network code yet); added in Phase 1 with food search.
+- 2026-10-18 · **Emulator set up during Phase 0** (owner asked; SETUP Stage 7 moved earlier). WHPX was already usable, so no admin step. Day-to-day testing runs on the emulator; the phone gets builds at phase ends or on request.
+- 2026-10-18 · **Splash icon = full adaptive launcher icon** (`@mipmap/ic_launcher`) instead of the white foreground: the white fork was invisible on porcelain because the icon-background color isn't applied to a 108dp foreground.
 - 2026-10-18 · **Toolchain versions at setup:** AGP 9.4.0 (Gradle 9.6.0 min), max API 37; SDK platform `android-37.0`, build-tools 37.0.0, platform-tools 37.0.1, cmdline-tools build 15859902.
 
 ## Signing certificate fingerprints (not secret)
