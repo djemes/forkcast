@@ -155,6 +155,9 @@ interface WeightDao {
     @Query("SELECT * FROM weight_entry WHERE deletedAt IS NULL ORDER BY timestamp DESC LIMIT 1")
     suspend fun latest(): WeightEntryEntity?
 
+    @Query("SELECT * FROM weight_entry WHERE id = :id")
+    suspend fun get(id: String): WeightEntryEntity?
+
     @Upsert suspend fun upsert(entry: WeightEntryEntity)
 
     @Query("UPDATE weight_entry SET deletedAt = :now, updatedAt = :now WHERE id = :id")

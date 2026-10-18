@@ -6,6 +6,8 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AppSettings(
     val appearance: AppearanceSettings = AppearanceSettings(),
+    /** Null until chosen in onboarding (the default comes from the device locale). */
+    val units: UnitPrefs? = null,
 )
 
 @Serializable
