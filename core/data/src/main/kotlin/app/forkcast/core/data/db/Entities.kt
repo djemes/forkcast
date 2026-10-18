@@ -1,3 +1,5 @@
+@file:UseSerializers(LocalDateSerializer::class)
+
 package app.forkcast.core.data.db
 
 import androidx.room.Entity
@@ -11,11 +13,16 @@ import app.forkcast.core.model.Nutrients
 import app.forkcast.core.model.ServingSize
 import app.forkcast.core.model.Sex
 import app.forkcast.core.model.WeightSource
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.UseSerializers
 import java.time.LocalDate
 
+// Every entity is @Serializable: the JSON export mirrors these rows (SPEC §6.3).
+// Changing a field here changes the export format: bump schemaVersion and add an import migration.
 // All tables (SPEC §6): UUID string id, createdAt/updatedAt epoch ms UTC, nullable deletedAt (soft delete).
 // Log dates are the user's local date plus the zone in effect when logged.
 
+@Serializable
 @Entity(tableName = "profile")
 data class ProfileEntity(
     @PrimaryKey val id: String = SINGLE_ID,
@@ -34,6 +41,7 @@ data class ProfileEntity(
     }
 }
 
+@Serializable
 @Entity(tableName = "goal", indices = [Index("isActive")])
 data class GoalEntity(
     @PrimaryKey val id: String,
@@ -50,6 +58,7 @@ data class GoalEntity(
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(tableName = "target_override", indices = [Index("nutrientKey")])
 data class TargetOverrideEntity(
     @PrimaryKey val id: String,
@@ -61,6 +70,7 @@ data class TargetOverrideEntity(
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(
     tableName = "food",
     indices = [Index("barcode"), Index("source", "sourceId"), Index("lastUsedAt"), Index("isFavorite")],
@@ -73,7 +83,7 @@ data class FoodEntity(
     val sourceId: String?,
     val barcode: String?,
     val servingSizes: List<ServingSize>,
-    val nutrientsPer100g: Nutrients,
+    @Serializable(with = NutrientsSerializer::class) val nutrientsPer100g: Nutrients,
     val isFavorite: Boolean,
     val lastUsedAt: Long?,
     val lastQuantity: Double?,
@@ -83,6 +93,7 @@ data class FoodEntity(
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(tableName = "log_entry", indices = [Index("date"), Index("foodId"), Index("mealSlotId")])
 data class LogEntryEntity(
     @PrimaryKey val id: String,
@@ -96,7 +107,7 @@ data class LogEntryEntity(
     val servingLabel: String,
     val grams: Double?,
     /** Snapshot for the logged amount; never recomputed from the food. */
-    val nutrients: Nutrients,
+    @Serializable(with = NutrientsSerializer::class) val nutrients: Nutrients,
     val source: FoodSource,
     val aiEstimateId: String?,
     val healthConnectRecordId: String?,
@@ -107,6 +118,7 @@ data class LogEntryEntity(
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(tableName = "saved_meal")
 data class SavedMealEntity(
     @PrimaryKey val id: String,
@@ -116,6 +128,7 @@ data class SavedMealEntity(
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(tableName = "saved_meal_item", indices = [Index("savedMealId")])
 data class SavedMealItemEntity(
     @PrimaryKey val id: String,
@@ -127,13 +140,14 @@ data class SavedMealItemEntity(
     val quantity: Double,
     val servingLabel: String,
     val grams: Double?,
-    val nutrients: Nutrients,
+    @Serializable(with = NutrientsSerializer::class) val nutrients: Nutrients,
     val source: FoodSource,
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(tableName = "weight_entry", indices = [Index("timestamp")])
 data class WeightEntryEntity(
     @PrimaryKey val id: String,
@@ -147,6 +161,7 @@ data class WeightEntryEntity(
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(tableName = "water_entry", indices = [Index("date")])
 data class WaterEntryEntity(
     @PrimaryKey val id: String,
@@ -159,6 +174,7 @@ data class WaterEntryEntity(
     val deletedAt: Long? = null,
 )
 
+@Serializable
 @Entity(tableName = "day_status", indices = [Index("date", unique = true)])
 data class DayStatusEntity(
     @PrimaryKey val id: String,

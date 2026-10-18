@@ -3,7 +3,9 @@ package app.forkcast.core.data.db
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import app.forkcast.core.model.MealSlot
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "meal_slot")
 data class MealSlotEntity(
     @PrimaryKey val id: String,
