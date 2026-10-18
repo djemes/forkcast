@@ -3,6 +3,7 @@ package app.forkcast.ui.today
 import app.cash.turbine.test
 import app.forkcast.core.domain.BudgetState
 import app.forkcast.core.model.NutrientKey
+import app.forkcast.fakes.FakeFoodRepository
 import app.forkcast.fakes.FakeLogRepository
 import app.forkcast.fakes.FakeMealSlotRepository
 import app.forkcast.fakes.FakeProfileRepository
@@ -36,7 +37,8 @@ class TodayViewModelTest {
         goalState.value = TestData.GOAL
     }
     private val log = FakeLogRepository()
-    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, FakeSettingsRepository(), clock)
+    private val foods = FakeFoodRepository()
+    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, FakeSettingsRepository(), clock)
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
@@ -93,6 +95,30 @@ class TodayViewModelTest {
         val s = vm().uiState.filterNotNull().first()
         assertThat(s.totals!!.state).isEqualTo(BudgetState.OVER)
         assertThat(s.totals!!.overKcal).isEqualTo(110.0)
+    }
+
+    @Test fun quickAddLogsToTheDayOnScreen() = runTest {
+        val vm = vm()
+        vm.uiState.filterNotNull().first()
+        vm.onEvent(TodayEvent.PreviousDay)
+        vm.effects.test {
+            vm.onEvent(TodayEvent.QuickAdd("s", "Coffee", 45.0, null, 5.0, null))
+            assertThat((awaitItem() as TodayEffect.Added).mealName).isEqualTo("Snacks")
+        }
+        val e = log.rows.value.values.single().first
+        assertThat(e.date).isEqualTo(TestData.TODAY.minusDays(1))
+        assertThat(e.nutrients[NutrientKey.ENERGY_KCAL]).isEqualTo(45.0)
+    }
+
+    @Test fun recentsAddWithLastUsedAmount() = runTest {
+        val id = foods.put(FakeFoodRepository.food("Oats", kcal = 380.0).copy(lastUsedAt = 1L, lastServingLabel = "g", lastQuantity = 40.0))
+        val vm = vm()
+        val food = vm.uiState.filterNotNull().first { it.recents.isNotEmpty() }.recents.single()
+        assertThat(food.id).isEqualTo(id)
+        vm.onEvent(TodayEvent.AddRecent(food, "b"))
+        val e = log.rows.value.values.single().first
+        assertThat(e.grams).isEqualTo(40.0)
+        assertThat(e.nutrients[NutrientKey.ENERGY_KCAL]).isWithin(1e-9).of(152.0)
     }
 
     @Test fun dayNavigationClearsSelection() = runTest {

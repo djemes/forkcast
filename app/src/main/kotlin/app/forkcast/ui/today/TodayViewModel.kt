@@ -2,6 +2,7 @@ package app.forkcast.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.ProfileRepository
@@ -9,7 +10,9 @@ import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
+import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.domain.MealSlotPicker
+import app.forkcast.core.model.Food
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.model.UnitPrefs
@@ -47,6 +50,8 @@ data class TodayUiState(
     val targets: DailyTargets? = null,
     val totals: DayTotals? = null,
     val selection: Set<String> = emptySet(),
+    /** For one-tap add in the Log sheet. */
+    val recents: List<Food> = emptyList(),
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -64,11 +69,14 @@ sealed interface TodayEvent {
     data object ClearSelection : TodayEvent
     data object DeleteSelected : TodayEvent
     data class UpdateEntry(val entry: LogEntry, val quantity: Double, val mealSlotId: String) : TodayEvent
+    data class QuickAdd(val mealSlotId: String, val label: String, val kcal: Double, val protein: Double?, val carbs: Double?, val fat: Double?) : TodayEvent
+    data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
 }
 
 /** One-shot UI effects. */
 sealed interface TodayEffect {
     data class Deleted(val ids: List<String>, val label: String?) : TodayEffect
+    data class Added(val mealName: String) : TodayEffect
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -77,6 +85,7 @@ class TodayViewModel @Inject constructor(
     mealSlotRepository: MealSlotRepository,
     private val logRepository: LogRepository,
     profileRepository: ProfileRepository,
+    foodRepository: FoodRepository,
     settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
@@ -92,9 +101,9 @@ class TodayViewModel @Inject constructor(
         mealSlotRepository.observeMealSlots(),
         selectedDate,
         dayEntries,
-        combine(profileRepository.observeDailyTargets(), settingsRepository.settings) { t, s -> t to s },
+        combine(profileRepository.observeDailyTargets(), settingsRepository.settings, foodRepository.observeRecents(5)) { t, s, r -> Triple(t, s, r) },
         selection,
-    ) { slots, date, entries, (targets, settings), selected ->
+    ) { slots, date, entries, (targets, settings, recents), selected ->
         val now = LocalTime.now(clock)
         TodayUiState(
             date = date,
@@ -108,6 +117,7 @@ class TodayViewModel @Inject constructor(
             targets = targets,
             totals = targets?.let { DayMath.totals(entries, it.budgetKcal) },
             selection = selected intersect entries.map { it.id }.toSet(),
+            recents = recents,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -134,6 +144,13 @@ class TodayViewModel @Inject constructor(
                 selection.value = emptySet()
                 delete(ids)
             }
+            is TodayEvent.QuickAdd -> addEntry(event.mealSlotId) { date ->
+                FoodLogging.quickAdd(event.label, event.kcal, event.protein, event.carbs, event.fat, date, event.mealSlotId, clock.instant())
+            }
+            is TodayEvent.AddRecent -> addEntry(event.mealSlotId) { date ->
+                val (serving, qty) = FoodLogging.defaultServing(event.food)
+                FoodLogging.entry(event.food, serving, qty, date, event.mealSlotId, clock.instant())
+            }
             is TodayEvent.UpdateEntry -> viewModelScope.launch {
                 val e = event.entry
                 val grams = e.grams?.let { it * event.quantity / e.quantity.coerceAtLeast(1e-9) }
@@ -146,6 +163,16 @@ class TodayViewModel @Inject constructor(
                     ),
                 )
             }
+        }
+    }
+
+    /** Logs to the day on screen (so you can fill in yesterday), then confirms "Added to Lunch". */
+    private fun addEntry(mealSlotId: String, build: (LocalDate) -> LogEntry) {
+        val date = selectedDate.value
+        val mealName = uiState.value?.meals?.firstOrNull { it.slot.id == mealSlotId }?.slot?.name.orEmpty()
+        viewModelScope.launch {
+            logRepository.add(listOf(build(date)))
+            effectChannel.send(TodayEffect.Added(mealName))
         }
     }
 

@@ -74,15 +74,28 @@ import kotlin.math.abs
 /** Where the Log sheet and other Today actions lead. Filled in as Phase 1 features land. */
 data class TodayActions(
     val openSettings: () -> Unit = {},
+    /** Opens food search to log into [mealSlotId] on [date]. */
+    val openSearch: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
 )
 
 @Composable
 fun TodayRoute(
     actions: TodayActions,
+    addedToMeal: String? = null,
+    onAddedShown: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    state?.let { TodayScreen(state = it, onEvent = viewModel::onEvent, actions = actions, effects = viewModel.effects) }
+    state?.let {
+        TodayScreen(
+            state = it,
+            onEvent = viewModel::onEvent,
+            actions = actions,
+            effects = viewModel.effects,
+            addedToMeal = addedToMeal,
+            onAddedShown = onAddedShown,
+        )
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -92,20 +105,32 @@ fun TodayScreen(
     onEvent: (TodayEvent) -> Unit,
     actions: TodayActions = TodayActions(),
     effects: Flow<TodayEffect> = emptyFlow(),
+    addedToMeal: String? = null,
+    onAddedShown: () -> Unit = {},
 ) {
     // Null = sheet closed; otherwise the meal the sheet logs to.
     var logSheetMealId by rememberSaveable { mutableStateOf<String?>(null) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showNutrients by rememberSaveable { mutableStateOf(false) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    var quickAddMealId by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val resources = LocalResources.current
     val currentOnEvent by rememberUpdatedState(onEvent)
 
+    // Confirmation after adding from food detail (DESIGN.md section 9: "Add to Lunch" then "Added to Lunch").
+    LaunchedEffect(addedToMeal) {
+        if (addedToMeal != null) {
+            onAddedShown()
+            snackbar.showSnackbar(resources.getString(R.string.food_added_to, addedToMeal))
+        }
+    }
+
     LaunchedEffect(effects) {
         effects.collect { effect ->
             when (effect) {
+                is TodayEffect.Added -> snackbar.showSnackbar(resources.getString(R.string.food_added_to, effect.mealName))
                 is TodayEffect.Deleted -> {
                     val msg = effect.label?.let { resources.getString(R.string.deleted_one, it) }
                         ?: resources.getQuantityString(R.plurals.deleted_many, effect.ids.size, effect.ids.size)
@@ -199,6 +224,27 @@ fun TodayScreen(
             selectedMealId = mealId,
             onSelectMeal = { logSheetMealId = it },
             onDismiss = { logSheetMealId = null },
+            actions = LogSheetActions(
+                search = actions.openSearch?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
+                quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
+            ),
+            recents = state.recents,
+            f = f,
+            onAddRecent = { food ->
+                logSheetMealId = null
+                onEvent(TodayEvent.AddRecent(food, mealId))
+            },
+        )
+    }
+    quickAddMealId?.let { mealId ->
+        QuickAddSheet(
+            mealName = state.meals.firstOrNull { it.slot.id == mealId }?.slot?.name.orEmpty(),
+            f = f,
+            onAdd = { label, kcal, p, c, fat ->
+                quickAddMealId = null
+                onEvent(TodayEvent.QuickAdd(mealId, label, kcal, p, c, fat))
+            },
+            onDismiss = { quickAddMealId = null },
         )
     }
     if (showNutrients && state.totals != null && state.targets != null) {
