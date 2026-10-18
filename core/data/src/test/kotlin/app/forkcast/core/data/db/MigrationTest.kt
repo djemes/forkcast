@@ -3,6 +3,7 @@ package app.forkcast.core.data.db
 import android.content.Context
 import androidx.room.Room
 import androidx.room.testing.MigrationTestHelper
+import androidx.sqlite.SQLiteConnection
 import androidx.sqlite.driver.AndroidSQLiteDriver
 import androidx.sqlite.execSQL
 import androidx.test.core.app.ApplicationProvider
@@ -32,13 +33,33 @@ class MigrationTest {
         databaseClass = ForkcastDatabase::class,
     )
 
-    /** Guards against changing an entity without bumping the version and exporting a schema. */
-    @Test fun version1SchemaMatchesCurrentCode() {
+    private fun SQLiteConnection.insertV1MealSlot() = execSQL(
+        "INSERT INTO meal_slot (id, name, sortOrder, startMinute, endMinute, createdAt, updatedAt, deletedAt) " +
+            "VALUES ('a', 'Lunch', 1, 660, 900, 1, 1, NULL)",
+    )
+
+    @Test fun migrate1To2KeepsMealSlotsAndAddsTables() {
         helper.createDatabase(1).apply {
-            execSQL(
-                "INSERT INTO meal_slot (id, name, sortOrder, startMinute, endMinute, createdAt, updatedAt, deletedAt) " +
-                    "VALUES ('a', 'Lunch', 1, 660, 900, 1, 1, NULL)",
-            )
+            insertV1MealSlot()
+            close()
+        }
+        helper.runMigrationsAndValidate(2, emptyList()).apply {
+            prepare("SELECT name FROM meal_slot").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getText(0)).isEqualTo("Lunch")
+            }
+            prepare("SELECT count(*) FROM log_entry").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getLong(0)).isEqualTo(0)
+            }
+            close()
+        }
+    }
+
+    /** A v1 file from Phase 0 opens with today's code, upgraded in place with its data. */
+    @Test fun version1FileOpensWithCurrentCode() {
+        helper.createDatabase(1).apply {
+            insertV1MealSlot()
             close()
         }
         val db = Room.databaseBuilder(context, ForkcastDatabase::class.java, TEST_DB)
@@ -48,6 +69,7 @@ class MigrationTest {
             assertThat(c.moveToFirst()).isTrue()
             assertThat(c.getString(0)).isEqualTo("Lunch")
         }
+        assertThat(db.openHelper.writableDatabase.version).isEqualTo(2)
         db.close()
     }
 
