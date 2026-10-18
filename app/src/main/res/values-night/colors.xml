@@ -1,6 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="porcelain">#FF0E1512</color>
-    <!-- Icon background stays the brand pine in both themes, as in the launcher icon. -->
-    <color name="pine">#FF0F7B5F</color>
 </resources>
