@@ -2,11 +2,11 @@
 
 Read this first in every session. Update it after every finished feature (keep it short).
 
-- **Current:** Phase 0 in progress (owner approved plan 2026-10-18)
-- **Phase status:** 0 ☐ · 1 ☐ · 2 ☐ · 3 ☐ · 4 ☐ · 5 ☐
+- **Current:** Phase 0 done (2026-10-18). Waiting for owner's OK to start Phase 1
+- **Phase status:** 0 ✓ · 1 ☐ · 2 ☐ · 3 ☐ · 4 ☐ · 5 ☐
 - **Setup stages done:** 1.1 toolchain (2026-10-18), 1.2 GitHub repo `djemes/forkcast` private (2026-10-18), 1.3 phone paired over wireless debugging (2026-10-18; SM-S938U1, Android 17 / API 37); Stage 2 key + GitHub secrets (2026-10-18; owner's Vaultwarden copy pending); Stage 7 emulator set up early at owner's request (2026-10-18)
-- **Done in current phase:** scaffold + modules, theme/font/contrast test, icon + splash, Today/Log sheet/Settings/Appearance/About shell, Room v1 + migration harness, JSON DataStore, CI + release workflows, release key
-- **Next step:** CI green → install on phone → test tag v0.0.1 (then delete that release) → Phase 0 gate
+- **Done in current phase:** scaffold + modules, theme/font/contrast test, icon + splash, Today/Log sheet/Settings/Appearance/About shell, Room v1 + migration harness, JSON DataStore, CI + release workflows (green), release key, emulator, signed release pipeline verified with a throwaway v0.0.1 (deleted)
+- **Next step:** Phase 1 plan (SPEC §3/§4.1–4.5, 4.9, 4.11). Due then: SETUP Stage 3 step 1 (USDA key) when food search starts; Stage 6 (Obtainium) after tagging v0.1.0
 - **Waiting on owner:** save `keys\forkcast-release.jks` + `keys\forkcast-release-credentials.txt` (in the project folder) into Vaultwarden
 - **Open questions:** —
 
