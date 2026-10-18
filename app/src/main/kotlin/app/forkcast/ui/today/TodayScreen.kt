@@ -88,6 +88,9 @@ fun TodayScreen(
                 onClick = { logSheetMealId = state.defaultMealId ?: state.meals.firstOrNull()?.id },
                 // The M3 extended FAB doesn't merge its text into the button node; label it for TalkBack.
                 modifier = Modifier.semantics { contentDescription = logLabel },
+                // Pine, like every primary action (DESIGN.md §2), rather than the pale M3 default.
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
                 icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
                 text = { Text(stringResource(R.string.log)) },
             )
