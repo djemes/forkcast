@@ -98,8 +98,8 @@ Acceptance:
 
 Acceptance:
 - [ ] Scan → food detail in < 1.5 s on a cached item, < 4 s on a network lookup (good connection)
-- [ ] A barcode that was resolved via label OCR resolves locally afterward, offline
-- [ ] Open Food Facts requests send a descriptive User-Agent (`Forkcast/<version> (<contact>)`) per their API terms
+- [x] A barcode that was resolved via label OCR resolves locally afterward, offline
+- [x] Open Food Facts requests send a descriptive User-Agent (`Forkcast/<version> (<contact>)`) per their API terms
 
 ### 4.5 Saved meals, recipes, copying (Phase 1; recipes Phase 4)
 
