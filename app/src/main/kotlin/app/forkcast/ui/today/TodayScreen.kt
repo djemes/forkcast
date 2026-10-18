@@ -43,6 +43,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -65,6 +66,7 @@ import app.forkcast.R
 import app.forkcast.ui.format.UnitFormatter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
@@ -120,10 +122,14 @@ fun TodayScreen(
     val currentOnEvent by rememberUpdatedState(onEvent)
 
     // Confirmation after adding from food detail (DESIGN.md section 9: "Add to Lunch" then "Added to Lunch").
+    // The snackbar runs in its own scope: clearing the trigger re-keys this effect, which would
+    // otherwise cancel the message before it appears.
+    val snackbarScope = rememberCoroutineScope()
     LaunchedEffect(addedToMeal) {
         if (addedToMeal != null) {
+            val message = resources.getString(R.string.food_added_to, addedToMeal)
+            snackbarScope.launch { snackbar.showSnackbar(message) }
             onAddedShown()
-            snackbar.showSnackbar(resources.getString(R.string.food_added_to, addedToMeal))
         }
     }
 

@@ -80,9 +80,18 @@ fun SourceBadge(source: FoodSource) {
     )
 }
 
+/** "1 cup", "1.5 × 1 cup", "180 g", "2 oz". One serving shows just its label. */
+fun servingText(quantity: Double, label: String): String {
+    val qty = UnitFormatter.trimNumber(quantity, 2)
+    return when {
+        label == "g" || label == "oz" -> "$qty\u2009$label"
+        quantity == 1.0 -> label
+        else -> "$qty × $label"
+    }
+}
+
 fun amountText(entry: LogEntry, f: UnitFormatter): String {
-    val qty = UnitFormatter.trimNumber(entry.quantity, 2)
-    val serving = if (entry.servingLabel == "g") "${qty} g" else "$qty × ${entry.servingLabel}"
+    val serving = servingText(entry.quantity, entry.servingLabel)
     return entry.grams?.takeIf { entry.servingLabel != "g" }?.let { "$serving · ${f.grams(it)}" } ?: serving
 }
 

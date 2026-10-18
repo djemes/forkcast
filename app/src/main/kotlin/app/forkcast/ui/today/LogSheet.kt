@@ -126,8 +126,7 @@ fun LogSheet(
 private fun RecentRow(food: Food, f: UnitFormatter, mealName: String, onAdd: () -> Unit) {
     val (serving, qty) = FoodLogging.defaultServing(food)
     val kcal = food.nutrientsPer100g.forGrams(serving.grams * qty).kcal
-    val amount = if (serving.label == FoodLogging.GRAM_LABEL) "${UnitFormatter.trimNumber(qty, 0)} g"
-    else "${UnitFormatter.trimNumber(qty, 2)} × ${serving.label}"
+    val amount = servingText(qty, serving.label)
     val addLabel = stringResource(R.string.food_add_to, mealName)
     ListItem(
         headlineContent = { Text(food.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
