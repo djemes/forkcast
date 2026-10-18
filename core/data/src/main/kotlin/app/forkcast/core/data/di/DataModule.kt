@@ -25,6 +25,8 @@ import app.forkcast.core.data.repository.DataStoreSettingsRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.RoomLogRepository
+import app.forkcast.core.data.repository.RoomSavedMealRepository
+import app.forkcast.core.data.repository.SavedMealRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.RoomProfileRepository
 import app.forkcast.core.data.repository.RoomWeightRepository
@@ -106,4 +108,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindLogRepository(impl: RoomLogRepository): LogRepository
+
+    @Binds
+    abstract fun bindSavedMealRepository(impl: RoomSavedMealRepository): SavedMealRepository
 }

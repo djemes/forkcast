@@ -7,6 +7,7 @@ import app.forkcast.fakes.FakeFoodRepository
 import app.forkcast.fakes.FakeLogRepository
 import app.forkcast.fakes.FakeMealSlotRepository
 import app.forkcast.fakes.FakeProfileRepository
+import app.forkcast.fakes.FakeSavedMealRepository
 import app.forkcast.fakes.FakeSettingsRepository
 import app.forkcast.fakes.FakeWeightRepository
 import app.forkcast.fakes.TestData
@@ -38,7 +39,8 @@ class TodayViewModelTest {
     }
     private val log = FakeLogRepository()
     private val foods = FakeFoodRepository()
-    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, FakeSettingsRepository(), clock)
+    private val saved = FakeSavedMealRepository()
+    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, FakeSettingsRepository(), clock)
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
@@ -119,6 +121,42 @@ class TodayViewModelTest {
         val e = log.rows.value.values.single().first
         assertThat(e.grams).isEqualTo(40.0)
         assertThat(e.nutrients[NutrientKey.ENERGY_KCAL]).isWithin(1e-9).of(152.0)
+    }
+
+    @Test fun copySelectionToAnotherDayKeepsSnapshots() = runTest {
+        val ids = log.add(listOf(TestData.entry("Oats", "b", 300.0), TestData.entry("Coffee", "b", 40.0)))
+        val vm = vm()
+        vm.uiState.filterNotNull().first()
+        vm.effects.test {
+            vm.onEvent(TodayEvent.Copy(ids, TestData.TODAY.plusDays(1), toMealSlotId = null))
+            val copied = awaitItem() as TodayEffect.Copied
+            assertThat(copied.count).isEqualTo(2)
+        }
+        val tomorrow = log.rows.value.values.map { it.first }.filter { it.date == TestData.TODAY.plusDays(1) }
+        assertThat(tomorrow.map { it.mealSlotId }.toSet()).containsExactly("b")
+        assertThat(tomorrow.sumOf { it.nutrients[NutrientKey.ENERGY_KCAL]!! }).isEqualTo(340.0)
+    }
+
+    @Test fun saveAsMealThenLogIt() = runTest {
+        val ids = log.add(listOf(TestData.entry("Oats", "b", 300.0), TestData.entry("Coffee", "b", 40.0)))
+        val vm = vm()
+        vm.uiState.filterNotNull().first()
+        vm.onEvent(TodayEvent.SaveAsMeal(ids, " Usual breakfast "))
+        val meal = vm.uiState.filterNotNull().first { it.savedMeals.isNotEmpty() }.savedMeals.single()
+        assertThat(meal.name).isEqualTo("Usual breakfast")
+        vm.onEvent(TodayEvent.LogSavedMeal(meal.id, "l"))
+        val lunch = vm.uiState.value!!.meals.first { it.slot.id == "l" }
+        assertThat(lunch.entries.map { it.displayName }).containsExactly("Oats", "Coffee")
+        assertThat(lunch.kcal).isEqualTo(340.0)
+    }
+
+    @Test fun sameAsYesterdayCopiesThatMeal() = runTest {
+        log.add(listOf(TestData.entry("Pasta", "d", 650.0, date = TestData.TODAY.minusDays(1))))
+        val vm = vm()
+        val s = vm.uiState.filterNotNull().first()
+        assertThat(s.yesterdayMealIds).containsExactly("d")
+        vm.onEvent(TodayEvent.SameAsYesterday("d"))
+        assertThat(vm.uiState.value!!.meals.first { it.slot.id == "d" }.entries.single().displayName).isEqualTo("Pasta")
     }
 
     @Test fun dayNavigationClearsSelection() = runTest {
