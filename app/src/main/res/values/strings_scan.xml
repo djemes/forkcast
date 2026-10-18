@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scan_hint">Point at a barcode</string>
+    <string name="scan_torch_on">Turn on flashlight</string>
+    <string name="scan_torch_off">Turn off flashlight</string>
+    <string name="scan_type_barcode">Type barcode</string>
+    <string name="scan_type_title">Enter the barcode</string>
+    <string name="scan_type_field">Barcode digits</string>
+    <string name="scan_type_invalid">That doesn\'t look like a valid barcode. Check the digits.</string>
+    <string name="scan_looking_up">Looking up %1$s…</string>
+    <string name="scan_not_found">Not in the databases yet. Scan the nutrition label and we\'ll save it for next time.</string>
+    <string name="scan_label">Scan label</string>
+    <string name="scan_enter_manually">Enter it manually</string>
+    <string name="scan_offline">No connection, and this barcode isn\'t saved on your phone yet. Try again when you\'re online, or enter it manually.</string>
+    <string name="scan_failed">The food databases didn\'t answer. Try again in a minute.</string>
+    <string name="scan_try_again">Try again</string>
+    <string name="scan_keep_scanning">Keep scanning</string>
+    <string name="camera_permission_title">Camera access</string>
+    <string name="camera_permission_body">Forkcast uses the camera only to read barcodes and nutrition labels. Images stay on your phone.</string>
+    <string name="camera_permission_allow">Allow camera</string>
+
+    <!-- Label scan -->
+    <string name="label_hint">Fit the whole Nutrition Facts panel in the frame, flat and in good light.</string>
+    <string name="label_capture">Capture label</string>
+    <string name="label_reading">Reading the label…</string>
+    <string name="label_unreadable">Couldn\'t read calories or the serving size. Try again closer and flatter, or enter the values by hand.</string>
+    <string name="label_review_note">Check the values against the label before saving.</string>
+</resources>
