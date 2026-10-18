@@ -6,15 +6,18 @@ import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.ProfileRepository
+import app.forkcast.core.data.repository.SavedMealRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.domain.MealSlotPicker
+import app.forkcast.core.model.AppSettings
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
+import app.forkcast.core.model.SavedMeal
 import app.forkcast.core.model.UnitPrefs
 import app.forkcast.core.model.kcal
 import app.forkcast.ui.format.UnitFormatter
@@ -27,6 +30,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -52,6 +56,9 @@ data class TodayUiState(
     val selection: Set<String> = emptySet(),
     /** For one-tap add in the Log sheet. */
     val recents: List<Food> = emptyList(),
+    val savedMeals: List<SavedMeal> = emptyList(),
+    /** Meals that had entries yesterday: these get a "Same as yesterday" button when empty. */
+    val yesterdayMealIds: Set<String> = emptySet(),
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -71,12 +78,20 @@ sealed interface TodayEvent {
     data class UpdateEntry(val entry: LogEntry, val quantity: Double, val mealSlotId: String) : TodayEvent
     data class QuickAdd(val mealSlotId: String, val label: String, val kcal: Double, val protein: Double?, val carbs: Double?, val fat: Double?) : TodayEvent
     data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
+    /** Copies entries to [toDate], into [toMealSlotId] or (null) each entry's own meal. */
+    data class Copy(val ids: List<String>, val toDate: LocalDate, val toMealSlotId: String?) : TodayEvent
+    data class SaveAsMeal(val ids: List<String>, val name: String) : TodayEvent
+    data class SameAsYesterday(val mealSlotId: String) : TodayEvent
+    data class LogSavedMeal(val savedMealId: String, val mealSlotId: String) : TodayEvent
+    data class DeleteSavedMeal(val savedMealId: String) : TodayEvent
 }
 
 /** One-shot UI effects. */
 sealed interface TodayEffect {
     data class Deleted(val ids: List<String>, val label: String?) : TodayEffect
     data class Added(val mealName: String) : TodayEffect
+    data class Copied(val count: Int, val toDate: LocalDate) : TodayEffect
+    data class SavedMealCreated(val name: String) : TodayEffect
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -86,6 +101,7 @@ class TodayViewModel @Inject constructor(
     private val logRepository: LogRepository,
     profileRepository: ProfileRepository,
     foodRepository: FoodRepository,
+    private val savedMealRepository: SavedMealRepository,
     settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
@@ -96,14 +112,33 @@ class TodayViewModel @Inject constructor(
     val effects: Flow<TodayEffect> = effectChannel.receiveAsFlow()
 
     private val dayEntries = selectedDate.flatMapLatest { logRepository.observeDay(it) }
+    private val yesterdayMeals = selectedDate.flatMapLatest { d ->
+        logRepository.observeDay(d.minusDays(1)).map { list -> list.map { it.mealSlotId }.toSet() }
+    }
+    private val extras = combine(
+        profileRepository.observeDailyTargets(),
+        settingsRepository.settings,
+        foodRepository.observeRecents(5),
+        savedMealRepository.meals,
+        yesterdayMeals,
+    ) { t, s, r, saved, yesterday -> Extras(t, s, r, saved, yesterday) }
+
+    private data class Extras(
+        val targets: DailyTargets?,
+        val settings: AppSettings,
+        val recents: List<Food>,
+        val saved: List<SavedMeal>,
+        val yesterday: Set<String>,
+    )
 
     val uiState: StateFlow<TodayUiState?> = combine(
         mealSlotRepository.observeMealSlots(),
         selectedDate,
         dayEntries,
-        combine(profileRepository.observeDailyTargets(), settingsRepository.settings, foodRepository.observeRecents(5)) { t, s, r -> Triple(t, s, r) },
+        extras,
         selection,
-    ) { slots, date, entries, (targets, settings, recents), selected ->
+    ) { slots, date, entries, x, selected ->
+        val targets = x.targets
         val now = LocalTime.now(clock)
         TodayUiState(
             date = date,
@@ -113,11 +148,13 @@ class TodayViewModel @Inject constructor(
                 MealSection(slot, list, DayMath.mealKcal(entries, slot.id))
             } + orphans(slots, entries),
             defaultMealId = MealSlotPicker.defaultFor(slots, now.hour * 60 + now.minute)?.id,
-            units = settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
+            units = x.settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
             targets = targets,
             totals = targets?.let { DayMath.totals(entries, it.budgetKcal) },
             selection = selected intersect entries.map { it.id }.toSet(),
-            recents = recents,
+            recents = x.recents,
+            savedMeals = x.saved,
+            yesterdayMealIds = x.yesterday,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -151,6 +188,33 @@ class TodayViewModel @Inject constructor(
                 val (serving, qty) = FoodLogging.defaultServing(event.food)
                 FoodLogging.entry(event.food, serving, qty, date, event.mealSlotId, clock.instant())
             }
+            is TodayEvent.Copy -> viewModelScope.launch {
+                selection.value = emptySet()
+                val ids = logRepository.copy(event.ids, event.toDate, event.toMealSlotId)
+                effectChannel.send(TodayEffect.Copied(ids.size, event.toDate))
+            }
+            is TodayEvent.SaveAsMeal -> viewModelScope.launch {
+                selection.value = emptySet()
+                val entries = uiState.value?.allEntries?.filter { it.id in event.ids }.orEmpty()
+                if (entries.isEmpty() || event.name.isBlank()) return@launch
+                savedMealRepository.saveFrom(event.name, entries)
+                effectChannel.send(TodayEffect.SavedMealCreated(event.name.trim()))
+            }
+            is TodayEvent.SameAsYesterday -> viewModelScope.launch {
+                val date = selectedDate.value
+                val yesterday = logRepository.entriesForMeal(date.minusDays(1), event.mealSlotId)
+                if (yesterday.isEmpty()) return@launch
+                logRepository.copy(yesterday.map { it.id }, date, event.mealSlotId)
+            }
+            is TodayEvent.LogSavedMeal -> viewModelScope.launch {
+                val date = selectedDate.value
+                val entries = savedMealRepository.toEntries(event.savedMealId, date, event.mealSlotId)
+                if (entries.isEmpty()) return@launch
+                logRepository.add(entries)
+                val mealName = uiState.value?.meals?.firstOrNull { it.slot.id == event.mealSlotId }?.slot?.name.orEmpty()
+                effectChannel.send(TodayEffect.Added(mealName))
+            }
+            is TodayEvent.DeleteSavedMeal -> viewModelScope.launch { savedMealRepository.delete(event.savedMealId) }
             is TodayEvent.UpdateEntry -> viewModelScope.launch {
                 val e = event.entry
                 val grams = e.grams?.let { it * event.quantity / e.quantity.coerceAtLeast(1e-9) }

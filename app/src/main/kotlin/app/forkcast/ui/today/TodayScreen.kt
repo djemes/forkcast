@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -26,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -118,9 +121,13 @@ fun TodayScreen(
     var showNutrients by rememberSaveable { mutableStateOf(false) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     var quickAddMealId by rememberSaveable { mutableStateOf<String?>(null) }
+    var savedMealsFor by rememberSaveable { mutableStateOf<String?>(null) }
+    var copyRequest by remember { mutableStateOf<CopyRequest?>(null) }
+    var saveRequest by remember { mutableStateOf<SaveRequest?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val resources = LocalResources.current
+    val locale = LocalLocale.current.platformLocale
     val currentOnEvent by rememberUpdatedState(onEvent)
 
     // Confirmation after adding from food detail (DESIGN.md section 9: "Add to Lunch" then "Added to Lunch").
@@ -139,6 +146,10 @@ fun TodayScreen(
         effects.collect { effect ->
             when (effect) {
                 is TodayEffect.Added -> snackbar.showSnackbar(resources.getString(R.string.food_added_to, effect.mealName))
+                is TodayEffect.Copied -> snackbar.showSnackbar(
+                    resources.getQuantityString(R.plurals.copied, effect.count, effect.count, shortDate(effect.toDate, locale)),
+                )
+                is TodayEffect.SavedMealCreated -> snackbar.showSnackbar(resources.getString(R.string.saved_meal_done, effect.name))
                 is TodayEffect.Deleted -> {
                     val msg = effect.label?.let { resources.getString(R.string.deleted_one, it) }
                         ?: resources.getQuantityString(R.plurals.deleted_many, effect.ids.size, effect.ids.size)
@@ -151,7 +162,14 @@ fun TodayScreen(
 
     Scaffold(
         topBar = {
-            if (state.isSelecting) SelectionBar(state.selection.size, onEvent)
+            if (state.isSelecting) {
+                SelectionBar(
+                    count = state.selection.size,
+                    onEvent = onEvent,
+                    onCopy = { copyRequest = CopyRequest(state.selection.toList(), allowSameMeal = true, from = state.date) },
+                    onSave = { saveRequest = SaveRequest(state.selection.toList(), "") },
+                )
+            }
             else DateHeader(state, onEvent, onPickDate = { showDatePicker = true }, onOpenSettings = actions.openSettings)
         },
         snackbarHost = { SnackbarHost(snackbar) },
@@ -220,6 +238,12 @@ fun TodayScreen(
                         },
                         onEntryLongClick = { id -> onEvent(TodayEvent.ToggleSelect(id)) },
                         onDelete = { id -> onEvent(TodayEvent.Delete(listOf(id))) },
+                        onCopyMeal = { copyRequest = CopyRequest(meal.entries.map { it.id }, allowSameMeal = true, from = day.date) },
+                        onSaveMeal = { saveRequest = SaveRequest(meal.entries.map { it.id }, meal.slot.name) },
+                        onCopyDay = { copyRequest = CopyRequest(day.allEntries.map { it.id }, allowSameMeal = true, from = day.date, wholeDay = true) },
+                        dayHasEntries = day.allEntries.isNotEmpty(),
+                        showSameAsYesterday = meal.slot.id in day.yesterdayMealIds,
+                        onSameAsYesterday = { onEvent(TodayEvent.SameAsYesterday(meal.slot.id)) },
                     )
                 }
             }
@@ -236,6 +260,7 @@ fun TodayScreen(
                 search = actions.openSearch?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 scan = actions.openScanner?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
+                savedMeals = { logSheetMealId = null; savedMealsFor = mealId },
             ),
             recents = state.recents,
             f = f,
@@ -254,6 +279,32 @@ fun TodayScreen(
                 onEvent(TodayEvent.QuickAdd(mealId, label, kcal, p, c, fat))
             },
             onDismiss = { quickAddMealId = null },
+        )
+    }
+    savedMealsFor?.let { mealId ->
+        SavedMealsSheet(
+            meals = state.savedMeals,
+            mealName = state.meals.firstOrNull { it.slot.id == mealId }?.slot?.name.orEmpty(),
+            f = f,
+            onLog = { saved -> savedMealsFor = null; onEvent(TodayEvent.LogSavedMeal(saved.id, mealId)) },
+            onDelete = { saved -> onEvent(TodayEvent.DeleteSavedMeal(saved.id)) },
+            onDismiss = { savedMealsFor = null },
+        )
+    }
+    copyRequest?.let { req ->
+        CopyDialog(
+            initialDate = req.from.plusDays(1),
+            meals = state.meals.map { it.slot },
+            allowSameMeal = req.allowSameMeal,
+            onCopy = { date, meal -> copyRequest = null; onEvent(TodayEvent.Copy(req.ids, date, meal)) },
+            onDismiss = { copyRequest = null },
+        )
+    }
+    saveRequest?.let { req ->
+        SaveMealDialog(
+            suggestedName = req.suggestedName,
+            onSave = { name -> saveRequest = null; onEvent(TodayEvent.SaveAsMeal(req.ids, name)) },
+            onDismiss = { saveRequest = null },
         )
     }
     if (showNutrients && state.totals != null && state.targets != null) {
@@ -286,8 +337,14 @@ fun TodayScreen(
     }
 }
 
+private data class CopyRequest(val ids: List<String>, val allowSameMeal: Boolean, val from: LocalDate, val wholeDay: Boolean = false)
+private data class SaveRequest(val ids: List<String>, val suggestedName: String)
+
+private fun shortDate(date: LocalDate, locale: java.util.Locale): String =
+    DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "EEEMMMd"), locale).format(date)
+
 @Composable
-private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit) {
+private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit, onCopy: () -> Unit, onSave: () -> Unit) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -304,6 +361,12 @@ private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit) {
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
         )
+        IconButton(onClick = onCopy) {
+            Icon(painterResource(R.drawable.ic_content_copy), stringResource(R.string.action_copy))
+        }
+        IconButton(onClick = onSave) {
+            Icon(painterResource(R.drawable.ic_bookmark), stringResource(R.string.action_save_as_meal))
+        }
         IconButton(onClick = { onEvent(TodayEvent.DeleteSelected) }) {
             Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.action_delete))
         }
@@ -386,8 +449,15 @@ private fun MealSectionView(
     onEntryClick: (String) -> Unit,
     onEntryLongClick: (String) -> Unit,
     onDelete: (String) -> Unit,
+    onCopyMeal: () -> Unit = {},
+    onSaveMeal: () -> Unit = {},
+    onCopyDay: () -> Unit = {},
+    dayHasEntries: Boolean = false,
+    showSameAsYesterday: Boolean = false,
+    onSameAsYesterday: () -> Unit = {},
 ) {
     val addDescription = stringResource(R.string.add_to_meal_description, meal.slot.name)
+    var menuOpen by remember { mutableStateOf(false) }
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
@@ -411,14 +481,35 @@ private fun MealSectionView(
                 Spacer(Modifier.width(4.dp))
                 Text(stringResource(R.string.add_to_meal))
             }
+            if (meal.entries.isNotEmpty() || dayHasEntries) {
+                Box {
+                    IconButton(onClick = { menuOpen = true }) {
+                        Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.meal_more, meal.slot.name))
+                    }
+                    DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                        if (meal.entries.isNotEmpty()) {
+                            DropdownMenuItem(text = { Text(stringResource(R.string.meal_copy)) }, onClick = { menuOpen = false; onCopyMeal() })
+                            DropdownMenuItem(text = { Text(stringResource(R.string.meal_save_as)) }, onClick = { menuOpen = false; onSaveMeal() })
+                        }
+                        if (dayHasEntries) {
+                            DropdownMenuItem(text = { Text(stringResource(R.string.day_copy)) }, onClick = { menuOpen = false; onCopyDay() })
+                        }
+                    }
+                }
+            }
         }
         if (meal.entries.isEmpty()) {
-            Text(
-                text = stringResource(R.string.meal_empty),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 12.dp, bottom = 4.dp),
-            )
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp)) {
+                Text(
+                    text = stringResource(R.string.meal_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.weight(1f),
+                )
+                if (showSameAsYesterday) {
+                    TextButton(onClick = onSameAsYesterday) { Text(stringResource(R.string.same_as_yesterday)) }
+                }
+            }
         }
         meal.entries.forEach { e ->
             androidx.compose.runtime.key(e.id) {

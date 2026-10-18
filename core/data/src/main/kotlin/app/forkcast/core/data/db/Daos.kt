@@ -145,6 +145,9 @@ interface SavedMealDao {
 
     @Query("UPDATE saved_meal SET deletedAt = :now, updatedAt = :now WHERE id = :id")
     suspend fun softDeleteMeal(id: String, now: Long)
+
+    @Query("UPDATE saved_meal SET name = :name, updatedAt = :now WHERE id = :id")
+    suspend fun rename(id: String, name: String, now: Long)
 }
 
 @Dao
