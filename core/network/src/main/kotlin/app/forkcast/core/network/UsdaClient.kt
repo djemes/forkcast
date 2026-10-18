@@ -139,14 +139,10 @@ private data class FoodDetail(
             foodNutrients.mapNotNull { n -> n.nutrient?.let { Triple(it.id, it.unitName, n.amount) } },
         )
         if (nutrients.isEmpty()) return null
-        val portions = foodPortions.filter { (it.gramWeight ?: 0.0) > 0 }.mapNotNull { p ->
-            val label = p.portionDescription?.takeIf { it.isNotBlank() && it != "Quantity not specified" }
-                ?: listOfNotNull(
-                    p.amount?.let { a -> if (a == a.toLong().toDouble()) a.toLong().toString() else a.toString() },
-                    p.modifier?.takeIf { it.isNotBlank() } ?: p.measureUnit?.name?.takeIf { it != "undetermined" },
-                ).joinToString(" ").takeIf { it.isNotBlank() }
-            label?.let { ServingSize(it, p.gramWeight!!) }
-        }
+        val portions = foodPortions
+            .filter { (it.gramWeight ?: 0.0) > 0 }
+            .sortedBy { it.sequenceNumber ?: Int.MAX_VALUE }
+            .mapNotNull { p -> portionLabel(p)?.let { ServingSize(it, p.gramWeight!!) } }
         return usdaFood(fdcId, description, brandName ?: brandOwner, gtinUpc, brandedServing(servingSize, servingSizeUnit, householdServingFullText) + portions, nutrients)
     }
 }
@@ -164,7 +160,25 @@ private data class Portion(
     val portionDescription: String? = null,
     val gramWeight: Double? = null,
     val measureUnit: MeasureUnit? = null,
+    val sequenceNumber: Int? = null,
 )
+
+/**
+ * A readable serving name, or null to skip the portion.
+ * FNDDS: `portionDescription` is the label ("1 cup, cooked"); its `modifier` is an internal
+ * numeric code ("90000" = "Quantity not specified"), never shown.
+ * SR Legacy: no description; label from amount + modifier ("1 cup") or the measure unit.
+ */
+private fun portionLabel(p: Portion): String? {
+    p.portionDescription?.let { d ->
+        return d.trim().takeIf { it.isNotEmpty() && !it.equals("Quantity not specified", ignoreCase = true) }
+    }
+    val amount = p.amount?.let { a -> if (a == a.toLong().toDouble()) a.toLong().toString() else a.toString() }
+    val unit = p.modifier?.trim()?.takeIf { it.isNotEmpty() && !it.all(Char::isDigit) }
+        ?: p.measureUnit?.name?.takeIf { it.isNotBlank() && it != "undetermined" }
+        ?: return null
+    return listOfNotNull(amount, unit).joinToString(" ")
+}
 
 @Serializable
 private data class MeasureUnit(val name: String? = null, @SerialName("abbreviation") val abbr: String? = null)

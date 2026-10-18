@@ -75,6 +75,14 @@ class FoodClientsTest {
         assertThat(rice.servingSizes.first().label).contains("cup")
     }
 
+    @Test fun fnddsPortionsSkipQuantityNotSpecified() = runTest {
+        val usda = UsdaClient(client { HttpStatusCode.OK to fixture("usda_food_fndds.json") }) { "k" }
+        val rice = usda.food("2708408")!!
+        // FNDDS lists "Quantity not specified" (modifier code 90000) first; it must not become a serving.
+        assertThat(rice.servingSizes.map { it.label }).containsExactly("1 cup, cooked")
+        assertThat(rice.servingSizes.single().grams).isEqualTo(158.0)
+    }
+
     @Test fun usdaByGtinMatchesNormalizedCode() = runTest {
         val usda = UsdaClient(client { HttpStatusCode.OK to fixture("usda_search_branded.json") }) { "k" }
         assertThat(usda.byGtin("00016000275287")!!.name).isEqualTo("Cheerios Cereal")

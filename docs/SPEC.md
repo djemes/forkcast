@@ -69,7 +69,7 @@ Top to bottom:
 
 Acceptance:
 - [ ] Today screen opens in under 500 ms cold-cached on the S25 Ultra
-- [ ] All totals update immediately after any add/edit/delete (Room Flow)
+- [x] All totals update immediately after any add/edit/delete (Room Flow)
 - [ ] Pending AI estimates appear in their meal with a progress indicator (see §4.6)
 
 ### 4.3 Food search and manual entry (Phase 1)
@@ -83,9 +83,9 @@ Acceptance:
 - Favorites (star) and Recents (last 50 distinct foods, with last-used quantity)
 
 Acceptance:
-- [ ] Search works offline against local foods
-- [ ] Adding a recent food takes ≤ 3 taps from the Today screen
-- [ ] A USDA or OFF food added once is cached locally with its full nutrient data
+- [x] Search works offline against local foods
+- [x] Adding a recent food takes ≤ 3 taps from the Today screen (Log → recent row: 2 taps)
+- [x] A USDA or OFF food added once is cached locally with its full nutrient data (cached when opened, refreshed from the USDA detail record)
 
 ### 4.4 Barcode scanning (Phase 1)
 
