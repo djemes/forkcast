@@ -13,6 +13,8 @@ import app.forkcast.ui.food.CustomFoodRoute
 import app.forkcast.ui.food.FoodDetailRoute
 import app.forkcast.ui.food.SearchRoute
 import app.forkcast.ui.onboarding.OnboardingRoute
+import app.forkcast.ui.scan.LabelScanRoute
+import app.forkcast.ui.scan.ScannerRoute
 import app.forkcast.ui.settings.AboutRoute
 import app.forkcast.ui.settings.AppearanceRoute
 import app.forkcast.ui.settings.FoodDatabasesRoute
@@ -35,13 +37,19 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class FoodDetailDestination(val foodId: String, val mealSlotId: String, val date: String)
 
-/** Create (foodId null) or edit a custom food; [barcode] pre-fills a new one. */
+/** Create (foodId null) or edit a custom food; [barcode] and [prefill] (scanned label JSON) pre-fill a new one. */
 @Serializable data class CustomFoodDestination(
     val foodId: String? = null,
     val barcode: String? = null,
     val mealSlotId: String? = null,
     val date: String? = null,
+    val prefill: String? = null,
 )
+
+@Serializable data class ScannerDestination(val mealSlotId: String, val date: String)
+
+/** Photograph a Nutrition Facts panel for an unknown [barcode]. */
+@Serializable data class LabelScanDestination(val barcode: String, val mealSlotId: String, val date: String)
 
 /** Key on Today's back-stack entry: the meal name to confirm ("Added to Lunch"). */
 private const val ADDED_TO = "added_to"
@@ -76,6 +84,7 @@ fun ForkcastNavHost(
                 actions = TodayActions(
                     openSettings = { navController.navigate(SettingsDestination) },
                     openSearch = { meal, date -> navController.navigate(SearchDestination(meal, date.toString())) },
+                    openScanner = { meal, date -> navController.navigate(ScannerDestination(meal, date.toString())) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },
@@ -89,6 +98,28 @@ fun ForkcastNavHost(
                     navController.navigate(FoodDetailDestination(id, args?.mealSlotId.orEmpty(), args?.date.orEmpty()))
                 },
                 onCreateFood = { navController.navigate(CustomFoodDestination(mealSlotId = args?.mealSlotId, date = args?.date)) },
+            )
+        }
+        composable<ScannerDestination> { entry ->
+            val args = entry.routeOrNull<ScannerDestination>()
+            val meal = args?.mealSlotId.orEmpty()
+            val date = args?.date.orEmpty()
+            ScannerRoute(
+                onBack = back,
+                onOpenFood = { id -> navController.navigate(FoodDetailDestination(id, meal, date)) },
+                onScanLabel = { gtin -> navController.navigate(LabelScanDestination(gtin, meal, date)) },
+                onEnterManually = { gtin -> navController.navigate(CustomFoodDestination(barcode = gtin, mealSlotId = meal, date = date)) },
+            )
+        }
+        composable<LabelScanDestination> { entry ->
+            val args = entry.routeOrNull<LabelScanDestination>()
+            LabelScanRoute(
+                onBack = back,
+                onParsed = { prefill ->
+                    navController.navigate(
+                        CustomFoodDestination(barcode = args?.barcode, mealSlotId = args?.mealSlotId, date = args?.date, prefill = prefill.encode()),
+                    ) { popUpTo<LabelScanDestination> { inclusive = true } }
+                },
             )
         }
         composable<FoodDetailDestination> {

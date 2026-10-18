@@ -4,6 +4,9 @@
 
     <!-- Network is used only for services the user configured: USDA, Open Food Facts (and later their AI provider and Drive). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Barcode and nutrition-label scanning; asked for the first time the scanner opens. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
 
     <application
         android:name=".ForkcastApplication"

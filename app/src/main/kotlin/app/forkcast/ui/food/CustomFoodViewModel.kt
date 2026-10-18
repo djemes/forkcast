@@ -14,6 +14,7 @@ import app.forkcast.core.model.NutrientKey
 import app.forkcast.core.model.ServingSize
 import app.forkcast.core.model.UnitPrefs
 import app.forkcast.navigation.CustomFoodDestination
+import app.forkcast.ui.scan.LabelPrefill
 import app.forkcast.ui.format.UnitFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.channels.Channel
@@ -41,6 +42,8 @@ data class CustomFoodForm(
     val units: UnitPrefs = UnitPrefs.US,
     /** Initial text values for number fields (only set on load). */
     val seed: Int = 0,
+    /** Values came from a scanned label: saved as a LABEL food, shown with a review note. */
+    val fromLabel: Boolean = false,
 ) {
     val normalizedBarcode: String? get() = barcode.takeIf { it.isNotBlank() }?.let { Gtin.normalize(it) }
     val barcodeInvalid: Boolean get() = barcode.isNotBlank() && normalizedBarcode == null
@@ -78,8 +81,20 @@ class CustomFoodViewModel @Inject constructor(
         viewModelScope.launch {
             val units = settings.settings.first().units ?: UnitFormatter.defaultsFor(Locale.getDefault())
             val food = args.foodId?.let { foods.get(it) }
+            val prefill = args.prefill?.let { LabelPrefill.decode(it) }
             _form.value = if (food == null) {
-                CustomFoodForm(loaded = true, barcode = args.barcode.orEmpty(), units = units, seed = 1)
+                CustomFoodForm(
+                    loaded = true,
+                    barcode = args.barcode?.let(::printedCode).orEmpty(),
+                    units = units,
+                    seed = 1,
+                    fromLabel = prefill != null,
+                    servingLabel = prefill?.servingLabel ?: "1 serving",
+                    servingGrams = prefill?.servingGrams,
+                    perServing = prefill?.nutrients.orEmpty().mapNotNull { (k, v) ->
+                        runCatching { NutrientKey.valueOf(k) }.getOrNull()?.let { it to v }
+                    }.toMap(),
+                )
             } else {
                 val serving = food.servingSizes.firstOrNull() ?: ServingSize("100 g", 100.0)
                 CustomFoodForm(
@@ -113,7 +128,7 @@ class CustomFoodViewModel @Inject constructor(
                 id = f.existing?.id.orEmpty(),
                 name = f.name.trim(),
                 brand = f.brand.trim().ifEmpty { null },
-                source = f.existing?.source?.takeIf { it == FoodSource.LABEL } ?: FoodSource.CUSTOM,
+                source = if (f.fromLabel || f.existing?.source == FoodSource.LABEL) FoodSource.LABEL else FoodSource.CUSTOM,
                 sourceId = null,
                 barcode = f.normalizedBarcode,
                 servingSizes = listOf(ServingSize(f.servingLabel.trim().ifEmpty { "1 serving" }, grams)),

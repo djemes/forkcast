@@ -78,6 +78,8 @@ data class TodayActions(
     val openSettings: () -> Unit = {},
     /** Opens food search to log into [mealSlotId] on [date]. */
     val openSearch: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
+    /** Opens the barcode scanner to log into [mealSlotId] on [date]. */
+    val openScanner: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
 )
 
 @Composable
@@ -232,6 +234,7 @@ fun TodayScreen(
             onDismiss = { logSheetMealId = null },
             actions = LogSheetActions(
                 search = actions.openSearch?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
+                scan = actions.openScanner?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
             ),
             recents = state.recents,

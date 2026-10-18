@@ -1,5 +1,6 @@
 package app.forkcast.fakes
 
+import app.forkcast.core.data.repository.BarcodeLookup
 import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.model.Food
@@ -46,6 +47,10 @@ class FakeFoodRepository : FoodRepository {
     override suspend fun saveCustom(food: Food): String = put(food)
     override suspend fun delete(id: String) = foods.update { it - id }
     override suspend fun findLocalByBarcode(gtin14: String) = foods.value.values.firstOrNull { it.barcode == gtin14 }
+    var barcodeResult: (String) -> BarcodeLookup = { gtin -> findBarcodeLocally(gtin) }
+    private fun findBarcodeLocally(gtin: String) =
+        foods.value.values.firstOrNull { it.barcode == gtin }?.let { BarcodeLookup.Found(it.id, fromCache = true) } ?: BarcodeLookup.NotFound
+    override suspend fun lookupBarcode(gtin14: String): BarcodeLookup = barcodeResult(gtin14)
 
     companion object {
         fun food(name: String, kcal: Double = 130.0, source: FoodSource = FoodSource.USDA, sourceId: String = name, barcode: String? = null) = Food(

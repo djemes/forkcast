@@ -123,6 +123,15 @@ dependencies {
     debugImplementation(libs.compose.ui.tooling)
     debugImplementation(libs.compose.ui.test.manifest)
 
+    implementation(libs.camera.core)
+    implementation(libs.camera.camera2)
+    implementation(libs.camera.lifecycle)
+    implementation(libs.camera.compose)
+    // Bundled models: barcode and text recognition work offline, no Play Services download.
+    implementation(libs.mlkit.barcode)
+    implementation(libs.mlkit.text)
+    implementation(libs.kotlinx.coroutines.play.services)
+
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)

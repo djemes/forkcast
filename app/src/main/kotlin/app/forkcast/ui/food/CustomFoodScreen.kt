@@ -59,6 +59,9 @@ private fun CustomFoodScreen(form: CustomFoodForm, vm: CustomFoodViewModel, onBa
         onBack = onBack,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
+            if (form.fromLabel) {
+                Text(stringResource(R.string.label_review_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
+            }
             TextInput(form.name, stringResource(R.string.custom_name), isError = form.name.isBlank(), supporting = stringResource(R.string.custom_required)) {
                 vm.update { copy(name = it) }
             }
