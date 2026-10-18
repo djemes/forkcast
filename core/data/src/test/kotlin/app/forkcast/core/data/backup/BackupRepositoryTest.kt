@@ -1,0 +1,248 @@
+package app.forkcast.core.data.backup
+
+import android.content.Context
+import androidx.datastore.core.DataStore
+import androidx.room.Room
+import androidx.test.core.app.ApplicationProvider
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.forkcast.core.data.db.DayStatusEntity
+import app.forkcast.core.data.db.FoodEntity
+import app.forkcast.core.data.db.ForkcastDatabase
+import app.forkcast.core.data.db.GoalEntity
+import app.forkcast.core.data.db.LogEntryEntity
+import app.forkcast.core.data.db.MealSlotEntity
+import app.forkcast.core.data.db.ProfileEntity
+import app.forkcast.core.data.db.SavedMealEntity
+import app.forkcast.core.data.db.SavedMealItemEntity
+import app.forkcast.core.data.db.TargetOverrideEntity
+import app.forkcast.core.data.db.WaterEntryEntity
+import app.forkcast.core.data.db.WeightEntryEntity
+import app.forkcast.core.model.ActivityLevel
+import app.forkcast.core.model.AppSettings
+import app.forkcast.core.model.ExerciseMode
+import app.forkcast.core.model.FoodSource
+import app.forkcast.core.model.GoalType
+import app.forkcast.core.model.NutrientKey
+import app.forkcast.core.model.ServingSize
+import app.forkcast.core.model.Sex
+import app.forkcast.core.model.ThemeMode
+import app.forkcast.core.model.WeightSource
+import com.google.common.truth.Truth.assertThat
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.test.runTest
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
+import org.junit.After
+import org.junit.Test
+import org.junit.runner.RunWith
+import java.time.Clock
+import java.time.Instant
+import java.time.LocalDate
+import java.time.ZoneId
+
+@RunWith(AndroidJUnit4::class)
+class BackupRepositoryTest {
+
+    private val context: Context = ApplicationProvider.getApplicationContext()
+    private val db = Room.inMemoryDatabaseBuilder(context, ForkcastDatabase::class.java)
+        .allowMainThreadQueries().build()
+    private val clock = Clock.fixed(Instant.parse("2026-10-18T16:00:00Z"), ZoneId.of("America/New_York"))
+    private val settings = MemoryDataStore(AppSettings())
+    private val repo = BackupRepository(context, db, settings, clock, "0.1.0")
+    private val dao = db.backupDao()
+    private val day = LocalDate.of(2026, 10, 18)
+
+    @After fun tearDown() {
+        db.close()
+        context.filesDir.resolve(BackupRepository.SAFETY_DIR).deleteRecursively()
+    }
+
+    @Test fun roundTripIsIdenticalExceptExportedAt() = runTest {
+        seedEveryTable()
+        settings.updateData { it.copy(appearance = it.appearance.copy(themeMode = ThemeMode.DARK)) }
+        val first = repo.exportJson()
+
+        dao.clearAll()
+        settings.updateData { AppSettings() }
+        val parsed = repo.parse(first) as ParsedBackup.Ok
+        repo.import(parsed.export, ImportMode.REPLACE)
+        val second = repo.exportJson()
+
+        assertThat(withoutExportedAt(second)).isEqualTo(withoutExportedAt(first))
+        assertThat(settings.data.first().appearance.themeMode).isEqualTo(ThemeMode.DARK)
+        // Soft-deleted rows travel too.
+        assertThat(dao.logEntries().single { it.id == "e2" }.deletedAt).isEqualTo(50L)
+    }
+
+    @Test fun exportHasSchemaFieldsAndNoSecrets() = runTest {
+        seedEveryTable()
+        val json = repo.exportJson()
+        val root = BackupJson.parseToJsonElement(json).jsonObject
+        assertThat(root.keys).containsAtLeast(
+            "schemaVersion", "app", "appVersion", "exportedAt", "timeZone", "profile", "goals",
+            "targetOverrides", "tdeeEstimates", "mealSlots", "foods", "recipes", "savedMeals",
+            "logEntries", "aiEstimates", "weights", "water", "activityDays", "dayStatus", "settings",
+        )
+        assertThat(root["exportedAt"].toString()).isEqualTo("\"2026-10-18T16:00:00Z\"")
+        assertThat(json).contains("\"ENERGY_KCAL\"")
+        assertThat(json.lowercase()).doesNotContain("apikey")
+        assertThat(json.lowercase()).doesNotContain("api_key")
+    }
+
+    @Test fun previewCountsVisibleRowsAndDateRange() = runTest {
+        seedEveryTable()
+        val preview = (repo.parse(repo.exportJson()) as ParsedBackup.Ok).preview
+        assertThat(preview.counts.logEntries).isEqualTo(1) // e2 is deleted
+        assertThat(preview.counts.foods).isEqualTo(1)
+        assertThat(preview.counts.weights).isEqualTo(1)
+        assertThat(preview.counts.hasProfile).isTrue()
+        assertThat(preview.firstDate).isEqualTo(day.minusDays(3))
+        assertThat(preview.lastDate).isEqualTo(day)
+        assertThat(preview.appVersion).isEqualTo("0.1.0")
+    }
+
+    @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":2}"""))
+            .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
+        assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
+            .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
+        assertThat(repo.parse("not json")).isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":1,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
+            .isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
+    }
+
+    @Test fun acceptsMinimalV1AndUnknownFields() {
+        val parsed = repo.parse(
+            """{"app":"Forkcast","schemaVersion":1,"appVersion":"0.1.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC","futureField":true}""",
+        )
+        assertThat(parsed).isInstanceOf(ParsedBackup.Ok::class.java)
+    }
+
+    @Test fun mergeNewerWinsAndDeletionsTravel() = runTest {
+        dao.upsertLogEntries(listOf(entry("a", "Old name", updatedAt = 10), entry("b", "Mine is newer", updatedAt = 90), entry("c", "Kept", updatedAt = 10)))
+        val incoming = export(
+            logEntries = listOf(
+                entry("a", "New name", updatedAt = 20),
+                entry("b", "Stale", updatedAt = 30),
+                entry("c", "Kept", updatedAt = 40, deletedAt = 40),
+                entry("d", "Brand new", updatedAt = 5),
+            ),
+        )
+
+        val summary = repo.import(incoming, ImportMode.MERGE)
+
+        val rows = dao.logEntries().associateBy { it.id }
+        assertThat(rows.getValue("a").displayName).isEqualTo("New name")
+        assertThat(rows.getValue("b").displayName).isEqualTo("Mine is newer")
+        assertThat(rows.getValue("c").deletedAt).isEqualTo(40L)
+        assertThat(rows.getValue("d").displayName).isEqualTo("Brand new")
+        assertThat(summary).isEqualTo(ImportSummary(ImportMode.MERGE, added = 1, updated = 2, unchanged = 1))
+    }
+
+    @Test fun mergeKeepsLocalSettingsAndNoSafetyBackup() = runTest {
+        settings.updateData { it.copy(waterTargetMl = 3000.0) }
+        repo.import(export(settings = AppSettings(waterTargetMl = 1000.0)), ImportMode.MERGE)
+        assertThat(settings.data.first().waterTargetMl).isEqualTo(3000.0)
+        assertThat(repo.latestSafetyBackup()).isNull()
+    }
+
+    @Test fun mergeMapsMealSlotsFromAnotherPhoneByName() = runTest {
+        dao.upsertMealSlots(listOf(slot("here-lunch", "Lunch"), slot("here-dinner", "Dinner")))
+        val incoming = export(
+            mealSlots = listOf(slot("there-lunch", "Lunch"), slot("there-brunch", "Brunch")),
+            logEntries = listOf(entry("x", "Soup", slotId = "there-lunch"), entry("y", "Eggs", slotId = "there-brunch")),
+        )
+        repo.import(incoming, ImportMode.MERGE)
+
+        assertThat(dao.mealSlots().map { it.id }).containsExactly("here-lunch", "here-dinner", "there-brunch")
+        val rows = dao.logEntries().associateBy { it.id }
+        assertThat(rows.getValue("x").mealSlotId).isEqualTo("here-lunch")
+        assertThat(rows.getValue("y").mealSlotId).isEqualTo("there-brunch")
+    }
+
+    @Test fun mergeLeavesOneActiveGoal() = runTest {
+        dao.upsertGoals(listOf(goal("mine", active = true, updatedAt = 10)))
+        repo.import(export(goals = listOf(goal("theirs", active = true, updatedAt = 20))), ImportMode.MERGE)
+        assertThat(dao.goals().filter { it.isActive }.map { it.id }).containsExactly("theirs")
+    }
+
+    @Test fun mergeMatchesDayStatusByDate() = runTest {
+        dao.upsertDayStatus(listOf(DayStatusEntity("s-here", day, false, null, 1, 10)))
+        repo.import(export(dayStatus = listOf(DayStatusEntity("s-there", day, true, "done", 1, 20))), ImportMode.MERGE)
+        assertThat(dao.dayStatus().single().markedComplete).isTrue()
+    }
+
+    @Test fun replaceWritesSafetyBackupFirst() = runTest {
+        dao.upsertLogEntries(listOf(entry("old", "Before replace")))
+        repo.import(export(logEntries = listOf(entry("new", "After"))), ImportMode.REPLACE)
+
+        assertThat(dao.logEntries().map { it.id }).containsExactly("new")
+        val safety = repo.latestSafetyBackup()!!
+        val saved = (repo.parse(safety.readText()) as ParsedBackup.Ok).export
+        assertThat(saved.logEntries.map { it.id }).containsExactly("old")
+    }
+
+    private fun withoutExportedAt(json: String): JsonObject =
+        JsonObject(BackupJson.parseToJsonElement(json).jsonObject - "exportedAt")
+
+    private fun export(
+        mealSlots: List<MealSlotEntity> = emptyList(),
+        goals: List<GoalEntity> = emptyList(),
+        logEntries: List<LogEntryEntity> = emptyList(),
+        dayStatus: List<DayStatusEntity> = emptyList(),
+        settings: AppSettings? = null,
+    ) = ExportV1(
+        appVersion = "0.1.0", exportedAt = "2026-10-18T16:00:00Z", timeZone = "America/New_York",
+        mealSlots = mealSlots, goals = goals, logEntries = logEntries, dayStatus = dayStatus, settings = settings,
+    )
+
+    private fun slot(id: String, name: String) = MealSlotEntity(id, name, 0, null, null, 1, 1, null)
+
+    private fun goal(id: String, active: Boolean, updatedAt: Long) = GoalEntity(
+        id, GoalType.LOSE, day, 90.0, 80.0, null, 0.5, active, 1, updatedAt,
+    )
+
+    private fun entry(
+        id: String,
+        name: String,
+        updatedAt: Long = 1,
+        deletedAt: Long? = null,
+        slotId: String = "lunch",
+        date: LocalDate = day,
+    ) = LogEntryEntity(
+        id, date, "America/New_York", slotId, "f1", name, null, 1.0, "1 cup", 158.0,
+        mapOf(NutrientKey.ENERGY_KCAL to 205.0, NutrientKey.PROTEIN_G to 4.3), FoodSource.USDA,
+        null, null, null, 1, 1, updatedAt, deletedAt,
+    )
+
+    private suspend fun seedEveryTable() {
+        dao.upsertProfiles(listOf(ProfileEntity(sex = Sex.FEMALE, birthDate = LocalDate.of(1990, 3, 1), heightCm = 168.0,
+            activityLevel = ActivityLevel.LIGHT, exerciseMode = ExerciseMode.INCLUDED, exerciseAddBackPct = 50,
+            createdAt = 1, updatedAt = 2)))
+        dao.upsertGoals(listOf(goal("g1", active = true, updatedAt = 3)))
+        dao.upsertTargetOverrides(listOf(TargetOverrideEntity("t1", "PROTEIN", 120.0, day, 1, 1)))
+        dao.upsertMealSlots(listOf(MealSlotEntity("lunch", "Lunch", 1, 660, 900, 1, 1, null)))
+        dao.upsertFoods(listOf(FoodEntity("f1", "Rice, \"white\"", null, FoodSource.USDA, "123", "00012345678905",
+            listOf(ServingSize("1 cup", 158.0)), mapOf(NutrientKey.ENERGY_KCAL to 130.0), true, 5, 1.0, "1 cup", 1, 5)))
+        dao.upsertSavedMeals(listOf(SavedMealEntity("m1", "Lunch box", 1, 1)))
+        dao.upsertSavedMealItems(listOf(SavedMealItemEntity("i1", "m1", 0, "f1", "Rice", null, 1.0, "1 cup", 158.0,
+            mapOf(NutrientKey.ENERGY_KCAL to 205.0), FoodSource.USDA, 1, 1)))
+        dao.upsertLogEntries(listOf(entry("e1", "Rice"), entry("e2", "Deleted", updatedAt = 50, deletedAt = 50, date = day.minusDays(9))))
+        dao.upsertWeights(listOf(WeightEntryEntity("w1", day.minusDays(3).atTime(12, 0).atZone(clock.zone).toInstant().toEpochMilli(),
+            80.5, null, WeightSource.MANUAL, null, 1, 1)))
+        dao.upsertWater(listOf(WaterEntryEntity("h1", 1, day, "America/New_York", 250.0, 1, 1)))
+        dao.upsertDayStatus(listOf(DayStatusEntity("d1", day, true, null, 1, 1)))
+    }
+}
+
+/** DataStore stand-in; the real one needs a file and a scope that outlives runTest. */
+class MemoryDataStore<T>(initial: T) : DataStore<T> {
+    private val state = MutableStateFlow(initial)
+    private val lock = Mutex()
+    override val data = state
+    override suspend fun updateData(transform: suspend (t: T) -> T): T =
+        lock.withLock { transform(state.value).also { state.value = it } }
+}

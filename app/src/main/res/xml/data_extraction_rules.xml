@@ -5,6 +5,7 @@
     <cloud-backup>
         <exclude domain="file" path="secrets/" />
         <exclude domain="file" path="photos/" />
+        <exclude domain="file" path="safety-backups/" />
         <exclude domain="sharedpref" path="secrets.xml" />
     </cloud-backup>
     <device-transfer>

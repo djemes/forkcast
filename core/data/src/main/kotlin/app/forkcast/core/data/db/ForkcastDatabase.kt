@@ -42,6 +42,7 @@ abstract class ForkcastDatabase : RoomDatabase() {
     abstract fun weightDao(): WeightDao
     abstract fun waterDao(): WaterDao
     abstract fun dayStatusDao(): DayStatusDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
         const val NAME = "forkcast.db"
