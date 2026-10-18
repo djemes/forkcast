@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- From assets/brand/icon-foreground.svg. Art stays inside the 66dp safe circle. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Progress ring -->
+    <path
+        android:pathData="M54,28 A26,26 0 1,1 28,54"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeWidth="6"
+        android:strokeLineCap="round" />
+    <!-- "Now" dot -->
+    <path
+        android:fillColor="#FFFFB27A"
+        android:pathData="M23,54 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0 z" />
+    <!-- Fork tines -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M47,36.4 a1.4,1.4 0 0,1 2.8,0 v10.2 a1.4,1.4 0 0,1 -2.8,0 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M52.6,36.4 a1.4,1.4 0 0,1 2.8,0 v10.2 a1.4,1.4 0 0,1 -2.8,0 z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M58.2,36.4 a1.4,1.4 0 0,1 2.8,0 v10.2 a1.4,1.4 0 0,1 -2.8,0 z" />
+    <!-- Fork head -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M47,46 L61,46 L61,50.5 C61,54.5 58.2,56.8 56.3,57.4 L51.7,57.4 C49.8,56.8 47,54.5 47,50.5 Z" />
+    <!-- Handle -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M51.8,58.7 a2.2,2.2 0 0,1 4.4,0 v12.6 a2.2,2.2 0 0,1 -4.4,0 z" />
+</vector>
