@@ -7,7 +7,7 @@ Read this first in every session. Update it after every finished feature (keep i
 - **Setup stages done:** 1.1 toolchain (2026-10-18), 1.2 GitHub repo `djemes/forkcast` private (2026-10-18), 1.3 phone paired over wireless debugging (2026-10-18; SM-S938U1, Android 17 / API 37); Stage 2 key + GitHub secrets (2026-10-18; owner's Vaultwarden copy pending)
 - **Done in current phase:** scaffold + modules, theme/font/contrast test, icon + splash, Today/Log sheet/Settings/Appearance/About shell, Room v1 + migration harness, JSON DataStore, CI + release workflows, release key
 - **Next step:** CI green → install on phone → test tag v0.0.1 (then delete that release) → Phase 0 gate
-- **Waiting on owner:** save `C:\Users\gabri\Documents\keys\forkcast-release.jks` + `forkcast-release-credentials.txt` into Vaultwarden
+- **Waiting on owner:** save `keys\forkcast-release.jks` + `keys\forkcast-release-credentials.txt` (in the project folder) into Vaultwarden
 - **Open questions:** —
 
 Environment notes for later sessions:

@@ -99,7 +99,7 @@ Batch questions when possible. For small judgment calls, decide, note it in `doc
 
 ## Secrets
 - Never print, echo, log, or commit secrets (keystore password, API keys, tokens), and never ask the owner to paste one into the conversation. Generate them inside scripts that write straight to their destination (file outside the repo, `gh secret set`)
-- Signing files live in `%USERPROFILE%\Documents\keys\`, never in the repo
+- Signing files live in the project's `keys\` folder (git-ignored, synced by OneDrive, master copy in Vaultwarden). Never commit them; check `git status` before any commit that touches `.gitignore`
 
 ## Commands (Windows, PowerShell)
 - Build debug: `./gradlew assembleDebug`

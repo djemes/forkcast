@@ -54,7 +54,7 @@ General rules:
 ## Stage 2 — Release signing and CI secrets (during Phase 0, after the workflows exist)
 
 1. Write a PowerShell script (outside the repo, e.g. in a temp folder) that, without printing secrets:
-   - Creates `%USERPROFILE%\Documents\keys\`
+   - Creates the project's git-ignored `keys\` folder (owner's choice, 2026-10-18)
    - Generates one strong random password (cryptographic RNG, ~32 chars; PKCS12 keystores use the same password for store and key)
    - Runs `keytool -genkeypair -keystore <keys>\forkcast-release.jks -alias forkcast -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=Forkcast" -storepass <pw> -keypass <pw>`
    - Writes `<keys>\forkcast-release-credentials.txt` with alias and password
@@ -63,7 +63,7 @@ General rules:
 2. Run it, then delete the script
 3. Make sure a debug keystore exists (`%USERPROFILE%\.android\debug.keystore`, created by the first debug build) and get its SHA-1
 4. Save both fingerprint sets in `docs/DECISIONS.md` (fingerprints are not secret; needed for Google sign-in in Stage 5)
-5. **[OWNER]** Save `forkcast-release.jks` and `forkcast-release-credentials.txt` from `Documents\keys` into Vaultwarden (as attachments to one item). Explain why: losing them means the installed app can never be updated again without uninstalling it
+5. **[OWNER]** Save `forkcast-release.jks` and `forkcast-release-credentials.txt` from the project's `keys\` folder into Vaultwarden (as attachments to one item). Explain why: losing them means the installed app can never be updated again without uninstalling it
 6. Push a test tag only if the owner agrees; otherwise verify `release.yml` on the first real release
 
 ---
