@@ -99,10 +99,10 @@ Keys are entered by the owner in the app's Settings on the phone. They never go 
 
 ## Stage 6 — Updates on the phone (first release tag, end of Phase 1)
 
-1. Download the latest Obtainium release APK from its official GitHub releases (verify the repo is `ImranR98/Obtainium`) and `adb install` it
-2. **[OWNER]** GitHub → Settings → Developer settings → Fine-grained tokens → new token: repository access **only `forkcast`**, permission **Contents: Read-only**, 1-year expiry. Paste it in Obtainium → Settings → GitHub (on the phone; never into this conversation)
-3. **[OWNER]** Obtainium → Add app → `https://github.com/<owner>/forkcast`
-4. From then on, releases ship by `git tag vX.Y.Z` + `git push --tags`; Obtainium offers the update
+Owner decided 2026-10-18: no Obtainium. Releases ship by `git tag vX.Y.Z` + `git push origin vX.Y.Z`; `release.yml` attaches the signed APK to a GitHub Release. The owner updates either way:
+1. **[OWNER]** On the phone, signed in to GitHub in the browser: open the repo's Releases → download `forkcast-X.Y.Z.apk` → tap it. The first time, Android asks to allow installs from that browser/Files app: allow it
+2. Or the owner asks Claude Code to "install the latest": `gh release download` the APK and `adb -s <phone> install -r --user 0` it over wireless debugging
+Both install over existing data because every phone build is signed with the same key. A signature or version-downgrade error means stop and explain (see CLAUDE.md, Phone safety)
 
 ---
 

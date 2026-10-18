@@ -64,7 +64,7 @@ The owner wants to hand off everything possible. If a task can be done with the 
 | Before Phase 0 | Stage 1: toolchain, GitHub repo, phone |
 | During Phase 0, once CI workflows exist | Stage 2: signing + GitHub secrets |
 | Phase 1, when starting food search (§4.3) | Stage 3 step 1: USDA key |
-| End of Phase 1, after tagging `v0.1.0` | Stage 6: Obtainium on the phone |
+| End of Phase 1, after tagging `v0.1.0` | Stage 6: how the owner installs releases (no Obtainium) |
 | Start of Phase 2 | Stage 3 steps 2–5: Gemini/Claude keys, limits; remind the owner about the kitchen-scale test set |
 | Start of Phase 3 | Stage 4: Health Connect |
 | Start of Phase 4 | Stage 5: Google Cloud + Drive OAuth |

@@ -331,8 +331,8 @@ All network code: timeouts (connect 10 s, read 60 s for AI, 15 s otherwise), ret
 ## 10. CI/CD and distribution
 
 - GitHub Actions `ci.yml`: on push/PR → JDK setup, Gradle cache, `assembleDebug testDebugUnitTest lintDebug`, upload debug APK artifact
-- `release.yml`: on tag `v*` → decode keystore from secrets, `assembleRelease`, sign, attach APK to a GitHub Release with auto-generated notes. `versionName` from the tag, `versionCode` from `GITHUB_RUN_NUMBER`
-- Install/update on the phone via Obtainium pointing at the private repo's Releases (GitHub token in Obtainium) — see SETUP.md Stage 6
+- `release.yml`: on tag `v*` → decode keystore from secrets, `assembleRelease`, sign, attach APK to a GitHub Release with auto-generated notes. `versionName` from the tag, `versionCode` = git commit count (changed 2026-10-18 so PC builds and releases share one rising counter; see DECISIONS.md)
+- Install/update on the phone by downloading the APK from the private repo's Releases, or by Claude Code over adb on request (no Obtainium; owner's choice 2026-10-18) — see SETUP.md Stage 6
 - Keep the same signing key forever (updates fail otherwise); the Google OAuth client depends on its SHA-1
 
 ## 11. Open decisions (resolve with the owner when reached)
