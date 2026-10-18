@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme before Compose draws; matches porcelain so there's no flash. -->
+    <style name="Theme.Forkcast" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/porcelain</item>
+    </style>
+
+    <!-- SplashScreen API: porcelain background, logo foreground on a pine circle. -->
+    <style name="Theme.Forkcast.Splash" parent="Theme.SplashScreen">
+        <item name="windowSplashScreenBackground">@color/porcelain</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_launcher_foreground</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/pine</item>
+        <item name="postSplashScreenTheme">@style/Theme.Forkcast</item>
+    </style>
+</resources>

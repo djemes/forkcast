@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ backup rules. Secrets (encrypted API keys, OAuth tokens) and photos are
+     never backed up (SPEC §4.11). The paths below are reserved for those files. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="file" path="secrets/" />
+        <exclude domain="file" path="photos/" />
+        <exclude domain="sharedpref" path="secrets.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="file" path="secrets/" />
+        <exclude domain="sharedpref" path="secrets.xml" />
+    </device-transfer>
+</data-extraction-rules>
