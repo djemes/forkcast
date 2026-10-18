@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108" width="108" height="108">
+  <!-- Android 13+ themed-icon layer: one color; the system tints it. -->
+  <path d="M54,28 A26,26 0 1 1 28,54" fill="none" stroke="#000000" stroke-width="6" stroke-linecap="round"/>
+  <circle cx="28" cy="54" r="5" fill="#000000"/>
+  <rect x="47" y="35" width="2.8" height="13" rx="1.4" fill="#000000"/>
+  <rect x="52.6" y="35" width="2.8" height="13" rx="1.4" fill="#000000"/>
+  <rect x="58.2" y="35" width="2.8" height="13" rx="1.4" fill="#000000"/>
+  <path d="M47,46 L61,46 L61,50.5 C61,54.5 58.2,56.8 56.3,57.4 L51.7,57.4 C49.8,56.8 47,54.5 47,50.5 Z" fill="#000000"/>
+  <rect x="51.8" y="56.5" width="4.4" height="17" rx="2.2" fill="#000000"/>
+</svg>
