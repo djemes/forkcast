@@ -6,8 +6,8 @@ Read this first in every session. Update it after every finished feature (keep i
 - **Phase status:** 0 ✓ · 1 ☐ · 2 ☐ · 3 ☐ · 4 ☐ · 5 ☐
 - **Setup stages done:** 1.1 toolchain (2026-10-18), 1.2 GitHub repo `djemes/forkcast` private (2026-10-18), 1.3 phone paired over wireless debugging (2026-10-18; SM-S938U1, Android 17 / API 37); Stage 2 key + GitHub secrets (2026-10-18; owner's Vaultwarden copy pending); Stage 7 emulator set up early at owner's request (2026-10-18)
 - **Phase 0 done:** scaffold + modules, theme/font/contrast test, icon + splash, Today/Log sheet/Settings/Appearance/About shell, Room v1 + migration harness, JSON DataStore, CI + release workflows (green), release key, emulator, signed release pipeline verified with a throwaway v0.0.1 (deleted)
-- **Done in current phase:** —
-- **Next step:** Phase 1 feature 1, goal math in :core:domain. Order: math → DB v2 → onboarding → Today → search/quick add/custom → barcode + label OCR → saved meals/copy/water/weight → export/import → v0.1.0
+- **Done in current phase:** goal math (core:domain), DB v2 + migration test, onboarding + Profile & goals (§4.1 ✓)
+- **Next step:** Today dashboard (§4.2: ring, macros, meal entries with edit/swipe-delete/multi-select, water/weight cards, day swipe). Order after that: → search/quick add/custom → barcode + label OCR → saved meals/copy/water/weight → export/import → v0.1.0
 - **Setup notes:** USDA key is in `keys/usda-api-key.txt` (Stage 3.1 done by owner; he enters it on the phone once Settings → Food databases exists). Stage 6 = no Obtainium (see SETUP)
 - **Waiting on owner:** save `keys\forkcast-release.jks` + `keys\forkcast-release-credentials.txt` (in the project folder) into Vaultwarden
 - **Open questions:** —

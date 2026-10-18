@@ -51,9 +51,9 @@ Collect, one question per screen with a progress indicator and sensible defaults
 - Short note that the app gives estimates, not medical advice
 
 Acceptance:
-- [ ] Every field editable later in Settings → Profile & Goals, and changes recompute targets immediately
-- [ ] Target date and weekly rate stay in sync as the user edits either
-- [ ] Warnings appear (not blocks) per §5.4 guardrails; the user can still proceed
+- [x] Every field editable later in Settings → Profile & Goals, and changes recompute targets immediately
+- [x] Target date and weekly rate stay in sync as the user edits either
+- [x] Warnings appear (not blocks) per §5.4 guardrails; the user can still proceed
 
 ### 4.2 Today dashboard (Phase 1)
 
