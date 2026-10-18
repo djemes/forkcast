@@ -22,7 +22,9 @@ import app.forkcast.core.data.db.TargetOverrideDao
 import app.forkcast.core.data.db.WaterDao
 import app.forkcast.core.data.db.WeightDao
 import app.forkcast.core.data.repository.DataStoreSettingsRepository
+import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
+import app.forkcast.core.data.repository.RoomLogRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.RoomProfileRepository
 import app.forkcast.core.data.repository.RoomWeightRepository
@@ -101,4 +103,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindWeightRepository(impl: RoomWeightRepository): WeightRepository
+
+    @Binds
+    abstract fun bindLogRepository(impl: RoomLogRepository): LogRepository
 }

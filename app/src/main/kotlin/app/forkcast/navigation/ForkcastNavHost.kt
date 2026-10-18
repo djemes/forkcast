@@ -10,6 +10,7 @@ import app.forkcast.ui.settings.AboutRoute
 import app.forkcast.ui.settings.AppearanceRoute
 import app.forkcast.ui.settings.ProfileGoalsRoute
 import app.forkcast.ui.settings.SettingsScreen
+import app.forkcast.ui.today.TodayActions
 import app.forkcast.ui.today.TodayRoute
 import kotlinx.serialization.Serializable
 
@@ -38,7 +39,7 @@ fun ForkcastNavHost(
             })
         }
         composable<TodayDestination> {
-            TodayRoute(onOpenSettings = { navController.navigate(SettingsDestination) })
+            TodayRoute(TodayActions(openSettings = { navController.navigate(SettingsDestination) }))
         }
         composable<SettingsDestination> {
             SettingsScreen(
