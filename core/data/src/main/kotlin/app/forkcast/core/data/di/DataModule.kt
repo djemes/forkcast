@@ -11,7 +11,16 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import app.forkcast.core.data.R
 import app.forkcast.core.data.db.DefaultMealSlots
 import app.forkcast.core.data.db.ForkcastDatabase
+import app.forkcast.core.data.db.DayStatusDao
+import app.forkcast.core.data.db.FoodDao
+import app.forkcast.core.data.db.GoalDao
+import app.forkcast.core.data.db.LogEntryDao
 import app.forkcast.core.data.db.MealSlotDao
+import app.forkcast.core.data.db.ProfileDao
+import app.forkcast.core.data.db.SavedMealDao
+import app.forkcast.core.data.db.TargetOverrideDao
+import app.forkcast.core.data.db.WaterDao
+import app.forkcast.core.data.db.WeightDao
 import app.forkcast.core.data.repository.DataStoreSettingsRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.RoomMealSlotRepository
@@ -48,8 +57,16 @@ object DataModule {
             .build()
     }
 
-    @Provides
-    fun provideMealSlotDao(db: ForkcastDatabase): MealSlotDao = db.mealSlotDao()
+    @Provides fun provideMealSlotDao(db: ForkcastDatabase): MealSlotDao = db.mealSlotDao()
+    @Provides fun provideProfileDao(db: ForkcastDatabase): ProfileDao = db.profileDao()
+    @Provides fun provideGoalDao(db: ForkcastDatabase): GoalDao = db.goalDao()
+    @Provides fun provideTargetOverrideDao(db: ForkcastDatabase): TargetOverrideDao = db.targetOverrideDao()
+    @Provides fun provideFoodDao(db: ForkcastDatabase): FoodDao = db.foodDao()
+    @Provides fun provideLogEntryDao(db: ForkcastDatabase): LogEntryDao = db.logEntryDao()
+    @Provides fun provideSavedMealDao(db: ForkcastDatabase): SavedMealDao = db.savedMealDao()
+    @Provides fun provideWeightDao(db: ForkcastDatabase): WeightDao = db.weightDao()
+    @Provides fun provideWaterDao(db: ForkcastDatabase): WaterDao = db.waterDao()
+    @Provides fun provideDayStatusDao(db: ForkcastDatabase): DayStatusDao = db.dayStatusDao()
 
     @Provides
     @Singleton
