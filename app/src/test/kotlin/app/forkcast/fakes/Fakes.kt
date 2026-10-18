@@ -27,6 +27,7 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun setThemeMode(mode: ThemeMode) = state.update { it.copy(appearance = it.appearance.copy(themeMode = mode)) }
     override suspend fun setUseWallpaperColors(enabled: Boolean) = state.update { it.copy(appearance = it.appearance.copy(useWallpaperColors = enabled)) }
     override suspend fun setUnits(units: UnitPrefs) = state.update { it.copy(units = units) }
+    override suspend fun setWaterTargetMl(ml: Double?) = state.update { it.copy(waterTargetMl = ml) }
 }
 
 class FakeWeightRepository : WeightRepository {

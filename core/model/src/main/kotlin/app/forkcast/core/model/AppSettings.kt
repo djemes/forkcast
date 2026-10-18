@@ -8,6 +8,8 @@ data class AppSettings(
     val appearance: AppearanceSettings = AppearanceSettings(),
     /** Null until chosen in onboarding (the default comes from the device locale). */
     val units: UnitPrefs? = null,
+    /** Daily water goal in ml; null = default by sex (SPEC §4.9). */
+    val waterTargetMl: Double? = null,
 )
 
 @Serializable

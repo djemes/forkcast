@@ -131,6 +131,8 @@ dependencies {
     implementation(libs.mlkit.barcode)
     implementation(libs.mlkit.text)
     implementation(libs.kotlinx.coroutines.play.services)
+    implementation(libs.vico.compose)
+    implementation(libs.vico.compose.m3)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

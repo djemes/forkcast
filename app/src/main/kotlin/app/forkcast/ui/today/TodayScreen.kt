@@ -83,6 +83,7 @@ data class TodayActions(
     val openSearch: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
     /** Opens the barcode scanner to log into [mealSlotId] on [date]. */
     val openScanner: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
+    val openWeight: () -> Unit = {},
 )
 
 @Composable
@@ -246,6 +247,15 @@ fun TodayScreen(
                         onSameAsYesterday = { onEvent(TodayEvent.SameAsYesterday(meal.slot.id)) },
                     )
                 }
+                item(key = "water") {
+                    WaterCard(
+                        water = day.water,
+                        f = f,
+                        onAddGlass = { onEvent(TodayEvent.AddWater(day.water.glassMl)) },
+                        onRemoveLast = { onEvent(TodayEvent.RemoveLastWater) },
+                    )
+                }
+                item(key = "weight") { WeightCard(day.weight, f, actions.openWeight) }
             }
         }
     }

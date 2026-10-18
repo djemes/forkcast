@@ -7,17 +7,26 @@ import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.SavedMealRepository
+import app.forkcast.core.data.repository.WaterRepository
+import app.forkcast.core.data.repository.WeightRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.domain.MealSlotPicker
+import app.forkcast.core.domain.NutritionConstants
+import app.forkcast.core.domain.UnitConversions
+import app.forkcast.core.domain.WeighIn
+import app.forkcast.core.domain.WeightTrend
 import app.forkcast.core.model.AppSettings
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.model.SavedMeal
+import app.forkcast.core.model.Sex
+import app.forkcast.core.model.WaterUnit
+import app.forkcast.core.model.WeightEntry
 import app.forkcast.core.model.UnitPrefs
 import app.forkcast.core.model.kcal
 import app.forkcast.ui.format.UnitFormatter
@@ -43,6 +52,17 @@ import javax.inject.Inject
 
 data class MealSection(val slot: MealSlot, val entries: List<LogEntry>, val kcal: Double)
 
+data class WaterSummary(
+    val ml: Double = 0.0,
+    val targetMl: Double = NutritionConstants.WATER_TARGET_MALE_ML,
+    /** One tap on "+ glass": 8 fl oz for US units, 250 ml for metric. */
+    val glassMl: Double = 250.0,
+    val lastEntryId: String? = null,
+)
+
+/** Latest weigh-in and the trend's weekly change (negative = losing). */
+data class WeightSummary(val latestKg: Double, val trendKg: Double, val weeklyChangeKg: Double?)
+
 data class TodayUiState(
     val date: LocalDate,
     val today: LocalDate,
@@ -59,6 +79,8 @@ data class TodayUiState(
     val savedMeals: List<SavedMeal> = emptyList(),
     /** Meals that had entries yesterday: these get a "Same as yesterday" button when empty. */
     val yesterdayMealIds: Set<String> = emptySet(),
+    val water: WaterSummary = WaterSummary(),
+    val weight: WeightSummary? = null,
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -84,6 +106,8 @@ sealed interface TodayEvent {
     data class SameAsYesterday(val mealSlotId: String) : TodayEvent
     data class LogSavedMeal(val savedMealId: String, val mealSlotId: String) : TodayEvent
     data class DeleteSavedMeal(val savedMealId: String) : TodayEvent
+    data class AddWater(val ml: Double) : TodayEvent
+    data object RemoveLastWater : TodayEvent
 }
 
 /** One-shot UI effects. */
@@ -102,6 +126,8 @@ class TodayViewModel @Inject constructor(
     profileRepository: ProfileRepository,
     foodRepository: FoodRepository,
     private val savedMealRepository: SavedMealRepository,
+    private val waterRepository: WaterRepository,
+    weightRepository: WeightRepository,
     settingsRepository: SettingsRepository,
     private val clock: Clock,
 ) : ViewModel() {
@@ -123,6 +149,12 @@ class TodayViewModel @Inject constructor(
         yesterdayMeals,
     ) { t, s, r, saved, yesterday -> Extras(t, s, r, saved, yesterday) }
 
+    private val bodyAndWater = combine(
+        selectedDate.flatMapLatest { waterRepository.observeDay(it) },
+        weightRepository.entries,
+        profileRepository.profile,
+    ) { water, weights, profile -> Triple(water, weights, profile) }
+
     private data class Extras(
         val targets: DailyTargets?,
         val settings: AppSettings,
@@ -135,10 +167,12 @@ class TodayViewModel @Inject constructor(
         mealSlotRepository.observeMealSlots(),
         selectedDate,
         dayEntries,
-        extras,
+        combine(extras, bodyAndWater) { x, b -> x to b },
         selection,
-    ) { slots, date, entries, x, selected ->
+    ) { slots, date, entries, (x, body), selected ->
+        val (water, weights, profile) = body
         val targets = x.targets
+        val units = x.settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
         val now = LocalTime.now(clock)
         TodayUiState(
             date = date,
@@ -148,15 +182,29 @@ class TodayViewModel @Inject constructor(
                 MealSection(slot, list, DayMath.mealKcal(entries, slot.id))
             } + orphans(slots, entries),
             defaultMealId = MealSlotPicker.defaultFor(slots, now.hour * 60 + now.minute)?.id,
-            units = x.settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
+            units = units,
             targets = targets,
             totals = targets?.let { DayMath.totals(entries, it.budgetKcal) },
             selection = selected intersect entries.map { it.id }.toSet(),
             recents = x.recents,
             savedMeals = x.saved,
             yesterdayMealIds = x.yesterday,
+            water = WaterSummary(
+                ml = water.sumOf { it.ml },
+                targetMl = x.settings.waterTargetMl
+                    ?: if (profile?.sex == Sex.FEMALE) NutritionConstants.WATER_TARGET_FEMALE_ML else NutritionConstants.WATER_TARGET_MALE_ML,
+                glassMl = if (units.water == WaterUnit.FL_OZ) UnitConversions.flOzToMl(8.0) else 250.0,
+                lastEntryId = water.maxByOrNull { it.timestamp }?.id,
+            ),
+            weight = weightSummary(weights),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private fun weightSummary(weights: List<WeightEntry>): WeightSummary? {
+        val latest = weights.maxByOrNull { it.timestamp } ?: return null
+        val points = WeightTrend.daily(weights.map { WeighIn(it.timestamp, it.kg) }, clock.zone, LocalDate.now(clock))
+        return WeightSummary(latest.kg, points.last().trendKg, WeightTrend.weeklyRateKg(points))
+    }
 
     /** Entries whose meal slot was deleted still show (under their own section) so nothing is hidden. */
     private fun orphans(slots: List<MealSlot>, entries: List<LogEntry>): List<MealSection> {
@@ -215,6 +263,10 @@ class TodayViewModel @Inject constructor(
                 effectChannel.send(TodayEffect.Added(mealName))
             }
             is TodayEvent.DeleteSavedMeal -> viewModelScope.launch { savedMealRepository.delete(event.savedMealId) }
+            is TodayEvent.AddWater -> viewModelScope.launch { waterRepository.add(selectedDate.value, event.ml) }
+            TodayEvent.RemoveLastWater -> viewModelScope.launch {
+                uiState.value?.water?.lastEntryId?.let { waterRepository.delete(it) }
+            }
             is TodayEvent.UpdateEntry -> viewModelScope.launch {
                 val e = event.entry
                 val grams = e.grams?.let { it * event.quantity / e.quantity.coerceAtLeast(1e-9) }

@@ -26,6 +26,8 @@ import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.RoomLogRepository
 import app.forkcast.core.data.repository.RoomSavedMealRepository
+import app.forkcast.core.data.repository.RoomWaterRepository
+import app.forkcast.core.data.repository.WaterRepository
 import app.forkcast.core.data.repository.SavedMealRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.RoomProfileRepository
@@ -111,4 +113,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindSavedMealRepository(impl: RoomSavedMealRepository): SavedMealRepository
+
+    @Binds
+    abstract fun bindWaterRepository(impl: RoomWaterRepository): WaterRepository
 }

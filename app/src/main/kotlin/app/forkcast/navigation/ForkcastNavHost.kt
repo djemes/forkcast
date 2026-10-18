@@ -22,6 +22,7 @@ import app.forkcast.ui.settings.ProfileGoalsRoute
 import app.forkcast.ui.settings.SettingsScreen
 import app.forkcast.ui.today.TodayActions
 import app.forkcast.ui.today.TodayRoute
+import app.forkcast.ui.weight.WeightRoute
 import kotlinx.serialization.Serializable
 
 @Serializable data object OnboardingDestination
@@ -31,6 +32,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object AppearanceDestination
 @Serializable data object AboutDestination
 @Serializable data object FoodDatabasesDestination
+@Serializable data object WeightDestination
 
 /** Log into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
 @Serializable data class SearchDestination(val mealSlotId: String, val date: String)
@@ -85,6 +87,7 @@ fun ForkcastNavHost(
                     openSettings = { navController.navigate(SettingsDestination) },
                     openSearch = { meal, date -> navController.navigate(SearchDestination(meal, date.toString())) },
                     openScanner = { meal, date -> navController.navigate(ScannerDestination(meal, date.toString())) },
+                    openWeight = { navController.navigate(WeightDestination) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },
@@ -159,6 +162,7 @@ fun ForkcastNavHost(
         }
         composable<ProfileGoalsDestination> { ProfileGoalsRoute(onBack = back) }
         composable<FoodDatabasesDestination> { FoodDatabasesRoute(onBack = back) }
+        composable<WeightDestination> { WeightRoute(onBack = back) }
         composable<AppearanceDestination> { AppearanceRoute(onBack = back) }
         composable<AboutDestination> { AboutRoute(onBack = back) }
     }
