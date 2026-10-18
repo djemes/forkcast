@@ -1,0 +1,41 @@
+# Gradle / build output
+.gradle/
+build/
+.kotlin/
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+output-metadata.json
+
+# Local machine config
+local.properties
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.fleet/
+
+# Secrets — never commit
+*.jks
+*.keystore
+*.p12
+*.pem
+keystore.properties
+.env
+.env*
+google-services.json
+*credentials*.txt
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs / profiling
+*.log
+*.hprof
