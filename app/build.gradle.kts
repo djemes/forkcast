@@ -30,9 +30,9 @@ val appVersionName: String = providers.gradleProperty("versionName").orNull
 
 // ---- Signing. One key for every build that can reach the phone (debug from this PC and
 // releases from CI), so updates always install over existing data. The key never enters
-// the repo: locally it's read from %USERPROFILE%\Documents\keys, in CI from env secrets.
+// the repo: locally it's read from the git-ignored keys/ folder, in CI from env secrets.
 val localSigning = Properties().apply {
-    val f = File(System.getProperty("user.home"), "Documents/keys/forkcast-release-credentials.txt")
+    val f = rootProject.file("keys/forkcast-release-credentials.txt")
     if (f.isFile) f.inputStream().use { load(it) }
 }
 

@@ -20,7 +20,8 @@ local.properties
 .vscode/
 .fleet/
 
-# Secrets — never commit
+# Secrets — never commit (signing key lives in /keys, see docs/DECISIONS.md)
+/keys/
 *.jks
 *.keystore
 *.p12
