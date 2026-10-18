@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- No INTERNET permission yet: Phase 0 makes no network calls. Added in Phase 1 for food search. -->
+    <!-- Network is used only for services the user configured: USDA, Open Food Facts (and later their AI provider and Drive). -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:name=".ForkcastApplication"
