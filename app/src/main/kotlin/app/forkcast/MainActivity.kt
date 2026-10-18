@@ -10,6 +10,7 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.core.model.ThemeMode
@@ -25,12 +26,13 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
-        splash.setKeepOnScreenCondition { viewModel.settings.value == null }
+        splash.setKeepOnScreenCondition { viewModel.start.value == null }
         enableEdgeToEdge()
 
         setContent {
-            val settings by viewModel.settings.collectAsStateWithLifecycle()
-            val appearance = settings?.appearance ?: return@setContent
+            val start by viewModel.start.collectAsStateWithLifecycle()
+            val current = start ?: return@setContent
+            val appearance = current.settings.appearance
             val darkTheme = when (appearance.themeMode) {
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 ThemeMode.LIGHT -> false
@@ -47,7 +49,9 @@ class MainActivity : ComponentActivity() {
             }
 
             ForkcastTheme(darkTheme = darkTheme, useWallpaperColors = appearance.useWallpaperColors) {
-                ForkcastNavHost()
+                // Decided once per launch, so finishing onboarding doesn't rebuild the graph mid-transition.
+                val needsOnboarding = remember { current.needsOnboarding }
+                ForkcastNavHost(startWithOnboarding = needsOnboarding)
             }
         }
     }

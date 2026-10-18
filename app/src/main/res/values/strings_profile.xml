@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Onboarding shell -->
+    <string name="onboarding_step_of">Step %1$d of %2$d</string>
+    <string name="action_continue">Continue</string>
+    <string name="action_start">Start tracking</string>
+    <string name="action_save">Save</string>
+
+    <!-- Units -->
+    <string name="onb_units_title">Welcome to Forkcast</string>
+    <string name="onb_units_body">A few questions turn your goal into a daily budget. First, the units you think in.</string>
+    <string name="units_weight">Weight</string>
+    <string name="units_height">Height</string>
+    <string name="units_energy">Energy</string>
+    <string name="unit_lb">lb</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_ft_in">ft / in</string>
+    <string name="unit_cm">cm</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_kj">kJ</string>
+
+    <!-- Sex -->
+    <string name="onb_sex_title">Sex for the calorie formula</string>
+    <string name="onb_sex_body">The standard equation for resting energy uses it. It stays on this phone.</string>
+    <string name="sex_male">Male</string>
+    <string name="sex_female">Female</string>
+
+    <!-- Birth date -->
+    <string name="onb_birth_title">Date of birth</string>
+    <string name="onb_birth_body">Your age changes your resting energy a little each year.</string>
+    <string name="onb_birth_pick">Choose a date</string>
+    <string name="onb_birth_too_young">Forkcast is for people 13 and older.</string>
+
+    <!-- Height / weight -->
+    <string name="onb_height_title">Height</string>
+    <string name="onb_weight_title">Current weight</string>
+    <string name="onb_weight_body">Today\'s weight is fine. If you have a smart scale, it can sync later.</string>
+    <string name="field_feet">Feet</string>
+    <string name="field_inches">Inches</string>
+    <string name="field_cm">Centimeters</string>
+    <string name="field_weight">Weight (%1$s)</string>
+    <string name="field_invalid_number">Enter a number</string>
+    <string name="field_out_of_range">That looks out of range</string>
+
+    <!-- Activity -->
+    <string name="onb_activity_title">Daily activity</string>
+    <string name="onb_activity_body">Pick what a normal week looks like, including exercise.</string>
+    <string name="activity_sedentary">Sedentary</string>
+    <string name="activity_sedentary_desc">Desk job, little walking, no regular exercise</string>
+    <string name="activity_light">Lightly active</string>
+    <string name="activity_light_desc">Some walking; light exercise 1–3 days a week</string>
+    <string name="activity_moderate">Moderately active</string>
+    <string name="activity_moderate_desc">On your feet a lot, or exercise 3–5 days a week</string>
+    <string name="activity_very">Very active</string>
+    <string name="activity_very_desc">Physical job, or hard exercise 6–7 days a week</string>
+    <string name="activity_extra">Extra active</string>
+    <string name="activity_extra_desc">Physical job plus hard training, or training twice a day</string>
+
+    <!-- Goal -->
+    <string name="onb_goal_title">Your goal</string>
+    <string name="goal_lose">Lose weight</string>
+    <string name="goal_maintain">Maintain weight</string>
+    <string name="goal_gain">Gain weight</string>
+    <string name="onb_target_title">Target weight</string>
+    <string name="onb_target_lose_hint">Below your current %1$s</string>
+    <string name="onb_target_gain_hint">Above your current %1$s</string>
+
+    <!-- Pace -->
+    <string name="onb_pace_title">How fast?</string>
+    <string name="onb_pace_body">Choose a weekly pace or a date. The other one updates as you go.</string>
+    <string name="pace_by_rate">Weekly pace</string>
+    <string name="pace_by_date">Target date</string>
+    <string name="pace_per_week">%1$s per week</string>
+    <string name="pace_reach_on">You\'d reach %1$s around %2$s.</string>
+    <string name="pace_rate_needed">That takes about %1$s per week.</string>
+    <string name="pace_custom_rate">Custom (%1$s per week)</string>
+
+    <!-- Result -->
+    <string name="onb_result_title">Your daily budget</string>
+    <string name="budget_kcal_per_day">%1$s per day</string>
+    <string name="macro_protein">Protein</string>
+    <string name="macro_carbs">Carbs</string>
+    <string name="macro_fat">Fat</string>
+    <string name="macro_fiber">Fiber</string>
+    <string name="how_calculated">How we calculated this</string>
+    <string name="calc_bmr">Resting energy (Mifflin-St Jeor): 10 × %1$s kg + 6.25 × %2$s cm − 5 × %3$d (age) %4$s = %5$s</string>
+    <string name="calc_bmr_male">+ 5</string>
+    <string name="calc_bmr_female">− 161</string>
+    <string name="calc_tdee">× %1$s for your activity = %2$s maintenance</string>
+    <string name="calc_deficit">− %1$s a day to lose %2$s a week (about 7,700 kcal per kg of body weight, or 3,500 per lb)</string>
+    <string name="calc_surplus">+ %1$s a day to gain %2$s a week (about 7,700 kcal per kg, or 3,500 per lb)</string>
+    <string name="calc_maintain">No deficit or surplus: your budget is your maintenance.</string>
+    <string name="calc_budget">Rounded to the nearest 10: %1$s</string>
+    <string name="calc_macros">Protein 1.6 g per kg of current weight (capped at 2.2 g per kg of goal weight). Fat 30%% of calories. Carbs fill the rest. Fiber 14 g per 1,000 kcal.</string>
+    <string name="calc_adaptive_note">These are formula estimates. After a few weeks of logging and weighing in, Forkcast can learn your real maintenance from your own data.</string>
+    <string name="not_medical_advice">Forkcast gives estimates, not medical advice.</string>
+
+    <!-- Guardrails (warnings, never blocks) -->
+    <string name="guard_fast_loss">This pace is faster than 1%% of your body weight per week (about %1$s). At that pace you\'d reach your goal around %2$s.</string>
+    <string name="guard_low_budget">This budget is below %1$s or below your resting energy (%2$s). Talk to a doctor or dietitian before going lower.</string>
+
+    <!-- Profile & goals (settings) -->
+    <string name="profile_goals_budget">Daily budget</string>
+    <string name="profile_custom_budget">Custom budget</string>
+    <string name="profile_custom_budget_summary">Override the calculated %1$s</string>
+    <string name="profile_custom_budget_field">Budget (%1$s)</string>
+    <string name="profile_use_calculated">Use calculated</string>
+    <string name="custom_chip">custom</string>
+    <string name="profile_section_body">You</string>
+    <string name="profile_section_goal">Goal</string>
+    <string name="profile_units">Units</string>
+    <string name="profile_sex">Sex for the formula</string>
+    <string name="profile_birth">Date of birth</string>
+    <string name="profile_height">Height</string>
+    <string name="profile_activity">Activity</string>
+    <string name="profile_goal_type">Goal</string>
+    <string name="profile_target">Target weight</string>
+    <string name="profile_pace">Pace</string>
+    <string name="profile_current_weight">Current weight</string>
+    <string name="profile_current_weight_summary">%1$s · log a new weigh-in to change it</string>
+    <string name="edit_title">Edit %1$s</string>
+</resources>

@@ -18,11 +18,12 @@ import app.forkcast.R
 @Composable
 fun SettingsScreen(
     onBack: () -> Unit,
+    onOpenProfileGoals: () -> Unit,
     onOpenAppearance: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
     SettingsScaffold(title = stringResource(R.string.settings), onBack = onBack) {
-        ComingSoonItem(R.string.settings_profile_goals)
+        SettingsItem(R.string.settings_profile_goals, onOpenProfileGoals)
         ComingSoonItem(R.string.settings_daily_targets)
         ComingSoonItem(R.string.settings_meals)
         ComingSoonItem(R.string.settings_notifications)

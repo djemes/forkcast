@@ -23,6 +23,10 @@ import app.forkcast.core.data.db.WaterDao
 import app.forkcast.core.data.db.WeightDao
 import app.forkcast.core.data.repository.DataStoreSettingsRepository
 import app.forkcast.core.data.repository.MealSlotRepository
+import app.forkcast.core.data.repository.ProfileRepository
+import app.forkcast.core.data.repository.RoomProfileRepository
+import app.forkcast.core.data.repository.RoomWeightRepository
+import app.forkcast.core.data.repository.WeightRepository
 import app.forkcast.core.data.repository.RoomMealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.settings.AppSettingsSerializer
@@ -33,11 +37,16 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import java.time.Clock
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
 object DataModule {
+
+    /** Injected so tests can pin "now". Uses the device zone at the time of each call. */
+    @Provides
+    fun provideClock(): Clock = Clock.systemDefaultZone()
 
     @Provides
     @Singleton
@@ -86,4 +95,10 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindSettingsRepository(impl: DataStoreSettingsRepository): SettingsRepository
+
+    @Binds
+    abstract fun bindProfileRepository(impl: RoomProfileRepository): ProfileRepository
+
+    @Binds
+    abstract fun bindWeightRepository(impl: RoomWeightRepository): WeightRepository
 }
