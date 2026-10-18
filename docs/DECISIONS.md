@@ -21,6 +21,7 @@ One dated line per non-obvious choice. Newest at the bottom.
 - 2026-10-18 · **No Obtainium** (owner's choice). Updates: download the APK from GitHub Releases on the phone, or Claude Code installs it over adb on request. SETUP Stage 6 rewritten.
 - 2026-10-18 · **USDA key** saved by the owner to `keys/usda-api-key.txt` (git-ignored) for local development. The app reads the key only from its encrypted settings, entered by the owner on the phone; builds never embed it.
 - 2026-10-18 · **Open Food Facts User-Agent:** `Forkcast/<version> (https://github.com/djemes/forkcast)`; no personal email hardcoded (SPEC principle 5).
+- 2026-10-18 · **Food APIs (verified live):** USDA key in `X-Api-Key` header; personal key 3,600 req/h, DEMO_KEY 10 req/h (so the app warns clearly when on DEMO_KEY). OFF product v2 for barcodes, search-a-licious (`search.openfoodfacts.org/search`) for text search. SPEC §4.4/§7 updated.
 - 2026-10-18 · **Toolchain versions at setup:** AGP 9.4.0 (Gradle 9.6.0 min), max API 37; SDK platform `android-37.0`, build-tools 37.0.0, platform-tools 37.0.1, cmdline-tools build 15859902.
 
 ## Signing certificate fingerprints (not secret)

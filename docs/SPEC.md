@@ -92,7 +92,7 @@ Acceptance:
 - CameraX preview + ML Kit Barcode Scanning (bundled model, works offline); formats: EAN-13, EAN-8, UPC-A, UPC-E
 - Continuous scan; haptic + sound on detection; torch toggle; manual barcode entry fallback
 - Lookup order: local cache → **in parallel** USDA Branded (by GTIN/UPC) and Open Food Facts (`/api/v2/product/{barcode}`); prefer the record with more complete nutrients, prefer USDA for US-market products on ties; show source
-- Normalize GTINs (UPC-E → UPC-A, zero-pad to GTIN-14 for comparison) `// VERIFY:` how FDC stores `gtinUpc` leading zeros
+- Normalize GTINs (UPC-E → UPC-A, zero-pad to GTIN-14 for comparison). Verified 2026-10-18: FDC returns `gtinUpc` as a 14-digit, zero-padded string (e.g. `00016000275287`), and a `/foods/search` query for the digits finds it; still compare normalized GTIN-14s because older records vary
 - **Not found** → offer "Scan the nutrition label": photo → ML Kit Text Recognition → parse serving size, calories, fat, sat fat, trans fat, cholesterol, sodium, carbs, fiber, sugars, added sugars, protein → editable form → save as custom food linked to the barcode, so the next scan resolves locally
 - Optional (Phase 2): if label OCR is poor, send the label photo to the configured AI provider for extraction
 
@@ -300,8 +300,8 @@ Map USDA nutrient numbers and OFF `nutriments` keys to these in one mapping file
 
 | Service | Use | Auth | Notes |
 |---|---|---|---|
-| USDA FoodData Central | Search, food details, barcode (Branded `gtinUpc`), AI component matching | Free api.data.gov key (user-supplied; `DEMO_KEY` fallback) | Cache aggressively. `// VERIFY:` current rate limits |
-| Open Food Facts | Barcode lookup, search (international products) | None; custom User-Agent required | Read-only; respect rate limits; data is ODbL — show attribution in About |
+| USDA FoodData Central | Search, food details, barcode (Branded `gtinUpc`), AI component matching | Free api.data.gov key (user-supplied; `DEMO_KEY` fallback) | Cache aggressively. Verified 2026-10-18 from response headers: personal key 3,600 requests/hour; `DEMO_KEY` only 10/hour. Key sent in the `X-Api-Key` header, not the URL. Foundation foods report energy only as nutrient 2047/2048 (Atwater), so energy falls back 1008 → 2048 → 2047 |
+| Open Food Facts | Barcode lookup, search (international products) | None; custom User-Agent required | Read-only; respect rate limits; data is ODbL — show attribution in About. Verified 2026-10-18: product lookup `GET /api/v2/product/{code}` (v3 also exists); text search uses the newer `https://search.openfoodfacts.org/search` (the legacy `cgi/search.pl` is deprecated) |
 | AI providers | Meal estimation, optional label extraction | User's API key | See AI_PROVIDERS.md |
 | Health Connect | Weight, body fat, steps, energy, exercise in; nutrition, hydration out | Android permissions | Phase 3 |
 | Google Drive | Backup | Google sign-in, `drive.file` scope | Phase 4; OAuth client set up per SETUP.md Stage 5 |
