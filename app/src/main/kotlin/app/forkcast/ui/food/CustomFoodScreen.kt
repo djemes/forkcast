@@ -62,7 +62,7 @@ private fun CustomFoodScreen(form: CustomFoodForm, vm: CustomFoodViewModel, onBa
             if (form.fromLabel) {
                 Text(stringResource(R.string.label_review_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.primary)
             }
-            TextInput(form.name, stringResource(R.string.custom_name), isError = form.name.isBlank(), supporting = stringResource(R.string.custom_required)) {
+            TextInput(form.name, stringResource(R.string.custom_name), supporting = stringResource(R.string.custom_required).takeIf { form.name.isBlank() }) {
                 vm.update { copy(name = it) }
             }
             TextInput(form.brand, stringResource(R.string.custom_brand)) { vm.update { copy(brand = it) } }
@@ -138,7 +138,7 @@ private fun TextInput(value: String, label: String, isError: Boolean = false, su
         onValueChange = onChange,
         label = { Text(label) },
         isError = isError,
-        supportingText = if (isError && supporting != null) ({ Text(supporting) }) else null,
+        supportingText = supporting?.let { { Text(it) } },
         singleLine = true,
         keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),
         modifier = Modifier.fillMaxWidth(),
