@@ -1,8 +1,13 @@
 package app.forkcast.ui.today
 
 import android.text.format.DateFormat
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -26,16 +31,25 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -47,19 +61,27 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
-import app.forkcast.core.model.MealSlot
+import app.forkcast.ui.format.UnitFormatter
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlin.math.abs
+
+/** Where the Log sheet and other Today actions lead. Filled in as Phase 1 features land. */
+data class TodayActions(
+    val openSettings: () -> Unit = {},
+)
 
 @Composable
 fun TodayRoute(
-    onOpenSettings: () -> Unit,
+    actions: TodayActions,
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    state?.let { TodayScreen(state = it, onEvent = viewModel::onEvent, onOpenSettings = onOpenSettings) }
+    state?.let { TodayScreen(state = it, onEvent = viewModel::onEvent, actions = actions, effects = viewModel.effects) }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,62 +89,134 @@ fun TodayRoute(
 fun TodayScreen(
     state: TodayUiState,
     onEvent: (TodayEvent) -> Unit,
-    onOpenSettings: () -> Unit,
+    actions: TodayActions = TodayActions(),
+    effects: Flow<TodayEffect> = emptyFlow(),
 ) {
     // Null = sheet closed; otherwise the meal the sheet logs to.
     var logSheetMealId by rememberSaveable { mutableStateOf<String?>(null) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var showNutrients by rememberSaveable { mutableStateOf(false) }
+    var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    val snackbar = remember { SnackbarHostState() }
+    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
+    val context = LocalContext.current
+    val currentOnEvent by rememberUpdatedState(onEvent)
+
+    LaunchedEffect(effects) {
+        effects.collect { effect ->
+            when (effect) {
+                is TodayEffect.Deleted -> {
+                    val msg = effect.label?.let { context.getString(R.string.deleted_one, it) }
+                        ?: context.getString(R.string.deleted_many, effect.ids.size)
+                    val result = snackbar.showSnackbar(msg, context.getString(R.string.undo), duration = SnackbarDuration.Long)
+                    if (result == SnackbarResult.ActionPerformed) currentOnEvent(TodayEvent.Undo(effect.ids))
+                }
+            }
+        }
+    }
 
     Scaffold(
         topBar = {
-            DateHeader(
-                state = state,
-                onEvent = onEvent,
-                onPickDate = { showDatePicker = true },
-                onOpenSettings = onOpenSettings,
-            )
+            if (state.isSelecting) SelectionBar(state.selection.size, onEvent)
+            else DateHeader(state, onEvent, onPickDate = { showDatePicker = true }, onOpenSettings = actions.openSettings)
         },
+        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            val logLabel = stringResource(R.string.log)
-            ExtendedFloatingActionButton(
-                onClick = { logSheetMealId = state.defaultMealId ?: state.meals.firstOrNull()?.id },
-                // The M3 extended FAB doesn't merge its text into the button node; label it for TalkBack.
-                modifier = Modifier.semantics { contentDescription = logLabel },
-                // Pine, like every primary action (DESIGN.md §2), rather than the pale M3 default.
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
-                text = { Text(stringResource(R.string.log)) },
-            )
+            if (!state.isSelecting) {
+                val logLabel = stringResource(R.string.log)
+                ExtendedFloatingActionButton(
+                    onClick = { logSheetMealId = state.defaultMealId ?: state.meals.firstOrNull()?.slot?.id },
+                    // The M3 extended FAB doesn't merge its text into the button node; label it for TalkBack.
+                    modifier = Modifier.semantics { contentDescription = logLabel },
+                    // Pine, like every primary action (DESIGN.md §2), rather than the pale M3 default.
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    icon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
+                    text = { Text(stringResource(R.string.log)) },
+                )
+            }
         },
     ) { padding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                top = padding.calculateTopPadding() + 8.dp,
-                // Room for the FAB so it never covers the last meal.
-                bottom = padding.calculateBottomPadding() + 96.dp,
-            ),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-        ) {
-            item { BudgetPlaceholder() }
-            items(state.meals, key = { it.id }) { meal ->
-                MealSection(meal = meal, onAdd = { logSheetMealId = meal.id })
+        // Swipe left/right anywhere not taken by an entry row changes the day (rows use swipe for delete).
+        AnimatedContent(
+            targetState = state.date,
+            transitionSpec = {
+                val forward = targetState > initialState
+                slideInHorizontally { if (forward) it / 3 else -it / 3 } togetherWith
+                    slideOutHorizontally { if (forward) -it / 3 else it / 3 }
+            },
+            label = "day",
+            modifier = Modifier.pointerInput(state.isSelecting) {
+                if (state.isSelecting) return@pointerInput
+                var total = 0f
+                detectHorizontalDragGestures(
+                    onDragStart = { total = 0f },
+                    onDragEnd = {
+                        if (abs(total) > 120.dp.toPx()) currentOnEvent(if (total < 0) TodayEvent.NextDay else TodayEvent.PreviousDay)
+                    },
+                ) { _, dx -> total += dx }
+            },
+        ) { _ ->
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(
+                    start = 16.dp,
+                    end = 16.dp,
+                    top = padding.calculateTopPadding() + 8.dp,
+                    // Room for the FAB so it never covers the last meal.
+                    bottom = padding.calculateBottomPadding() + 96.dp,
+                ),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+            ) {
+                val totals = state.totals
+                val targets = state.targets
+                if (totals != null && targets != null) {
+                    item(key = "ring") { BudgetRing(totals, f, Modifier.fillMaxWidth()) }
+                    item(key = "macros") { MacroBars(totals, targets, f) { showNutrients = true } }
+                }
+                items(state.meals, key = { it.slot.id }) { meal ->
+                    MealSectionView(
+                        meal = meal,
+                        f = f,
+                        selection = state.selection,
+                        onAdd = { logSheetMealId = meal.slot.id },
+                        onEntryClick = { id ->
+                            if (state.isSelecting) onEvent(TodayEvent.ToggleSelect(id)) else editingId = id
+                        },
+                        onEntryLongClick = { id -> onEvent(TodayEvent.ToggleSelect(id)) },
+                        onDelete = { id -> onEvent(TodayEvent.Delete(listOf(id))) },
+                    )
+                }
             }
         }
     }
 
     logSheetMealId?.let { mealId ->
         LogSheet(
-            meals = state.meals,
+            meals = state.meals.map { it.slot },
             selectedMealId = mealId,
             onSelectMeal = { logSheetMealId = it },
             onDismiss = { logSheetMealId = null },
         )
     }
-
+    if (showNutrients && state.totals != null && state.targets != null) {
+        NutrientPanelSheet(state.totals, state.targets, f) { showNutrients = false }
+    }
+    editingId?.let { id ->
+        val entry = state.allEntries.firstOrNull { it.id == id }
+        if (entry == null) {
+            editingId = null
+        } else {
+            EditEntrySheet(
+                entry = entry,
+                meals = state.meals.map { it.slot },
+                f = f,
+                onSave = { q, meal -> onEvent(TodayEvent.UpdateEntry(entry, q, meal)); editingId = null },
+                onDelete = { onEvent(TodayEvent.Delete(listOf(entry.id))); editingId = null },
+                onDismiss = { editingId = null },
+            )
+        }
+    }
     if (showDatePicker) {
         DatePickerDialogFor(
             initial = state.date,
@@ -132,6 +226,30 @@ fun TodayScreen(
                 onEvent(TodayEvent.PickDate(it))
             },
         )
+    }
+}
+
+@Composable
+private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.secondaryContainer)
+            .statusBarsPadding()
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+    ) {
+        IconButton(onClick = { onEvent(TodayEvent.ClearSelection) }) {
+            Icon(painterResource(R.drawable.ic_close), stringResource(R.string.action_clear_selection))
+        }
+        Text(
+            stringResource(R.string.selected_count, count),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.weight(1f),
+        )
+        IconButton(onClick = { onEvent(TodayEvent.DeleteSelected) }) {
+            Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.action_delete))
+        }
     }
 }
 
@@ -203,57 +321,61 @@ private fun dateTitle(date: LocalDate, today: LocalDate): String {
 }
 
 @Composable
-private fun BudgetPlaceholder() {
+private fun MealSectionView(
+    meal: MealSection,
+    f: UnitFormatter,
+    selection: Set<String>,
+    onAdd: () -> Unit,
+    onEntryClick: (String) -> Unit,
+    onEntryLongClick: (String) -> Unit,
+    onDelete: (String) -> Unit,
+) {
+    val addDescription = stringResource(R.string.add_to_meal_description, meal.slot.name)
     Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
-            .padding(20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+            .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 8.dp),
     ) {
-        Text(
-            text = stringResource(R.string.budget_placeholder_title),
-            style = MaterialTheme.typography.titleMedium,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.size(4.dp))
-        Text(
-            text = stringResource(R.string.budget_placeholder_body),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-@Composable
-private fun MealSection(meal: MealSlot, onAdd: () -> Unit) {
-    val addDescription = stringResource(R.string.add_to_meal_description, meal.name)
-    Column(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
-            .padding(start = 16.dp, end = 4.dp, top = 4.dp, bottom = 12.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp).padding(start = 12.dp)) {
             Text(
-                text = meal.name,
+                text = meal.slot.name,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
                     .weight(1f)
                     .semantics { heading() },
             )
+            if (meal.entries.isNotEmpty()) {
+                Text(f.energy(meal.kcal), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
             TextButton(onClick = onAdd, modifier = Modifier.semantics { contentDescription = addDescription }) {
                 Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
                 Text(stringResource(R.string.add_to_meal))
             }
         }
-        Text(
-            text = stringResource(R.string.meal_empty),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
+        if (meal.entries.isEmpty()) {
+            Text(
+                text = stringResource(R.string.meal_empty),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 12.dp, bottom = 4.dp),
+            )
+        }
+        meal.entries.forEach { e ->
+            androidx.compose.runtime.key(e.id) {
+                EntryRow(
+                    entry = e,
+                    f = f,
+                    selecting = selection.isNotEmpty(),
+                    selected = e.id in selection,
+                    onClick = { onEntryClick(e.id) },
+                    onLongClick = { onEntryLongClick(e.id) },
+                    onDelete = { onDelete(e.id) },
+                )
+            }
+        }
     }
 }
 

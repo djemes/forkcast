@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Budget ring -->
+    <string name="ring_left">%1$s left</string>
+    <string name="ring_over">%1$s over</string>
+    <string name="ring_eaten_budget">Eaten %1$s · Budget %2$s · +%3$s ex</string>
+    <string name="ring_description">%1$s eaten of %2$s. %3$s.</string>
+
+    <!-- Macros / nutrient panel -->
+    <string name="macro_progress">%1$s / %2$s</string>
+    <string name="nutrients_open">Show all nutrients</string>
+    <string name="nutrients_title">Nutrients today</string>
+    <string name="nutrient_no_target">no target</string>
+    <string name="nutrient_limit">limit</string>
+
+    <!-- Entries -->
+    <string name="entry_amount">%1$s %2$s</string>
+    <string name="deleted_one">Deleted %1$s</string>
+    <string name="deleted_many">Deleted %1$d items</string>
+    <string name="undo">Undo</string>
+    <string name="selected_count">%1$d selected</string>
+    <string name="action_delete">Delete</string>
+    <string name="action_clear_selection">Clear selection</string>
+    <string name="select_entry">Select</string>
+    <string name="edit_entry_title">Edit entry</string>
+    <string name="edit_quantity">Quantity</string>
+    <string name="edit_meal">Meal</string>
+    <string name="entry_selected">Selected</string>
+
+    <!-- Source badges (DESIGN.md §5) -->
+    <string name="badge_usda">USDA</string>
+    <string name="badge_off">OFF</string>
+    <string name="badge_label">Label</string>
+    <string name="badge_custom">Custom</string>
+    <string name="badge_quick">Quick</string>
+    <string name="badge_recipe">Recipe</string>
+    <string name="badge_ai">AI</string>
+
+    <!-- Nutrient names -->
+    <string name="n_energy">Energy</string>
+    <string name="n_protein">Protein</string>
+    <string name="n_carbs">Carbs</string>
+    <string name="n_fat">Fat</string>
+    <string name="n_sat_fat">Saturated fat</string>
+    <string name="n_trans_fat">Trans fat</string>
+    <string name="n_mono_fat">Monounsaturated fat</string>
+    <string name="n_poly_fat">Polyunsaturated fat</string>
+    <string name="n_cholesterol">Cholesterol</string>
+    <string name="n_fiber">Fiber</string>
+    <string name="n_sugars">Sugars</string>
+    <string name="n_added_sugars">Added sugars</string>
+    <string name="n_sodium">Sodium</string>
+    <string name="n_potassium">Potassium</string>
+    <string name="n_calcium">Calcium</string>
+    <string name="n_iron">Iron</string>
+    <string name="n_magnesium">Magnesium</string>
+    <string name="n_vitamin_a">Vitamin A</string>
+    <string name="n_vitamin_c">Vitamin C</string>
+    <string name="n_vitamin_d">Vitamin D</string>
+    <string name="n_vitamin_b12">Vitamin B12</string>
+    <string name="n_caffeine">Caffeine</string>
+    <string name="n_alcohol">Alcohol</string>
+    <string name="n_water">Water</string>
+</resources>
