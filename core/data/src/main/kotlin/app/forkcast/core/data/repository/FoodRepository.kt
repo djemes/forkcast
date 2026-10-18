@@ -2,10 +2,15 @@ package app.forkcast.core.data.repository
 
 import app.forkcast.core.data.db.FoodDao
 import app.forkcast.core.data.db.FoodEntity
+import app.forkcast.core.domain.BarcodeChoice
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.FoodSource
+import app.forkcast.core.network.FoodApiError
 import app.forkcast.core.network.OffClient
 import app.forkcast.core.network.UsdaClient
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import java.time.Clock
@@ -13,6 +18,14 @@ import java.util.Locale
 import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
+
+/** Outcome of a barcode lookup (SPEC §4.4). */
+sealed interface BarcodeLookup {
+    data class Found(val foodId: String, val fromCache: Boolean) : BarcodeLookup
+    data object NotFound : BarcodeLookup
+    /** Not cached locally and the databases couldn't be reached. */
+    data class Failed(val error: FoodApiError) : BarcodeLookup
+}
 
 interface FoodRepository {
     /** Your own foods (custom, cached, recents, favorites). Works offline. */
@@ -34,6 +47,8 @@ interface FoodRepository {
     suspend fun saveCustom(food: Food): String
     suspend fun delete(id: String)
     suspend fun findLocalByBarcode(gtin14: String): Food?
+    /** Local cache first, then USDA Branded and Open Food Facts in parallel; the winner is cached. */
+    suspend fun lookupBarcode(gtin14: String): BarcodeLookup
 }
 
 @Singleton
@@ -130,6 +145,30 @@ class DefaultFoodRepository @Inject constructor(
     override suspend fun delete(id: String) = dao.softDelete(id, clock.millis())
 
     override suspend fun findLocalByBarcode(gtin14: String): Food? = dao.findByBarcode(gtin14)?.toModel()
+
+    override suspend fun lookupBarcode(gtin14: String): BarcodeLookup {
+        dao.findByBarcode(gtin14)?.let { return BarcodeLookup.Found(it.id, fromCache = true) }
+        val (usdaResult, offResult) = coroutineScope {
+            val u = async { runCatchingApi { usda.byGtin(gtin14) } }
+            val o = async { runCatchingApi { off.product(gtin14) } }
+            u.await() to o.await()
+        }
+        val chosen = BarcodeChoice.choose(usdaResult.getOrNull(), offResult.getOrNull(), gtin14)
+        if (chosen != null) return BarcodeLookup.Found(cache(chosen.copy(barcode = gtin14)), fromCache = false)
+        val error = listOfNotNull(usdaResult.exceptionOrNull(), offResult.exceptionOrNull()).filterIsInstance<FoodApiError>()
+        // Only call it "not found" if at least one database actually answered.
+        return if (error.size == 2) BarcodeLookup.Failed(error.first()) else BarcodeLookup.NotFound
+    }
+
+    private suspend fun <T> runCatchingApi(block: suspend () -> T): Result<T> = try {
+        Result.success(block())
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: FoodApiError) {
+        Result.failure(e)
+    } catch (e: Exception) {
+        Result.failure(FoodApiError.BadResponse(e))
+    }
 }
 
 fun FoodEntity.toModel() = Food(

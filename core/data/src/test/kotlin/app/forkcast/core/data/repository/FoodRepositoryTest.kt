@@ -13,7 +13,10 @@ import app.forkcast.core.network.OffClient
 import app.forkcast.core.network.UsdaClient
 import com.google.common.truth.Truth.assertThat
 import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.respondError
+import io.ktor.http.HttpHeaders
+import io.ktor.http.headersOf
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -77,5 +80,41 @@ class FoodRepositoryTest {
         val id = repo.cache(remote("Rice", sourceId = "168878"))
         repo.refreshDetails(id) // the mock server returns 503
         assertThat(repo.get(id)!!.nutrientsPer100g[NutrientKey.ENERGY_KCAL]).isEqualTo(100.0)
+    }
+
+    @Test fun barcodeLookupCachedFoundNotFoundAndOffline() = runTest {
+        // Cached: found without the network (the mock server is down).
+        val id = repo.saveCustom(remote("Label bar").copy(source = FoodSource.LABEL, sourceId = null, barcode = "00012345678905"))
+        assertThat(repo.lookupBarcode("00012345678905")).isEqualTo(BarcodeLookup.Found(id, fromCache = true))
+
+        // Not cached and both databases unreachable: a network failure, not "not found".
+        assertThat(repo.lookupBarcode("00016000275287")).isInstanceOf(BarcodeLookup.Failed::class.java)
+    }
+
+    @Test fun barcodeLookupCachesTheWinnerWithItsBarcode() = runTest {
+        val fixtures = mapOf(
+            "api.nal.usda.gov" to javaClass.getResource("/fixtures/usda_search_branded.json")!!.readText(),
+            "world.openfoodfacts.org" to """{"status":0}""",
+        )
+        val online = HttpClientFactory.create("t", MockEngine { req ->
+            respond(fixtures.getValue(req.url.host), HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        val repo2 = DefaultFoodRepository(db.foodDao(), UsdaClient(online) { "k" }, OffClient(online), Clock.systemUTC())
+        val result = repo2.lookupBarcode("00016000275287") as BarcodeLookup.Found
+        assertThat(result.fromCache).isFalse()
+        val food = repo2.get(result.foodId)!!
+        assertThat(food.name).isEqualTo("Cheerios Cereal")
+        assertThat(food.barcode).isEqualTo("00016000275287")
+        // Second scan is local and works offline.
+        assertThat(repo.lookupBarcode("00016000275287")).isEqualTo(BarcodeLookup.Found(result.foodId, fromCache = true))
+    }
+
+    @Test fun barcodeNotFoundWhenADatabaseAnswered() = runTest {
+        val online = HttpClientFactory.create("t", MockEngine { req ->
+            val body = if (req.url.host == "api.nal.usda.gov") """{"foods":[]}""" else """{"status":0}"""
+            respond(body, HttpStatusCode.OK, headersOf(HttpHeaders.ContentType, "application/json"))
+        })
+        val repo2 = DefaultFoodRepository(db.foodDao(), UsdaClient(online) { "k" }, OffClient(online), Clock.systemUTC())
+        assertThat(repo2.lookupBarcode("00012345678905")).isEqualTo(BarcodeLookup.NotFound)
     }
 }
