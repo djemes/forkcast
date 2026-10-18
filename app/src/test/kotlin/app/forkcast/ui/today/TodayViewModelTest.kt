@@ -8,6 +8,7 @@ import app.forkcast.fakes.FakeLogRepository
 import app.forkcast.fakes.FakeMealSlotRepository
 import app.forkcast.fakes.FakeProfileRepository
 import app.forkcast.fakes.FakeSavedMealRepository
+import app.forkcast.fakes.FakeWaterRepository
 import app.forkcast.fakes.FakeSettingsRepository
 import app.forkcast.fakes.FakeWeightRepository
 import app.forkcast.fakes.TestData
@@ -40,7 +41,8 @@ class TodayViewModelTest {
     private val log = FakeLogRepository()
     private val foods = FakeFoodRepository()
     private val saved = FakeSavedMealRepository()
-    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, FakeSettingsRepository(), clock)
+    private val water = FakeWaterRepository()
+    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), clock)
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
@@ -157,6 +159,26 @@ class TodayViewModelTest {
         assertThat(s.yesterdayMealIds).containsExactly("d")
         vm.onEvent(TodayEvent.SameAsYesterday("d"))
         assertThat(vm.uiState.value!!.meals.first { it.slot.id == "d" }.entries.single().displayName).isEqualTo("Pasta")
+    }
+
+    @Test fun waterGlassesAndUndo() = runTest {
+        val vm = vm()
+        val s = vm.uiState.filterNotNull().first()
+        assertThat(s.water.targetMl).isEqualTo(2500.0) // male default
+        vm.onEvent(TodayEvent.AddWater(s.water.glassMl))
+        vm.onEvent(TodayEvent.AddWater(s.water.glassMl))
+        assertThat(vm.uiState.value!!.water.ml).isWithin(1e-6).of(2 * s.water.glassMl)
+        vm.onEvent(TodayEvent.RemoveLastWater)
+        assertThat(vm.uiState.value!!.water.ml).isWithin(1e-6).of(s.water.glassMl)
+    }
+
+    @Test fun weightSummaryShowsLatestAndTrend() = runTest {
+        weights.add(90.0, null, clock.instant().minusSeconds(86_400 * 7))
+        weights.add(89.0, null, clock.instant())
+        val w = vm().uiState.filterNotNull().first { it.weight != null }.weight!!
+        assertThat(w.latestKg).isEqualTo(89.0)
+        assertThat(w.trendKg).isLessThan(90.0)
+        assertThat(w.weeklyChangeKg!!).isLessThan(0.0)
     }
 
     @Test fun dayNavigationClearsSelection() = runTest {

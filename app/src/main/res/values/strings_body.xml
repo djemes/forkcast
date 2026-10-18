@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Water -->
+    <string name="water_title">Water</string>
+    <string name="water_progress">%1$s / %2$s</string>
+    <string name="water_add_glass">+ glass</string>
+    <string name="water_add_glass_description">Add a glass of water (%1$s)</string>
+    <string name="water_remove_last">Remove last water entry</string>
+
+    <!-- Weight card -->
+    <string name="weight_title">Weight</string>
+    <string name="weight_trend_down">trend ↓ %1$s/wk</string>
+    <string name="weight_trend_up">trend ↑ %1$s/wk</string>
+    <string name="weight_trend_flat">trend steady</string>
+    <string name="weight_none">No weigh-ins yet. Tap to log one.</string>
+    <string name="weight_open">Open weight log</string>
+
+    <!-- Weight screen -->
+    <string name="weight_log_title">Weight</string>
+    <string name="weight_add_title">Log a weigh-in</string>
+    <string name="weight_field">Weight (%1$s)</string>
+    <string name="body_fat_field" formatted="false">Body fat % (optional)</string>
+    <string name="weight_date">Date</string>
+    <string name="weight_add">Save weigh-in</string>
+    <string name="weight_history">History</string>
+    <string name="weight_delete">Delete weigh-in from %1$s</string>
+    <string name="weight_chart_description">Weight chart: dots are weigh-ins, the line is the smoothed trend.</string>
+    <string name="weight_trend_now">Trend %1$s</string>
+    <string name="weight_saved">Weigh-in saved</string>
+</resources>

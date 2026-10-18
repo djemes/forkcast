@@ -13,6 +13,7 @@ interface SettingsRepository {
     suspend fun setThemeMode(mode: ThemeMode)
     suspend fun setUseWallpaperColors(enabled: Boolean)
     suspend fun setUnits(units: UnitPrefs)
+    suspend fun setWaterTargetMl(ml: Double?)
 }
 
 @Singleton
@@ -32,5 +33,9 @@ class DataStoreSettingsRepository @Inject constructor(
 
     override suspend fun setUnits(units: UnitPrefs) {
         dataStore.updateData { it.copy(units = units) }
+    }
+
+    override suspend fun setWaterTargetMl(ml: Double?) {
+        dataStore.updateData { it.copy(waterTargetMl = ml) }
     }
 }

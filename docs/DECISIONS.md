@@ -25,6 +25,8 @@ One dated line per non-obvious choice. Newest at the bottom.
 - 2026-10-18 · **Remote search results are cached when opened** (not only when logged), so a food you've looked at works offline later and detail navigation is by local id. Local search ranks favorites and recently used first, so cached-but-unused foods don't crowd results.
 - 2026-10-18 · **Logging goes to the day on screen**, so you can fill in yesterday from the Today screen.
 - 2026-10-18 · **Custom foods take label values per serving**; stored per 100 g. Serving weight in grams is required (needed for the conversion); ml servings are treated as grams.
+- 2026-10-18 · **Water:** one tap adds a glass (8 fl oz for US units, 250 ml metric); the − button removes the last entry. Target default 2.5 L men / 2.0 L women, stored as an optional override in settings.
+- 2026-10-18 · **Weight chart y-axis fits the data** (padded min/max) instead of Vico's default zero baseline, so trends are visible. Past-dated weigh-ins are stamped 07:00 local (the trend uses the earliest reading per day).
 - 2026-10-18 · **Toolchain versions at setup:** AGP 9.4.0 (Gradle 9.6.0 min), max API 37; SDK platform `android-37.0`, build-tools 37.0.0, platform-tools 37.0.1, cmdline-tools build 15859902.
 
 ## Signing certificate fingerprints (not secret)
