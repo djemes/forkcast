@@ -49,9 +49,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -99,16 +100,16 @@ fun TodayScreen(
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     val snackbar = remember { SnackbarHostState() }
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
-    val context = LocalContext.current
+    val resources = LocalResources.current
     val currentOnEvent by rememberUpdatedState(onEvent)
 
     LaunchedEffect(effects) {
         effects.collect { effect ->
             when (effect) {
                 is TodayEffect.Deleted -> {
-                    val msg = effect.label?.let { context.getString(R.string.deleted_one, it) }
-                        ?: context.getString(R.string.deleted_many, effect.ids.size)
-                    val result = snackbar.showSnackbar(msg, context.getString(R.string.undo), duration = SnackbarDuration.Long)
+                    val msg = effect.label?.let { resources.getString(R.string.deleted_one, it) }
+                        ?: resources.getQuantityString(R.plurals.deleted_many, effect.ids.size, effect.ids.size)
+                    val result = snackbar.showSnackbar(msg, resources.getString(R.string.undo), duration = SnackbarDuration.Long)
                     if (result == SnackbarResult.ActionPerformed) currentOnEvent(TodayEvent.Undo(effect.ids))
                 }
             }
@@ -139,9 +140,10 @@ fun TodayScreen(
     ) { padding ->
         // Swipe left/right anywhere not taken by an entry row changes the day (rows use swipe for delete).
         AnimatedContent(
-            targetState = state.date,
+            targetState = state,
+            contentKey = { it.date },
             transitionSpec = {
-                val forward = targetState > initialState
+                val forward = targetState.date > initialState.date
                 slideInHorizontally { if (forward) it / 3 else -it / 3 } togetherWith
                     slideOutHorizontally { if (forward) -it / 3 else it / 3 }
             },
@@ -156,7 +158,7 @@ fun TodayScreen(
                     },
                 ) { _, dx -> total += dx }
             },
-        ) { _ ->
+        ) { day ->
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
@@ -168,20 +170,20 @@ fun TodayScreen(
                 ),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                val totals = state.totals
-                val targets = state.targets
+                val totals = day.totals
+                val targets = day.targets
                 if (totals != null && targets != null) {
                     item(key = "ring") { BudgetRing(totals, f, Modifier.fillMaxWidth()) }
                     item(key = "macros") { MacroBars(totals, targets, f) { showNutrients = true } }
                 }
-                items(state.meals, key = { it.slot.id }) { meal ->
+                items(day.meals, key = { it.slot.id }) { meal ->
                     MealSectionView(
                         meal = meal,
                         f = f,
-                        selection = state.selection,
+                        selection = day.selection,
                         onAdd = { logSheetMealId = meal.slot.id },
                         onEntryClick = { id ->
-                            if (state.isSelecting) onEvent(TodayEvent.ToggleSelect(id)) else editingId = id
+                            if (day.isSelecting) onEvent(TodayEvent.ToggleSelect(id)) else editingId = id
                         },
                         onEntryLongClick = { id -> onEvent(TodayEvent.ToggleSelect(id)) },
                         onDelete = { id -> onEvent(TodayEvent.Delete(listOf(id))) },
@@ -243,7 +245,7 @@ private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit) {
             Icon(painterResource(R.drawable.ic_close), stringResource(R.string.action_clear_selection))
         }
         Text(
-            stringResource(R.string.selected_count, count),
+            pluralStringResource(R.plurals.selected_count, count, count),
             style = MaterialTheme.typography.titleMedium,
             modifier = Modifier.weight(1f),
         )
