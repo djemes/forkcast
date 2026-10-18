@@ -17,3 +17,8 @@ One dated line per non-obvious choice. Newest at the bottom.
 - 2026-10-18 · **Robolectric tests run with `--add-exports java.base/jdk.internal.access`** (needed for its Android 16 runtime on JDK 21); Room migration tests use the file+driver `MigrationTestHelper` because the name-based one mis-compares Windows paths.
 - 2026-10-18 · **No INTERNET permission in Phase 0** (no network code yet); added in Phase 1 with food search.
 - 2026-10-18 · **Toolchain versions at setup:** AGP 9.4.0 (Gradle 9.6.0 min), max API 37; SDK platform `android-37.0`, build-tools 37.0.0, platform-tools 37.0.1, cmdline-tools build 15859902.
+
+## Signing certificate fingerprints (not secret)
+Release key `forkcast-release.jks`, alias `forkcast`, created 2026-10-18, RSA 4096, valid 10,000 days. Used for every build that reaches the phone (see above), so this is the only SHA-1 the Google OAuth client (SETUP Stage 5) needs.
+- SHA-1: `8F:C2:19:E0:BF:5E:20:80:F6:27:6E:BE:69:22:28:42:FA:26:FA:3D`
+- SHA-256: `39:A4:DE:39:DE:6A:86:58:18:43:B3:42:29:1F:39:D6:3B:C7:4A:EA:94:7C:74:76:E8:87:93:4B:66:47:16:A0`
