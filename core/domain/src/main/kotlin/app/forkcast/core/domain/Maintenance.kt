@@ -3,32 +3,91 @@ package app.forkcast.core.domain
 import app.forkcast.core.domain.NutritionConstants.KCAL_PER_KG
 import app.forkcast.core.model.ActivityLevel
 import app.forkcast.core.model.DayCompleteness
-import app.forkcast.core.model.ExerciseMode
 import app.forkcast.core.model.TdeeConfidence
-import app.forkcast.core.model.UserProfile
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
-/** Exercise calories (SPEC §5.2, Phase 3). */
-object ExerciseMath {
+/** One day's activity and what it adds to that day's budget (SPEC §5.2). */
+data class ActivityBonus(
+    /** Active calories Health Connect reported for the day (null = none). */
+    val activeKcal: Double?,
+    /** Average daily active calories over the days before (null until there are enough days). */
+    val usualKcal: Double?,
+    /** Days of synced activity behind [usualKcal] (up to 28). */
+    val baselineDays: Int,
+    /** Active calories above usual, never below 0. */
+    val extraKcal: Double,
+    /** The part counted toward the budget: half the extra, capped. 0 when the bonus is off. */
+    val bonusKcal: Double,
+    /** The activity bonus setting. */
+    val enabled: Boolean,
+) {
+    /** A usual exists but rests on fewer than 28 days. */
+    val partialBaseline: Boolean get() = usualKcal != null && baselineDays < NutritionConstants.ACTIVITY_BASELINE_DAYS
 
-    /** Activity factor for the formula: Added back starts from sedentary and adds exercise per day. */
-    fun activityFactor(profile: UserProfile): Double =
-        if (profile.exerciseMode == ExerciseMode.ADDED_BACK) ActivityLevel.SEDENTARY.factor else profile.activityLevel.factor
+    companion object {
+        val NONE = ActivityBonus(null, null, 0, 0.0, 0.0, enabled = false)
+    }
+}
 
-    /** What a day's synced active calories add to its budget: nothing when Included. */
-    fun bonusKcal(profile: UserProfile, activeKcal: Double?): Double =
-        if (profile.exerciseMode != ExerciseMode.ADDED_BACK || activeKcal == null) 0.0
-        else (activeKcal.coerceAtLeast(0.0) * profile.exerciseAddBackPct / 100.0).roundToInt().toDouble()
+/**
+ * Activity bonus (SPEC §5.2, owner 2026-10-19). The base budget (activity level, or adaptive
+ * maintenance) already covers a usual day, so only activity above usual adds budget:
+ * bonus = 50 % × (active − usual), ≥ 0, ≤ 500 kcal, usual = the average over the 28 days before.
+ */
+object ActivityBonusMath {
+
+    /** @param activeByDate synced active calories per day (days without data are absent). */
+    fun forDay(date: LocalDate, activeByDate: Map<LocalDate, Double>, enabled: Boolean): ActivityBonus {
+        val active = activeByDate[date]
+        val from = date.minusDays(NutritionConstants.ACTIVITY_BASELINE_DAYS.toLong())
+        val history = activeByDate.filterKeys { !it.isBefore(from) && it.isBefore(date) }.values
+        val usual = if (history.size >= NutritionConstants.ACTIVITY_BASELINE_MIN_DAYS) history.average() else null
+        val extra = if (active != null && usual != null) (active - usual).coerceAtLeast(0.0) else 0.0
+        val bonus = if (enabled) (extra * NutritionConstants.ACTIVITY_BONUS_SHARE).coerceAtMost(NutritionConstants.ACTIVITY_BONUS_CAP_KCAL) else 0.0
+        return ActivityBonus(active, usual, history.size, extra.roundToInt().toDouble(), bonus.roundToInt().toDouble(), enabled)
+    }
+
+    /**
+     * Average daily bonus over [window] (missing days count as 0). Adaptive maintenance already
+     * contains the activity of the days it measured, bonus days included, so the budget takes
+     * this average out of it once and adds each day's own bonus back.
+     */
+    fun averageBonus(window: ClosedRange<LocalDate>, activeByDate: Map<LocalDate, Double>, enabled: Boolean): Double {
+        if (!enabled) return 0.0
+        var d = window.start
+        var sum = 0.0
+        var days = 0
+        while (!d.isAfter(window.endInclusive)) {
+            sum += forDay(d, activeByDate, true).bonusKcal
+            days++
+            d = d.plusDays(1)
+        }
+        return if (days == 0) 0.0 else sum / days
+    }
+}
+
+/**
+ * Which activity level matches synced activity (SPEC §5.2): total ≈ (resting + active) plus
+ * about 10 % for digesting food, so the factor ≈ 1.1 × (1 + active / BMR); the nearest level wins.
+ */
+object ActivityLevelAdvice {
+    const val MIN_DAYS = 14
+
+    fun factorFor(bmrKcal: Double, avgActiveKcal: Double): Double = 1.1 * (1 + avgActiveKcal / bmrKcal)
+
+    fun suggest(bmrKcal: Double, avgActiveKcal: Double): ActivityLevel {
+        val factor = factorFor(bmrKcal, avgActiveKcal)
+        return ActivityLevel.entries.minBy { kotlin.math.abs(it.factor - factor) }
+    }
 }
 
 /**
  * Adaptive maintenance (SPEC §5.6). The estimate is all-in maintenance: what the scale says the
- * body burned, exercise included. In Added-back mode the budget subtracts the average exercise
- * bonus from it, since that bonus is then added back day by day (owner, 2026-10-19: no double
- * counting).
+ * body burned, activity included. With the activity bonus on, the budget takes the window's
+ * average bonus out of it, since each day's bonus is added back on that day (no double counting).
  */
 object AdaptiveTdee {
 

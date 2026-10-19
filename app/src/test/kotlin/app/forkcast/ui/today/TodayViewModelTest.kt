@@ -56,9 +56,9 @@ class TodayViewModelTest {
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
 
-    /** Added back (SPEC §5.2): the day's bonus raises what's left; the Activity card says how. */
+    /** Activity above usual (SPEC §5.2) raises what's left; the Activity card says how. */
     @Test fun exerciseBonusRaisesTheAllowance() = runTest {
-        maintenance.bonus.value = mapOf(TestData.TODAY to 200.0)
+        maintenance.bonus.value = mapOf(TestData.TODAY to app.forkcast.core.domain.ActivityBonus(400.0, 0.0, 28, 400.0, 200.0, true))
         health.statusState.value = health.statusState.value.copy(settings = app.forkcast.core.model.HealthSettings(connected = true))
         health.activity.value = mapOf(TestData.TODAY to app.forkcast.core.model.ActivityDay(TestData.TODAY, 9000, 400.0, null, null, emptyList()))
         log.add(listOf(TestData.entry("Rice", "l", 205.0, 4.0)))
@@ -66,7 +66,7 @@ class TodayViewModelTest {
         assertThat(s.totals!!.allowanceKcal).isEqualTo(2490.0)
         assertThat(s.activity.connected).isTrue()
         assertThat(s.activity.day!!.steps).isEqualTo(9000)
-        assertThat(s.activity.bonusKcal).isEqualTo(200.0)
+        assertThat(s.activity.bonus.bonusKcal).isEqualTo(200.0)
     }
 
     @Test fun completenessFollowsTheRuleAndTheMark() = runTest {

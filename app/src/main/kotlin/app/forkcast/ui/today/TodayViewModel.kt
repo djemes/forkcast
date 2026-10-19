@@ -31,7 +31,7 @@ import app.forkcast.core.domain.WeightTrend
 import app.forkcast.core.model.ActivityDay
 import app.forkcast.core.model.AppSettings
 import app.forkcast.core.model.DayCompleteness
-import app.forkcast.core.model.ExerciseMode
+import app.forkcast.core.domain.ActivityBonus
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
@@ -120,7 +120,7 @@ data class TodayUiState(
     /** Most recent other day with entries, shown on an empty day so a log is never "lost". */
     val lastLogged: LoggedDay? = null,
     /** Health Connect activity for the day (Phase 3). */
-    val activity: ActivitySummary = ActivitySummary(false, false, null, ExerciseMode.INCLUDED, 50, 0.0),
+    val activity: ActivitySummary = ActivitySummary(false, false, null),
     /** The user's mark for the day, for the maintenance estimate (SPEC §5.6). */
     val completeness: DayCompleteness = DayCompleteness.AUTO,
     /** The day meets the automatic rule (2 meals, 1,000 kcal). */
@@ -204,11 +204,13 @@ class TodayViewModel @Inject constructor(
         val history: List<LogEntry>,
         val lastLogged: LoggedDay?,
         val activity: ActivityDay?,
-        val exerciseBonus: Double,
+        val bonus: ActivityBonus,
         val completeness: DayCompleteness,
-    )
+    ) {
+        val exerciseBonus: Double get() = bonus.bonusKcal
+    }
 
-    private data class DayHealth(val activity: ActivityDay?, val bonus: Double, val completeness: DayCompleteness)
+    private data class DayHealth(val activity: ActivityDay?, val bonus: ActivityBonus, val completeness: DayCompleteness)
 
     private val day: Flow<DayData> = selectedDate.flatMapLatest { d ->
         combine(
@@ -221,7 +223,7 @@ class TodayViewModel @Inject constructor(
             combine(
                 if (d == LocalDate.now(clock)) logRepository.observeRange(d.minusDays(60), d.minusDays(1)) else flowOf(emptyList()),
                 logRepository.observeLatestDay(d),
-                combine(health.observeActivity(d), maintenance.observeExerciseBonus(d), maintenance.observeCompleteness(d), ::DayHealth),
+                combine(health.observeActivity(d), maintenance.observeActivityBonus(d), maintenance.observeCompleteness(d), ::DayHealth),
             ) { h, l, dh -> Triple(h, l, dh) },
         ) { entries, yesterday, water, estimates, (history, last, dh) ->
             DayData(d, entries, yesterday, water, estimates, history, last, dh.activity, dh.bonus, dh.completeness)
@@ -310,9 +312,7 @@ class TodayViewModel @Inject constructor(
                 connected = healthFlags.first,
                 available = healthFlags.second,
                 day = dayData.activity,
-                mode = profile?.exerciseMode ?: ExerciseMode.INCLUDED,
-                addBackPct = profile?.exerciseAddBackPct ?: 50,
-                bonusKcal = dayData.exerciseBonus,
+                bonus = dayData.bonus,
             ),
             completeness = dayData.completeness,
             autoComplete = AdaptiveTdee.isComplete(

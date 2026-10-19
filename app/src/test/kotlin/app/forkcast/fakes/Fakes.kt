@@ -34,6 +34,7 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings) =
         state.update { it.copy(notifications = transform(it.notifications)) }
     override suspend fun setAdaptiveTdee(enabled: Boolean) = state.update { it.copy(adaptiveTdee = enabled) }
+    override suspend fun setActivityBonus(enabled: Boolean) = state.update { it.copy(activityBonus = enabled) }
 }
 
 class FakeWeightRepository : WeightRepository {

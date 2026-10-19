@@ -32,4 +32,14 @@ object NutritionConstants {
 
     // Weight trend smoothing (SPEC §5.5)
     const val TREND_SMOOTHING = 0.1
+
+    // Activity bonus (SPEC §5.2): only activity above a usual day adds budget, and only part of it.
+    /** Share of the extra active calories that counts (watches tend to overestimate). */
+    const val ACTIVITY_BONUS_SHARE = 0.5
+    /** "Usual" = average daily active calories over this many days before the day. */
+    const val ACTIVITY_BASELINE_DAYS = 28
+    /** Fewer days of synced activity than this: no usual yet, so no bonus. */
+    const val ACTIVITY_BASELINE_MIN_DAYS = 3
+    /** The most a day's activity can add to its budget. */
+    const val ACTIVITY_BONUS_CAP_KCAL = 500.0
 }

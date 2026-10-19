@@ -2,7 +2,6 @@ package app.forkcast.core.domain
 
 import app.forkcast.core.model.ActivityLevel
 import app.forkcast.core.model.DayCompleteness
-import app.forkcast.core.model.ExerciseMode
 import app.forkcast.core.model.Goal
 import app.forkcast.core.model.GoalType
 import app.forkcast.core.model.Sex
@@ -77,24 +76,70 @@ class MaintenanceTest {
         assertThat(AdaptiveTdee.isDue(today.minusDays(7), today)).isTrue()
     }
 
-    @Test fun exerciseBonusOnlyWhenAddedBack() {
-        assertThat(ExerciseMath.bonusKcal(profile, 400.0)).isEqualTo(0.0)
-        val addedBack = profile.copy(exerciseMode = ExerciseMode.ADDED_BACK, exerciseAddBackPct = 50)
-        assertThat(ExerciseMath.bonusKcal(addedBack, 401.0)).isEqualTo(201.0)
-        assertThat(ExerciseMath.bonusKcal(addedBack, null)).isEqualTo(0.0)
-        assertThat(ExerciseMath.activityFactor(addedBack)).isEqualTo(ActivityLevel.SEDENTARY.factor)
-        assertThat(ExerciseMath.activityFactor(profile)).isEqualTo(ActivityLevel.MODERATE.factor)
+    /** Active calories for the 28 days before [today]: [usual] every day. */
+    private fun history(usual: Double, days: Int = 28) = (1..days).associate { today.minusDays(it.toLong()) to usual }
+
+    @Test fun noExerciseNormalDayAndBigWorkoutDay() {
+        val usual = history(400.0)
+        // No exercise: below usual, never negative.
+        assertThat(ActivityBonusMath.forDay(today, usual + (today to 150.0), true).bonusKcal).isEqualTo(0.0)
+        // A normal day: at usual, nothing extra.
+        val normal = ActivityBonusMath.forDay(today, usual + (today to 400.0), true)
+        assertThat(normal.extraKcal).isEqualTo(0.0)
+        assertThat(normal.bonusKcal).isEqualTo(0.0)
+        // A workout day: 700 active = 300 above usual, half counts.
+        val workout = ActivityBonusMath.forDay(today, usual + (today to 700.0), true)
+        assertThat(workout.usualKcal).isEqualTo(400.0)
+        assertThat(workout.extraKcal).isEqualTo(300.0)
+        assertThat(workout.bonusKcal).isEqualTo(150.0)
+        // A huge day is capped at 500.
+        assertThat(ActivityBonusMath.forDay(today, usual + (today to 2400.0), true).bonusKcal).isEqualTo(500.0)
+    }
+
+    @Test fun bonusOffShowsActivityOnly() {
+        val b = ActivityBonusMath.forDay(today, history(400.0) + (today to 700.0), enabled = false)
+        assertThat(b.extraKcal).isEqualTo(300.0)
+        assertThat(b.bonusKcal).isEqualTo(0.0)
+        assertThat(b.enabled).isFalse()
+    }
+
+    @Test fun usualUsesWhatIsAvailableAndSaysSo() {
+        val few = ActivityBonusMath.forDay(today, history(400.0, days = 2) + (today to 700.0), true)
+        assertThat(few.usualKcal).isNull()
+        assertThat(few.bonusKcal).isEqualTo(0.0)
+        val some = ActivityBonusMath.forDay(today, history(400.0, days = 5) + (today to 700.0), true)
+        assertThat(some.usualKcal).isEqualTo(400.0)
+        assertThat(some.baselineDays).isEqualTo(5)
+        assertThat(some.partialBaseline).isTrue()
+        // Days older than 28 and the day itself are not part of the usual.
+        val old = (29..40).associate { today.minusDays(it.toLong()) to 2000.0 }
+        val full = ActivityBonusMath.forDay(today, history(400.0) + old + (today to 700.0), true)
+        assertThat(full.usualKcal).isEqualTo(400.0)
+        assertThat(full.baselineDays).isEqualTo(28)
+        assertThat(full.partialBaseline).isFalse()
+    }
+
+    @Test fun averageBonusOverTheWindow() {
+        // 56 days at 400 with one 700 day inside the window: that day's bonus is 150; average 150/28.
+        val active = (1..56).associate { today.minusDays(it.toLong()) to 400.0 } + (today.minusDays(3) to 700.0)
+        val avg = ActivityBonusMath.averageBonus(AdaptiveTdee.window(today), active, true)
+        assertThat(avg).isWithin(0.5).of(150.0 / 28)
+        assertThat(ActivityBonusMath.averageBonus(AdaptiveTdee.window(today), active, false)).isEqualTo(0.0)
+    }
+
+    @Test fun activityLevelAdvice() {
+        // BMR 1,800: ~1.1 × (1 + active/1,800). 100 → 1.16 sedentary; 450 → 1.375 light; 800 → 1.59 moderate.
+        assertThat(ActivityLevelAdvice.suggest(1800.0, 100.0)).isEqualTo(ActivityLevel.SEDENTARY)
+        assertThat(ActivityLevelAdvice.suggest(1800.0, 450.0)).isEqualTo(ActivityLevel.LIGHT)
+        assertThat(ActivityLevelAdvice.suggest(1800.0, 800.0)).isEqualTo(ActivityLevel.MODERATE)
     }
 
     private val goal = Goal("g", GoalType.LOSE, today, 90.0, 80.0, null, 0.5)
 
-    @Test fun addedBackUsesSedentaryFormula() {
-        val included = DailyTargetsCalculator.compute(profile, goal, 90.0, today)
-        val addedBack = DailyTargetsCalculator.compute(profile.copy(exerciseMode = ExerciseMode.ADDED_BACK), goal, 90.0, today)
-        assertThat(addedBack.tdeeKcal).isWithin(0.01).of(included.bmrKcal * 1.2)
-        // Same deficit either way: 0.5 kg/week.
-        assertThat(included.tdeeKcal - included.budgetKcal).isWithin(10.0).of(550.0)
-        assertThat(addedBack.tdeeKcal - addedBack.budgetKcal).isWithin(10.0).of(550.0)
+    @Test fun formulaUsesTheChosenActivityLevel() {
+        val t = DailyTargetsCalculator.compute(profile, goal, 90.0, today)
+        assertThat(t.tdeeKcal).isWithin(0.01).of(t.bmrKcal * ActivityLevel.MODERATE.factor)
+        assertThat(t.tdeeKcal - t.budgetKcal).isWithin(10.0).of(550.0)
     }
 
     @Test fun adaptiveReplacesFormulaAndKeepsTheDeficit() {
@@ -104,13 +149,13 @@ class MaintenanceTest {
         assertThat(t.budgetKcal).isEqualTo(2350)
     }
 
-    @Test fun addedBackTakesTheAverageBonusOutOfAdaptive() {
-        val p = profile.copy(exerciseMode = ExerciseMode.ADDED_BACK)
-        val t = DailyTargetsCalculator.compute(p, goal, 90.0, today, adaptiveKcal = 2900.0, avgExerciseBonusKcal = 200.0)
-        assertThat(t.tdeeKcal).isEqualTo(2700.0)
-        assertThat(t.budgetKcal).isEqualTo(2150)
-        // Included ignores the bonus.
-        assertThat(DailyTargetsCalculator.compute(profile, goal, 90.0, today, adaptiveKcal = 2900.0, avgExerciseBonusKcal = 200.0).tdeeKcal)
-            .isEqualTo(2900.0)
+    /** Adaptive maintenance already holds the measured days' activity: the average bonus comes out once. */
+    @Test fun adaptiveTakesTheAverageBonusOut() {
+        val t = DailyTargetsCalculator.compute(profile, goal, 90.0, today, adaptiveKcal = 2900.0, avgExerciseBonusKcal = 60.0)
+        assertThat(t.tdeeKcal).isEqualTo(2840.0)
+        assertThat(t.budgetKcal).isEqualTo(2290)
+        // The formula is a guess, not a measurement: nothing to take out.
+        assertThat(DailyTargetsCalculator.compute(profile, goal, 90.0, today, avgExerciseBonusKcal = 60.0).tdeeKcal)
+            .isWithin(0.01).of(DailyTargetsCalculator.compute(profile, goal, 90.0, today).tdeeKcal)
     }
 }

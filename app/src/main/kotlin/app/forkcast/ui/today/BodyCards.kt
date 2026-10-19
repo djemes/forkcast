@@ -18,7 +18,8 @@ import androidx.compose.material3.TextButton
 import androidx.health.connect.client.records.ExerciseSessionRecord
 import app.forkcast.core.model.ActivityDay
 import app.forkcast.core.model.DayCompleteness
-import app.forkcast.core.model.ExerciseMode
+import app.forkcast.core.domain.ActivityBonus
+import app.forkcast.core.domain.NutritionConstants
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -134,22 +135,22 @@ data class ActivitySummary(
     /** Health Connect exists on this phone (no prompt otherwise). */
     val available: Boolean,
     val day: ActivityDay?,
-    val mode: ExerciseMode,
-    val addBackPct: Int,
-    /** What the day's active calories added to its budget. */
-    val bonusKcal: Double,
+    /** Usual activity, the extra above it, and what that adds to the day's budget (SPEC §5.2). */
+    val bonus: ActivityBonus = ActivityBonus.NONE,
 )
 
 /** Activity card: steps, active calories and workouts from Health Connect, and how they affect the budget. */
 @Composable
-fun ActivityCard(activity: ActivitySummary, f: UnitFormatter, onConnect: () -> Unit) {
+fun ActivityCard(activity: ActivitySummary, f: UnitFormatter, onConnect: () -> Unit, onOpen: () -> Unit = {}) {
     if (!activity.connected && !activity.available) return
+    // Like the Weight card: the whole card opens its detail (or, before connecting, Health Connect).
+    val label = stringResource(if (activity.connected) R.string.activity_open else R.string.activity_connect_action)
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
-            .then(if (!activity.connected) Modifier.clickable(onClickLabel = stringResource(R.string.activity_connect_action), role = Role.Button, onClick = onConnect) else Modifier)
+            .clickable(onClickLabel = label, role = Role.Button, onClick = if (activity.connected) onOpen else onConnect)
             .heightIn(min = 64.dp)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
@@ -175,22 +176,32 @@ fun ActivityCard(activity: ActivitySummary, f: UnitFormatter, onConnect: () -> U
                         style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-                Text(
-                    if (activity.mode == ExerciseMode.ADDED_BACK) {
-                        stringResource(R.string.activity_added_back, f.energy(activity.bonusKcal), activity.addBackPct)
-                    } else {
-                        stringResource(R.string.activity_included)
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = if (activity.mode == ExerciseMode.ADDED_BACK && activity.bonusKcal > 0) ForkcastTheme.colors.pine else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+                BonusLines(activity.bonus, f)
             }
         }
     }
 }
 
+/** Usual activity and what the day's activity adds, in plain words. */
 @Composable
-private fun exerciseName(type: Int): String = stringResource(
+fun BonusLines(b: ActivityBonus, f: UnitFormatter) {
+    val muted = MaterialTheme.colorScheme.onSurfaceVariant
+    val usual = b.usualKcal
+    when {
+        usual == null -> Text(stringResource(R.string.activity_usual_none, NutritionConstants.ACTIVITY_BASELINE_MIN_DAYS), style = MaterialTheme.typography.bodySmall, color = muted)
+        b.partialBaseline -> Text(stringResource(R.string.activity_usual_partial, f.energy(usual), b.baselineDays), style = MaterialTheme.typography.bodySmall, color = muted)
+        else -> Text(stringResource(R.string.activity_usual, f.energy(usual)), style = MaterialTheme.typography.bodySmall, color = muted)
+    }
+    when {
+        !b.enabled -> Text(stringResource(R.string.activity_bonus_off), style = MaterialTheme.typography.bodySmall, color = muted)
+        b.usualKcal == null || b.activeKcal == null -> Unit
+        b.bonusKcal > 0 -> Text(stringResource(R.string.activity_bonus, f.energy(b.bonusKcal)), style = MaterialTheme.typography.bodySmall, color = ForkcastTheme.colors.pine)
+        else -> Text(stringResource(R.string.activity_bonus_zero), style = MaterialTheme.typography.bodySmall, color = muted)
+    }
+}
+
+@Composable
+fun exerciseName(type: Int): String = stringResource(
     when (type) {
         ExerciseSessionRecord.EXERCISE_TYPE_RUNNING, ExerciseSessionRecord.EXERCISE_TYPE_RUNNING_TREADMILL -> R.string.activity_running
         ExerciseSessionRecord.EXERCISE_TYPE_WALKING -> R.string.activity_walking

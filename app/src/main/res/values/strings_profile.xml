@@ -92,10 +92,15 @@
     <string name="calc_maintain">No deficit or surplus: your budget is your maintenance.</string>
     <string name="calc_budget">Rounded to the nearest 10: %1$s</string>
     <string name="calc_macros">Protein 1.6 g per kg of current weight (capped at 2.2 g per kg of goal weight). Fat 30%% of calories. Carbs fill the rest. Fiber 14 g per 1,000 kcal.</string>
-    <string name="calc_tdee_added_back">× %1$s (sedentary: exercise is added back day by day) = %2$s maintenance</string>
     <string name="calc_adaptive">Your log and weight trend over the last 4 weeks put your maintenance at %1$s (the formula said %2$s).</string>
-    <string name="calc_adaptive_added_back">− %1$s a day, your average exercise added back (it\'s added on the day itself) = %2$s</string>
-    <string name="calc_added_back_note">On top of the budget, %1$d %% of each day\'s active calories from Health Connect is added that day.</string>
+    <string name="calc_adaptive_added_back">− %1$s a day, your average activity bonus (each day\'s bonus is added on that day) = %2$s</string>
+    <string name="calc_activity_note">On top of this, %1$d %% of each day\'s active calories above your usual (up to %2$s) is added that day.</string>
+    <string name="activity_bonus_setting">Add extra activity to my budget</string>
+    <string name="activity_bonus_setting_on">%1$d %% of your active calories above a usual day, up to %2$s, is added to that day\'s budget.</string>
+    <string name="activity_bonus_setting_off">Activity shows on Today but doesn\'t change your budget.</string>
+    <string name="activity_advice">Your last %1$d days average %2$s active a day, which fits “%3$s”.</string>
+    <string name="activity_advice_high">Your activity level is set higher than that. Activity above a usual day already adds budget, so a level that counts your workouts can count them twice.</string>
+    <string name="activity_advice_low">Your activity level is set lower than that, so your budget may be on the low side.</string>
     <string name="calc_adaptive_note">These are formula estimates. After a few weeks of logging and weighing in, Forkcast can learn your real maintenance from your own data.</string>
     <string name="not_medical_advice">Forkcast gives estimates, not medical advice.</string>
 
@@ -122,14 +127,6 @@
     <string name="maintenance_use">Use my estimated maintenance</string>
     <string name="maintenance_use_on">Your budget follows it and updates weekly. Off keeps the formula.</string>
     <string name="maintenance_use_off">Your budget uses the formula. Turn on to follow your own data.</string>
-    <string name="exercise_calories">Exercise calories</string>
-    <string name="exercise_included">Included in your activity level</string>
-    <string name="exercise_included_body">Workouts from Health Connect are shown but don\'t change your budget. Best if your activity level already counts them.</string>
-    <string name="exercise_added_back">Added back: %1$d %% of active calories</string>
-    <string name="exercise_added_back_choice">Added back</string>
-    <string name="exercise_added_back_body" formatted="false">Your budget starts from a sedentary level, and a share of each day\'s active calories is added that day. Watches tend to overestimate, so 50 % is a safe default.</string>
-    <string name="exercise_share">Share added back</string>
-    <string name="exercise_share_value">%1$d %%</string>
     <string name="profile_units">Units</string>
     <string name="profile_sex">Sex for the formula</string>
     <string name="profile_birth">Date of birth</string>

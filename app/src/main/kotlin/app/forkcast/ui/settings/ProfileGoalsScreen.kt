@@ -32,7 +32,7 @@ import app.forkcast.core.domain.GoalPlanner
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.Switch
 import androidx.compose.ui.semantics.Role
-import app.forkcast.core.model.ExerciseMode
+import app.forkcast.core.domain.NutritionConstants
 import app.forkcast.core.model.GoalType
 import app.forkcast.core.model.TdeeConfidence
 import app.forkcast.core.model.Sex
@@ -53,7 +53,7 @@ import app.forkcast.ui.onboarding.formatDate
 import app.forkcast.ui.onboarding.pacePresetsKg
 import java.time.LocalDate
 
-private enum class EditField { UNITS, SEX, BIRTH, HEIGHT, ACTIVITY, GOAL, BUDGET, EXERCISE }
+private enum class EditField { UNITS, SEX, BIRTH, HEIGHT, ACTIVITY, GOAL, BUDGET }
 
 @Composable
 fun ProfileGoalsRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltViewModel()) {
@@ -90,7 +90,7 @@ private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel)
     Column(Modifier.padding(horizontal = 16.dp)) {
         BudgetSummary(
             s.targets, s.units, s.profile.sex, s.profile.heightCm, s.profile.activityLevel,
-            addBackPct = s.profile.exerciseAddBackPct.takeIf { s.profile.exerciseMode == ExerciseMode.ADDED_BACK },
+            activityBonus = s.activityBonusOn,
         )
     }
     Row(
@@ -118,11 +118,24 @@ private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel)
         colors = colors,
         modifier = Modifier.toggleable(value = s.adaptiveOn, role = Role.Switch) { vm.setAdaptive(it) },
     )
-    Row(
-        R.string.exercise_calories,
-        if (s.profile.exerciseMode == ExerciseMode.ADDED_BACK) stringResource(R.string.exercise_added_back, s.profile.exerciseAddBackPct)
-        else stringResource(R.string.exercise_included),
-        EditField.EXERCISE,
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.activity_bonus_setting)) },
+        supportingContent = {
+            Text(
+                if (s.activityBonusOn) {
+                    stringResource(
+                        R.string.activity_bonus_setting_on,
+                        (NutritionConstants.ACTIVITY_BONUS_SHARE * 100).toInt(),
+                        f.energy(NutritionConstants.ACTIVITY_BONUS_CAP_KCAL),
+                    )
+                } else {
+                    stringResource(R.string.activity_bonus_setting_off)
+                },
+            )
+        },
+        trailingContent = { Switch(checked = s.activityBonusOn, onCheckedChange = null) },
+        colors = colors,
+        modifier = Modifier.toggleable(value = s.activityBonusOn, role = Role.Switch) { vm.setActivityBonus(it) },
     )
 
     Section(R.string.profile_section_goal)
@@ -145,8 +158,34 @@ private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel)
     Row(R.string.profile_birth, formatDate(s.profile.birthDate), EditField.BIRTH)
     Row(R.string.profile_height, f.height(s.profile.heightCm), EditField.HEIGHT)
     Row(R.string.profile_activity, activityLabel(s.profile.activityLevel), EditField.ACTIVITY)
+    ActivityAdvice(s, f)
 
     editing?.let { field -> EditDialog(field, s, vm) { editing = null } }
+}
+
+/** What synced activity says about the chosen activity level (SPEC §5.2), so workouts aren't counted twice. */
+@Composable
+private fun ActivityAdvice(s: ProfileGoalsState, f: UnitFormatter) {
+    val level = s.suggestedLevel ?: return
+    val usual = s.activity.usualKcal ?: return
+    Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Text(
+            stringResource(R.string.activity_advice, s.activity.baselineDays, f.energy(usual), activityLabel(level)),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        when {
+            s.profile.activityLevel.factor > level.factor -> Text(
+                stringResource(R.string.activity_advice_high),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.error,
+            )
+            s.profile.activityLevel.factor < level.factor -> Text(
+                stringResource(R.string.activity_advice_low),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 }
 
 @Composable
@@ -175,8 +214,6 @@ private fun EditDialog(field: EditField, s: ProfileGoalsState, vm: ProfileGoalsV
     var height by remember { mutableStateOf<Double?>(s.profile.heightCm) }
     var activity by remember { mutableStateOf(s.profile.activityLevel) }
     var budget by remember { mutableStateOf<Double?>(UnitFormatter(s.units).energyValue(s.targets.budgetKcal.toDouble())) }
-    var exerciseMode by remember { mutableStateOf(s.profile.exerciseMode) }
-    var addBackPct by remember { mutableStateOf(s.profile.exerciseAddBackPct) }
     val goal = remember { GoalEditState(s) }
 
     val title = stringResource(
@@ -188,7 +225,6 @@ private fun EditDialog(field: EditField, s: ProfileGoalsState, vm: ProfileGoalsV
             EditField.ACTIVITY -> R.string.profile_activity
             EditField.GOAL -> R.string.profile_section_goal
             EditField.BUDGET -> R.string.profile_custom_budget
-            EditField.EXERCISE -> R.string.exercise_calories
         },
     )
     val valid = when (field) {
@@ -213,23 +249,6 @@ private fun EditDialog(field: EditField, s: ProfileGoalsState, vm: ProfileGoalsV
                     EditField.HEIGHT -> HeightInput(height, s.units) { height = it }
                     EditField.ACTIVITY -> ChoiceList(activityChoices(), activity) { activity = it }
                     EditField.GOAL -> GoalEditor(goal, s)
-                    EditField.EXERCISE -> {
-                        ChoiceList(
-                            listOf(
-                                Choice(ExerciseMode.INCLUDED, stringResource(R.string.exercise_included)),
-                                Choice(ExerciseMode.ADDED_BACK, stringResource(R.string.exercise_added_back_choice)),
-                            ),
-                            exerciseMode,
-                        ) { exerciseMode = it }
-                        Text(
-                            stringResource(if (exerciseMode == ExerciseMode.ADDED_BACK) R.string.exercise_added_back_body else R.string.exercise_included_body),
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                        if (exerciseMode == ExerciseMode.ADDED_BACK) {
-                            Text(stringResource(R.string.exercise_share), style = MaterialTheme.typography.titleSmall)
-                            ChoiceList(listOf(25, 50, 75, 100).map { Choice(it, stringResource(R.string.exercise_share_value, it)) }, addBackPct) { addBackPct = it }
-                        }
-                    }
                     EditField.BUDGET -> {
                         val f = UnitFormatter(s.units)
                         NumberField(
@@ -259,7 +278,6 @@ private fun EditDialog(field: EditField, s: ProfileGoalsState, vm: ProfileGoalsV
                     EditField.ACTIVITY -> vm.updateProfile { it.copy(activityLevel = activity) }
                     EditField.GOAL -> goal.save(vm, s)
                     EditField.BUDGET -> budget?.let { vm.setCustomBudget(UnitFormatter(s.units).energyToKcal(it)) }
-                    EditField.EXERCISE -> vm.updateProfile { it.copy(exerciseMode = exerciseMode, exerciseAddBackPct = addBackPct) }
                 }
                 close()
             }) { Text(stringResource(R.string.action_save)) }

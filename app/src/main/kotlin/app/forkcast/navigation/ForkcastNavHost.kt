@@ -26,6 +26,7 @@ import app.forkcast.ui.ai.AiProfileEditRoute
 import app.forkcast.ui.ai.AiProfileEditViewModel
 import app.forkcast.ui.ai.AiSettingsRoute
 import app.forkcast.ui.backup.BackupRoute
+import app.forkcast.ui.activity.ActivityRoute
 import app.forkcast.ui.health.HealthConnectRoute
 import app.forkcast.ui.photo.PhotoMealRoute
 import app.forkcast.ui.photo.ReviewRoute
@@ -50,6 +51,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object MealsDestination
 @Serializable data object DailyTargetsDestination
 @Serializable data object HealthConnectDestination
+
+/** Activity detail for [date] (ISO yyyy-MM-dd) and the days before it. */
+@Serializable data class ActivityDestination(val date: String)
 
 /** Photo-meal camera, logging into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
 @Serializable data class PhotoMealDestination(val mealSlotId: String, val date: String)
@@ -133,6 +137,7 @@ fun ForkcastNavHost(
                     openPhoto = { meal, date -> navController.navigate(PhotoMealDestination(meal, date.toString())) },
                     openEstimate = { id -> navController.navigate(ReviewDestination(id)) },
                     openHealthConnect = { navController.navigate(HealthConnectDestination) },
+                    openActivity = { date -> navController.navigate(ActivityDestination(date.toString())) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },
@@ -236,6 +241,7 @@ fun ForkcastNavHost(
         composable<MealsDestination> { MealsRoute(onBack = back) }
         composable<DailyTargetsDestination> { DailyTargetsRoute(onBack = back) }
         composable<HealthConnectDestination> { HealthConnectRoute(onBack = back) }
+        composable<ActivityDestination> { ActivityRoute(onBack = back) }
         composable<PhotoMealDestination> {
             PhotoMealRoute(
                 onBack = back,

@@ -62,8 +62,8 @@ class NotificationEngine @Inject constructor(
         if (!s.budgetEnabled) return
         val today = LocalDate.now(clock)
         val targets = profiles.observeDailyTargets().first() ?: return
-        // Added-back exercise raises the day's allowance (SPEC §5.2).
-        val totals = DayMath.totals(log.range(today, today), targets.budgetKcal, maintenance.exerciseBonus(today))
+        // Activity above usual raises the day's allowance (SPEC §5.2).
+        val totals = DayMath.totals(log.range(today, today), targets.budgetKcal, maintenance.bonusKcal(today))
         val eaten = totals.eatenKcal
         val budget = totals.allowanceKcal
         val fired = dao.notificationsOn(today).filter { it.type == NotificationTypes.BUDGET }.map { it.threshold }.toSet()
@@ -106,7 +106,7 @@ class NotificationEngine @Inject constructor(
 
         if (s.eveningEnabled && due(s.eveningMinute) && (NotificationTypes.EVENING to 0) !in fired && targets != null) {
             record(today, NotificationTypes.EVENING, 0)
-            val left = targets.budgetKcal + maintenance.exerciseBonus(today) - entries.sumOf { it.nutrients.kcal }
+            val left = targets.budgetKcal + maintenance.bonusKcal(today) - entries.sumOf { it.nutrients.kcal }
             val history = log.range(today.minusDays(60), today.minusDays(1)).map {
                 val t = it.loggedAt.atZone(clock.zone).toLocalTime()
                 Forecast.Logged(it.date, t.hour * 60 + t.minute, it.nutrients.kcal)

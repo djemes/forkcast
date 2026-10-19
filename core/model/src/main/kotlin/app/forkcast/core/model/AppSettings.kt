@@ -18,6 +18,11 @@ data class AppSettings(
      * False locks maintenance to the formula value.
      */
     val adaptiveTdee: Boolean = true,
+    /**
+     * Activity above a usual day adds part of it to that day's budget (SPEC §5.2). Off shows
+     * activity only. Replaces the Phase 3 Included/Added-back profile modes (owner, 2026-10-19).
+     */
+    val activityBonus: Boolean = true,
 )
 
 /**

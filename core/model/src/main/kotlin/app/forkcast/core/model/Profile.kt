@@ -19,7 +19,10 @@ enum class ActivityLevel(val factor: Double) {
 @Serializable
 enum class GoalType { LOSE, MAINTAIN, GAIN }
 
-/** How synced exercise affects the budget (SPEC §5.2, Phase 3). */
+/**
+ * Phase 3 exercise modes, kept only because profile rows and exports carry them. Unused since
+ * 2026-10-19: AppSettings.activityBonus replaced them (SPEC §5.2).
+ */
 @Serializable
 enum class ExerciseMode { INCLUDED, ADDED_BACK }
 

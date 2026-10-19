@@ -112,6 +112,8 @@ data class TodayActions(
     /** Opens the review screen of a photo estimate. */
     val openEstimate: (estimateId: String) -> Unit = {},
     val openHealthConnect: () -> Unit = {},
+    /** Opens the Activity detail on [date]. */
+    val openActivity: (date: java.time.LocalDate) -> Unit = {},
 )
 
 @Composable
@@ -330,7 +332,7 @@ fun TodayScreen(
                     )
                 }
                 item(key = "weight") { WeightCard(day.weight, f, actions.openWeight) }
-                item(key = "activity") { ActivityCard(day.activity, f, actions.openHealthConnect) }
+                item(key = "activity") { ActivityCard(day.activity, f, actions.openHealthConnect) { actions.openActivity(day.date) } }
                 if (!day.date.isAfter(day.today) && !day.isEmptyDay) {
                     item(key = "completeness") {
                         DayCompletenessRow(day.completeness, day.autoComplete) { onEvent(TodayEvent.SetCompleteness(it)) }

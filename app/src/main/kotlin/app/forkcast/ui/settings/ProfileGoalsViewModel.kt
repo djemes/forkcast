@@ -8,7 +8,10 @@ import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WeightRepository
+import app.forkcast.core.domain.ActivityBonus
+import app.forkcast.core.domain.ActivityLevelAdvice
 import app.forkcast.core.domain.DailyTargets
+import app.forkcast.core.model.ActivityLevel
 import app.forkcast.core.model.Goal
 import app.forkcast.core.model.GoalType
 import app.forkcast.core.model.NutrientKey
@@ -38,7 +41,16 @@ data class ProfileGoalsState(
     val progress: MaintenanceProgress = MaintenanceProgress(0, 0),
     /** Settings: follow the adaptive estimate (false = formula). */
     val adaptiveOn: Boolean = true,
-)
+    /** Settings: activity above usual adds budget (SPEC §5.2). */
+    val activityBonusOn: Boolean = true,
+    /** Today's activity bonus, for its usual (the 28 days before today). */
+    val activity: ActivityBonus = ActivityBonus.NONE,
+) {
+    /** The activity level synced activity points to, once there are enough days (SPEC §5.2). */
+    val suggestedLevel: ActivityLevel?
+        get() = activity.usualKcal?.takeIf { activity.baselineDays >= ActivityLevelAdvice.MIN_DAYS }
+            ?.let { ActivityLevelAdvice.suggest(targets.bmrKcal, it) }
+}
 
 @HiltViewModel
 class ProfileGoalsViewModel @Inject constructor(
@@ -51,8 +63,8 @@ class ProfileGoalsViewModel @Inject constructor(
 
     val state: StateFlow<ProfileGoalsState?> = combine(
         settings.settings, profiles.profile, profiles.activeGoal, profiles.observeDailyTargets(),
-        combine(maintenance.latest, maintenance.observeProgress()) { m, pr -> m to pr },
-    ) { s, p, g, t, (m, pr) ->
+        combine(maintenance.latest, maintenance.observeProgress(), maintenance.observeActivityBonus(LocalDate.now(clock))) { m, pr, a -> Triple(m, pr, a) },
+    ) { s, p, g, t, (m, pr, a) ->
         if (p == null || g == null || t == null) null
         else ProfileGoalsState(
             units = s.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
@@ -64,6 +76,8 @@ class ProfileGoalsViewModel @Inject constructor(
             maintenance = m,
             progress = pr,
             adaptiveOn = s.adaptiveTdee,
+            activityBonusOn = s.activityBonus,
+            activity = a,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -90,6 +104,8 @@ class ProfileGoalsViewModel @Inject constructor(
     }
 
     fun setAdaptive(on: Boolean) = launch { settings.setAdaptiveTdee(on) }
+
+    fun setActivityBonus(on: Boolean) = launch { settings.setActivityBonus(on) }
 
     fun setCustomBudget(kcal: Double?) = launch { profiles.setOverride(NutrientKey.ENERGY_KCAL, kcal) }
 

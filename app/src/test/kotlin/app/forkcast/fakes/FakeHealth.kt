@@ -7,6 +7,7 @@ import app.forkcast.core.data.health.SyncReason
 import app.forkcast.core.data.repository.MaintenanceEstimate
 import app.forkcast.core.data.repository.MaintenanceProgress
 import app.forkcast.core.data.repository.MaintenanceRepository
+import app.forkcast.core.domain.ActivityBonus
 import app.forkcast.core.model.ActivityDay
 import app.forkcast.core.model.DayCompleteness
 import app.forkcast.core.model.HealthSettings
@@ -42,7 +43,7 @@ class FakeMaintenanceRepository : MaintenanceRepository {
     val latestState = MutableStateFlow<MaintenanceEstimate?>(null)
     val progress = MutableStateFlow(MaintenanceProgress(0, 0))
     val completeness = MutableStateFlow<Map<LocalDate, DayCompleteness>>(emptyMap())
-    val bonus = MutableStateFlow<Map<LocalDate, Double>>(emptyMap())
+    val bonus = MutableStateFlow<Map<LocalDate, ActivityBonus>>(emptyMap())
 
     override val latest: Flow<MaintenanceEstimate?> = latestState
     override fun observeProgress(): Flow<MaintenanceProgress> = progress
@@ -50,7 +51,8 @@ class FakeMaintenanceRepository : MaintenanceRepository {
     override fun observeCompleteness(date: LocalDate): Flow<DayCompleteness> = completeness.map { it[date] ?: DayCompleteness.AUTO }
     override suspend fun setCompleteness(date: LocalDate, completeness: DayCompleteness) =
         this.completeness.update { it + (date to completeness) }
-    override fun observeExerciseBonus(date: LocalDate): Flow<Double> = bonus.map { it[date] ?: 0.0 }
-    override suspend fun exerciseBonus(date: LocalDate): Double = bonus.value[date] ?: 0.0
+    override fun observeActivityBonus(date: LocalDate): Flow<ActivityBonus> = bonus.map { it[date] ?: ActivityBonus.NONE }
+    override suspend fun bonusKcal(date: LocalDate): Double = bonus.value[date]?.bonusKcal ?: 0.0
+    override fun observeActivityBonuses(from: LocalDate, to: LocalDate): Flow<Map<LocalDate, ActivityBonus>> = bonus
     override fun observeAverageBonus(today: LocalDate): Flow<Double> = MutableStateFlow(0.0)
 }

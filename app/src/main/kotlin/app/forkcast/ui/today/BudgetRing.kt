@@ -86,7 +86,7 @@ fun BudgetRing(
     val over = totals.state == BudgetState.OVER
     val bigNumber = units.energyNumber(if (over) totals.overKcal else totals.remainingKcal)
     val label = stringResource(if (over) R.string.ring_over else R.string.ring_left, units.energyUnitLabel)
-    // Added-back exercise (SPEC §5.2) is part of what's left; it's named so the number never surprises.
+    // Activity above a usual day (SPEC §5.2) is part of what's left; it's named so the number never surprises.
     val exercise = totals.exerciseKcal > 0
     val description = (
         if (exercise) {
@@ -151,8 +151,10 @@ fun BudgetRing(
                 }
             }
         }
+        // The extra from activity sits inside the ring; at large font sizes it moves to this line instead.
+        val bigFont = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
         Text(
-            if (exercise) {
+            if (exercise && bigFont) {
                 stringResource(
                     R.string.ring_eaten_budget_exercise,
                     units.energyNumber(totals.eatenKcal),

@@ -6,7 +6,7 @@
     <string name="hc_read_weight">Weight, body fat and height</string>
     <string name="hc_read_weight_body">Fills your weight log and trend. A scale reading replaces a weigh-in you typed within 10 minutes of it.</string>
     <string name="hc_read_activity">Steps, calories burned and workouts</string>
-    <string name="hc_read_activity_body">Shown on Today, and used for exercise calories if you add them back to your budget.</string>
+    <string name="hc_read_activity_body">Shown on Today. Activity above your usual day adds part of it to that day\'s budget.</string>
     <string name="hc_writes_title">Forkcast writes</string>
     <string name="hc_write_nutrition">Food</string>
     <string name="hc_write_nutrition_body">Each entry as a nutrition record with its meal. Edits and deletions follow.</string>

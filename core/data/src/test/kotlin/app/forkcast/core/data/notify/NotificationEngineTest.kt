@@ -87,7 +87,7 @@ class NotificationEngineTest {
         override suspend fun delete(id: String) = Unit
     }
     private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db, db.mealSlotDao(), clock), db.aiDao(),
-        RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weightRepo, db.profileDao(), db.goalDao(), clock), clock)
+        RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weightRepo, db.profileDao(), db.goalDao(), settings, clock), clock)
     private val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
 
     init {
@@ -118,18 +118,18 @@ class NotificationEngineTest {
         assertThat(texts().last()).isEqualTo("You're 200 kcal over today's budget.")
     }
 
-    /** Added back: half of 400 active kcal raises today's allowance to 2,200 (SPEC §5.2). */
-    @Test fun addedBackExerciseRaisesTheAllowance() = runTest {
-        db.profileDao().upsert(ProfileEntity(sex = Sex.MALE, birthDate = LocalDate.of(1985, 1, 1), heightCm = 180.0,
-            activityLevel = ActivityLevel.MODERATE, exerciseMode = ExerciseMode.ADDED_BACK, exerciseAddBackPct = 50, createdAt = 1, updatedAt = 1))
-        db.healthDao().upsertActivity(listOf(ActivityDayEntity("a", day, 9000, 400.0, null, null, emptyList(), 1, 1)))
-        eat(1700.0)
+    /** A workout day: 300 active kcal above a usual 400 adds 150 to the allowance (SPEC §5.2). */
+    @Test fun activityAboveUsualRaisesTheAllowance() = runTest {
+        db.healthDao().upsertActivity((1..10).map { d ->
+            ActivityDayEntity("d$d", day.minusDays(d.toLong()), 8000, 400.0, null, null, emptyList(), 1, 1)
+        } + ActivityDayEntity("t", day, 12000, 700.0, null, null, emptyList(), 1, 1))
+        eat(1650.0)
         engine.checkBudget()
-        // 77 % of 2,200: under the 80 % threshold that 1,700 of 2,000 would have crossed.
+        // 77 % of 2,150: under the 80 % threshold that 1,650 of 2,000 would have crossed.
         assertThat(nm.allNotifications).isEmpty()
         eat(100.0)
         engine.checkBudget()
-        assertThat(texts()).containsExactly("1,800 of 2,200 kcal so far. About 400 left for today.")
+        assertThat(texts()).containsExactly("1,750 of 2,150 kcal so far. About 400 left for today.")
     }
 
     @Test fun quietHoursSuppressButStillRecord() = runTest {

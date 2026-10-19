@@ -8,18 +8,17 @@ import app.forkcast.core.data.db.HealthDao
 import app.forkcast.core.data.db.TdeeEstimateEntity
 import app.forkcast.core.domain.AdaptiveTdee
 import app.forkcast.core.domain.EnergyMath
-import app.forkcast.core.domain.ExerciseMath
+import app.forkcast.core.domain.ActivityBonus
+import app.forkcast.core.domain.ActivityBonusMath
+import app.forkcast.core.domain.NutritionConstants
 import app.forkcast.core.domain.WeighIn
 import app.forkcast.core.model.DayCompleteness
 import app.forkcast.core.model.TdeeConfidence
 import app.forkcast.core.model.TdeeMethod
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -49,14 +48,15 @@ interface MaintenanceRepository {
     suspend fun updateIfDue()
     fun observeCompleteness(date: LocalDate): Flow<DayCompleteness>
     suspend fun setCompleteness(date: LocalDate, completeness: DayCompleteness)
-    /** What synced exercise adds to [date]'s budget (0 unless Added back). */
-    fun observeExerciseBonus(date: LocalDate): Flow<Double>
-    suspend fun exerciseBonus(date: LocalDate): Double
-    /** Average daily bonus over the 28 days before [today] (Added back takes it out of adaptive maintenance). */
+    /** What [date]'s activity adds to its budget (SPEC §5.2), with the usual and the extra. */
+    fun observeActivityBonus(date: LocalDate): Flow<ActivityBonus>
+    suspend fun bonusKcal(date: LocalDate): Double
+    /** Each day's bonus from [from] to [to], for the Activity screen. */
+    fun observeActivityBonuses(from: LocalDate, to: LocalDate): Flow<Map<LocalDate, ActivityBonus>>
+    /** Average daily bonus over the 28 days before [today] (taken out of adaptive maintenance). */
     fun observeAverageBonus(today: LocalDate): Flow<Double>
 }
 
-@OptIn(ExperimentalCoroutinesApi::class)
 @Singleton
 class RoomMaintenanceRepository @Inject constructor(
     private val healthDao: HealthDao,
@@ -65,12 +65,11 @@ class RoomMaintenanceRepository @Inject constructor(
     private val weights: WeightRepository,
     private val profileDao: ProfileDao,
     private val goalDao: GoalDao,
+    private val settings: SettingsRepository,
     private val clock: Clock,
 ) : MaintenanceRepository {
 
     private val mutex = Mutex()
-    // Daos, not ProfileRepository: the daily targets read this repository.
-    private val profile = profileDao.observe().map { it?.toModel() }.distinctUntilChanged()
 
     override val latest: Flow<MaintenanceEstimate?> = healthDao.observeLatestTdee().map { row ->
         row?.takeIf { it.method == TdeeMethod.ADAPTIVE }?.let { MaintenanceEstimate(it.date, it.kcal, it.confidence, it.completeDays, it.weighIns) }
@@ -133,20 +132,28 @@ class RoomMaintenanceRepository @Inject constructor(
         dayStatusDao.upsert(row)
     }
 
-    override fun observeExerciseBonus(date: LocalDate): Flow<Double> =
-        combine(profile, healthDao.observeActivity(date)) { p, a ->
-            if (p == null) 0.0 else ExerciseMath.bonusKcal(p, a?.activeKcal)
-        }.distinctUntilChanged()
+    /** Synced active calories per day, from [from] − 28 days (for the usual) to [to]. */
+    private fun activeByDate(from: LocalDate, to: LocalDate): Flow<Map<LocalDate, Double>> =
+        healthDao.observeActivityRange(from.minusDays(NutritionConstants.ACTIVITY_BASELINE_DAYS.toLong()), to).map { rows ->
+            rows.mapNotNull { r -> r.activeKcal?.let { r.date to it } }.toMap()
+        }
 
-    override suspend fun exerciseBonus(date: LocalDate): Double = observeExerciseBonus(date).first()
+    private val bonusOn: Flow<Boolean> = settings.settings.map { it.activityBonus }.distinctUntilChanged()
+
+    override fun observeActivityBonus(date: LocalDate): Flow<ActivityBonus> =
+        combine(activeByDate(date, date), bonusOn) { active, on -> ActivityBonusMath.forDay(date, active, on) }.distinctUntilChanged()
+
+    override suspend fun bonusKcal(date: LocalDate): Double = observeActivityBonus(date).first().bonusKcal
+
+    override fun observeActivityBonuses(from: LocalDate, to: LocalDate): Flow<Map<LocalDate, ActivityBonus>> =
+        combine(activeByDate(from, to), bonusOn) { active, on ->
+            generateSequence(from) { it.plusDays(1) }.takeWhile { !it.isAfter(to) }.associateWith { ActivityBonusMath.forDay(it, active, on) }
+        }
 
     override fun observeAverageBonus(today: LocalDate): Flow<Double> {
         val window = AdaptiveTdee.window(today)
-        return profile.flatMapLatest { p ->
-            if (p == null) flowOf(0.0)
-            else healthDao.observeActivityRange(window.start, window.endInclusive).map { rows ->
-                rows.sumOf { ExerciseMath.bonusKcal(p, it.activeKcal) } / AdaptiveTdee.WINDOW_DAYS
-            }
+        return combine(activeByDate(window.start, window.endInclusive), bonusOn) { active, on ->
+            ActivityBonusMath.averageBonus(window, active, on)
         }.distinctUntilChanged()
     }
 

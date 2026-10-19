@@ -10,7 +10,6 @@ import app.forkcast.core.data.db.ProfileEntity
 import app.forkcast.core.data.health.MutableClock
 import app.forkcast.core.model.ActivityLevel
 import app.forkcast.core.model.DayCompleteness
-import app.forkcast.core.model.ExerciseMode
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.model.GoalType
 import app.forkcast.core.model.LogEntry
@@ -37,13 +36,15 @@ class MaintenanceRepositoryTest {
     private val today = LocalDate.of(2026, 11, 20)
     private val log = RoomLogRepository(db, db.logEntryDao(), db.foodDao(), clock)
     private val weights = RoomWeightRepository(db.weightDao(), clock)
-    private val repo = RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weights, db.profileDao(), db.goalDao(), clock)
+    private val settings = app.forkcast.core.data.backup.MemoryDataStore(app.forkcast.core.model.AppSettings())
+    private val settingsRepo = DataStoreSettingsRepository(settings)
+    private val repo = RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weights, db.profileDao(), db.goalDao(), settingsRepo, clock)
 
     @After fun tearDown() = db.close()
 
-    private suspend fun seedProfile(mode: ExerciseMode = ExerciseMode.INCLUDED) {
+    private suspend fun seedProfile() {
         db.profileDao().upsert(ProfileEntity(sex = Sex.MALE, birthDate = LocalDate.of(1985, 1, 1), heightCm = 180.0,
-            activityLevel = ActivityLevel.MODERATE, exerciseMode = mode, exerciseAddBackPct = 50, createdAt = 1, updatedAt = 1))
+            activityLevel = ActivityLevel.MODERATE, exerciseMode = app.forkcast.core.model.ExerciseMode.INCLUDED, exerciseAddBackPct = 50, createdAt = 1, updatedAt = 1))
         db.goalDao().setActive(GoalEntity("g", GoalType.LOSE, today.minusDays(60), 90.0, 80.0, null, 0.5, true, 1, 1))
     }
 
@@ -102,16 +103,21 @@ class MaintenanceRepositoryTest {
         assertThat(repo.observeCompleteness(d).first()).isEqualTo(DayCompleteness.COMPLETE)
     }
 
-    @Test fun exerciseBonusAndAverageOnlyWhenAddedBack() = runTest {
-        seedProfile(ExerciseMode.ADDED_BACK)
-        db.healthDao().upsertActivity(listOf(
-            ActivityDayEntity("a", today, 9000, 400.0, null, null, emptyList(), 1, 1),
-            ActivityDayEntity("b", today.minusDays(1), 9000, 560.0, null, null, emptyList(), 1, 1),
-        ))
-        assertThat(repo.exerciseBonus(today)).isEqualTo(200.0)
-        assertThat(repo.observeAverageBonus(today).first()).isWithin(0.01).of(280.0 / 28)
+    @Test fun activityBonusFromSyncedDaysAndTheSetting() = runTest {
+        seedProfile()
+        // 10 days at 400 active, then a 700 day today.
+        db.healthDao().upsertActivity((1..10).map { d ->
+            ActivityDayEntity("d$d", today.minusDays(d.toLong()), 8000, 400.0, null, null, emptyList(), 1, 1)
+        } + ActivityDayEntity("t", today, 12000, 700.0, null, null, emptyList(), 1, 1))
+        val b = repo.observeActivityBonus(today).first()
+        assertThat(b.usualKcal).isEqualTo(400.0)
+        assertThat(b.baselineDays).isEqualTo(10)
+        assertThat(b.bonusKcal).isEqualTo(150.0)
+        assertThat(repo.bonusKcal(today)).isEqualTo(150.0)
+        assertThat(repo.observeActivityBonuses(today.minusDays(1), today).first().getValue(today.minusDays(1)).bonusKcal).isEqualTo(0.0)
 
-        db.profileDao().upsert(db.profileDao().get()!!.copy(exerciseMode = ExerciseMode.INCLUDED, updatedAt = 2))
-        assertThat(repo.exerciseBonus(today)).isEqualTo(0.0)
+        settingsRepo.setActivityBonus(false)
+        assertThat(repo.bonusKcal(today)).isEqualTo(0.0)
+        assertThat(repo.observeAverageBonus(today.plusDays(1)).first()).isEqualTo(0.0)
     }
 }

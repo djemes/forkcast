@@ -3,6 +3,7 @@ package app.forkcast.ui.today
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -71,22 +72,23 @@ class TodayScreenTest {
         compose.onNodeWithText("251 kcal").assertIsDisplayed()
     }
 
-    /** Added back: the ring names the exercise in what's left; the Activity card shows steps, workouts and the bonus. */
-    @Test fun addedBackExerciseShowsInRingAndActivityCard() {
+    /** Activity above usual: the ring names it in what's left; the Activity card shows steps, workouts, usual and the bonus. */
+    @Test fun activityBonusShowsInRingAndActivityCard() {
         val run = app.forkcast.core.model.ExerciseSession("s", null, 56, 0, 40 * 60_000L, 310.0)
         val day = app.forkcast.core.model.ActivityDay(today, 8200, 400.0, 2650.0, 40, listOf(run))
         val withExercise = state.copy(
             totals = DayMath.totals(entries, targets.budgetKcal, 200.0),
-            activity = ActivitySummary(true, true, day, app.forkcast.core.model.ExerciseMode.ADDED_BACK, 50, 200.0),
+            activity = ActivitySummary(true, true, day, app.forkcast.core.domain.ActivityBonus(400.0, 300.0, 28, 100.0, 200.0, true)),
         )
         compose.setContent { ForkcastTheme { TodayScreen(withExercise, onEvent = {}) } }
         // Energy amounts use a thin space before the unit.
-        compose.onNodeWithContentDescription("including 200 kcal from exercise. 2,239 kcal left", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("including 200 kcal from activity. 2,239 kcal left", substring = true).assertIsDisplayed()
         compose.onNodeWithContentDescription("2,039 kcal left", substring = true).assertDoesNotExist()
-        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("added to this day", substring = true))
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("toward this day", substring = true))
         compose.onNodeWithText("8,200 steps · 400 kcal active").assertExists()
         compose.onNodeWithText("Run · 40 min · 310 kcal").assertExists()
-        compose.onNodeWithText("+200 kcal added to this day's budget (50 % of active calories)").assertIsDisplayed()
+        compose.onNodeWithText("+200 kcal toward this day's budget").assertIsDisplayed()
+        compose.onNodeWithText("Usual: 300 kcal active a day").assertExists()
     }
 
     @Test fun notConnectedActivityCardOffersHealthConnect() {
@@ -130,10 +132,16 @@ class TodayScreenTest {
 
     @Test fun arrowsSendDayEvents() {
         val events = mutableListOf<TodayEvent>()
-        compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = { events += it }) } }
+        // On a past day both arrows work; on today the next arrow is off (no future days).
+        compose.setContent { ForkcastTheme { TodayScreen(state.copy(date = today.minusDays(1)), onEvent = { events += it }) } }
         compose.onNodeWithContentDescription("Previous day").performClick()
         compose.onNodeWithContentDescription("Next day").performClick()
         assertThat(events).containsExactly(TodayEvent.PreviousDay, TodayEvent.NextDay).inOrder()
+    }
+
+    @Test fun noNextDayOnToday() {
+        compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = {}) } }
+        compose.onNodeWithContentDescription("Next day").assertIsNotEnabled()
     }
 
     @Test fun worksAtDoubleFontScale() {
