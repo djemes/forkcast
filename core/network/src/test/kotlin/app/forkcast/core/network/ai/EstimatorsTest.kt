@@ -155,6 +155,13 @@ class EstimatorsTest {
         assertThat(requests.size).isEqualTo(6)
     }
 
+    @Test fun longRetryAfterOnServerErrorIsNotWaitedOut() {
+        val c = ClaudeEstimator(http(HttpStatusCode.ServiceUnavailable, fixture("claude_500.json"), mapOf("retry-after" to "3600")), { "sk-test" }, "claude-haiku-5-5")
+        val err = kotlinx.coroutines.runBlocking { kotlinx.coroutines.withTimeout(20_000) { c.estimate(request("m")).exceptionOrNull() } }
+        assertThat(err).isInstanceOf(AiError.Server::class.java)
+        assertThat(requests).hasSize(2)
+    }
+
     @Test fun fencedJsonFromLocalServersParses() = runTest {
         val r = openAi(HttpStatusCode.OK, "openai_fenced_valid.json").estimate(request("gpt-test")).getOrThrow()
         assertThat(r.parsed.items).hasSize(3)

@@ -97,6 +97,21 @@ class FoodClientsTest {
         }
     }
 
+    /** USDA answers an exhausted key with Retry-After of hours; waiting it out stalled photo estimates. */
+    @Test fun usdaRateLimitFailsFastDespiteLongRetryAfter() {
+        val engine = MockEngine { req ->
+            requests += req
+            respond("""{"error":{"code":"OVER_RATE_LIMIT"}}""", HttpStatusCode.TooManyRequests, headersOf(HttpHeaders.RetryAfter, "14900"))
+        }
+        val usda = UsdaClient(HttpClientFactory.create("Forkcast/test", engine)) { null }
+        val started = System.nanoTime()
+        assertThrows(FoodApiError.RateLimited::class.java) {
+            kotlinx.coroutines.runBlocking { kotlinx.coroutines.withTimeout(30_000) { usda.searchGeneric("broccoli") } }
+        }
+        assertThat((System.nanoTime() - started) / 1_000_000).isLessThan(30_000L)
+        assertThat(requests).hasSize(3)
+    }
+
     @Test fun offProductMapsUnitsAndBrand() = runTest {
         val off = OffClient(client { HttpStatusCode.OK to fixture("off_product.json") })
         val nutella = off.product("03017624010701")!!

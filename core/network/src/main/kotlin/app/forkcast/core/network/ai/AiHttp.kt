@@ -32,7 +32,8 @@ object AiHttpClientFactory {
             maxRetries = 1
             retryIf { _, response -> response.status.value >= 500 }
             retryOnExceptionIf { _, cause -> cause is java.io.IOException && cause !is SocketTimeoutException }
-            constantDelay(millis = 1_500)
+            // A 503's Retry-After can be long; the chain and the worker's backoff handle waiting.
+            constantDelay(millis = 1_500, respectRetryAfterHeader = false)
         }
         defaultRequest { headers.append(HttpHeaders.UserAgent, userAgent) }
     }

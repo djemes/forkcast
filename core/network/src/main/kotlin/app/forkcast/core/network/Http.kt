@@ -21,8 +21,8 @@ val NetworkJson = Json {
 
 /**
  * The one HTTP client (SPEC §7): connect 10 s, request 15 s, retries with backoff for
- * 429/5xx and I/O errors only (never for 4xx auth errors). No request logging, so keys
- * in headers can never reach logs.
+ * 429/5xx and I/O errors only (never for 4xx auth errors), at most a few seconds apart
+ * whatever Retry-After says. No request logging, so keys in headers can never reach logs.
  */
 object HttpClientFactory {
     fun create(userAgent: String, engine: HttpClientEngine = OkHttp.create()): HttpClient = HttpClient(engine) {
@@ -37,7 +37,9 @@ object HttpClientFactory {
             maxRetries = 2
             retryIf { _, response -> response.status.value == 429 || response.status.value >= 500 }
             retryOnExceptionIf { _, cause -> cause is java.io.IOException }
-            exponentialDelay(base = 2.0, maxDelayMs = 8_000)
+            // Never wait out the server's Retry-After: USDA sends hours for an exhausted key, which
+            // stalled photo estimates in component matching (found on the emulator 2026-10-19).
+            exponentialDelay(base = 2.0, maxDelayMs = 8_000, respectRetryAfterHeader = false)
         }
         defaultRequest { headers.append(HttpHeaders.UserAgent, userAgent) }
     }
