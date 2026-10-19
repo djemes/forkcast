@@ -9,6 +9,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import app.forkcast.core.data.R
+import app.forkcast.core.data.backup.BackupRepository
+import app.forkcast.core.data.backup.RoomBackupRepository
 import app.forkcast.core.data.db.DefaultMealSlots
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.DayStatusDao
@@ -116,4 +118,7 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindWaterRepository(impl: RoomWaterRepository): WaterRepository
+
+    @Binds
+    abstract fun bindBackupRepository(impl: RoomBackupRepository): BackupRepository
 }
