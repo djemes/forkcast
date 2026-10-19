@@ -41,6 +41,12 @@ class SeedActivity : Activity() {
                 when (scenario) {
                     "history" -> client.insertRecords(history())
                     "today" -> client.insertRecords(today())
+                    // Activity bonus check: 28 usual days (~400 active), then a rest day, a normal day and a big workout today.
+                    "bonus" -> {
+                        listOf(StepsRecord::class, ActiveCaloriesBurnedRecord::class, ExerciseSessionRecord::class)
+                            .forEach { client.deleteRecords(it, TimeRangeFilter.after(Instant.EPOCH)) }
+                        client.insertRecords(bonus())
+                    }
                     "clear" -> listOf(
                         WeightRecord::class, BodyFatRecord::class, HeightRecord::class, StepsRecord::class,
                         ActiveCaloriesBurnedRecord::class, TotalCaloriesBurnedRecord::class, ExerciseSessionRecord::class,
@@ -84,6 +90,29 @@ class SeedActivity : Activity() {
         out += ExerciseSessionRecord(
             runStart, off(runStart), runEnd, off(runEnd), Metadata.manualEntry(),
             exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_RUNNING, title = "Evening run",
+        )
+        return out
+    }
+
+    private fun bonus(): List<Record> {
+        val today = LocalDate.now(zone)
+        val out = ArrayList<Record>()
+        fun day(d: Long, steps: Long, active: Double) {
+            val date = today.minusDays(d)
+            val start = at(date, 6)
+            val end = if (d == 0L) java.time.Instant.now().minusSeconds(60) else at(date, 22)
+            out += StepsRecord(start, off(start), end, off(end), steps, Metadata.manualEntry())
+            out += ActiveCaloriesBurnedRecord(start, off(start), end, off(end), Energy.kilocalories(active), Metadata.manualEntry())
+        }
+        for (d in 30L downTo 3L) day(d, 8000 + (d * 97) % 1500, 380.0 + (d * 13) % 40)
+        day(2, 2500, 150.0)   // no exercise
+        day(1, 8200, 405.0)   // a normal day
+        day(0, 16000, 950.0)  // big workout day
+        val runStart = at(today, 6, 30)
+        val runEnd = at(today, 7, 45)
+        out += ExerciseSessionRecord(
+            runStart, off(runStart), runEnd, off(runEnd), Metadata.manualEntry(),
+            exerciseType = ExerciseSessionRecord.EXERCISE_TYPE_RUNNING, title = "Long run",
         )
         return out
     }
