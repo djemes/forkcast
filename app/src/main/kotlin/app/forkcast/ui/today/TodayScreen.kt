@@ -346,6 +346,7 @@ fun TodayScreen(
                 logSheetMealId = null
                 onEvent(TodayEvent.AddRecent(food, mealId))
             },
+            dayLabel = if (state.isToday) null else shortDayLabel(state.date, state.today),
         )
     }
     quickAddMealId?.let { mealId ->

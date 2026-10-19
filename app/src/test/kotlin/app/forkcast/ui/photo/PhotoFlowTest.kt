@@ -1,6 +1,8 @@
 package app.forkcast.ui.photo
 
 import android.net.Uri
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -10,6 +12,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.unit.Density
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
@@ -169,5 +172,43 @@ class PhotoFlowTest {
         }
         assertThat(estimates.calls).containsExactly("correct:only ate half", "save").inOrder()
         assertThat(vm.state.first { it.loaded }.detail).isNull()
+    }
+
+    @Test fun reviewWorksAtDoubleFontScale() {
+        val estimate = FakeAiEstimateRepository.row("a1", TestData.TODAY, "l", EstimateStatus.DONE, kcal = 640.0)
+            .copy(result = MealEstimateJson(mealName = "Grilled chicken thigh with white rice and steamed broccoli"))
+        val detail = EstimateDetail(estimate, listOf(component("c1", "White rice, long-grain, steamed", 200.0, 260.0, hidden = false, usda = true)))
+        val events = mutableListOf<ReviewEvent>()
+        compose.setContent {
+            val d = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(d.density, fontScale = 2f)) {
+                ForkcastTheme { ReviewScreen(ReviewUiState(loaded = true, detail = detail, units = UnitPrefs.METRIC), { events += it }, {}) }
+            }
+        }
+        // The kcal and the controls stay reachable; long names wrap instead of pushing them out.
+        compose.onNodeWithText("260", substring = true).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("More White rice, long-grain, steamed").performScrollTo().performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.SetGrams("c1", 205.0))
+        compose.onNodeWithText("Save").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test fun captureStepKeepsShutterGalleryAndNextAtDoubleFontScale() {
+        compose.setContent {
+            val d = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(d.density, fontScale = 2f)) {
+                ForkcastTheme {
+                    PhotoMealScreen(
+                        state = PhotoMealUiState(loaded = true, step = PhotoStep.CAPTURE, photos = listOf(photo, photo), mealSlotId = "l", slots = FakeMealSlotRepository.DEFAULT, hasProfile = true),
+                        onEvent = {},
+                        onBack = {},
+                        onOpenAiSettings = {},
+                    )
+                }
+            }
+        }
+        compose.onNodeWithContentDescription("Take photo").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Choose from gallery").assertIsDisplayed()
+        compose.onNodeWithText("Next").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Remove photo 2").assertIsDisplayed()
     }
 }

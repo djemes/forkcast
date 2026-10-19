@@ -69,6 +69,8 @@ fun LogSheet(
     recents: List<Food> = emptyList(),
     f: UnitFormatter? = null,
     onAddRecent: (Food) -> Unit = {},
+    /** Set when the day on screen isn't today ("Yesterday"), so it's clear where the entry goes. */
+    dayLabel: String? = null,
 ) {
     val selected = meals.firstOrNull { it.id == selectedMealId } ?: meals.firstOrNull()
     ModalBottomSheet(
@@ -86,6 +88,14 @@ fun LogSheet(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.padding(horizontal = 16.dp),
             )
+            if (dayLabel != null) {
+                Text(
+                    stringResource(R.string.log_sheet_day, dayLabel),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.tertiary,
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                )
+            }
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier

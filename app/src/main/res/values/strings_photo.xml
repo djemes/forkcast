@@ -53,6 +53,10 @@
     <string name="review_send">Send</string>
     <string name="review_save">Save</string>
     <string name="review_delete">Delete estimate</string>
+    <string name="review_delete_title">Delete this estimate?</string>
+    <string name="review_delete_body">Its photos and its entry in the log are removed.</string>
+    <string name="review_photo_open">Open photo</string>
+    <string name="review_photo_close">Close photo</string>
     <string name="review_retry">Try again</string>
     <string name="review_warnings">Adjusted: %1$s</string>
     <string name="review_photo">Meal photo %1$d</string>

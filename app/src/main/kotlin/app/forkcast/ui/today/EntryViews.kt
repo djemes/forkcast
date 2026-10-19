@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -38,6 +38,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -47,10 +48,10 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
-import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.model.kcal
 import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.onboarding.NumberField
@@ -198,15 +199,24 @@ fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit
         EstimateStatus.FAILED -> stringResource(R.string.estimate_failed)
     }
     val working = p.status == EstimateStatus.RUNNING || (p.status == EstimateStatus.PENDING && p.retryAfter == null && p.errorCode == null)
+    // Same shape as an entry row (DESIGN.md §5): rounded surface, 52 dp min, 12 dp sides.
     Column(
         Modifier
             .fillMaxWidth()
-            .heightIn(min = 56.dp)
+            .clip(RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerLow)
             .clickable(onClick = onClick)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
+            .heightIn(min = 52.dp)
+            .padding(horizontal = 12.dp, vertical = 6.dp),
+        verticalArrangement = Arrangement.Center,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Icon(painterResource(R.drawable.ic_photo_camera), contentDescription = null, modifier = Modifier.size(18.dp))
+            Icon(
+                painterResource(if (p.status == EstimateStatus.FAILED) R.drawable.ic_error else R.drawable.ic_photo_camera),
+                contentDescription = null,
+                tint = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(20.dp),
+            )
             Text(
                 text,
                 style = MaterialTheme.typography.bodyLarge,
@@ -215,7 +225,7 @@ fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit
             )
             SourceBadge(FoodSource.AI, needsReview = true)
         }
-        if (working) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp))
+        if (working) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp, start = 28.dp))
     }
 }
 

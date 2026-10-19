@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -53,8 +55,10 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
@@ -153,17 +157,25 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
                 Button(onClick = request) { Text(stringResource(R.string.photo_allow_camera)) }
             }
         }
-        Column(Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp)) {
+        // Top: back + framing hint on a scrim, so the text reads over a bright plate.
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(
                     onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Black.copy(alpha = 0.4f), contentColor = Color.White),
+                    colors = IconButtonDefaults.iconButtonColors(containerColor = SCRIM, contentColor = Color.White),
                 ) { Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back)) }
                 Text(
                     stringResource(R.string.photo_framing_hint),
                     color = Color.White,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(horizontal = 8.dp),
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier
+                        .padding(start = 8.dp)
+                        .weight(1f, fill = false)
+                        .background(SCRIM, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 )
             }
             if (state.firstIsFreeTier) {
@@ -172,61 +184,96 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
                     color = Color.White,
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
-                        .padding(start = 56.dp, end = 8.dp)
-                        .background(Color.Black.copy(alpha = 0.4f), RoundedCornerShape(8.dp))
-                        .padding(8.dp),
+                        .padding(start = 56.dp)
+                        .background(SCRIM, RoundedCornerShape(12.dp))
+                        .padding(horizontal = 12.dp, vertical = 8.dp),
                 )
             }
         }
+        // Bottom: thumbnails, then three equal zones (gallery · shutter · next) so the shutter
+        // stays centered and full size at any font scale.
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
                 .navigationBarsPadding()
                 .padding(16.dp),
         ) {
-            Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) })
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(onClick = openGallery, enabled = state.canAddPhoto) {
-                    Icon(painterResource(R.drawable.ic_photo_library), contentDescription = null)
-                    Text(stringResource(R.string.photo_gallery), modifier = Modifier.padding(start = 8.dp))
+                Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, modifier = Modifier.weight(1f, fill = false))
+                Text(
+                    stringResource(R.string.photo_count, state.photos.size),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+                    OutlinedIconButton(onClick = openGallery, enabled = state.canAddPhoto, modifier = Modifier.size(56.dp)) {
+                        Icon(painterResource(R.drawable.ic_photo_library), stringResource(R.string.photo_gallery))
+                    }
                 }
-                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
-                    FilledIconButton(
-                        onClick = ::shoot,
-                        enabled = granted && state.canAddPhoto && !busy,
-                        modifier = Modifier.size(72.dp),
-                        shape = CircleShape,
-                    ) { Icon(painterResource(R.drawable.ic_photo_camera), stringResource(R.string.photo_shutter), Modifier.size(32.dp)) }
-                }
-                Button(onClick = { onEvent(PhotoMealEvent.Next) }, enabled = state.photos.isNotEmpty()) {
-                    Text(stringResource(R.string.photo_next))
+                FilledIconButton(
+                    onClick = ::shoot,
+                    enabled = granted && state.canAddPhoto && !busy,
+                    modifier = Modifier.size(72.dp),
+                    shape = CircleShape,
+                ) { Icon(painterResource(R.drawable.ic_photo_camera), stringResource(R.string.photo_shutter), Modifier.size(32.dp)) }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
+                    Button(onClick = { onEvent(PhotoMealEvent.Next) }, enabled = state.photos.isNotEmpty(), modifier = Modifier.heightIn(min = 48.dp)) {
+                        Text(stringResource(R.string.photo_next), maxLines = 1)
+                    }
                 }
             }
-            Text(stringResource(R.string.photo_count, state.photos.size), style = MaterialTheme.typography.bodySmall)
         }
     }
 }
 
+/** Translucent black behind text and buttons over the camera image. */
+private val SCRIM = Color.Black.copy(alpha = 0.55f)
+
+/**
+ * Photo thumbnails, all the same size and square-cropped. The remove control is a small badge on
+ * the corner (24 dp to see, 48 dp to touch) so it never covers the photo.
+ */
 @Composable
-private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit) {
+private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit, modifier: Modifier = Modifier, size: Dp = 64.dp) {
     if (photos.isEmpty()) return
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) {
         photos.forEachIndexed { i, uri ->
-            Box {
+            // Room above and right of the image for the badge's touch area.
+            Box(Modifier.size(size + 20.dp)) {
                 AsyncImage(
                     model = uri,
                     contentDescription = stringResource(R.string.review_photo, i + 1),
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.size(72.dp).clip(RoundedCornerShape(8.dp)),
+                    modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .size(size)
+                        .clip(RoundedCornerShape(12.dp)),
                 )
-                IconButton(
-                    onClick = { onRemove(i) },
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = Color.Black.copy(alpha = 0.5f), contentColor = Color.White),
-                    modifier = Modifier.align(Alignment.TopEnd).size(48.dp).padding(8.dp),
-                ) { Icon(painterResource(R.drawable.ic_close), stringResource(R.string.photo_remove, i + 1), Modifier.size(16.dp)) }
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .size(48.dp)
+                        .clip(CircleShape)
+                        .clickable(role = Role.Button) { onRemove(i) },
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier.size(24.dp).background(MaterialTheme.colorScheme.inverseSurface, CircleShape),
+                    ) {
+                        Icon(
+                            painterResource(R.drawable.ic_close),
+                            stringResource(R.string.photo_remove, i + 1),
+                            tint = MaterialTheme.colorScheme.inverseOnSurface,
+                            modifier = Modifier.size(16.dp),
+                        )
+                    }
+                }
             }
         }
     }
@@ -259,7 +306,7 @@ private fun DetailsStep(
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) })
+            Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = 88.dp)
             OutlinedTextField(
                 value = state.description,
                 onValueChange = { onEvent(PhotoMealEvent.SetDescription(it)) },
@@ -282,7 +329,7 @@ private fun DetailsStep(
             when {
                 !state.aiEnabled -> Text(stringResource(R.string.photo_ai_off), color = MaterialTheme.colorScheme.error)
                 !state.hasProfile -> {
-                    Text(stringResource(R.string.photo_no_ai), color = MaterialTheme.colorScheme.error)
+                    Text(stringResource(R.string.photo_no_ai), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(onClick = onOpenAiSettings) { Text(stringResource(R.string.photo_open_ai_settings)) }
                 }
             }
