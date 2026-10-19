@@ -84,6 +84,10 @@ data class TodayActions(
     /** Opens the barcode scanner to log into [mealSlotId] on [date]. */
     val openScanner: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
     val openWeight: () -> Unit = {},
+    /** Opens the photo-meal camera for [mealSlotId] on [date]. */
+    val openPhoto: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
+    /** Opens the review screen of a photo estimate. */
+    val openEstimate: (estimateId: String) -> Unit = {},
 )
 
 @Composable
@@ -235,8 +239,15 @@ fun TodayScreen(
                         selection = day.selection,
                         onAdd = { logSheetMealId = meal.slot.id },
                         onEntryClick = { id ->
-                            if (day.isSelecting) onEvent(TodayEvent.ToggleSelect(id)) else editingId = id
+                            val estimateId = meal.entries.firstOrNull { it.id == id }?.aiEstimateId
+                            when {
+                                day.isSelecting -> onEvent(TodayEvent.ToggleSelect(id))
+                                estimateId != null -> actions.openEstimate(estimateId)
+                                else -> editingId = id
+                            }
                         },
+                        unreviewed = day.unreviewedEstimateIds,
+                        onPendingClick = actions.openEstimate,
                         onEntryLongClick = { id -> onEvent(TodayEvent.ToggleSelect(id)) },
                         onDelete = { id -> onEvent(TodayEvent.Delete(listOf(id))) },
                         onCopyMeal = { copyRequest = CopyRequest(meal.entries.map { it.id }, allowSameMeal = true, from = day.date) },
@@ -269,6 +280,7 @@ fun TodayScreen(
             actions = LogSheetActions(
                 search = actions.openSearch?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 scan = actions.openScanner?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
+                photo = actions.openPhoto?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
                 savedMeals = { logSheetMealId = null; savedMealsFor = mealId },
             ),
@@ -465,6 +477,8 @@ private fun MealSectionView(
     dayHasEntries: Boolean = false,
     showSameAsYesterday: Boolean = false,
     onSameAsYesterday: () -> Unit = {},
+    unreviewed: Set<String> = emptySet(),
+    onPendingClick: (String) -> Unit = {},
 ) {
     val addDescription = stringResource(R.string.add_to_meal_description, meal.slot.name)
     var menuOpen by remember { mutableStateOf(false) }
@@ -508,7 +522,7 @@ private fun MealSectionView(
                 }
             }
         }
-        if (meal.entries.isEmpty()) {
+        if (meal.entries.isEmpty() && meal.pending.isEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp)) {
                 Text(
                     text = stringResource(R.string.meal_empty),
@@ -531,8 +545,12 @@ private fun MealSectionView(
                     onClick = { onEntryClick(e.id) },
                     onLongClick = { onEntryLongClick(e.id) },
                     onDelete = { onDelete(e.id) },
+                    needsReview = e.aiEstimateId != null && e.aiEstimateId in unreviewed,
                 )
             }
+        }
+        meal.pending.forEach { p ->
+            androidx.compose.runtime.key(p.id) { PendingEstimateRow(p, f) { onPendingClick(p.id) } }
         }
     }
 }

@@ -56,6 +56,9 @@ interface AiDao {
     @Query("SELECT * FROM ai_component WHERE estimateId = :estimateId AND deletedAt IS NULL ORDER BY sortOrder")
     suspend fun components(estimateId: String): List<AiComponentEntity>
 
+    @Query("SELECT * FROM ai_component WHERE id = :id")
+    suspend fun componentById(id: String): AiComponentEntity?
+
     @Upsert suspend fun upsertComponents(c: List<AiComponentEntity>)
 
     @Query("UPDATE ai_component SET deletedAt = :now, updatedAt = :now WHERE estimateId = :estimateId AND deletedAt IS NULL")

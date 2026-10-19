@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Photo meal (SPEC §4.6, DESIGN.md §4) -->
+    <string name="photo_meal_title">Photo meal</string>
+    <string name="photo_framing_hint">Fit the whole plate. A fork or hand helps with size.</string>
+    <string name="photo_free_tier_hint">Google may review free-tier photos. Keep faces and documents out of the frame.</string>
+    <string name="photo_shutter">Take photo</string>
+    <string name="photo_gallery">Choose from gallery</string>
+    <string name="photo_remove">Remove photo %1$d</string>
+    <string name="photo_count">%1$d of 3 photos</string>
+    <string name="photo_next">Next</string>
+    <string name="photo_camera_needed">Forkcast needs the camera to photograph your meal. You can also pick photos from your gallery.</string>
+    <string name="photo_allow_camera">Allow camera</string>
+    <string name="photo_description">What\'s on the plate? (optional)</string>
+    <string name="photo_description_hint">chicken thigh, ~1.5 cups white rice, cooked in olive oil</string>
+    <string name="photo_meal_label">Meal</string>
+    <string name="photo_estimate">Estimate</string>
+    <string name="photo_no_ai">Set up an AI profile first, then photos can be estimated.</string>
+    <string name="photo_open_ai_settings">Open AI settings</string>
+    <string name="photo_ai_off">Photo estimates are turned off in Settings → AI.</string>
+    <string name="photo_estimating_in">Estimating in %1$s…</string>
+
+    <!-- Pending rows on Today -->
+    <string name="estimate_running">Estimating…</string>
+    <string name="estimate_waiting_network">Waiting for a connection</string>
+    <string name="estimate_waiting_quota">Waiting for AI quota (resets %1$s)</string>
+    <string name="estimate_needs_answer">The AI has a question. Tap to answer.</string>
+    <string name="estimate_ready_review">Ready to review: ~%1$s</string>
+    <string name="estimate_failed">Couldn\'t estimate. Tap for details.</string>
+    <string name="badge_ai_review">AI·review</string>
+
+    <!-- Review screen -->
+    <string name="review_title">Review estimate</string>
+    <string name="review_total">~%1$s, likely %2$s–%3$s</string>
+    <string name="review_by">Estimated by %1$s</string>
+    <string name="review_likely_added">Likely added</string>
+    <string name="review_remove_added">Remove all</string>
+    <string name="review_matched">USDA: %1$s</string>
+    <string name="review_ai_values">AI values</string>
+    <string name="review_use_usda">Use USDA values</string>
+    <string name="review_use_ai">Use AI values</string>
+    <string name="review_grams">%1$s g</string>
+    <string name="review_less">Less %1$s</string>
+    <string name="review_more">More %1$s</string>
+    <string name="review_grams_slider">Amount of %1$s</string>
+    <string name="review_remove_item">Remove %1$s</string>
+    <string name="review_assumptions">Assumptions</string>
+    <string name="review_question">The AI asks: %1$s</string>
+    <string name="review_accept_as_is">Log as is</string>
+    <string name="review_correct">Correct it</string>
+    <string name="review_correct_hint">e.g. it was fried in butter, or I only ate half</string>
+    <string name="review_answer_hint">Your answer</string>
+    <string name="review_send">Send</string>
+    <string name="review_save">Save</string>
+    <string name="review_delete">Delete estimate</string>
+    <string name="review_retry">Try again</string>
+    <string name="review_warnings">Adjusted: %1$s</string>
+    <string name="review_photo">Meal photo %1$d</string>
+    <string name="review_running">The AI is working on it. You can leave this screen.</string>
+    <string name="review_no_profile">No AI profile could be used. Check Settings → AI.</string>
+    <string name="review_disabled">Photo estimates are turned off in Settings → AI.</string>
+</resources>

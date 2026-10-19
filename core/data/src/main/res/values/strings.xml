@@ -5,4 +5,21 @@
     <string name="meal_lunch">Lunch</string>
     <string name="meal_dinner">Dinner</string>
     <string name="meal_snacks">Snacks</string>
+
+    <!-- Notification channels (SPEC §4.8). Users can tune each one in system settings too. -->
+    <string name="channel_budget">Budget thresholds</string>
+    <string name="channel_evening">Evening outlook</string>
+    <string name="channel_protein">Protein check</string>
+    <string name="channel_meal_reminder">Meal reminders</string>
+    <string name="channel_weigh_in">Weigh-in reminder</string>
+    <string name="channel_estimate_ready">Estimate ready</string>
+    <string name="channel_backup_failed">Backup problems</string>
+    <string name="channel_working">Working in the background</string>
+    <string name="estimating_notification">Estimating your meal…</string>
+    <string name="photo_meal">Photo meal</string>
+    <!-- DESIGN.md §6: factual and kind. -->
+    <string name="estimate_ready_notification">%1$s estimated: ~%2$s kcal (%3$s–%4$s). Tap to review.</string>
+    <string name="estimate_question_notification">%1$s: the AI has a quick question before logging it. Tap to answer.</string>
+    <string name="estimate_failed_title">Photo estimate paused</string>
+    <string name="estimate_key_problem">An AI key was rejected. Check it in Settings → AI.</string>
 </resources>

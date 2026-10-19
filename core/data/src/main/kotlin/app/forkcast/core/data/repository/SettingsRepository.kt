@@ -3,6 +3,7 @@ package app.forkcast.core.data.repository
 import androidx.datastore.core.DataStore
 import app.forkcast.core.model.AiSettings
 import app.forkcast.core.model.AppSettings
+import app.forkcast.core.model.NotificationSettings
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.core.model.UnitPrefs
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,7 @@ interface SettingsRepository {
     suspend fun setUnits(units: UnitPrefs)
     suspend fun setWaterTargetMl(ml: Double?)
     suspend fun updateAi(transform: (AiSettings) -> AiSettings)
+    suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings)
 }
 
 @Singleton
@@ -43,5 +45,9 @@ class DataStoreSettingsRepository @Inject constructor(
 
     override suspend fun updateAi(transform: (AiSettings) -> AiSettings) {
         dataStore.updateData { it.copy(ai = transform(it.ai)) }
+    }
+
+    override suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings) {
+        dataStore.updateData { it.copy(notifications = transform(it.notifications)) }
     }
 }

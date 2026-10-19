@@ -38,6 +38,18 @@ class UsdaClient @Inject constructor(
         return parse<UsdaSearchResponse>(response).foods.mapNotNull { it.toFood() }
     }
 
+    /** Generic foods for AI component matching (SPEC §4.6.1), each with its FDC data type. */
+    suspend fun searchGeneric(query: String, pageSize: Int = 10): List<UsdaHit> {
+        val response = call {
+            http.post("$BASE/foods/search") {
+                header(KEY_HEADER, key())
+                contentType(ContentType.Application.Json)
+                setBody(UsdaSearchRequest(query, GENERIC_TYPES, pageSize))
+            }
+        }
+        return parse<UsdaSearchResponse>(response).foods.mapNotNull { f -> f.toFood()?.let { UsdaHit(it, f.dataType) } }
+    }
+
     /** Full record with portions; better data than the search row (no duplicate nutrients). */
     suspend fun food(fdcId: String): Food? {
         val response = call { http.get("$BASE/food/$fdcId") { header(KEY_HEADER, key()) } }
@@ -78,8 +90,12 @@ class UsdaClient @Inject constructor(
         const val DEMO_KEY = "DEMO_KEY"
         private const val KEY_HEADER = "X-Api-Key"
         val ALL_TYPES = listOf("Foundation", "SR Legacy", "Survey (FNDDS)", "Branded")
+        val GENERIC_TYPES = listOf("Foundation", "SR Legacy", "Survey (FNDDS)")
     }
 }
+
+/** A search result with its FDC data type ("Foundation", "SR Legacy", "Survey (FNDDS)", "Branded"). */
+data class UsdaHit(val food: Food, val dataType: String?)
 
 @Serializable
 private data class UsdaSearchRequest(

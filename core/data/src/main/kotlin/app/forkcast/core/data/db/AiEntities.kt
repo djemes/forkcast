@@ -72,6 +72,8 @@ data class AiEstimateEntity(
     val retryAfter: Long?,
     /** The "Estimate ready" notification was posted (or not needed). */
     val notified: Boolean,
+    /** When the user saved the review screen; until then the entry shows "AI·review". */
+    val reviewedAt: Long?,
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,

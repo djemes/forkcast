@@ -11,6 +11,30 @@ data class AppSettings(
     /** Daily water goal in ml; null = default by sex (SPEC §4.9). */
     val waterTargetMl: Double? = null,
     val ai: AiSettings = AiSettings(),
+    val notifications: NotificationSettings = NotificationSettings(),
+)
+
+/** Settings › Notifications (SPEC §4.8). Times are minutes after local midnight. */
+@Serializable
+data class NotificationSettings(
+    /** POST_NOTIFICATIONS was requested once, in context; never ask on launch. */
+    val permissionAsked: Boolean = false,
+    val budgetEnabled: Boolean = true,
+    /** Percent of the day's budget; each fires at most once per day. */
+    val budgetThresholds: List<Int> = listOf(80, 100),
+    val eveningEnabled: Boolean = false,
+    val eveningMinute: Int = 16 * 60 + 30,
+    val proteinEnabled: Boolean = false,
+    val proteinMinute: Int = 17 * 60,
+    val mealRemindersEnabled: Boolean = true,
+    /** Meal slot id → reminder time. Empty = defaults (Lunch 13:30, Dinner 20:00, matched by name). */
+    val mealReminderMinutes: Map<String, Int> = emptyMap(),
+    val weighInEnabled: Boolean = true,
+    val weighInMinute: Int = 7 * 60 + 30,
+    val estimateReadyEnabled: Boolean = true,
+    val backupFailedEnabled: Boolean = true,
+    val quietStartMinute: Int = 22 * 60,
+    val quietEndMinute: Int = 7 * 60,
 )
 
 /** Settings › AI (SPEC §4.7). Profiles live in the database; keys in the encrypted store. */

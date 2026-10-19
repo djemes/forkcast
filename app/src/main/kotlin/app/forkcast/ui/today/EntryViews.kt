@@ -3,6 +3,7 @@ package app.forkcast.ui.today
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -48,6 +50,7 @@ import app.forkcast.R
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
+import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.model.kcal
 import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.onboarding.NumberField
@@ -66,12 +69,12 @@ fun sourceBadge(source: FoodSource): String = stringResource(
     },
 )
 
-/** Tiny textual source badge (DESIGN.md §5). */
+/** Tiny textual source badge (DESIGN.md §5). An unreviewed AI entry reads "AI·review" (apricot outline). */
 @Composable
-fun SourceBadge(source: FoodSource) {
-    val outline = if (source == FoodSource.AI) ForkcastTheme.colors.apricot else MaterialTheme.colorScheme.outlineVariant
+fun SourceBadge(source: FoodSource, needsReview: Boolean = false) {
+    val outline = if (source == FoodSource.AI && needsReview) ForkcastTheme.colors.apricot else MaterialTheme.colorScheme.outlineVariant
     Text(
-        sourceBadge(source),
+        if (source == FoodSource.AI && needsReview) stringResource(R.string.badge_ai_review) else sourceBadge(source),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
@@ -106,6 +109,7 @@ fun EntryRow(
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     onDelete: () -> Unit,
+    needsReview: Boolean = false,
 ) {
     val dismiss = rememberSwipeToDismissBoxState()
     val deleteLabel = stringResource(R.string.action_delete)
@@ -166,7 +170,7 @@ fun EntryRow(
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f, fill = false),
                     )
-                    SourceBadge(entry.source)
+                    SourceBadge(entry.source, needsReview)
                 }
             }
             // kcal is never truncated (DESIGN.md §5).
@@ -174,6 +178,50 @@ fun EntryRow(
         }
     }
 }
+
+/**
+ * A photo estimate that isn't a log entry yet (DESIGN.md §5): an indeterminate progress line
+ * while it runs, otherwise one line saying what it's waiting for. Tap opens the review screen.
+ */
+@Composable
+fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit) {
+    val text = when (p.status) {
+        EstimateStatus.PENDING -> when {
+            p.retryAfter != null && p.retryAfter > System.currentTimeMillis() ->
+                stringResource(R.string.estimate_waiting_quota, timeOf(p.retryAfter))
+            p.errorCode == "Network" -> stringResource(R.string.estimate_waiting_network)
+            else -> stringResource(R.string.estimate_running)
+        }
+        EstimateStatus.RUNNING -> stringResource(R.string.estimate_running)
+        EstimateStatus.NEEDS_INPUT -> stringResource(R.string.estimate_needs_answer)
+        EstimateStatus.DONE -> stringResource(R.string.estimate_ready_review, f.energy(p.kcalExpected ?: 0.0))
+        EstimateStatus.FAILED -> stringResource(R.string.estimate_failed)
+    }
+    val working = p.status == EstimateStatus.RUNNING || (p.status == EstimateStatus.PENDING && p.retryAfter == null && p.errorCode == null)
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .clickable(onClick = onClick)
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Icon(painterResource(R.drawable.ic_photo_camera), contentDescription = null, modifier = Modifier.size(18.dp))
+            Text(
+                text,
+                style = MaterialTheme.typography.bodyLarge,
+                color = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.weight(1f),
+            )
+            SourceBadge(FoodSource.AI, needsReview = true)
+        }
+        if (working) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp))
+    }
+}
+
+private fun timeOf(epochMs: Long): String =
+    java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
+        .format(java.time.Instant.ofEpochMilli(epochMs).atZone(java.time.ZoneId.systemDefault()))
 
 /** Change the amount or meal of a logged entry. Nutrients rescale from the entry's own snapshot. */
 @OptIn(ExperimentalMaterial3Api::class)

@@ -3,6 +3,8 @@ package app.forkcast.ui.today
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.core.data.repository.FoodRepository
+import app.forkcast.core.data.ai.AiEstimateRepository
+import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.ProfileRepository
@@ -50,7 +52,23 @@ import java.time.LocalTime
 import java.util.Locale
 import javax.inject.Inject
 
-data class MealSection(val slot: MealSlot, val entries: List<LogEntry>, val kcal: Double)
+data class MealSection(
+    val slot: MealSlot,
+    val entries: List<LogEntry>,
+    val kcal: Double,
+    /** Photo estimates in this meal that aren't logged yet (running, waiting, question, failed, or awaiting review). */
+    val pending: List<PendingEstimate> = emptyList(),
+)
+
+/** A photo estimate shown as its own row until it becomes a log entry (SPEC §4.6 step 4). */
+data class PendingEstimate(
+    val id: String,
+    val status: EstimateStatus,
+    val kcalExpected: Double?,
+    /** Waiting for quota until then (epoch ms). */
+    val retryAfter: Long?,
+    val errorCode: String?,
+)
 
 data class WaterSummary(
     val ml: Double = 0.0,
@@ -81,6 +99,8 @@ data class TodayUiState(
     val yesterdayMealIds: Set<String> = emptySet(),
     val water: WaterSummary = WaterSummary(),
     val weight: WeightSummary? = null,
+    /** Estimates logged by auto-accept and not reviewed yet: their entries show "AI·review". */
+    val unreviewedEstimateIds: Set<String> = emptySet(),
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -129,6 +149,7 @@ class TodayViewModel @Inject constructor(
     private val waterRepository: WaterRepository,
     weightRepository: WeightRepository,
     settingsRepository: SettingsRepository,
+    estimateRepository: AiEstimateRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -155,6 +176,8 @@ class TodayViewModel @Inject constructor(
         profileRepository.profile,
     ) { water, weights, profile -> Triple(water, weights, profile) }
 
+    private val dayEstimates = selectedDate.flatMapLatest { estimateRepository.observeDay(it) }
+
     private data class Extras(
         val targets: DailyTargets?,
         val settings: AppSettings,
@@ -167,10 +190,15 @@ class TodayViewModel @Inject constructor(
         mealSlotRepository.observeMealSlots(),
         selectedDate,
         dayEntries,
-        combine(extras, bodyAndWater) { x, b -> x to b },
+        combine(extras, bodyAndWater, dayEstimates) { x, b, est -> Triple(x, b, est) },
         selection,
-    ) { slots, date, entries, (x, body), selected ->
+    ) { slots, date, entries, (x, body, estimates), selected ->
         val (water, weights, profile) = body
+        val loggedIds = entries.map { it.id }.toSet()
+        // Once logged, an estimate is its entry (deleting the entry hides it; Undo brings it back).
+        val pending = estimates
+            .filter { it.logEntryId == null }
+            .map { PendingEstimate(it.id, it.status, it.kcalExpected, it.retryAfter, it.errorCode) to it.mealSlotId }
         val targets = x.targets
         val units = x.settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
         val now = LocalTime.now(clock)
@@ -179,7 +207,7 @@ class TodayViewModel @Inject constructor(
             today = LocalDate.now(clock),
             meals = slots.map { slot ->
                 val list = entries.filter { it.mealSlotId == slot.id }
-                MealSection(slot, list, DayMath.mealKcal(entries, slot.id))
+                MealSection(slot, list, DayMath.mealKcal(entries, slot.id), pending.filter { it.second == slot.id }.map { it.first })
             } + orphans(slots, entries),
             defaultMealId = MealSlotPicker.defaultFor(slots, now.hour * 60 + now.minute)?.id,
             units = units,
@@ -197,6 +225,7 @@ class TodayViewModel @Inject constructor(
                 lastEntryId = water.maxByOrNull { it.timestamp }?.id,
             ),
             weight = weightSummary(weights),
+            unreviewedEstimateIds = estimates.filter { it.logEntryId in loggedIds && it.reviewedAt == null }.map { it.id }.toSet(),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

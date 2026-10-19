@@ -72,8 +72,10 @@ data class EstimatedNutrients(
     @SerialName("sat_fat_g") val satFatG: Double? = null,
     @SerialName("sodium_mg") val sodiumMg: Double? = null,
 ) {
+    // `this@EstimatedNutrients`: inside buildMap the receiver is itself a Nutrients map, whose
+    // `kcal` extension would otherwise shadow this class's property.
     fun toNutrients(): Nutrients = buildMap {
-        put(NutrientKey.ENERGY_KCAL, kcal)
+        put(NutrientKey.ENERGY_KCAL, this@EstimatedNutrients.kcal)
         put(NutrientKey.PROTEIN_G, proteinG)
         put(NutrientKey.CARBS_G, carbsG)
         put(NutrientKey.FAT_G, fatG)
