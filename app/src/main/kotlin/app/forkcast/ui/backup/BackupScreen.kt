@@ -45,9 +45,25 @@ import java.time.format.FormatStyle
 
 /** Settings → Backup & data (SPEC §4.11). */
 @Composable
-fun BackupRoute(onBack: () -> Unit, viewModel: BackupViewModel = hiltViewModel()) {
+fun BackupRoute(
+    onBack: () -> Unit,
+    viewModel: BackupViewModel = hiltViewModel(),
+    transfer: SettingsTransferViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val transferState by transfer.state.collectAsStateWithLifecycle()
     val onEvent = viewModel::onEvent
+
+    val exportZip = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.ZIP.mimeType)) { uri ->
+        uri?.let { onEvent(BackupEvent.Export(ExportKind.ZIP, it)) }
+    }
+    val exportSettings = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
+        transfer.export(uri)
+    }
+    val importSettings = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> transfer.picked(uri) }
+    LaunchedEffect(transferState.step) {
+        if (transferState.step == SettingsTransferStep.PickExportFile) exportSettings.launch(transfer.suggestedName())
+    }
 
     val exportJson = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.JSON.mimeType)) { uri ->
         uri?.let { onEvent(BackupEvent.Export(ExportKind.JSON, it)) }
@@ -67,13 +83,26 @@ fun BackupRoute(onBack: () -> Unit, viewModel: BackupViewModel = hiltViewModel()
         onEvent = onEvent,
         actions = BackupActions(
             exportJson = { exportJson.launch(viewModel.suggestedName(ExportKind.JSON)) },
+            exportZip = { exportZip.launch(viewModel.suggestedName(ExportKind.ZIP)) },
             exportFoodLog = { exportFoodLog.launch(viewModel.suggestedName(ExportKind.FOOD_LOG_CSV)) },
             exportWeights = { exportWeights.launch(viewModel.suggestedName(ExportKind.WEIGHTS_CSV)) },
             // Some file managers label .json as octet-stream or plain text.
-            import = { open.launch(arrayOf("application/json", "application/octet-stream", "text/plain")) },
+            import = { open.launch(arrayOf("application/json", "application/zip", "application/octet-stream", "text/plain")) },
         ),
         onBack = onBack,
+        settingsSection = {
+            SettingsTransferSection(
+                busy = state.busy || transferState.busy,
+                onExport = transfer::startExport,
+                onImport = { importSettings.launch(arrayOf("application/octet-stream", "*/*")) },
+            )
+        },
+        extraNotice = transferState.notice,
+        onExtraNoticeShown = transfer::noticeShown,
     )
+    transferState.step?.let { step ->
+        SettingsTransferDialogs(step, transfer::setExportPassphrase, transfer::unlock, transfer::apply, transfer::dismiss)
+    }
 }
 
 /** System file pickers, launched from the route so the screen stays previewable and testable. */
@@ -82,12 +111,27 @@ data class BackupActions(
     val exportFoodLog: () -> Unit,
     val exportWeights: () -> Unit,
     val import: () -> Unit,
+    /** Last, with a default, so existing positional callers keep working. */
+    val exportZip: () -> Unit = {},
 )
 
 @Composable
-fun BackupScreen(state: BackupUiState, onEvent: (BackupEvent) -> Unit, actions: BackupActions, onBack: () -> Unit) {
+fun BackupScreen(
+    state: BackupUiState,
+    onEvent: (BackupEvent) -> Unit,
+    actions: BackupActions,
+    onBack: () -> Unit,
+    settingsSection: @Composable () -> Unit = {},
+    extraNotice: Int? = null,
+    onExtraNoticeShown: () -> Unit = {},
+) {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    LaunchedEffect(extraNotice) {
+        val notice = extraNotice ?: return@LaunchedEffect
+        onExtraNoticeShown()
+        snackbar.showSnackbar(resources.getString(notice))
+    }
     LaunchedEffect(state.notice) {
         val notice = state.notice ?: return@LaunchedEffect
         onEvent(BackupEvent.NoticeShown)
@@ -104,6 +148,7 @@ fun BackupScreen(state: BackupUiState, onEvent: (BackupEvent) -> Unit, actions: 
                 SectionTitle(R.string.backup_export_title)
                 Text(stringResource(R.string.backup_export_body), style = MaterialTheme.typography.bodyMedium)
                 Button(onClick = actions.exportJson, enabled = !state.busy) { Text(stringResource(R.string.backup_export_json)) }
+                OutlinedButton(onClick = actions.exportZip, enabled = !state.busy) { Text(stringResource(R.string.backup_export_zip)) }
 
                 SectionTitle(R.string.backup_csv_title)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -114,6 +159,8 @@ fun BackupScreen(state: BackupUiState, onEvent: (BackupEvent) -> Unit, actions: 
                 SectionTitle(R.string.backup_import_title, Modifier.padding(top = 16.dp))
                 Text(stringResource(R.string.backup_import_body), style = MaterialTheme.typography.bodyMedium)
                 Button(onClick = actions.import, enabled = !state.busy) { Text(stringResource(R.string.backup_import)) }
+
+                Column(Modifier.padding(top = 16.dp)) { settingsSection() }
 
                 if (state.hasSafetyBackup) {
                     Text(
@@ -229,6 +276,7 @@ private fun MessageDialog(title: String, body: String, onDismiss: () -> Unit) {
 private fun BackupNotice.message(): Int = when (this) {
     is BackupNotice.Exported -> when (kind) {
         ExportKind.JSON -> R.string.backup_saved_json
+        ExportKind.ZIP -> R.string.backup_saved_zip
         ExportKind.FOOD_LOG_CSV -> R.string.backup_saved_food_log
         ExportKind.WEIGHTS_CSV -> R.string.backup_saved_weights
     }

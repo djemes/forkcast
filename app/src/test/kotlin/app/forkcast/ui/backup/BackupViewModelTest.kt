@@ -36,7 +36,8 @@ class BackupViewModelTest {
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
     @After fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm() = BackupViewModel(backups, documents, clock)
+    private val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
+    private fun vm() = BackupViewModel(backups, documents, app.forkcast.core.data.backup.PhotoArchive(context, app.forkcast.core.data.ai.PhotoStore(context)), clock)
 
     @Test fun fileNamesUseLocalTime() {
         val vm = vm()

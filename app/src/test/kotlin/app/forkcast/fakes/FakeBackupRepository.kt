@@ -61,4 +61,16 @@ class FakeDocumentIo : DocumentIo {
     }
 
     override suspend fun readText(uri: Uri) = files[uri] ?: throw IOException("missing")
+
+    val writtenBytes = mutableMapOf<Uri, ByteArray>()
+
+    override suspend fun writeStream(uri: Uri, block: suspend (java.io.OutputStream) -> Unit) {
+        if (failWrites) throw IOException("read-only")
+        val out = java.io.ByteArrayOutputStream()
+        block(out)
+        writtenBytes[uri] = out.toByteArray()
+    }
+
+    override suspend fun <T> readStream(uri: Uri, block: suspend (java.io.InputStream) -> T): T =
+        block((files[uri] ?: throw IOException("missing")).byteInputStream())
 }

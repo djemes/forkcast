@@ -11,12 +11,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.IOException
+import java.io.InputStream
+import java.io.OutputStream
 import javax.inject.Inject
 
 /** Reads and writes files the user picked with the system file picker (Storage Access Framework). */
 interface DocumentIo {
     suspend fun writeText(uri: Uri, text: String)
     suspend fun readText(uri: Uri): String
+    /** For large or binary files (the photo .zip). */
+    suspend fun writeStream(uri: Uri, block: suspend (OutputStream) -> Unit)
+    suspend fun <T> readStream(uri: Uri, block: suspend (InputStream) -> T): T
 }
 
 class ContentResolverDocumentIo @Inject constructor(
@@ -27,6 +32,16 @@ class ContentResolverDocumentIo @Inject constructor(
         // "wt" truncates, so re-using an existing file never leaves old bytes at the end.
         val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IOException("No output stream")
         out.bufferedWriter(Charsets.UTF_8).use { it.write(text) }
+    }
+
+    override suspend fun writeStream(uri: Uri, block: suspend (OutputStream) -> Unit) = withContext(Dispatchers.IO) {
+        val out = context.contentResolver.openOutputStream(uri, "wt") ?: throw IOException("No output stream")
+        out.use { block(it) }
+    }
+
+    override suspend fun <T> readStream(uri: Uri, block: suspend (InputStream) -> T): T = withContext(Dispatchers.IO) {
+        val input = context.contentResolver.openInputStream(uri) ?: throw IOException("No input stream")
+        input.use { block(it) }
     }
 
     override suspend fun readText(uri: Uri): String = withContext(Dispatchers.IO) {
