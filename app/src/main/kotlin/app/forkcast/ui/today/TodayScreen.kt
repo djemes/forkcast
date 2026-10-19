@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -197,6 +198,7 @@ fun TodayScreen(
     // Horizontal drag offset while swiping between days: the page follows the finger a little.
     var dragX by remember { mutableFloatStateOf(0f) }
     val dragScope = rememberCoroutineScope()
+    val canGoForward = rememberUpdatedState(state.date < state.today)
 
     Scaffold(
         topBar = {
@@ -253,7 +255,8 @@ fun TodayScreen(
                         },
                         onDragEnd = {
                             val fling = abs(velocity.calculateVelocity().x) > DAY_FLING_VELOCITY && abs(total) > threshold / 3
-                            if (abs(total) > threshold || fling) {
+                            val blocked = total < 0 && !canGoForward.value
+                            if (!blocked && (abs(total) > threshold || fling)) {
                                 dragX = 0f
                                 currentOnEvent(if (total < 0) TodayEvent.NextDay else TodayEvent.PreviousDay)
                             } else {
@@ -264,7 +267,8 @@ fun TodayScreen(
                     ) { change, dx ->
                         total += dx
                         velocity.addPosition(change.uptimeMillis, change.position)
-                        dragX = total * DAY_DRAG_FOLLOW
+                        // Today is the last day: swiping toward the future doesn't move the page.
+                        dragX = if (total < 0 && !canGoForward.value) 0f else total * DAY_DRAG_FOLLOW
                     }
                 },
         ) { day ->
@@ -416,6 +420,7 @@ fun TodayScreen(
     if (showDatePicker) {
         DatePickerDialogFor(
             initial = state.date,
+            latest = state.today,
             onDismiss = { showDatePicker = false },
             onPick = {
                 showDatePicker = false
@@ -522,7 +527,8 @@ private fun DateHeader(
                 )
             }
         }
-        IconButton(onClick = { onEvent(TodayEvent.NextDay) }) {
+        // No future days: the arrow stops at today (the swipe and the picker do too).
+        IconButton(onClick = { onEvent(TodayEvent.NextDay) }, enabled = state.date < state.today) {
             Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.next_day))
         }
         // At large font sizes the "Today" button drops its word so the day name keeps one line.
@@ -720,10 +726,16 @@ private fun MealSectionView(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DatePickerDialogFor(initial: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
+private fun DatePickerDialogFor(initial: LocalDate, latest: LocalDate, onDismiss: () -> Unit, onPick: (LocalDate) -> Unit) {
     // The Material date picker works in UTC midnight millis.
+    val latestMillis = latest.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     val pickerState = rememberDatePickerState(
         initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+        yearRange = 2000..latest.year,
+        selectableDates = object : SelectableDates {
+            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= latestMillis
+            override fun isSelectableYear(year: Int) = year <= latest.year
+        },
     )
     DatePickerDialog(
         onDismissRequest = onDismiss,

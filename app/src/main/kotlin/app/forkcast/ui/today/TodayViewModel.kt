@@ -422,7 +422,9 @@ class TodayViewModel @Inject constructor(
 
     private fun changeDate(change: (LocalDate) -> LocalDate) {
         selection.value = emptySet()
-        selectedDate.update(change)
+        // Never past today: nothing can be logged for a future day.
+        val today = LocalDate.now(clock)
+        selectedDate.update { minOf(change(it), today) }
         followingToday = selectedDate.value == LocalDate.now(clock)
     }
 

@@ -77,6 +77,14 @@ class TodayViewModelTest {
         assertThat(vm.uiState.filterNotNull().first { it.completeness == app.forkcast.core.model.DayCompleteness.INCOMPLETE }).isNotNull()
     }
 
+    @Test fun neverMovesPastToday() = runTest {
+        val vm = vm()
+        vm.uiState.filterNotNull().first()
+        vm.onEvent(TodayEvent.NextDay)
+        vm.onEvent(TodayEvent.PickDate(TestData.TODAY.plusDays(3)))
+        assertThat(vm.uiState.filterNotNull().first().date).isEqualTo(TestData.TODAY)
+    }
+
     @Test fun totalsFollowTheLog() = runTest {
         log.add(listOf(TestData.entry("Yogurt", "b", 146.0, 20.0), TestData.entry("Rice", "l", 205.0, 4.0)))
         val s = vm().uiState.filterNotNull().first()
