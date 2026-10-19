@@ -76,6 +76,9 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // ML Kit ships native libs per ABI; the phone is arm64, so release ships only that
+            // (debug keeps every ABI for the x86_64 emulator).
+            ndk { abiFilters += "arm64-v8a" }
             if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
         }
     }
