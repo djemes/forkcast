@@ -55,7 +55,7 @@ data class BackupPreview(
 )
 
 sealed interface ParsedBackup {
-    data class Ok(val export: ExportV1, val preview: BackupPreview) : ParsedBackup
+    data class Ok(val export: ForkcastExport, val preview: BackupPreview) : ParsedBackup
     data class Rejected(val reason: RejectReason) : ParsedBackup
 }
 
@@ -75,7 +75,7 @@ interface BackupRepository {
     suspend fun foodLogCsv(): String
     suspend fun weightsCsv(): String
     fun parse(text: String): ParsedBackup
-    suspend fun import(export: ExportV1, mode: ImportMode): ImportSummary
+    suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary
     /** The newest safety backup taken before a Replace, or null if there is none. */
     suspend fun readSafetyBackup(): String?
 }
@@ -98,8 +98,8 @@ class RoomBackupRepository @Inject constructor(
 
     private val safetyDir get() = File(context.filesDir, SAFETY_DIR)
 
-    suspend fun export(): ExportV1 = db.withTransaction {
-        ExportV1(
+    suspend fun export(): ForkcastExport = db.withTransaction {
+        ForkcastExport(
             appVersion = appVersion,
             exportedAt = clock.instant().truncatedTo(ChronoUnit.SECONDS).toString(),
             timeZone = clock.zone.id,
@@ -114,10 +114,16 @@ class RoomBackupRepository @Inject constructor(
             weights = dao.weights(),
             water = dao.water(),
             dayStatus = dao.dayStatus(),
+            aiEstimates = dao.aiEstimates(),
+            aiComponents = dao.aiComponents(),
+            aiProfiles = dao.aiProfiles(),
+            usageRecords = dao.usageRecords(),
+            notificationLog = dao.notificationLog(),
+            aiMatchCache = dao.aiMatchCache(),
         )
     }.copy(settings = settings.data.first())
 
-    override suspend fun exportJson(): String = BackupJson.encodeToString(ExportV1.serializer(), export())
+    override suspend fun exportJson(): String = BackupJson.encodeToString(ForkcastExport.serializer(), export())
 
     override suspend fun foodLogCsv(): String = csv.foodLog()
 
@@ -132,10 +138,10 @@ class RoomBackupRepository @Inject constructor(
         if (root.string("app") != "Forkcast") return ParsedBackup.Rejected(RejectReason.NOT_FORKCAST)
         val version = root["schemaVersion"]?.jsonPrimitive?.intOrNull
             ?: return ParsedBackup.Rejected(RejectReason.UNREADABLE)
-        if (version > ExportV1.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
-        // Older versions get upgraded here once a v2 exists; v1 is the first.
+        if (version > ForkcastExport.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
+        // v1 → v2 only added arrays, which default to empty; older files decode as they are.
         val export = try {
-            BackupJson.decodeFromJsonElement(ExportV1.serializer(), root)
+            BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), root)
         } catch (e: IllegalArgumentException) {
             return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         } catch (e: DateTimeException) {
@@ -144,7 +150,7 @@ class RoomBackupRepository @Inject constructor(
         return ParsedBackup.Ok(export, preview(export))
     }
 
-    override suspend fun import(export: ExportV1, mode: ImportMode): ImportSummary = when (mode) {
+    override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = when (mode) {
         ImportMode.REPLACE -> replace(export)
         ImportMode.MERGE -> merge(export)
     }
@@ -153,7 +159,7 @@ class RoomBackupRepository @Inject constructor(
         safetyDir.listFiles { f -> f.name.endsWith(".json") }?.maxByOrNull { it.name }?.readText()
     }
 
-    private suspend fun replace(export: ExportV1): ImportSummary {
+    private suspend fun replace(export: ForkcastExport): ImportSummary {
         writeSafetyBackup()
         db.withTransaction {
             dao.clearAll()
@@ -168,13 +174,19 @@ class RoomBackupRepository @Inject constructor(
             dao.upsertWeights(export.weights)
             dao.upsertWater(export.water)
             dao.upsertDayStatus(export.dayStatus)
+            dao.upsertAiEstimates(export.aiEstimates)
+            dao.upsertAiComponents(export.aiComponents)
+            dao.upsertAiProfiles(export.aiProfiles)
+            dao.upsertUsageRecords(export.usageRecords)
+            dao.upsertNotificationLog(export.notificationLog)
+            dao.upsertAiMatchCache(export.aiMatchCache)
         }
         export.settings?.let { imported -> settings.updateData { imported } }
         return ImportSummary(ImportMode.REPLACE, added = export.rowCount(), updated = 0, unchanged = 0)
     }
 
     /** Settings are kept as they are on a merge; they have no edit times to compare. */
-    private suspend fun merge(export: ExportV1): ImportSummary {
+    private suspend fun merge(export: ForkcastExport): ImportSummary {
         val tally = Tally()
         db.withTransaction {
             val slotIds = mergeMealSlots(export.mealSlots, tally)
@@ -194,6 +206,15 @@ class RoomBackupRepository @Inject constructor(
             val status = newer(localStatus.values.toList(), export.dayStatus, { it.date.toString() }, { it.updatedAt }, tally)
             status.forEach { row -> localStatus[row.date]?.takeIf { it.id != row.id }?.let { dao.deleteDayStatus(it.id) } }
             dao.upsertDayStatus(status)
+            val estimates = export.aiEstimates.map { it.copy(mealSlotId = slotIds[it.mealSlotId] ?: it.mealSlotId) }
+            dao.upsertAiEstimates(newer(dao.aiEstimates(), estimates, { it.id }, { it.updatedAt }, tally))
+            dao.upsertAiComponents(newer(dao.aiComponents(), export.aiComponents, { it.id }, { it.updatedAt }, tally))
+            dao.upsertAiProfiles(newer(dao.aiProfiles(), export.aiProfiles, { it.id }, { it.updatedAt }, tally))
+            dao.upsertUsageRecords(newer(dao.usageRecords(), export.usageRecords, { it.id }, { it.updatedAt }, tally))
+            // One row per (date, type, threshold) (unique index): only add what this phone hasn't logged.
+            val fired = dao.notificationLog().map { Triple(it.date, it.type, it.threshold) }.toSet()
+            dao.upsertNotificationLog(export.notificationLog.filter { Triple(it.date, it.type, it.threshold) !in fired })
+            dao.upsertAiMatchCache(newer(dao.aiMatchCache(), export.aiMatchCache, { it.id }, { it.updatedAt }, tally))
         }
         return ImportSummary(ImportMode.MERGE, tally.added, tally.updated, tally.unchanged)
     }
@@ -280,11 +301,11 @@ val BackupJson = Json {
 private fun JsonObject.string(name: String): String? =
     runCatching { get(name)?.jsonPrimitive?.content }.getOrNull()
 
-private fun ExportV1.rowCount() =
+private fun ForkcastExport.rowCount() =
     (if (profile != null) 1 else 0) + goals.size + targetOverrides.size + mealSlots.size + foods.size +
         savedMeals.size + savedMealItems.size + logEntries.size + weights.size + water.size + dayStatus.size
 
-internal fun preview(export: ExportV1): BackupPreview {
+internal fun preview(export: ForkcastExport): BackupPreview {
     val dates = export.logEntries.filter { it.deletedAt == null }.map { it.date } +
         export.water.filter { it.deletedAt == null }.map { it.date } +
         export.weights.filter { it.deletedAt == null }.map {

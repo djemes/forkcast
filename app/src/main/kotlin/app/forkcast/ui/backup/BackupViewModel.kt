@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.BackupRepository
-import app.forkcast.core.data.backup.ExportV1
+import app.forkcast.core.data.backup.ForkcastExport
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.ImportSummary
 import app.forkcast.core.data.backup.ParsedBackup
@@ -72,7 +72,7 @@ class BackupViewModel @Inject constructor(
     val state: StateFlow<BackupUiState> = _state.asStateFlow()
 
     /** The parsed file waiting on Merge/Replace; kept out of UiState because it can be large. */
-    private var pending: ExportV1? = null
+    private var pending: ForkcastExport? = null
 
     init {
         refreshSafetyBackup()

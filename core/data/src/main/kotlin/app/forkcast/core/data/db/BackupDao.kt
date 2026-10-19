@@ -19,6 +19,12 @@ interface BackupDao {
     @Query("SELECT * FROM weight_entry") suspend fun weights(): List<WeightEntryEntity>
     @Query("SELECT * FROM water_entry") suspend fun water(): List<WaterEntryEntity>
     @Query("SELECT * FROM day_status") suspend fun dayStatus(): List<DayStatusEntity>
+    @Query("SELECT * FROM ai_estimate") suspend fun aiEstimates(): List<AiEstimateEntity>
+    @Query("SELECT * FROM ai_component") suspend fun aiComponents(): List<AiComponentEntity>
+    @Query("SELECT * FROM ai_profile") suspend fun aiProfiles(): List<AiProfileEntity>
+    @Query("SELECT * FROM usage_record") suspend fun usageRecords(): List<UsageRecordEntity>
+    @Query("SELECT * FROM notification_log") suspend fun notificationLog(): List<NotificationLogEntity>
+    @Query("SELECT * FROM ai_match_cache") suspend fun aiMatchCache(): List<AiMatchCacheEntity>
 
     @Upsert suspend fun upsertProfiles(rows: List<ProfileEntity>)
     @Upsert suspend fun upsertGoals(rows: List<GoalEntity>)
@@ -31,6 +37,12 @@ interface BackupDao {
     @Upsert suspend fun upsertWeights(rows: List<WeightEntryEntity>)
     @Upsert suspend fun upsertWater(rows: List<WaterEntryEntity>)
     @Upsert suspend fun upsertDayStatus(rows: List<DayStatusEntity>)
+    @Upsert suspend fun upsertAiEstimates(rows: List<AiEstimateEntity>)
+    @Upsert suspend fun upsertAiComponents(rows: List<AiComponentEntity>)
+    @Upsert suspend fun upsertAiProfiles(rows: List<AiProfileEntity>)
+    @Upsert suspend fun upsertUsageRecords(rows: List<UsageRecordEntity>)
+    @Upsert suspend fun upsertNotificationLog(rows: List<NotificationLogEntity>)
+    @Upsert suspend fun upsertAiMatchCache(rows: List<AiMatchCacheEntity>)
 
     @Query("DELETE FROM profile") suspend fun clearProfiles()
     @Query("DELETE FROM goal") suspend fun clearGoals()
@@ -43,11 +55,18 @@ interface BackupDao {
     @Query("DELETE FROM weight_entry") suspend fun clearWeights()
     @Query("DELETE FROM water_entry") suspend fun clearWater()
     @Query("DELETE FROM day_status") suspend fun clearDayStatus()
+    @Query("DELETE FROM ai_estimate") suspend fun clearAiEstimates()
+    @Query("DELETE FROM ai_component") suspend fun clearAiComponents()
+    @Query("DELETE FROM ai_profile") suspend fun clearAiProfiles()
+    @Query("DELETE FROM usage_record") suspend fun clearUsageRecords()
+    @Query("DELETE FROM notification_log") suspend fun clearNotificationLog()
+    @Query("DELETE FROM ai_match_cache") suspend fun clearAiMatchCache()
     @Query("DELETE FROM day_status WHERE id = :id") suspend fun deleteDayStatus(id: String)
 
     @Transaction
     suspend fun clearAll() {
         clearProfiles(); clearGoals(); clearTargetOverrides(); clearMealSlots(); clearFoods()
         clearSavedMeals(); clearSavedMealItems(); clearLogEntries(); clearWeights(); clearWater(); clearDayStatus()
+        clearAiEstimates(); clearAiComponents(); clearAiProfiles(); clearUsageRecords(); clearNotificationLog(); clearAiMatchCache()
     }
 }
