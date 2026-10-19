@@ -6,6 +6,7 @@ import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import java.time.LocalDate
@@ -17,6 +18,9 @@ class FakeLogRepository : LogRepository {
 
     override fun observeDay(date: LocalDate): Flow<List<LogEntry>> =
         rows.map { m -> m.values.filter { !it.second && it.first.date == date }.map { it.first }.sortedBy { it.loggedAt } }
+    override fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntry>> =
+        rows.map { m -> m.values.filter { !it.second && it.first.date in from..to }.map { it.first }.sortedBy { it.loggedAt } }
+    override suspend fun range(from: LocalDate, to: LocalDate) = observeRange(from, to).first()
     override suspend fun entriesForMeal(date: LocalDate, mealSlotId: String) =
         rows.value.values.filter { !it.second && it.first.date == date && it.first.mealSlotId == mealSlotId }.map { it.first }
     override suspend fun get(id: String) = rows.value[id]?.takeIf { !it.second }?.first

@@ -76,6 +76,22 @@ class TodayViewModelTest {
         assertThat(s.totals!!.eatenKcal).isEqualTo(640.0)
     }
 
+    @Test fun forecastAppearsAfterSevenLoggedDays() = runTest {
+        // Clock is 12:40; each past day had a 700 kcal dinner logged at 19:00 local.
+        fun dinner(daysAgo: Long) = TestData.entry("Dinner", "d", 700.0, date = TestData.TODAY.minusDays(daysAgo))
+            .copy(loggedAt = TestData.TODAY.minusDays(daysAgo).atTime(19, 0).atZone(zone).toInstant())
+        log.add((1L..6L).map(::dinner))
+        log.add(listOf(TestData.entry("Lunch", "l", 600.0)))
+        assertThat(vm().uiState.filterNotNull().first().forecast).isNull()
+
+        log.add(listOf(dinner(7)))
+        val s = vm().uiState.filterNotNull().first()
+        assertThat(s.forecast!!.expectedRemainingKcal).isEqualTo(700.0)
+        assertThat(s.forecast!!.forecastTotalKcal).isEqualTo(1300.0)
+        assertThat(s.forecast!!.status).isEqualTo(app.forkcast.core.domain.Forecast.Status.ON_COURSE)
+        assertThat(s.forecastFromMinute).isEqualTo(12 * 60 + 40)
+    }
+
     @Test fun deleteAndUndo() = runTest {
         val ids = log.add(listOf(TestData.entry("Rice", "l", 205.0)))
         val vm = vm()

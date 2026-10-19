@@ -105,6 +105,13 @@ interface LogEntryDao {
     @Query("SELECT * FROM log_entry WHERE date = :date AND deletedAt IS NULL ORDER BY loggedAt")
     suspend fun getForDate(date: LocalDate): List<LogEntryEntity>
 
+    /** Inclusive range, for the forecast and notifications. ISO date strings sort chronologically. */
+    @Query("SELECT * FROM log_entry WHERE date >= :from AND date <= :to AND deletedAt IS NULL ORDER BY loggedAt")
+    fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntryEntity>>
+
+    @Query("SELECT * FROM log_entry WHERE date >= :from AND date <= :to AND deletedAt IS NULL ORDER BY loggedAt")
+    suspend fun getRange(from: LocalDate, to: LocalDate): List<LogEntryEntity>
+
     @Query("SELECT * FROM log_entry WHERE date = :date AND mealSlotId = :mealSlotId AND deletedAt IS NULL ORDER BY loggedAt")
     suspend fun getForMeal(date: LocalDate, mealSlotId: String): List<LogEntryEntity>
 
