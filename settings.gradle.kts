@@ -27,3 +27,7 @@ include(":core:model")
 include(":core:domain")
 include(":core:data")
 include(":core:network")
+
+// Development only: a stand-in for Samsung Health that writes test data into the emulator's
+// Health Connect (another app's data origin). Not part of CI; build with -PwithHcSeed.
+if (providers.gradleProperty("withHcSeed").isPresent) include(":tools:hcseed")

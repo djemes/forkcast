@@ -37,6 +37,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.core.model.WeightSource
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WeightRepository
 import app.forkcast.core.domain.TrendPoint
@@ -178,9 +179,19 @@ fun WeightScreen(
                 Text(stringResource(R.string.weight_history), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 12.dp).semantics { heading() })
             }
             state.entries.forEach { e ->
-                val day = e.timestamp.atZone(java.time.ZoneId.systemDefault()).toLocalDate()
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-                    Text(formatDate(day), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                val local = e.timestamp.atZone(java.time.ZoneId.systemDefault())
+                val day = local.toLocalDate()
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                    Column(Modifier.weight(1f).padding(vertical = 4.dp)) {
+                        Text(formatDate(day), style = MaterialTheme.typography.bodyLarge)
+                        // Time and source, so a replaced manual weigh-in (SPEC §4.9) is easy to follow.
+                        val time = app.forkcast.ui.settings.timeText(local.hour * 60 + local.minute)
+                        Text(
+                            if (e.source == WeightSource.HEALTH_CONNECT) stringResource(R.string.weight_from_health_connect, time) else time,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                     Text(
                         listOfNotNull(f.weight(e.kg), e.bodyFatPct?.let { "${f.number(it, 1)} %" }).joinToString(" · "),
                         style = MaterialTheme.typography.labelLarge,
