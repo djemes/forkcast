@@ -33,7 +33,7 @@ class Notifier @Inject constructor(@ApplicationContext private val context: Cont
 
     // canPost() checks POST_NOTIFICATIONS first; lint can't follow that across functions.
     @SuppressLint("MissingPermission")
-    fun post(channel: Channel, id: Int, title: String, text: String, open: String?) {
+    fun post(channel: Channel, id: Int, title: String, text: String, open: String?, silent: Boolean = false) {
         if (!canPost()) return
         val intent = context.packageManager.getLaunchIntentForPackage(context.packageName)?.apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
@@ -48,6 +48,7 @@ class Notifier @Inject constructor(@ApplicationContext private val context: Cont
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setAutoCancel(true)
+            .setSilent(silent)
             .setContentIntent(pending)
             .build()
         try {

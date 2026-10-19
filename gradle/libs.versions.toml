@@ -38,6 +38,8 @@ coil = "3.6.3"
 reorderable = "3.1.0"
 # Phase 3, checked 2026-10-19 (Google Maven: 1.1.0 is the newest stable; 1.2.0-alpha06 newest overall)
 healthConnect = "1.1.0"
+# Phase 4, checked 2026-10-19 on Google Maven (22.0.0 newest; AuthorizationClient for Drive)
+playServicesAuth = "22.0.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -98,6 +100,7 @@ camera-compose = { module = "androidx.camera:camera-compose", version.ref = "cam
 mlkit-barcode = { module = "com.google.mlkit:barcode-scanning", version.ref = "mlkitBarcode" }
 mlkit-text = { module = "com.google.mlkit:text-recognition", version.ref = "mlkitText" }
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 
 vico-compose = { module = "com.patrykandpatrick.vico:compose", version.ref = "vico" }
 vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }

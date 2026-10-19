@@ -141,6 +141,7 @@ fun ForkcastNavHost(
                 request.startsWith("estimate:") -> navController.navigate(ReviewDestination(request.removePrefix("estimate:")))
                 request == "settings_ai" -> navController.navigate(AiSettingsDestination)
                 request.startsWith("weekly:") -> navController.navigate(WeeklyDestination(request.removePrefix("weekly:")))
+                request == "backup" -> navController.navigate(BackupDestination)
             }
         }
         onOpenHandled()

@@ -25,7 +25,22 @@ data class AppSettings(
     val activityBonus: Boolean = true,
     /** What the user had saved as keys, so a restored phone (keys are never backed up) can ask for them (SPEC §4.11). */
     val keyNotes: KeyNotes = KeyNotes(),
+    /** Google Drive auto-backup choices (SPEC §4.11). The connection itself is per phone (DevicePrefs). */
+    val backup: BackupSettings = BackupSettings(),
 )
+
+/** Owner's defaults (2026-10-19): every night, any network, charging or not, data only (no photos). */
+@Serializable
+data class BackupSettings(
+    /** Back up automatically once Drive is connected on this phone. */
+    val auto: Boolean = true,
+    val frequency: BackupFrequency = BackupFrequency.DAILY,
+    val wifiOnly: Boolean = false,
+    val chargingOnly: Boolean = false,
+)
+
+@Serializable
+enum class BackupFrequency(val days: Int) { DAILY(1), WEEKLY(7) }
 
 /** Never the keys themselves: only that a food-database key was saved (dismissed prompts are per phone, in DevicePrefs). */
 @Serializable

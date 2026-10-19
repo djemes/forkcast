@@ -56,6 +56,8 @@ dependencies {
     ksp(libs.hilt.androidx.compiler)
     implementation(libs.androidx.exifinterface)
     api(libs.health.connect)
+    implementation(libs.play.services.auth)
+    implementation(libs.kotlinx.coroutines.play.services)
 
     testImplementation(libs.junit4)
     testImplementation(libs.truth)
