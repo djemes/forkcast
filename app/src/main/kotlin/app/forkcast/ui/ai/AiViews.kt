@@ -26,6 +26,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.core.network.ai.AiError
 import app.forkcast.core.model.ProviderId
 
 /**
@@ -44,7 +45,12 @@ fun TestResult(test: TestState?, provider: ProviderId, modifier: Modifier = Modi
             modifier = modifier,
         )
         is TestState.Failed -> Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            IconLine(R.drawable.ic_error, res.aiErrorMessage(test.error, provider), MaterialTheme.colorScheme.error)
+            IconLine(
+                R.drawable.ic_error,
+                // A connection test isn't an estimate: say so rather than "will run when back online".
+                if (test.error is AiError.Network) res.getString(R.string.ai_err_network_test) else res.aiErrorMessage(test.error, provider),
+                MaterialTheme.colorScheme.error,
+            )
             aiErrorDetail(test.error)?.let { detail ->
                 Text(
                     stringResource(R.string.ai_err_provider_said, provider.shortName(), detail),

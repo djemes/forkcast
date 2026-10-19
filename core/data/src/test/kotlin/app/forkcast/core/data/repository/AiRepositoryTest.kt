@@ -42,7 +42,8 @@ class AiRepositoryTest {
         override fun decrypt(ciphertext: ByteArray, associatedData: ByteArray) = encrypt(ciphertext, associatedData)
     }
 
-    private val secrets = SecretStore(File(context.filesDir, "secrets-${System.nanoTime()}/store.bin"), { XorAead() }, Dispatchers.Unconfined)
+    private val secretsFile = File(context.filesDir, "secrets-${System.nanoTime()}/store.bin")
+    private val secrets = SecretStore(secretsFile, { XorAead() }, Dispatchers.Unconfined)
     private val settings = DataStoreSettingsRepository(
         DataStoreFactory.create(AppSettingsSerializer) { File(context.filesDir, "settings-ai-${System.nanoTime()}.json") },
     )
@@ -58,6 +59,14 @@ class AiRepositoryTest {
         repo.saveProfile(AiProfileDraft(null, name, ProviderId.GEMINI, "gemini-3.8-flash", null, TierLabel.FREE), key)
 
     private suspend fun order() = repo.profilesNow().sortedBy { it.order }.map { it.name to it.order }
+
+    /** After an app restart the store hasn't been read yet; the list must still know which keys exist. */
+    @Test fun savedKeysShowAfterRestart() = runTest {
+        val id = add("A", "AQ.key-a")
+        val restarted = SecretStore(secretsFile, { XorAead() }, Dispatchers.Unconfined)
+        val repo2 = DefaultAiRepository(db.aiDao(), restarted, MealEstimatorFactory(http, defaults) { restarted.aiKey(it) }, defaults, settings, clock)
+        assertThat(repo2.profiles.first().single { it.profile.id == id }.hasKey).isTrue()
+    }
 
     @Test fun deleteMovesTheRestUpAndUndoRestoresPlaceAndKey() = runTest {
         val a = add("A", "AQ.key-a")

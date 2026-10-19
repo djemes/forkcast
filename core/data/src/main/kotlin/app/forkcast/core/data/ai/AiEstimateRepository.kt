@@ -194,7 +194,13 @@ class DefaultAiEstimateRepository @Inject constructor(
             is AiChain.Outcome.Failure -> {
                 val err = outcome.finalError
                 val retryAt = outcome.retryAtMs
-                val failed = e.copy(attempts = e.attempts + 1, errorCode = err?.let(AiErrorCodes::of), errorDetail = err?.message)
+                // Name the profile that gave this error, so the message says "Gemini rejected…".
+                val last = outcome.attempts.lastOrNull { it.error === err }?.profile
+                val failed = e.copy(
+                    attempts = e.attempts + 1, errorCode = err?.let(AiErrorCodes::of), errorDetail = err?.message,
+                    profileId = last?.id ?: e.profileId, profileName = last?.name ?: e.profileName,
+                    provider = last?.provider ?: e.provider, tierLabel = last?.tierLabel ?: e.tierLabel,
+                )
                 when {
                     // Nothing could be tried: no profile, all off, or all keys rejected.
                     outcome.attempts.isEmpty() && retryAt == null ->

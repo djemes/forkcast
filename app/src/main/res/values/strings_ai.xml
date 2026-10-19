@@ -98,6 +98,7 @@
     <string name="ai_err_refused">%1$s declined to estimate this photo.</string>
     <string name="ai_err_bad_response">%1$s sent an answer Forkcast couldn\'t read. Try again.</string>
     <string name="ai_err_request">%1$s rejected the request: %2$s</string>
+    <string name="ai_err_network_test">No connection. Connect to the internet, then test again.</string>
     <string name="ai_err_network">No connection. The estimate will run when you\'re back online.</string>
     <string name="ai_err_timeout">%1$s took too long to answer. Try again.</string>
     <string name="ai_err_server">%1$s had a problem (error %2$d). Try again later.</string>

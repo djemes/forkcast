@@ -109,6 +109,9 @@ class DefaultAiRepository @Inject constructor(
 
     // Deferred so the usage window is computed when a screen subscribes, not once per process.
     override val profiles: Flow<List<AiProfileStatus>> = flow {
+        // Which keys exist is only known after the encrypted file was read once; without this,
+        // every profile showed "No key saved" after an app restart (found on the emulator 2026-10-19).
+        secrets.refresh()
         val today = LocalDate.now(clock)
         val usage = dao.observeUsage(today.minusDays(2), today.plusDays(2))
         emitAll(

@@ -189,6 +189,8 @@ class AiEstimateRepositoryTest {
         val id = repo.create(day, slot, listOf(jpeg()), null)
         assertThat(repo.run(id)).isInstanceOf(RunOutcome.Failed::class.java)
         assertThat(db.aiDao().estimate(id)!!.errorCode).isEqualTo("ContentRefused")
+        // The failure names the profile that gave it ("Gemini declined…").
+        assertThat(db.aiDao().estimate(id)!!.provider).isEqualTo(ProviderId.GEMINI)
     }
 
     @Test fun noProfileFails() = runTest {

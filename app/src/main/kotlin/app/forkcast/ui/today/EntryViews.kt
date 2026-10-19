@@ -5,8 +5,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -223,7 +222,8 @@ fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit
                 color = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.weight(1f),
             )
-            SourceBadge(FoodSource.AI, needsReview = true)
+            // "AI·review" only when there's an estimate to review; a failed one has nothing yet.
+            SourceBadge(FoodSource.AI, needsReview = p.status != EstimateStatus.FAILED)
         }
         if (working) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp, start = 28.dp))
     }
@@ -274,7 +274,7 @@ fun EditEntrySheet(
                 )
             }
             Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 meals.forEach { m ->
                     FilterChip(selected = m.id == mealId, onClick = { mealId = m.id }, label = { Text(m.name) })
                 }
