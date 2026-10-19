@@ -67,10 +67,10 @@ fun ProfileRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltView
 
 /** Settings › Goal & budget: the budget and how it's made, the goal, maintenance and activity. */
 @Composable
-fun GoalBudgetRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltViewModel()) {
+fun GoalBudgetRoute(onBack: () -> Unit, onOpenWeekly: () -> Unit = {}, viewModel: ProfileGoalsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     SettingsScaffold(title = stringResource(R.string.settings_goal_budget), onBack = onBack) {
-        state?.let { ProfileGoalsContent(it, viewModel, ProfilePart.GOAL) }
+        state?.let { ProfileGoalsContent(it, viewModel, ProfilePart.GOAL, onOpenWeekly) }
     }
 }
 
@@ -96,7 +96,7 @@ fun UnitsRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltViewMo
 enum class ProfilePart { PROFILE, GOAL }
 
 @Composable
-private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel, part: ProfilePart) {
+private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel, part: ProfilePart, onOpenWeekly: () -> Unit = {}) {
     val f = UnitFormatter(s.units)
     var editing by rememberSaveable { mutableStateOf<EditField?>(null) }
     val colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background)
@@ -126,6 +126,12 @@ private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel,
             activityBonus = s.activityBonusOn,
         )
     }
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.weekly_open)) },
+        supportingContent = { Text(stringResource(R.string.weekly_open_summary)) },
+        colors = colors,
+        modifier = Modifier.clickable(onClick = onOpenWeekly),
+    )
     Row(
         R.string.profile_custom_budget,
         if (s.targets.isCustomBudget) "${f.energy(s.targets.budgetKcal.toDouble())} · ${stringResource(R.string.custom_chip)}"

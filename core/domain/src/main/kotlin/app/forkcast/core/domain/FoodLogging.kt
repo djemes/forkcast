@@ -30,6 +30,32 @@ object FoodLogging {
             .distinctBy { it.label.lowercase() }
     }
 
+    /**
+     * Servings an entry can be changed to in the edit sheet. Needs the entry's grams (quick adds
+     * have none: only the quantity changes). The food's own servings when it's known, else the
+     * entry's serving, g and oz (and ml/fl oz for counted drinks). The current serving is always
+     * in the list, at the grams the entry was logged with.
+     */
+    fun editServings(entry: LogEntry, food: Food?): List<ServingSize> {
+        val grams = entry.grams ?: return emptyList()
+        if (entry.quantity <= 0) return emptyList()
+        val current = ServingSize(entry.servingLabel, grams / entry.quantity)
+        val options = food?.let { servingOptions(it) } ?: buildList {
+            add(current)
+            if (entry.waterMl != null) {
+                add(ServingSize(ML_LABEL, 1.0))
+                add(ServingSize(FL_OZ_LABEL, UnitConversions.flOzToMl(1.0)))
+            }
+            add(ServingSize(GRAM_LABEL, 1.0))
+            add(ServingSize(OUNCE_LABEL, UnitConversions.G_PER_OZ))
+        }
+        return (listOf(current) + options).distinctBy { it.label.lowercase() }
+    }
+
+    /** The quantity that keeps the same amount when switching from one serving to another. */
+    fun convertQuantity(quantity: Double, from: ServingSize, to: ServingSize): Double =
+        if (to.grams <= 0) quantity else quantity * from.grams / to.grams
+
     /** Last-used serving and quantity, else the food's first serving × 1, else 100 g. */
     fun defaultServing(food: Food): Pair<ServingSize, Double> {
         val options = servingOptions(food)

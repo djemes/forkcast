@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Weekly check-in (owner, 2026-10-19) -->
+    <string name="weekly_title">Weekly check-in</string>
+    <string name="weekly_range">%1$s – %2$s</string>
+    <string name="weekly_previous">Previous week</string>
+    <string name="weekly_next">Next week</string>
+    <string name="weekly_nothing">Nothing was logged this week.</string>
+    <string name="weekly_food">Food</string>
+    <string name="weekly_days_logged">Days logged</string>
+    <string name="weekly_days_value">%1$d of 7 (%2$d complete)</string>
+    <string name="weekly_avg_eaten">Average eaten</string>
+    <string name="weekly_avg_budget">Average budget, with activity</string>
+    <string name="weekly_under">On logged days you were %1$s under your budget on average.</string>
+    <string name="weekly_over">On logged days you were %1$s over your budget on average.</string>
+    <string name="weekly_on_budget">On logged days you were right on your budget.</string>
+    <string name="weekly_weight">Weight</string>
+    <string name="weekly_weigh_ins">Days weighed</string>
+    <string name="weekly_trend">Trend this week</string>
+    <string name="weekly_plan">Plan per week</string>
+    <string name="weekly_pace_ahead">Ahead of your plan.</string>
+    <string name="weekly_pace_on">On pace with your plan.</string>
+    <string name="weekly_pace_behind">Slower than your plan this week. One week of trend is noisy; look at a few in a row.</string>
+    <string name="weekly_pace_drift">Your weight trend moved this week while your goal is to maintain.</string>
+    <string name="weekly_pace_no_data">Not enough weigh-ins this week to tell.</string>
+    <string name="weekly_maintenance">Maintenance</string>
+    <string name="weekly_maintenance_none">No estimate from your data yet.</string>
+    <string name="weekly_maintenance_now">Estimated maintenance</string>
+    <string name="weekly_maintenance_change">Change this week</string>
+    <string name="weekly_activity">Activity</string>
+    <string name="weekly_activity_none">No activity from Health Connect this week.</string>
+    <string name="weekly_avg_steps">Average steps</string>
+    <string name="weekly_avg_active">Average active calories</string>
+    <string name="weekly_bonus_total">Added to budgets</string>
+    <string name="weekly_open">Weekly check-in</string>
+    <string name="weekly_open_summary">Last week\'s food, weight, maintenance and activity</string>
+</resources>

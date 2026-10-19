@@ -59,6 +59,10 @@ data class NotificationSettings(
     val weighInEnabled: Boolean = true,
     val weighInMinute: Int = 7 * 60 + 30,
     val estimateReadyEnabled: Boolean = true,
+    /** Weekly check-in (owner, 2026-10-19): a look back at the last 7 days, on [weeklyDay] (ISO 1 = Monday). */
+    val weeklyEnabled: Boolean = true,
+    val weeklyDay: Int = 1,
+    val weeklyMinute: Int = 9 * 60,
     val backupFailedEnabled: Boolean = true,
     val quietStartMinute: Int = 22 * 60,
     val quietEndMinute: Int = 7 * 60,

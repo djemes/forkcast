@@ -127,5 +127,8 @@ abstract class RepositoryModule {
     abstract fun bindBackupRepository(impl: RoomBackupRepository): BackupRepository
 
     @Binds
+    abstract fun bindWeeklyCheckInRepository(impl: app.forkcast.core.data.repository.RoomWeeklyCheckInRepository): app.forkcast.core.data.repository.WeeklyCheckInRepository
+
+    @Binds
     abstract fun bindMaintenanceRepository(impl: app.forkcast.core.data.repository.RoomMaintenanceRepository): app.forkcast.core.data.repository.MaintenanceRepository
 }

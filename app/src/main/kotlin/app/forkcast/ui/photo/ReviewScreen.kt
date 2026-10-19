@@ -93,6 +93,15 @@ fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: (
     val f = UnitFormatter(state.units ?: UnitFormatter.defaultsFor(LocalLocale.current.platformLocale), LocalLocale.current.platformLocale)
     var confirmDelete by remember { mutableStateOf(false) }
     var enlarged by remember { mutableStateOf<File?>(null) }
+    state.match?.let { m ->
+        MatchSearchSheet(
+            state = m,
+            f = f,
+            onQuery = { onEvent(ReviewEvent.SearchMatch(it)) },
+            onPick = { onEvent(ReviewEvent.PickMatch(it)) },
+            onDismiss = { onEvent(ReviewEvent.CloseMatch) },
+        )
+    }
     Scaffold(
         topBar = {
             TopAppBar(
@@ -257,6 +266,10 @@ private fun ComponentRow(c: AiComponentEntity, f: UnitFormatter, onEvent: (Revie
                 }) {
                     Text(stringResource(if (c.useSource == ComponentSource.USDA) R.string.review_use_ai else R.string.review_use_usda))
                 }
+            }
+            // Pick another food from a search (USDA and your own foods).
+            TextButton(onClick = { onEvent(ReviewEvent.ChangeMatch(c.id)) }) {
+                Text(stringResource(R.string.review_change_match))
             }
         }
         Slider(

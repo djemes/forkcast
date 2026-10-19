@@ -11,6 +11,7 @@ import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.model.EstimatedItem
+import app.forkcast.core.model.Food
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.Nutrients
@@ -94,6 +95,8 @@ interface AiEstimateRepository {
     suspend fun retry(id: String)
     suspend fun setGrams(componentId: String, grams: Double)
     suspend fun setSource(componentId: String, source: ComponentSource)
+    /** "Change match": use [food] (picked from a search) for this component, and for this food from now on. */
+    suspend fun setMatch(componentId: String, food: Food)
     suspend fun removeComponent(componentId: String)
     /** Review "Save": logs (or updates) the entry and clears the AI·review badge. */
     suspend fun save(id: String)
@@ -310,6 +313,18 @@ class DefaultAiEstimateRepository @Inject constructor(
         if (source == ComponentSource.USDA && c.usdaPer100g == null) return@editComponent c
         val next = c.copy(useSource = source)
         next.copy(nutrientsUsed = per100(next).forGrams(next.grams))
+    }
+
+    override suspend fun setMatch(componentId: String, food: Food) {
+        val c = dao.componentById(componentId) ?: return
+        val local = matcher.remember(c.usdaQuery, c.preparation, food)
+        editComponent(componentId) { cur ->
+            cur.copy(
+                matchedFoodId = local.id, matchedFdcId = local.sourceId, matchedName = local.name, matchScore = ComponentMatcher.USER_CHOICE_SCORE,
+                usdaPer100g = local.nutrientsPer100g, useSource = ComponentSource.USDA,
+                nutrientsUsed = local.nutrientsPer100g.forGrams(cur.grams),
+            )
+        }
     }
 
     override suspend fun removeComponent(componentId: String) = editComponent(componentId) { it.copy(deletedAt = clock.millis()) }

@@ -32,6 +32,7 @@ class FakeAiEstimateRepository : AiEstimateRepository {
     override suspend fun retry(id: String) { calls += "retry" }
     override suspend fun setGrams(componentId: String, grams: Double) { calls += "grams:$componentId:$grams" }
     override suspend fun setSource(componentId: String, source: ComponentSource) { calls += "source:$componentId:$source" }
+    override suspend fun setMatch(componentId: String, food: app.forkcast.core.model.Food) { calls += "match:$componentId:${food.name}" }
     override suspend fun removeComponent(componentId: String) { calls += "remove:$componentId" }
     override suspend fun save(id: String) { calls += "save" }
     override suspend fun delete(id: String) {

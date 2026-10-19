@@ -25,6 +25,8 @@ import app.forkcast.core.model.EstimatedItem
 import app.forkcast.core.model.EstimatedNutrients
 import app.forkcast.core.model.MealEstimateJson
 import app.forkcast.core.model.NutrientKey
+import app.forkcast.core.model.FoodSource
+import app.forkcast.core.model.Food
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.model.kcal
@@ -250,6 +252,29 @@ class AiEstimateRepositoryTest {
         assertThat(log.observeDay(day).first().single().nutrients.kcal).isWithin(1.0).of(e.kcalExpected!!)
         // Match cached for next time.
         assertThat(db.aiDao().match("rice white long grain cooked | boiled")).isNotNull()
+    }
+
+    /** "Change match": a picked food replaces the numbers now and is used for the same food next time. */
+    @Test fun changeMatchUsesThePickedFoodAndRemembersIt() = runTest {
+        val slot = lunch()
+        ai.add("g", ProviderId.GEMINI, result())
+        val id = repo.create(day, slot, listOf(jpeg()), null)
+        repo.run(id)
+        val chicken = db.aiDao().components(id).first { it.name == "Chicken thigh" }
+        assertThat(chicken.useSource).isEqualTo(ComponentSource.AI)
+
+        val picked = Food("", "Chicken, thigh, skinless, grilled", null, FoodSource.USDA, "999", null, emptyList(),
+            mapOf(NutrientKey.ENERGY_KCAL to 180.0, NutrientKey.PROTEIN_G to 26.0), false, null, null, null)
+        repo.setMatch(chicken.id, picked)
+
+        val after = db.aiDao().components(id).first { it.id == chicken.id }
+        assertThat(after.useSource).isEqualTo(ComponentSource.USDA)
+        assertThat(after.matchedName).isEqualTo("Chicken, thigh, skinless, grilled")
+        assertThat(after.nutrientsUsed.kcal).isWithin(0.1).of(216.0) // 120 g × 180/100
+        assertThat(db.aiDao().estimate(id)!!.kcalExpected!!).isWithin(1.0).of(216.0 + 260.0 + 62.0)
+        val cached = db.aiDao().match("chicken thigh roasted meat only | roasted")!!
+        assertThat(cached.score).isEqualTo(ComponentMatcher.USER_CHOICE_SCORE)
+        assertThat(foods.get(cached.foodId!!)!!.name).isEqualTo("Chicken, thigh, skinless, grilled")
     }
 
     @Test fun autoAcceptOffWaitsForSave() = runTest {

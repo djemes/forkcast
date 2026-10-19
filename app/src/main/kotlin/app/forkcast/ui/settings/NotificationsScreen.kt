@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.RadioButton
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -201,6 +203,50 @@ fun NotificationsScreen(
         ToggleRow(R.string.nset_weigh_in, R.string.nset_weigh_in_body, s.weighInEnabled, minute = s.weighInMinute,
             onTime = { editing = TimeEdit(weighTitle, s.weighInMinute) { m -> onUpdate { c -> c.copy(weighInMinute = m) } } },
         ) { on -> enable(on) { it.copy(weighInEnabled = on) } }
+
+        val weeklyTitle = stringResource(R.string.nset_weekly)
+        ToggleRow(R.string.nset_weekly, R.string.nset_weekly_body, s.weeklyEnabled, minute = s.weeklyMinute,
+            onTime = { editing = TimeEdit(weeklyTitle, s.weeklyMinute) { m -> onUpdate { c -> c.copy(weeklyMinute = m) } } },
+        ) { on -> enable(on) { it.copy(weeklyEnabled = on) } }
+        if (s.weeklyEnabled) {
+            var pickDay by remember { mutableStateOf(false) }
+            val locale = androidx.compose.ui.platform.LocalLocale.current.platformLocale
+            val dayLabel = stringResource(R.string.nset_weekly_day)
+            val dayName = java.time.DayOfWeek.of(s.weeklyDay.coerceIn(1, 7)).getDisplayName(java.time.format.TextStyle.FULL, locale)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(start = 32.dp, end = 16.dp),
+            ) {
+                Text(dayLabel, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                AssistChip(onClick = { pickDay = true }, label = { Text(dayName) }, modifier = Modifier.heightIn(min = 48.dp))
+            }
+            if (pickDay) {
+                AlertDialog(
+                    onDismissRequest = { pickDay = false },
+                    title = { Text(dayLabel) },
+                    text = {
+                        Column {
+                            for (d in java.time.DayOfWeek.entries) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .heightIn(min = 48.dp)
+                                        .selectable(selected = d.value == s.weeklyDay, role = Role.RadioButton) {
+                                            onUpdate { c -> c.copy(weeklyDay = d.value) }
+                                            pickDay = false
+                                        },
+                                ) {
+                                    RadioButton(selected = d.value == s.weeklyDay, onClick = null)
+                                    Text(d.getDisplayName(java.time.format.TextStyle.FULL, locale), modifier = Modifier.padding(start = 12.dp))
+                                }
+                            }
+                        }
+                    },
+                    confirmButton = { TextButton(onClick = { pickDay = false }) { Text(stringResource(R.string.cancel)) } },
+                )
+            }
+        }
 
         ToggleRow(R.string.nset_meals, R.string.nset_meals_body, s.mealRemindersEnabled) { on ->
             onMealCategory(on)

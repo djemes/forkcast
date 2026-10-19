@@ -33,8 +33,10 @@ class ComponentMatcher @Inject constructor(
             if (cached.foodId == null) return null
             val food = foods.get(cached.foodId)
             if (food != null) {
-                // The same query can still disagree on energy this time (e.g. a sauce-heavy version).
-                return if (AiMatching.kcalAgrees(food.nutrientsPer100g.kcal / 100.0, modelKcalPerG)) ComponentMatch(food, cached.score) else null
+                // The same query can still disagree on energy this time (e.g. a sauce-heavy version);
+                // a match the user picked is always kept.
+                val agrees = cached.score >= USER_CHOICE_SCORE || AiMatching.kcalAgrees(food.nutrientsPer100g.kcal / 100.0, modelKcalPerG)
+                return if (agrees) ComponentMatch(food, cached.score) else null
             }
         }
         val hits = try {
@@ -53,5 +55,18 @@ class ComponentMatcher @Inject constructor(
         dao.upsertMatch(AiMatchCacheEntity(key, localId, best.first.item.sourceId, best.second, now, now))
         val food = foods.get(localId) ?: return null
         return ComponentMatch(food, best.second)
+    }
+
+    /** The user picked [food] for this query on the review screen: cache it locally and use it from now on. */
+    suspend fun remember(usdaQuery: String, preparation: String, food: Food): Food {
+        val localId = if (food.id.isNotEmpty() && foods.get(food.id) != null) food.id else foods.cache(food)
+        val now = clock.millis()
+        dao.upsertMatch(AiMatchCacheEntity(AiMatching.cacheKey(usdaQuery, preparation), localId, food.sourceId, USER_CHOICE_SCORE, now, now))
+        return foods.get(localId) ?: food
+    }
+
+    companion object {
+        /** Match score of a food the user picked by hand (above any automatic score, which is ≤ 1). */
+        const val USER_CHOICE_SCORE = 2.0
     }
 }

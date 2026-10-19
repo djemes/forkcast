@@ -86,8 +86,9 @@ class NotificationEngineTest {
         override suspend fun update(entry: WeightEntry) = Unit
         override suspend fun delete(id: String) = Unit
     }
+    private val maintenance = RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weightRepo, db.profileDao(), db.goalDao(), settings, clock)
     private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db, db.mealSlotDao(), clock), db.aiDao(),
-        RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weightRepo, db.profileDao(), db.goalDao(), settings, clock), clock)
+        maintenance, app.forkcast.core.data.repository.RoomWeeklyCheckInRepository(log, db.dayStatusDao(), profiles, maintenance, weightRepo, db.healthDao(), clock), clock)
     private val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
 
     init {
@@ -130,6 +131,21 @@ class NotificationEngineTest {
         eat(100.0)
         engine.checkBudget()
         assertThat(texts()).containsExactly("1,750 of 2,150 kcal so far. About 400 left for today.")
+    }
+
+    /** Weekly check-in on its day: the last 7 days in one line (owner, 2026-10-19). */
+    @Test fun weeklyCheckInOnItsDay() = runTest {
+        // 2026-10-19 is a Monday; last week is Oct 12–18.
+        settings.updateNotifications { it.copy(mealRemindersEnabled = false, weighInEnabled = false, weeklyEnabled = true, weeklyDay = 1, weeklyMinute = 9 * 60) }
+        for (d in 12..17) {
+            log.add(listOf(LogEntry("", LocalDate.of(2026, 10, d), "lunch", null, "Food", null, 1.0, "meal", null,
+                mapOf(NutrientKey.ENERGY_KCAL to 1880.0), FoodSource.QUICK_ADD, null, clock.instant())))
+        }
+        now = ZonedDateTime.of(2026, 10, 19, 9, 5, 0, 0, ny)
+        engine.runReminders()
+        assertThat(texts()).containsExactly("1,880 kcal a day on 6 logged days, 120 under your budget.")
+        engine.runReminders()
+        assertThat(nm.allNotifications).hasSize(1)
     }
 
     @Test fun quietHoursSuppressButStillRecord() = runTest {

@@ -32,6 +32,10 @@ interface HealthDao {
 
     @Upsert suspend fun upsertTdee(row: TdeeEstimateEntity)
 
+    /** The latest estimate made on or before [date]. */
+    @Query("SELECT * FROM tdee_estimate WHERE deletedAt IS NULL AND date <= :date ORDER BY date DESC, createdAt DESC LIMIT 1")
+    suspend fun tdeeAsOf(date: LocalDate): TdeeEstimateEntity?
+
     /** Entries whose current version isn't in Health Connect yet (new, edited, or deleted since). */
     @Query("SELECT * FROM log_entry WHERE hcSyncedAt IS NULL OR hcSyncedAt < updatedAt ORDER BY updatedAt LIMIT :limit")
     suspend fun pendingLogEntries(limit: Int): List<LogEntryEntity>

@@ -39,6 +39,10 @@
     <string name="review_ai_values">AI values</string>
     <string name="review_use_usda">Use USDA values</string>
     <string name="review_use_ai">Use AI values</string>
+    <string name="review_change_match">Change match</string>
+    <string name="review_match_title">What is “%1$s”?</string>
+    <string name="review_match_body">Pick the food it really is. Forkcast uses its nutrition for this item, and next time for the same food.</string>
+    <string name="review_match_per_100g">%1$s / 100 g</string>
     <string name="review_grams">%1$s g</string>
     <string name="review_less">Less %1$s</string>
     <string name="review_more">More %1$s</string>

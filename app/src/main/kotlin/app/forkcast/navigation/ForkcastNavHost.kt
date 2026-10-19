@@ -27,6 +27,7 @@ import app.forkcast.ui.ai.AiProfileEditViewModel
 import app.forkcast.ui.ai.AiSettingsRoute
 import app.forkcast.ui.backup.BackupRoute
 import app.forkcast.ui.activity.ActivityRoute
+import app.forkcast.ui.weekly.WeeklyCheckInRoute
 import app.forkcast.ui.health.HealthConnectRoute
 import app.forkcast.ui.photo.PhotoMealRoute
 import app.forkcast.ui.photo.ReviewRoute
@@ -49,6 +50,9 @@ import kotlinx.serialization.Serializable
 @Serializable data object ProfileDestination
 @Serializable data object UnitsDestination
 @Serializable data object WaterSettingsDestination
+
+/** Weekly check-in for the week starting [start] (ISO date); null = last week. */
+@Serializable data class WeeklyDestination(val start: String? = null)
 @Serializable data object AppearanceDestination
 @Serializable data object AboutDestination
 @Serializable data object FoodDatabasesDestination
@@ -112,6 +116,7 @@ fun ForkcastNavHost(
             when {
                 request.startsWith("estimate:") -> navController.navigate(ReviewDestination(request.removePrefix("estimate:")))
                 request == "settings_ai" -> navController.navigate(AiSettingsDestination)
+                request.startsWith("weekly:") -> navController.navigate(WeeklyDestination(request.removePrefix("weekly:")))
             }
         }
         onOpenHandled()
@@ -229,7 +234,7 @@ fun ForkcastNavHost(
                 ),
             )
         }
-        composable<ProfileGoalsDestination> { GoalBudgetRoute(onBack = back) }
+        composable<ProfileGoalsDestination> { GoalBudgetRoute(onBack = back, onOpenWeekly = { navController.navigate(WeeklyDestination()) }) }
         composable<ProfileDestination> { ProfileRoute(onBack = back) }
         composable<UnitsDestination> { UnitsRoute(onBack = back) }
         composable<WaterSettingsDestination> { WaterSettingsRoute(onBack = back) }
@@ -258,6 +263,7 @@ fun ForkcastNavHost(
         composable<DailyTargetsDestination> { DailyTargetsRoute(onBack = back) }
         composable<HealthConnectDestination> { HealthConnectRoute(onBack = back) }
         composable<ActivityDestination> { ActivityRoute(onBack = back) }
+        composable<WeeklyDestination> { WeeklyCheckInRoute(onBack = back) }
         composable<PhotoMealDestination> {
             PhotoMealRoute(
                 onBack = back,

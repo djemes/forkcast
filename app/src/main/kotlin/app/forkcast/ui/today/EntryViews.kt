@@ -1,5 +1,9 @@
 package app.forkcast.ui.today
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import app.forkcast.core.domain.FoodLogging
+import app.forkcast.core.model.ServingSize
 import androidx.compose.ui.semantics.Role
 import androidx.compose.material3.Switch
 import androidx.compose.foundation.selection.toggleable
@@ -237,18 +241,25 @@ private fun timeOf(epochMs: Long): String =
     java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
         .format(java.time.Instant.ofEpochMilli(epochMs).atZone(java.time.ZoneId.systemDefault()))
 
-/** Change the amount or meal of a logged entry. Nutrients rescale from the entry's own snapshot. */
+/**
+ * Change the amount, serving or meal of a logged entry. Nutrients rescale from the entry's own
+ * snapshot by grams, so switching cup → g keeps the numbers right and never re-reads the food.
+ */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditEntrySheet(
     entry: LogEntry,
     meals: List<MealSlot>,
     f: UnitFormatter,
-    onSave: (quantity: Double, mealSlotId: String, countsAsWater: Boolean) -> Unit,
+    onSave: (quantity: Double, mealSlotId: String, countsAsWater: Boolean, serving: ServingSize?) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
+    /** Servings to switch between (empty: the amount can only be scaled). */
+    servings: List<ServingSize> = emptyList(),
 ) {
     var quantity by rememberSaveable(entry.id) { mutableStateOf<Double?>(entry.quantity) }
+    var servingLabel by rememberSaveable(entry.id) { mutableStateOf(entry.servingLabel) }
+    val serving = servings.firstOrNull { it.label == servingLabel }
     var mealId by rememberSaveable(entry.id) { mutableStateOf(entry.mealSlotId) }
     var countsWater by rememberSaveable(entry.id) { mutableStateOf(entry.waterMl != null) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
@@ -256,6 +267,8 @@ fun EditEntrySheet(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .navigationBarsPadding()
+                // Serving chips and the water switch can make it taller than a small screen.
+                .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
             Text(stringResource(R.string.edit_entry_title), style = MaterialTheme.typography.titleLarge)
@@ -263,20 +276,43 @@ fun EditEntrySheet(
                 Text(entry.displayName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 SourceBadge(entry.source)
             }
+            if (servings.size > 1) {
+                Text(stringResource(R.string.food_serving), style = MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    servings.forEach { s ->
+                        FilterChip(
+                            selected = s.label == servingLabel,
+                            onClick = {
+                                // Same amount in the new serving: 1 cup (158 g) → 158 g.
+                                val from = serving
+                                val q = quantity
+                                if (from != null && q != null && s.label != servingLabel) {
+                                    quantity = UnitFormatter.trimNumber(FoodLogging.convertQuantity(q, from, s), 2).toDouble()
+                                }
+                                servingLabel = s.label
+                            },
+                            label = { Text(s.label) },
+                        )
+                    }
+                }
+            }
             NumberField(
-                initial = UnitFormatter.trimNumber(entry.quantity, 2),
+                initial = UnitFormatter.trimNumber(quantity ?: entry.quantity, 2),
                 label = stringResource(R.string.edit_quantity),
-                suffix = if (entry.servingLabel in setOf("g", "oz", "ml", "fl oz")) entry.servingLabel else "× ${entry.servingLabel}",
+                suffix = if (servingLabel in setOf("g", "oz", "ml", "fl oz")) servingLabel else "× $servingLabel",
                 onValue = { quantity = it },
-                key = entry.id,
+                // Re-seed when the serving changes the number.
+                key = "${entry.id}|$servingLabel",
             )
             val q = quantity
             if (q != null && q > 0 && entry.quantity > 0) {
-                Text(
-                    f.energy(entry.nutrients.kcal * q / entry.quantity),
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                )
+                // kcal from the snapshot, scaled by grams when a serving is known, else by quantity.
+                val kcal = if (serving != null && entry.grams != null && entry.grams!! > 0) {
+                    entry.nutrients.kcal * q * serving.grams / entry.grams!!
+                } else {
+                    entry.nutrients.kcal * q / entry.quantity
+                }
+                Text(f.energy(kcal), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
             }
             Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -293,7 +329,7 @@ fun EditEntrySheet(
                     Text(stringResource(R.string.action_delete))
                 }
                 Button(
-                    onClick = { quantity?.let { onSave(it, mealId, countsWater) } },
+                    onClick = { quantity?.let { onSave(it, mealId, countsWater, serving) } },
                     enabled = (quantity ?: 0.0) > 0,
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.action_save)) }

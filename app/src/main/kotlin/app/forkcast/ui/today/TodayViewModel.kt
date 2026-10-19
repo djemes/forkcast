@@ -37,6 +37,7 @@ import app.forkcast.core.model.Food
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.model.SavedMeal
+import app.forkcast.core.model.ServingSize
 import app.forkcast.core.model.Sex
 import app.forkcast.core.model.UnitPrefs
 import app.forkcast.core.model.WaterEntry
@@ -150,7 +151,16 @@ sealed interface TodayEvent {
     data class ToggleSelect(val id: String) : TodayEvent
     data object ClearSelection : TodayEvent
     data object DeleteSelected : TodayEvent
-    data class UpdateEntry(val entry: LogEntry, val quantity: Double, val mealSlotId: String, val countsAsWater: Boolean = entry.waterMl != null) : TodayEvent
+    data class UpdateEntry(
+        val entry: LogEntry,
+        val quantity: Double,
+        val mealSlotId: String,
+        val countsAsWater: Boolean = entry.waterMl != null,
+        /** The serving chosen in the edit sheet; null keeps the entry's. */
+        val serving: ServingSize? = null,
+    ) : TodayEvent
+    /** The edit sheet opened: load the food's servings for it. */
+    data class LoadEditServings(val entryId: String) : TodayEvent
     data class QuickAdd(val mealSlotId: String, val label: String, val kcal: Double, val protein: Double?, val carbs: Double?, val fat: Double?) : TodayEvent
     data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
     /** Copies entries to [toDate], into [toMealSlotId] or (null) each entry's own meal. */
@@ -178,7 +188,7 @@ class TodayViewModel @Inject constructor(
     mealSlotRepository: MealSlotRepository,
     private val logRepository: LogRepository,
     profileRepository: ProfileRepository,
-    foodRepository: FoodRepository,
+    private val foods: FoodRepository,
     private val savedMealRepository: SavedMealRepository,
     private val waterRepository: WaterRepository,
     weightRepository: WeightRepository,
@@ -193,6 +203,9 @@ class TodayViewModel @Inject constructor(
     /** True while the screen shows today, so it moves to the new day after midnight (see [TodayEvent.Resumed]). */
     private var followingToday = true
     private val selection = MutableStateFlow<Set<String>>(emptySet())
+    /** Servings for the entry open in the edit sheet (entry id → servings). */
+    private val editServings = MutableStateFlow<Pair<String, List<ServingSize>>?>(null)
+    val editServingsFor: StateFlow<Pair<String, List<ServingSize>>?> = editServings
     private val effectChannel = Channel<TodayEffect>(Channel.BUFFERED)
     val effects: Flow<TodayEffect> = effectChannel.receiveAsFlow()
 
@@ -239,7 +252,7 @@ class TodayViewModel @Inject constructor(
         profileRepository.observeDailyTargets(),
         settingsRepository.settings,
         // One-tap foods: recents, or favorites before anything has been logged.
-        combine(foodRepository.observeRecents(5), foodRepository.observeFavorites()) { r, fav -> if (r.isNotEmpty()) r to false else fav.take(5) to true },
+        combine(foods.observeRecents(5), foods.observeFavorites()) { r, fav -> if (r.isNotEmpty()) r to false else fav.take(5) to true },
         savedMealRepository.meals,
     ) { t, s, (r, favorites), saved -> Extras(t, s, r, saved, favorites) }
 
@@ -407,16 +420,23 @@ class TodayViewModel @Inject constructor(
             }
             is TodayEvent.UpdateEntry -> viewModelScope.launch {
                 val e = event.entry
-                val grams = e.grams?.let { it * event.quantity / e.quantity.coerceAtLeast(1e-9) }
+                val serving = event.serving?.takeIf { e.grams != null }
+                val grams = if (serving != null) serving.grams * event.quantity else e.grams?.let { it * event.quantity / e.quantity.coerceAtLeast(1e-9) }
                 logRepository.update(
                     e.copy(
                         quantity = event.quantity,
+                        servingLabel = serving?.label ?: e.servingLabel,
                         grams = grams,
                         nutrients = DayMath.rescale(e, event.quantity, grams),
                         mealSlotId = event.mealSlotId,
                         waterMl = DrinkWater.waterMl(event.countsAsWater, grams),
                     ),
                 )
+            }
+            is TodayEvent.LoadEditServings -> viewModelScope.launch {
+                val entry = uiState.value?.allEntries?.firstOrNull { it.id == event.entryId } ?: return@launch
+                val food = entry.foodId?.let { foods.get(it) }
+                editServings.value = entry.id to FoodLogging.editServings(entry, food)
             }
         }
     }

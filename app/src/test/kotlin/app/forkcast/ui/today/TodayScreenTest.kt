@@ -10,6 +10,7 @@ import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.isDialog
 import androidx.compose.ui.test.hasAnyAncestor
 import androidx.compose.ui.test.performTextInput
@@ -123,6 +124,19 @@ class TodayScreenTest {
         compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = {}) } }
         row("Banana").performClick()
         compose.onNodeWithText("Edit entry").assertIsDisplayed()
+    }
+
+    /** The edit sheet can switch the serving; the amount carries over (owner, 2026-10-19). */
+    @Test fun editSheetSwitchesServing() {
+        val events = mutableListOf<TodayEvent>()
+        val servings = listOf(app.forkcast.core.model.ServingSize("serving", 100.0), app.forkcast.core.model.ServingSize("g", 1.0))
+        compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = { events += it }, editServings = "n" to servings) } }
+        row("Banana").performClick()
+        compose.onAllNodesWithText("g").filterToOne(hasClickAction()).performScrollTo().performClick()
+        compose.onNodeWithText("Save").performScrollTo().performClick()
+        val update = events.filterIsInstance<TodayEvent.UpdateEntry>().single()
+        assertThat(update.serving?.label).isEqualTo("g")
+        assertThat(update.quantity).isEqualTo(100.0)
     }
 
     @Test fun selectionBarDeletes() {

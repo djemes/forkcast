@@ -87,6 +87,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.data.db.LoggedDay
 import app.forkcast.ui.format.UnitFormatter
 import kotlinx.coroutines.flow.Flow
@@ -124,6 +125,7 @@ fun TodayRoute(
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val editServings by viewModel.editServingsFor.collectAsStateWithLifecycle()
     // Left open overnight, the screen moves on to the new day (unless you were looking at another one).
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onEvent(TodayEvent.Resumed) }
     state?.let {
@@ -134,6 +136,7 @@ fun TodayRoute(
             effects = viewModel.effects,
             addedToMeal = addedToMeal,
             onAddedShown = onAddedShown,
+            editServings = editServings,
         )
     }
 }
@@ -147,12 +150,15 @@ fun TodayScreen(
     effects: Flow<TodayEffect> = emptyFlow(),
     addedToMeal: String? = null,
     onAddedShown: () -> Unit = {},
+    /** Servings loaded for the entry being edited (entry id → servings). */
+    editServings: Pair<String, List<app.forkcast.core.model.ServingSize>>? = null,
 ) {
     // Null = sheet closed; otherwise the meal the sheet logs to.
     var logSheetMealId by rememberSaveable { mutableStateOf<String?>(null) }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showNutrients by rememberSaveable { mutableStateOf(false) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
+    LaunchedEffect(editingId) { editingId?.let { onEvent(TodayEvent.LoadEditServings(it)) } }
     var quickAddMealId by rememberSaveable { mutableStateOf<String?>(null) }
     var savedMealsFor by rememberSaveable { mutableStateOf<String?>(null) }
     var copyRequest by remember { mutableStateOf<CopyRequest?>(null) }
@@ -415,7 +421,8 @@ fun TodayScreen(
                 entry = entry,
                 meals = state.meals.map { it.slot },
                 f = f,
-                onSave = { q, meal, water -> onEvent(TodayEvent.UpdateEntry(entry, q, meal, water)); editingId = null },
+                onSave = { q, meal, water, serving -> onEvent(TodayEvent.UpdateEntry(entry, q, meal, water, serving)); editingId = null },
+                servings = editServings?.takeIf { it.first == entry.id }?.second ?: FoodLogging.editServings(entry, null),
                 onDelete = { onEvent(TodayEvent.Delete(listOf(entry.id))); editingId = null },
                 onDismiss = { editingId = null },
             )

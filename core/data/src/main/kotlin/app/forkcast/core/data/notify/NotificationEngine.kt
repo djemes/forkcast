@@ -2,6 +2,13 @@ package app.forkcast.core.data.notify
 
 import android.content.Context
 import app.forkcast.core.data.R
+import kotlin.math.abs
+import java.time.DayOfWeek
+import app.forkcast.core.model.WeightUnit
+import app.forkcast.core.model.UnitPrefs
+import app.forkcast.core.domain.UnitConversions
+import app.forkcast.core.domain.WeeklyCheckIn
+import app.forkcast.core.data.repository.WeeklyCheckInRepository
 import app.forkcast.core.data.db.AiDao
 import app.forkcast.core.data.db.NotificationLogEntity
 import app.forkcast.core.data.repository.LogRepository
@@ -34,6 +41,7 @@ object NotificationTypes {
     const val PROTEIN = "protein"
     const val MEAL = "meal"
     const val WEIGH_IN = "weigh_in"
+    const val WEEKLY = "weekly"
 }
 
 /**
@@ -52,6 +60,7 @@ class NotificationEngine @Inject constructor(
     private val slots: MealSlotRepository,
     private val dao: AiDao,
     private val maintenance: MaintenanceRepository,
+    private val weekly: WeeklyCheckInRepository,
     private val clock: Clock,
 ) {
     private val n get() = NumberFormat.getIntegerInstance()
@@ -87,6 +96,8 @@ class NotificationEngine @Inject constructor(
             if (s.proteinEnabled) add(s.proteinMinute)
             if (s.weighInEnabled) add(s.weighInMinute)
             if (s.mealRemindersEnabled) addAll(mealReminders(s).values)
+            // Wakes daily at that time; only the check-in day posts.
+            if (s.weeklyEnabled) add(s.weeklyMinute)
         }
     }
 
@@ -143,6 +154,18 @@ class NotificationEngine @Inject constructor(
             }
         }
 
+        if (s.weeklyEnabled && today.dayOfWeek.value == s.weeklyDay && due(s.weeklyMinute) && (NotificationTypes.WEEKLY to 0) !in fired) {
+            record(today, NotificationTypes.WEEKLY, 0)
+            val week = WeeklyCheckIn.lastWeek(today, DayOfWeek.of(s.weeklyDay))
+            val summary = weekly.summary(week.start)
+            if (summary.daysLogged > 0 && !quiet(s)) {
+                notifier.post(
+                    Channel.WEEKLY, ID_WEEKLY, context.getString(R.string.notif_weekly_title),
+                    weeklyText(summary, settings.settings.first().units), open = "weekly:${week.start}",
+                )
+            }
+        }
+
         if (s.mealRemindersEnabled) {
             val mealSlots = slots.observeMealSlots().first()
             for ((slotId, minute) in mealReminders(s)) {
@@ -164,6 +187,28 @@ class NotificationEngine @Inject constructor(
             slots.observeMealSlots().first().map { NotificationRules.Meal(it.id, it.name, it.endMinute ?: NotificationRules.DEFAULT_DINNER_MINUTE) },
         )
 
+    /** "2,050 kcal a day on 6 days, 120 under your budget. Weight trend down 0.4 lb." */
+    private fun weeklyText(w: WeeklyCheckIn.Summary, units: UnitPrefs?): String {
+        val avg = n.format((w.avgIntakeKcal ?: 0.0).roundToInt())
+        val diff = (w.avgDifferenceKcal ?: 0.0).roundToInt()
+        val vs = when {
+            diff <= -10 -> context.getString(R.string.notif_weekly_under, n.format(-diff))
+            diff >= 10 -> context.getString(R.string.notif_weekly_over, n.format(diff))
+            else -> context.getString(R.string.notif_weekly_on)
+        }
+        val food = context.getString(R.string.notif_weekly_food, avg, w.daysLogged, vs)
+        val change = w.trendChangeKg ?: return food
+        val lb = units?.weight == WeightUnit.LB
+        val amount = abs(if (lb) UnitConversions.kgToLb(change) else change)
+        val weight = String.format(java.util.Locale.getDefault(), "%.1f %s", amount, if (lb) "lb" else "kg")
+        val trend = when {
+            amount < 0.05 -> context.getString(R.string.notif_weekly_steady)
+            change < 0 -> context.getString(R.string.notif_weekly_down, weight)
+            else -> context.getString(R.string.notif_weekly_up, weight)
+        }
+        return "$food $trend"
+    }
+
     private fun quiet(s: NotificationSettings): Boolean {
         val t = LocalTime.now(clock)
         return NotificationRules.inQuietHours(t.hour * 60 + t.minute, s.quietStartMinute, s.quietEndMinute)
@@ -179,6 +224,7 @@ class NotificationEngine @Inject constructor(
         const val ID_EVENING = 2002
         const val ID_PROTEIN = 2003
         const val ID_WEIGH_IN = 2004
+        const val ID_WEEKLY = 2005
         const val ID_MEAL = 3000
     }
 }

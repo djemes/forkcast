@@ -7,6 +7,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -138,6 +140,24 @@ class PhotoFlowTest {
         nutrientsUsed = mapOf(NutrientKey.ENERGY_KCAL to kcal), createdAt = 0, updatedAt = 0,
     )
 
+    /** "Change match" opens a search for that item; picking a result sends it back (owner, 2026-10-19). */
+    @Test fun changeMatchSearchAndPick() {
+        val estimate = FakeAiEstimateRepository.row("a1", TestData.TODAY, "l", EstimateStatus.DONE, kcal = 260.0)
+        val detail = EstimateDetail(estimate, listOf(component("c1", "White rice", 200.0, 260.0, hidden = false, usda = true)))
+        val brown = app.forkcast.core.model.Food("b", "Rice, brown, cooked", null, app.forkcast.core.model.FoodSource.USDA, "2", null, emptyList(),
+            mapOf(NutrientKey.ENERGY_KCAL to 123.0), false, null, null, null)
+        val events = mutableListOf<ReviewEvent>()
+        var state by androidx.compose.runtime.mutableStateOf(ReviewUiState(loaded = true, detail = detail, units = UnitPrefs.METRIC))
+        compose.setContent { ForkcastTheme { ReviewScreen(state, { events += it }, {}) } }
+        compose.onNodeWithText("Change match").performScrollTo().performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.ChangeMatch("c1"))
+        state = state.copy(match = MatchSearchState("c1", "White rice", "White rice", results = listOf(brown)))
+        compose.onNodeWithText("What is “White rice”?").assertExists()
+        compose.onNodeWithText("123 kcal / 100 g").assertExists()
+        compose.onNodeWithText("Rice, brown, cooked").performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.PickMatch(brown))
+    }
+
     @Test fun reviewShowsRangeSourceAndLikelyAdded() {
         val estimate = FakeAiEstimateRepository.row("a1", TestData.TODAY, "l", EstimateStatus.DONE, kcal = 640.0)
             .copy(result = MealEstimateJson(mealName = "Chicken and rice", assumptions = listOf("Rice is plain")))
@@ -164,7 +184,7 @@ class PhotoFlowTest {
 
     @Test fun reviewViewModelSavesAndCloses() = runTest {
         val estimates = FakeAiEstimateRepository()
-        val vm = ReviewViewModel(SavedStateHandle(mapOf("estimateId" to "a1")), estimates, app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()), FakeSettingsRepository())
+        val vm = ReviewViewModel(SavedStateHandle(mapOf("estimateId" to "a1")), estimates, app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()), FakeSettingsRepository(), app.forkcast.fakes.FakeFoodRepository())
         vm.effect.test {
             vm.onEvent(ReviewEvent.Correct("only ate half"))
             vm.onEvent(ReviewEvent.Save)

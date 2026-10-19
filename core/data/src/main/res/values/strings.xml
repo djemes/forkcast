@@ -12,6 +12,7 @@
     <string name="channel_protein">Protein check</string>
     <string name="channel_meal_reminder">Meal reminders</string>
     <string name="channel_weigh_in">Weigh-in reminder</string>
+    <string name="channel_weekly">Weekly check-in</string>
     <string name="channel_estimate_ready">Estimate ready</string>
     <string name="channel_backup_failed">Backup problems</string>
     <string name="channel_working">Working in the background</string>
@@ -37,4 +38,12 @@
     <string name="notif_meal">Nothing logged for %1$s yet.</string>
     <string name="notif_weigh_in_title">Weigh-in</string>
     <string name="notif_weigh_in">No weigh-in yet today.</string>
+    <string name="notif_weekly_title">Your week</string>
+    <string name="notif_weekly_food">%1$s kcal a day on %2$d logged days, %3$s.</string>
+    <string name="notif_weekly_under">%1$s under your budget</string>
+    <string name="notif_weekly_over">%1$s over your budget</string>
+    <string name="notif_weekly_on">right on your budget</string>
+    <string name="notif_weekly_down">Weight trend down %1$s.</string>
+    <string name="notif_weekly_up">Weight trend up %1$s.</string>
+    <string name="notif_weekly_steady">Weight trend steady.</string>
 </resources>
