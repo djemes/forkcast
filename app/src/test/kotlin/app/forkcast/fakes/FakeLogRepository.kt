@@ -43,7 +43,19 @@ class FakeLogRepository : LogRepository {
 
 class FakeMealSlotRepository(slots: List<MealSlot> = DEFAULT) : MealSlotRepository {
     val state = MutableStateFlow(slots)
+    private val deleted = mutableMapOf<String, MealSlot>()
     override fun observeMealSlots(): Flow<List<MealSlot>> = state
+    override suspend fun add(name: String, startMinute: Int?, endMinute: Int?): String {
+        val id = "m${state.value.size + deleted.size}"
+        state.update { it + MealSlot(id, name.trim(), it.size, startMinute, endMinute) }
+        return id
+    }
+    override suspend fun update(slot: MealSlot) = state.update { l -> l.map { if (it.id == slot.id) slot.copy(sortOrder = it.sortOrder) else it } }
+    override suspend fun delete(id: String) = state.update { l -> l.firstOrNull { it.id == id }?.let { deleted[id] = it }; l.filterNot { it.id == id } }
+    override suspend fun restore(id: String) = state.update { l -> deleted.remove(id)?.let { (l + it).sortedBy { s -> s.sortOrder } } ?: l }
+    override suspend fun reorder(idsInOrder: List<String>) = state.update { l ->
+        idsInOrder.mapIndexedNotNull { i, id -> l.firstOrNull { it.id == id }?.copy(sortOrder = i) }
+    }
 
     companion object {
         val DEFAULT = listOf(

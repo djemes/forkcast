@@ -13,4 +13,11 @@ interface MealSlotDao {
 
     @Upsert
     suspend fun upsert(slots: List<MealSlotEntity>)
+
+    /** Including deleted rows (for restore and reorder). */
+    @Query("SELECT * FROM meal_slot")
+    suspend fun all(): List<MealSlotEntity>
+
+    @Query("SELECT * FROM meal_slot WHERE id = :id")
+    suspend fun get(id: String): MealSlotEntity?
 }

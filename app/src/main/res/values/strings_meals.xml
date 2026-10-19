@@ -26,4 +26,29 @@
     </plurals>
     <string name="saved_meal_delete">Delete %1$s</string>
     <string name="saved_meal_log">Log %1$s</string>
+
+    <!-- Settings › Meals (SPEC §4.12) -->
+    <string name="meals_body">Your meal sections on Today, in this order. When you log, Forkcast picks the meal whose time window contains the current time; a meal without a window is used when none fits.</string>
+    <string name="meals_window">%1$s – %2$s</string>
+    <string name="meals_no_window">No time window: used when no other meal fits</string>
+    <string name="meals_add">Add meal</string>
+    <string name="meals_max">Up to %1$d meals.</string>
+    <string name="meals_edit_title">Edit meal</string>
+    <string name="meals_new_title">New meal</string>
+    <string name="meals_name">Name</string>
+    <string name="meals_has_window">Time window</string>
+    <string name="meals_starts">Starts %1$s</string>
+    <string name="meals_ends">Ends %1$s</string>
+    <string name="meals_overlap">Overlaps %1$s. The meal higher in the list is picked first.</string>
+    <string name="meals_err_blank">Give the meal a name.</string>
+    <string name="meals_err_long">Keep the name under %1$d characters.</string>
+    <string name="meals_err_duplicate">Another meal already has this name.</string>
+    <string name="meals_err_window">Start and end can\'t be the same time.</string>
+    <string name="meals_delete">Delete meal</string>
+    <string name="meals_delete_body">Past entries in %1$s stay on their days, under Other. You can undo this right after.</string>
+    <string name="meals_deleted">Deleted %1$s</string>
+    <string name="meals_last_one">Keep at least one meal.</string>
+    <string name="meals_more">More options for %1$s</string>
+    <string name="meals_move_up">Move up</string>
+    <string name="meals_move_down">Move down</string>
 </resources>

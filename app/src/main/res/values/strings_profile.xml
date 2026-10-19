@@ -119,4 +119,21 @@
     <string name="profile_current_weight">Current weight</string>
     <string name="profile_current_weight_summary">%1$s · log a new weigh-in to change it</string>
     <string name="edit_title">Edit %1$s</string>
+
+    <!-- Settings › Daily targets (SPEC §4.12, §5.7) -->
+    <string name="targets_body">Targets come from your budget and goal. Change any of them; custom ones stay until you reset them. Changing protein, carbs or fat doesn\'t rebalance the others.</string>
+    <string name="targets_goal">Goal</string>
+    <string name="targets_limit">Limit</string>
+    <string name="targets_custom">custom</string>
+    <string name="targets_default">Default %1$s</string>
+    <string name="targets_section_main">Calories and macros</string>
+    <string name="targets_section_limits">Fiber and limits</string>
+    <string name="targets_section_micros">Vitamins and minerals (US Daily Values)</string>
+    <string name="targets_edit">%1$s target</string>
+    <string name="targets_amount">Amount</string>
+    <string name="targets_reset">Reset to default</string>
+    <string name="targets_invalid">Enter a number above 0.</string>
+    <string name="targets_kind_goal">a goal to reach</string>
+    <string name="targets_kind_limit">a limit to stay under</string>
+    <string name="targets_kind_line">%1$s is %2$s.</string>
 </resources>

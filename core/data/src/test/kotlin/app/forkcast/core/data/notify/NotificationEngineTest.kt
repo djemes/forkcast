@@ -80,7 +80,7 @@ class NotificationEngineTest {
         override suspend fun update(entry: WeightEntry) = Unit
         override suspend fun delete(id: String) = Unit
     }
-    private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db.mealSlotDao()), db.aiDao(), clock)
+    private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db, db.mealSlotDao(), clock), db.aiDao(), clock)
     private val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
 
     init {
