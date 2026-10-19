@@ -62,7 +62,22 @@ interface EstimateScheduler {
 object AiErrorCodes {
     const val NO_PROFILE = "NoProfile"
     const val DISABLED = "Disabled"
-    fun of(e: AiError): String = e::class.simpleName ?: "Unknown"
+    /**
+     * Explicit names, not `e::class.simpleName`: R8 renames classes in release builds, which
+     * would store "c" and lose the specific message on the review screen.
+     */
+    fun of(e: AiError): String = when (e) {
+        is AiError.InvalidKey -> "InvalidKey"
+        is AiError.RateLimited -> "RateLimited"
+        is AiError.QuotaExhausted -> "QuotaExhausted"
+        is AiError.ModelNotFound -> "ModelNotFound"
+        is AiError.ContentRefused -> "ContentRefused"
+        is AiError.BadResponse -> "BadResponse"
+        is AiError.InvalidRequest -> "InvalidRequest"
+        is AiError.Network -> "Network"
+        is AiError.Timeout -> "Timeout"
+        is AiError.Server -> "Server"
+    }
 }
 
 interface AiEstimateRepository {
