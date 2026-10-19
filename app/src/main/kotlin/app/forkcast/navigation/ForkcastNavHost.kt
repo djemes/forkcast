@@ -1,6 +1,7 @@
 package app.forkcast.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -22,6 +23,8 @@ import app.forkcast.ui.ai.AiProfileEditRoute
 import app.forkcast.ui.ai.AiProfileEditViewModel
 import app.forkcast.ui.ai.AiSettingsRoute
 import app.forkcast.ui.backup.BackupRoute
+import app.forkcast.ui.photo.PhotoMealRoute
+import app.forkcast.ui.photo.ReviewRoute
 import app.forkcast.ui.settings.ProfileGoalsRoute
 import app.forkcast.ui.settings.SettingsScreen
 import app.forkcast.ui.today.TodayActions
@@ -39,6 +42,11 @@ import kotlinx.serialization.Serializable
 @Serializable data object BackupDestination
 @Serializable data object WeightDestination
 @Serializable data object AiSettingsDestination
+
+/** Photo-meal camera, logging into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
+@Serializable data class PhotoMealDestination(val mealSlotId: String, val date: String)
+
+@Serializable data class ReviewDestination(val estimateId: String)
 
 /** Edit [profileId], or create a new profile (null). [preset] "free_gemini" = guided free setup. */
 @Serializable data class AiProfileEditDestination(val profileId: String? = null, val preset: String? = null)
@@ -69,8 +77,22 @@ private const val ADDED_TO = "added_to"
 fun ForkcastNavHost(
     startWithOnboarding: Boolean,
     navController: NavHostController = rememberNavController(),
+    openRequest: String? = null,
+    onOpenHandled: () -> Unit = {},
 ) {
     val back: () -> Unit = { navController.popBackStack() }
+
+    // A tapped notification: open the estimate's review screen or Settings › AI.
+    LaunchedEffect(openRequest, startWithOnboarding) {
+        val request = openRequest ?: return@LaunchedEffect
+        if (!startWithOnboarding) {
+            when {
+                request.startsWith("estimate:") -> navController.navigate(ReviewDestination(request.removePrefix("estimate:")))
+                request == "settings_ai" -> navController.navigate(AiSettingsDestination)
+            }
+        }
+        onOpenHandled()
+    }
 
     /** Returns to Today and shows "Added to <meal>". */
     fun addedTo(mealName: String) {
@@ -97,6 +119,8 @@ fun ForkcastNavHost(
                     openSearch = { meal, date -> navController.navigate(SearchDestination(meal, date.toString())) },
                     openScanner = { meal, date -> navController.navigate(ScannerDestination(meal, date.toString())) },
                     openWeight = { navController.navigate(WeightDestination) },
+                    openPhoto = { meal, date -> navController.navigate(PhotoMealDestination(meal, date.toString())) },
+                    openEstimate = { id -> navController.navigate(ReviewDestination(id)) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },
@@ -181,6 +205,14 @@ fun ForkcastNavHost(
             )
         }
         composable<AiProfileEditDestination> { AiProfileEditRoute(onBack = back) }
+        composable<PhotoMealDestination> {
+            PhotoMealRoute(
+                onBack = back,
+                onQueued = { navController.popBackStack<TodayDestination>(inclusive = false) },
+                onOpenAiSettings = { navController.navigate(AiSettingsDestination) },
+            )
+        }
+        composable<ReviewDestination> { ReviewRoute(onBack = back) }
         composable<BackupDestination> { BackupRoute(onBack = back) }
         composable<WeightDestination> { WeightRoute(onBack = back) }
         composable<AppearanceDestination> { AppearanceRoute(onBack = back) }

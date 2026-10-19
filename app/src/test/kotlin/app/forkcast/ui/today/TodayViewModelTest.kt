@@ -24,6 +24,8 @@ import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import app.forkcast.core.data.db.EstimateStatus
+import app.forkcast.fakes.FakeAiEstimateRepository
 import java.time.Clock
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -42,7 +44,8 @@ class TodayViewModelTest {
     private val foods = FakeFoodRepository()
     private val saved = FakeSavedMealRepository()
     private val water = FakeWaterRepository()
-    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), clock)
+    private val estimates = FakeAiEstimateRepository()
+    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, clock)
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
@@ -55,6 +58,22 @@ class TodayViewModelTest {
         assertThat(s.totals!!.budgetKcal).isEqualTo(2290)
         assertThat(s.meals.first { it.slot.id == "b" }.entries.single().displayName).isEqualTo("Yogurt")
         assertThat(s.meals.first { it.slot.id == "l" }.kcal).isEqualTo(205.0)
+    }
+
+    @Test fun photoEstimatesShowPendingThenAsReviewableEntries() = runTest {
+        val ids = log.add(listOf(TestData.entry("Chicken and rice", "l", 640.0).copy(source = app.forkcast.core.model.FoodSource.AI, aiEstimateId = "a1")))
+        estimates.rows.value = listOf(
+            FakeAiEstimateRepository.row("a1", TestData.TODAY, "l", EstimateStatus.DONE, logEntryId = ids.single(), kcal = 640.0),
+            FakeAiEstimateRepository.row("a2", TestData.TODAY, "l", EstimateStatus.RUNNING),
+        )
+        val s = vm().uiState.filterNotNull().first()
+        val lunch = s.meals.first { it.slot.id == "l" }
+        // The logged estimate is its entry; the running one is a pending row.
+        assertThat(lunch.entries.single().aiEstimateId).isEqualTo("a1")
+        assertThat(lunch.pending.map { it.id }).containsExactly("a2")
+        assertThat(s.unreviewedEstimateIds).containsExactly("a1")
+        // Pending estimates don't count toward the totals until logged.
+        assertThat(s.totals!!.eatenKcal).isEqualTo(640.0)
     }
 
     @Test fun deleteAndUndo() = runTest {

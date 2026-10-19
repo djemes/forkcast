@@ -1,6 +1,10 @@
 package app.forkcast.core.data.di
 
 import android.content.Context
+import app.forkcast.core.data.ai.AiEstimateRepository
+import app.forkcast.core.data.ai.DefaultAiEstimateRepository
+import app.forkcast.core.data.ai.EstimateScheduler
+import app.forkcast.core.data.ai.WorkManagerEstimateScheduler
 import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.DefaultAiRepository
 import app.forkcast.core.data.repository.DefaultFoodRepository
@@ -68,4 +72,10 @@ abstract class FoodModule {
 
     @Binds
     abstract fun bindAiRepository(impl: DefaultAiRepository): AiRepository
+
+    @Binds
+    abstract fun bindAiEstimateRepository(impl: DefaultAiEstimateRepository): AiEstimateRepository
+
+    @Binds
+    abstract fun bindEstimateScheduler(impl: WorkManagerEstimateScheduler): EstimateScheduler
 }

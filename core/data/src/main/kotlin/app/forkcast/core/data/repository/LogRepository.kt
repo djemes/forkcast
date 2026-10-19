@@ -74,7 +74,8 @@ class RoomLogRepository @Inject constructor(
 
     override suspend fun copy(ids: List<String>, toDate: LocalDate, toMealSlotId: String?): List<String> {
         val source = dao.getAll(ids).filter { it.deletedAt == null }.sortedBy { it.loggedAt }
-        return add(source.map { it.toModel().copy(date = toDate, mealSlotId = toMealSlotId ?: it.mealSlotId, loggedAt = clock.instant()) })
+        // A copy is a plain entry: the review screen belongs to the original.
+        return add(source.map { it.toModel().copy(date = toDate, mealSlotId = toMealSlotId ?: it.mealSlotId, loggedAt = clock.instant(), aiEstimateId = null) })
     }
 
     private fun LogEntry.toEntity(id: String, now: Long, loggedAt: Long) = LogEntryEntity(
@@ -90,7 +91,7 @@ class RoomLogRepository @Inject constructor(
         grams = grams,
         nutrients = nutrients,
         source = source,
-        aiEstimateId = null,
+        aiEstimateId = aiEstimateId,
         healthConnectRecordId = null,
         note = note,
         loggedAt = loggedAt,
@@ -113,4 +114,5 @@ fun LogEntryEntity.toModel() = LogEntry(
     source = source,
     note = note,
     loggedAt = Instant.ofEpochMilli(loggedAt),
+    aiEstimateId = aiEstimateId,
 )

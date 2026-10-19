@@ -8,6 +8,7 @@ import app.forkcast.core.domain.DailyTargetsCalculator
 import app.forkcast.core.model.AiSettings
 import app.forkcast.core.model.AppSettings
 import app.forkcast.core.model.Goal
+import app.forkcast.core.model.NotificationSettings
 import app.forkcast.core.model.NutrientKey
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.core.model.UnitPrefs
@@ -30,6 +31,8 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun setUnits(units: UnitPrefs) = state.update { it.copy(units = units) }
     override suspend fun setWaterTargetMl(ml: Double?) = state.update { it.copy(waterTargetMl = ml) }
     override suspend fun updateAi(transform: (AiSettings) -> AiSettings) = state.update { it.copy(ai = transform(it.ai)) }
+    override suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings) =
+        state.update { it.copy(notifications = transform(it.notifications)) }
 }
 
 class FakeWeightRepository : WeightRepository {

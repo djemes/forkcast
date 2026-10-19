@@ -2,11 +2,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network is used only for services the user configured: USDA, Open Food Facts (and later their AI provider and Drive). -->
+    <!-- Network is used only for services the user configured: USDA, Open Food Facts, their AI provider (and later Drive). -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Barcode and nutrition-label scanning; asked for the first time the scanner opens. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <!-- Asked in context: the first time a notification is turned on or a photo is estimated (SPEC §4.8). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application
         android:name=".ForkcastApplication"
@@ -32,5 +34,17 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- WorkManager is started by ForkcastApplication (Hilt worker factory), not by App Startup. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup"
+                tools:node="remove" />
+        </provider>
     </application>
 </manifest>

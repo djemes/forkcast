@@ -21,6 +21,8 @@ data class LogEntry(
     val source: FoodSource,
     val note: String?,
     val loggedAt: Instant,
+    /** The photo estimate this entry came from; opens the review screen. */
+    val aiEstimateId: String? = null,
 )
 
 data class WeightEntry(

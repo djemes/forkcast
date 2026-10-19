@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
-    "identityHash": "215c6c0c5f9beb2e68a9ad5b90789e0f",
+    "identityHash": "a8b91aab35fdd2dfbb4e513a54f77518",
     "entities": [
       {
         "tableName": "meal_slot",
@@ -917,7 +917,7 @@
       },
       {
         "tableName": "ai_estimate",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `zoneId` TEXT NOT NULL, `mealSlotId` TEXT NOT NULL, `logEntryId` TEXT, `status` TEXT NOT NULL, `profileId` TEXT, `profileName` TEXT, `provider` TEXT, `model` TEXT, `tierLabel` TEXT, `description` TEXT, `personalContext` TEXT, `photoPaths` TEXT NOT NULL, `localTime` TEXT NOT NULL, `unitsHint` TEXT NOT NULL, `correction` TEXT, `promptVersion` TEXT NOT NULL, `rawJson` TEXT, `result` TEXT, `warnings` TEXT NOT NULL, `mealName` TEXT, `kcalLow` REAL, `kcalExpected` REAL, `kcalHigh` REAL, `inputTokens` INTEGER, `outputTokens` INTEGER, `latencyMs` INTEGER, `errorCode` TEXT, `errorDetail` TEXT, `attempts` INTEGER NOT NULL, `retryAfter` INTEGER, `notified` INTEGER NOT NULL, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `date` TEXT NOT NULL, `zoneId` TEXT NOT NULL, `mealSlotId` TEXT NOT NULL, `logEntryId` TEXT, `status` TEXT NOT NULL, `profileId` TEXT, `profileName` TEXT, `provider` TEXT, `model` TEXT, `tierLabel` TEXT, `description` TEXT, `personalContext` TEXT, `photoPaths` TEXT NOT NULL, `localTime` TEXT NOT NULL, `unitsHint` TEXT NOT NULL, `correction` TEXT, `promptVersion` TEXT NOT NULL, `rawJson` TEXT, `result` TEXT, `warnings` TEXT NOT NULL, `mealName` TEXT, `kcalLow` REAL, `kcalExpected` REAL, `kcalHigh` REAL, `inputTokens` INTEGER, `outputTokens` INTEGER, `latencyMs` INTEGER, `errorCode` TEXT, `errorDetail` TEXT, `attempts` INTEGER NOT NULL, `retryAfter` INTEGER, `notified` INTEGER NOT NULL, `reviewedAt` INTEGER, `createdAt` INTEGER NOT NULL, `updatedAt` INTEGER NOT NULL, `deletedAt` INTEGER, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -1095,6 +1095,11 @@
             "columnName": "notified",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "reviewedAt",
+            "columnName": "reviewedAt",
+            "affinity": "INTEGER"
           },
           {
             "fieldPath": "createdAt",
@@ -1631,7 +1636,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '215c6c0c5f9beb2e68a9ad5b90789e0f')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'a8b91aab35fdd2dfbb4e513a54f77518')"
     ]
   }
 }
