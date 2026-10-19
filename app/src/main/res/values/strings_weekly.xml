@@ -10,10 +10,12 @@
     <string name="weekly_days_logged">Days logged</string>
     <string name="weekly_days_value">%1$d of 7 (%2$d complete)</string>
     <string name="weekly_avg_eaten">Average eaten</string>
+    <string name="weekly_avg_eaten_complete">Average eaten, complete days</string>
+    <string name="weekly_none_complete">No day this week was logged in full, so these averages include partly logged days and may look low. Mark a day complete on Today if you logged everything.</string>
     <string name="weekly_avg_budget">Average budget, with activity</string>
-    <string name="weekly_under">On logged days you were %1$s under your budget on average.</string>
-    <string name="weekly_over">On logged days you were %1$s over your budget on average.</string>
-    <string name="weekly_on_budget">On logged days you were right on your budget.</string>
+    <string name="weekly_under">On average you were %1$s under your budget.</string>
+    <string name="weekly_over">On average you were %1$s over your budget.</string>
+    <string name="weekly_on_budget">On average you were right on your budget.</string>
     <string name="weekly_weight">Weight</string>
     <string name="weekly_weigh_ins">Days weighed</string>
     <string name="weekly_trend">Trend this week</string>

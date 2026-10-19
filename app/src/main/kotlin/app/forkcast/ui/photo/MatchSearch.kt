@@ -91,6 +91,12 @@ fun MatchSearchSheet(
                 state.error is FoodApiError.Offline && state.results.isEmpty() -> Text(stringResource(R.string.search_offline), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                 state.error != null && state.results.isEmpty() -> Text(stringResource(R.string.search_failed, stringResource(R.string.search_usda)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                 state.results.isEmpty() -> Text(stringResource(R.string.search_no_results), style = MaterialTheme.typography.bodyMedium)
+                // USDA failed but your own foods matched: say why the list is short.
+                state.error != null -> Text(
+                    stringResource(if (state.error is FoodApiError.Offline) R.string.search_offline else R.string.review_match_usda_down),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
             state.results.forEach { food ->
                 Row(

@@ -30,14 +30,16 @@ class WeeklyCheckInTest {
         activeKcalByDay = mapOf(start to 400.0, start.plusDays(1) to 500.0),
     )
 
-    @Test fun summarizesFoodAgainstTheBudgetOnLoggedDays() {
+    @Test fun summarizesFoodAgainstTheBudgetOnCompleteDays() {
         val s = WeeklyCheckIn.summarize(input())
         assertThat(s.daysLogged).isEqualTo(6)
         assertThat(s.completeDays).isEqualTo(4)
+        assertThat(s.averagedOverComplete).isTrue()
+        assertThat(s.averagedDays).isEqualTo(4)
         assertThat(s.avgIntakeKcal).isEqualTo(2000.0)
-        // Budget 2,150 on 6 days plus a 100 bonus on one of them.
-        assertThat(s.avgAllowanceKcal!!).isWithin(0.01).of(2150.0 + 100.0 / 6)
-        assertThat(s.avgDifferenceKcal!!).isWithin(0.01).of(2000.0 - 2150.0 - 100.0 / 6)
+        // Budget 2,150 on the 4 complete days plus a 100 bonus on one of them.
+        assertThat(s.avgAllowanceKcal!!).isWithin(0.01).of(2150.0 + 100.0 / 4)
+        assertThat(s.avgDifferenceKcal!!).isWithin(0.01).of(2000.0 - 2150.0 - 100.0 / 4)
         assertThat(s.totalBonusKcal).isEqualTo(100.0)
         assertThat(s.maintenanceChangeKcal).isEqualTo(50.0)
         assertThat(s.avgSteps).isEqualTo(9000L)
@@ -54,6 +56,16 @@ class WeeklyCheckInTest {
         assertThat(WeeklyCheckIn.pace(0.4, null, 4)).isEqualTo(WeeklyCheckIn.Pace.BEHIND)
         // Gaining.
         assertThat(WeeklyCheckIn.pace(0.6, 0.25, 4)).isEqualTo(WeeklyCheckIn.Pace.AHEAD)
+    }
+
+    /** A half-logged day would make intake look low, so it's left out when complete days exist. */
+    @Test fun incompleteDaysOnlyWhenNothingIsComplete() {
+        val kcal = mapOf(start to 2000.0, start.plusDays(1) to 400.0)
+        val withComplete = WeeklyCheckIn.summarize(input(kcal = kcal).copy(completeDays = setOf(start)))
+        assertThat(withComplete.avgIntakeKcal).isEqualTo(2000.0)
+        val none = WeeklyCheckIn.summarize(input(kcal = kcal).copy(completeDays = emptySet()))
+        assertThat(none.avgIntakeKcal).isEqualTo(1200.0)
+        assertThat(none.averagedOverComplete).isFalse()
     }
 
     @Test fun emptyWeek() {

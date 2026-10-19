@@ -40,6 +40,7 @@
     <string name="notif_weigh_in">No weigh-in yet today.</string>
     <string name="notif_weekly_title">Your week</string>
     <string name="notif_weekly_food">%1$s kcal a day on %2$d logged days, %3$s.</string>
+    <string name="notif_weekly_food_complete">%1$s kcal a day on %2$d complete days, %3$s.</string>
     <string name="notif_weekly_under">%1$s under your budget</string>
     <string name="notif_weekly_over">%1$s over your budget</string>
     <string name="notif_weekly_on">right on your budget</string>

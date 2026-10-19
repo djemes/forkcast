@@ -46,7 +46,6 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.util.Locale
 import javax.inject.Inject
 import kotlin.math.abs
@@ -110,7 +109,7 @@ fun WeeklyCheckInScreen(state: WeeklyUiState?, onBack: () -> Unit, onPrevious: (
             }
             Section(R.string.weekly_food) {
                 Line(R.string.weekly_days_logged, stringResource(R.string.weekly_days_value, w.daysLogged, w.completeDays))
-                w.avgIntakeKcal?.let { Line(R.string.weekly_avg_eaten, f.energy(it)) }
+                w.avgIntakeKcal?.let { Line(if (w.averagedOverComplete) R.string.weekly_avg_eaten_complete else R.string.weekly_avg_eaten, f.energy(it)) }
                 w.avgAllowanceKcal?.let { Line(R.string.weekly_avg_budget, f.energy(it)) }
                 w.avgDifferenceKcal?.let { d ->
                     val r = d.roundToInt()
@@ -122,6 +121,7 @@ fun WeeklyCheckInScreen(state: WeeklyUiState?, onBack: () -> Unit, onPrevious: (
                         },
                     )
                 }
+                if (!w.averagedOverComplete && w.daysLogged > 0) Note(stringResource(R.string.weekly_none_complete))
             }
             Section(R.string.weekly_weight) {
                 Line(R.string.weekly_weigh_ins, w.weighIns.toString())
@@ -168,7 +168,12 @@ private fun signedWeight(kg: Double, f: UnitFormatter): String = when {
     else -> "+" + f.weight(kg)
 }
 
-private fun shortDate(d: LocalDate): String = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()).format(d)
+/** "Oct 12": the year only matters for old weeks, and the range header has to fit at 200 %. */
+private fun shortDate(d: LocalDate): String {
+    val locale = Locale.getDefault()
+    val skeleton = if (d.year == LocalDate.now().year) "MMMd" else "yMMMd"
+    return DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, skeleton), locale).format(d)
+}
 
 @Composable
 private fun Section(title: Int, content: @Composable () -> Unit) {

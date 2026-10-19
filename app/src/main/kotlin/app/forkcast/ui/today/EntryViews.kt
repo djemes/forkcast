@@ -287,7 +287,13 @@ fun EditEntrySheet(
                                 val from = serving
                                 val q = quantity
                                 if (from != null && q != null && s.label != servingLabel) {
-                                    quantity = UnitFormatter.trimNumber(FoodLogging.convertQuantity(q, from, s), 2).toDouble()
+                                    // Whole grams and ml, tenths of oz, hundredths of servings.
+                                    val decimals = when (s.label) {
+                                        "g", "ml" -> 0
+                                        "oz", "fl oz" -> 1
+                                        else -> 2
+                                    }
+                                    quantity = UnitFormatter.trimNumber(FoodLogging.convertQuantity(q, from, s), decimals).toDouble()
                                 }
                                 servingLabel = s.label
                             },

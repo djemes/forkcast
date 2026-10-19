@@ -196,7 +196,7 @@ class NotificationEngine @Inject constructor(
             diff >= 10 -> context.getString(R.string.notif_weekly_over, n.format(diff))
             else -> context.getString(R.string.notif_weekly_on)
         }
-        val food = context.getString(R.string.notif_weekly_food, avg, w.daysLogged, vs)
+        val food = context.getString(if (w.averagedOverComplete) R.string.notif_weekly_food_complete else R.string.notif_weekly_food, avg, w.averagedDays, vs)
         val change = w.trendChangeKg ?: return food
         val lb = units?.weight == WeightUnit.LB
         val amount = abs(if (lb) UnitConversions.kgToLb(change) else change)

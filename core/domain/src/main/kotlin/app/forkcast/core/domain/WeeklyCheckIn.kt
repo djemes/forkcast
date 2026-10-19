@@ -46,8 +46,11 @@ object WeeklyCheckIn {
         val end: LocalDate,
         val daysLogged: Int,
         val completeDays: Int,
-        /** Average intake on logged days. */
+        /** Average intake over the days in [averagedDays]: complete days, or every logged day if none is complete. */
         val avgIntakeKcal: Double?,
+        val averagedDays: Int,
+        /** The averages use complete days only (a half-logged day would make intake look low). */
+        val averagedOverComplete: Boolean,
         /** Average budget including activity on those same days. */
         val avgAllowanceKcal: Double?,
         /** Intake − allowance on average (negative = under). */
@@ -65,8 +68,10 @@ object WeeklyCheckIn {
 
     fun summarize(i: Input): Summary {
         val logged = i.kcalByDay.filterKeys { it in i.start..i.end }
-        val avgIntake = logged.values.takeIf { it.isNotEmpty() }?.average()
-        val avgAllowance = logged.keys.takeIf { it.isNotEmpty() }?.map { i.budgetKcal + (i.bonusByDay[it] ?: 0.0) }?.average()
+        val complete = logged.filterKeys { it in i.completeDays }
+        val basis = complete.ifEmpty { logged }
+        val avgIntake = basis.values.takeIf { it.isNotEmpty() }?.average()
+        val avgAllowance = basis.keys.takeIf { it.isNotEmpty() }?.map { i.budgetKcal + (i.bonusByDay[it] ?: 0.0) }?.average()
         val change = if (i.trendBeforeKg != null && i.trendEndKg != null) i.trendEndKg - i.trendBeforeKg else null
         val steps = i.stepsByDay.filterKeys { it in i.start..i.end }.values
         val active = i.activeKcalByDay.filterKeys { it in i.start..i.end }.values
@@ -76,6 +81,8 @@ object WeeklyCheckIn {
             daysLogged = logged.size,
             completeDays = i.completeDays.count { it in i.start..i.end },
             avgIntakeKcal = avgIntake,
+            averagedDays = basis.size,
+            averagedOverComplete = complete.isNotEmpty(),
             avgAllowanceKcal = avgAllowance,
             avgDifferenceKcal = if (avgIntake != null && avgAllowance != null) avgIntake - avgAllowance else null,
             trendChangeKg = change,
