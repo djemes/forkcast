@@ -55,6 +55,7 @@ dependencies {
     implementation(libs.hilt.work)
     ksp(libs.hilt.androidx.compiler)
     implementation(libs.androidx.exifinterface)
+    api(libs.health.connect)
 
     testImplementation(libs.junit4)
     testImplementation(libs.truth)

@@ -7,6 +7,8 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import app.forkcast.core.data.health.HealthRepository
+import app.forkcast.core.data.health.SyncReason
 import app.forkcast.core.domain.NotificationRules
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -27,8 +29,11 @@ class ReminderWorker @AssistedInject constructor(
     @Assisted params: WorkerParameters,
     private val engine: NotificationEngine,
     private val scheduler: ReminderScheduler,
+    private val health: HealthRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        // A scale reading that reached Health Connect skips the weigh-in reminder (SPEC §4.8).
+        runCatching { health.sync(SyncReason.BACKGROUND) }
         engine.runReminders()
         scheduler.scheduleNext()
         return Result.success()

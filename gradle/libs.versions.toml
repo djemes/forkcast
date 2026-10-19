@@ -36,6 +36,8 @@ hiltWork = "1.4.0"
 exifinterface = "1.4.2"
 coil = "3.6.3"
 reorderable = "3.1.0"
+# Phase 3, checked 2026-10-19 (Google Maven: 1.1.0 is the newest stable; 1.2.0-alpha06 newest overall)
+healthConnect = "1.1.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -107,6 +109,7 @@ hilt-androidx-compiler = { module = "androidx.hilt:hilt-compiler", version.ref =
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+health-connect = { module = "androidx.health.connect:connect-client", version.ref = "healthConnect" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

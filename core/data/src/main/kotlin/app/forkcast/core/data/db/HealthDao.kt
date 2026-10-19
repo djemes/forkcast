@@ -18,8 +18,9 @@ interface HealthDao {
     @Query("SELECT * FROM activity_day WHERE date >= :from AND date <= :to AND deletedAt IS NULL ORDER BY date")
     fun observeActivityRange(from: LocalDate, to: LocalDate): Flow<List<ActivityDayEntity>>
 
-    @Query("SELECT * FROM activity_day WHERE date IN (:dates)")
-    suspend fun activityFor(dates: List<LocalDate>): List<ActivityDayEntity>
+    /** Including deleted rows: one row per date (unique), so a returning day reuses its row. */
+    @Query("SELECT * FROM activity_day WHERE date >= :from AND date <= :to")
+    suspend fun activityRangeAll(from: LocalDate, to: LocalDate): List<ActivityDayEntity>
 
     @Upsert suspend fun upsertActivity(rows: List<ActivityDayEntity>)
 
@@ -62,5 +63,18 @@ interface HealthDao {
     @Query("SELECT * FROM weight_entry WHERE source = 'MANUAL' AND deletedAt IS NULL AND timestamp >= :from AND timestamp <= :to")
     suspend fun manualWeightsBetween(from: Long, to: Long): List<WeightEntryEntity>
 
+    /** Any source, for attaching a body-fat reading to the weigh-in it belongs to. */
+    @Query("SELECT * FROM weight_entry WHERE deletedAt IS NULL AND timestamp >= :from AND timestamp <= :to")
+    suspend fun weightsBetween(from: Long, to: Long): List<WeightEntryEntity>
+
+    @Query("SELECT * FROM weight_entry WHERE source = 'HEALTH_CONNECT' AND deletedAt IS NULL AND timestamp >= :from")
+    suspend fun healthConnectWeightsSince(from: Long): List<WeightEntryEntity>
+
     @Upsert suspend fun upsertWeights(rows: List<WeightEntryEntity>)
+
+    @Query("SELECT count(*) FROM log_entry WHERE hcSyncedAt IS NULL OR hcSyncedAt < updatedAt")
+    fun observePendingLogCount(): Flow<Int>
+
+    @Query("SELECT count(*) FROM water_entry WHERE hcSyncedAt IS NULL OR hcSyncedAt < updatedAt")
+    fun observePendingWaterCount(): Flow<Int>
 }
