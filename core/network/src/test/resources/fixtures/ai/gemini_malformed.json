@@ -1,0 +1,27 @@
+{
+  "id": "int_1",
+  "object": "interaction",
+  "model": "gemini-3.8-flash",
+  "status": "completed",
+  "steps": [
+    {
+      "type": "thought",
+      "content": []
+    },
+    {
+      "type": "model_output",
+      "content": [
+        {
+          "type": "text",
+          "text": "not json at all"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "total_input_tokens": 3100,
+    "total_output_tokens": 610,
+    "total_thought_tokens": 420,
+    "total_tokens": 4130
+  }
+}

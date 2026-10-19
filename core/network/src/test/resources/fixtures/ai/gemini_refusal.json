@@ -1,0 +1,10 @@
+{
+  "id": "int_2",
+  "object": "interaction",
+  "model": "gemini-3.8-flash",
+  "status": "failed",
+  "steps": [],
+  "error": {
+    "reason": "SAFETY"
+  }
+}

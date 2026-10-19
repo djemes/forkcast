@@ -1,0 +1,20 @@
+{
+  "id": "chatcmpl-1",
+  "object": "chat.completion",
+  "model": "gpt-test",
+  "choices": [
+    {
+      "index": 0,
+      "message": {
+        "role": "assistant",
+        "content": "```json\n{\"meal_name\": \n```",
+        "refusal": null
+      },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 2900,
+    "completion_tokens": 700
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "_note": "Edit this file to change recommended models, prices or quota rules; no code changes needed. Prices are USD per 1M tokens, checked 2026-10-18 (AI_PROVIDERS.md §6).",
+  "maxImageEdgePx": 1568,
+  "jpegQuality": 85,
+  "maxImages": 3,
+  "maxOutputTokens": 4096,
+  "providers": {
+    "CLAUDE": {
+      "recommendedModel": "claude-sonnet-5-5",
+      "budgetModel": "claude-haiku-5-5",
+      "keyUrl": "https://platform.claude.com/",
+      "quotaReset": "rolling"
+    },
+    "GEMINI": {
+      "recommendedModel": "gemini-3.8-flash",
+      "budgetModel": "gemini-3.5-flash-lite",
+      "keyUrl": "https://aistudio.google.com/apikey",
+      "quotaReset": "midnight:America/Los_Angeles"
+    },
+    "OPENAI_COMPAT": {
+      "recommendedModel": null,
+      "budgetModel": null,
+      "keyUrl": "https://platform.openai.com/api-keys",
+      "defaultBaseUrl": "https://api.openai.com",
+      "quotaReset": "rolling"
+    }
+  },
+  "models": {
+    "claude-sonnet-5-5": { "displayName": "Claude Sonnet 5.5", "inputPerM": 2.00, "outputPerM": 10.00, "effort": "low" },
+    "claude-haiku-5-5": { "displayName": "Claude Haiku 5.5", "inputPerM": 0.10, "outputPerM": 0.50, "effort": "low" },
+    "gemini-3.8-flash": { "displayName": "Gemini 3.8 Flash", "inputPerM": 0.75, "outputPerM": 3.75, "thinkingLevel": "low",
+      "priceChanges": [{ "from": "2027-01-01", "inputPerM": 1.50, "outputPerM": 7.50 }] },
+    "gemini-3.5-flash-lite": { "displayName": "Gemini 3.5 Flash-Lite", "inputPerM": 0.30, "outputPerM": 2.50, "thinkingLevel": "minimal" },
+    "gemini-3.6-flash": { "displayName": "Gemini 3.6 Flash", "thinkingLevel": "minimal" }
+  },
+  "defaultChain": [
+    { "provider": "GEMINI", "model": "gemini-3.8-flash", "tier": "FREE", "name": "Gemini 3.8 Flash" },
+    { "provider": "GEMINI", "model": "gemini-3.5-flash-lite", "tier": "FREE", "name": "Gemini 3.5 Flash-Lite", "sameKeyAsPrevious": true },
+    { "provider": "CLAUDE", "model": "claude-haiku-5-5", "tier": "PAID", "name": "Claude Haiku 5.5", "optional": true }
+  ]
+}
