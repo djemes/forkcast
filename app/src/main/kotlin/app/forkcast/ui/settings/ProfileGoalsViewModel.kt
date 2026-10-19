@@ -2,6 +2,9 @@ package app.forkcast.ui.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.forkcast.core.data.repository.MaintenanceEstimate
+import app.forkcast.core.data.repository.MaintenanceProgress
+import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WeightRepository
@@ -31,6 +34,10 @@ data class ProfileGoalsState(
     val targets: DailyTargets,
     val currentKg: Double,
     val today: LocalDate,
+    val maintenance: MaintenanceEstimate? = null,
+    val progress: MaintenanceProgress = MaintenanceProgress(0, 0),
+    /** Settings: follow the adaptive estimate (false = formula). */
+    val adaptiveOn: Boolean = true,
 )
 
 @HiltViewModel
@@ -38,12 +45,14 @@ class ProfileGoalsViewModel @Inject constructor(
     private val profiles: ProfileRepository,
     private val weights: WeightRepository,
     private val settings: SettingsRepository,
+    maintenance: MaintenanceRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
     val state: StateFlow<ProfileGoalsState?> = combine(
         settings.settings, profiles.profile, profiles.activeGoal, profiles.observeDailyTargets(),
-    ) { s, p, g, t ->
+        combine(maintenance.latest, maintenance.observeProgress()) { m, pr -> m to pr },
+    ) { s, p, g, t, (m, pr) ->
         if (p == null || g == null || t == null) null
         else ProfileGoalsState(
             units = s.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
@@ -52,6 +61,9 @@ class ProfileGoalsViewModel @Inject constructor(
             targets = t,
             currentKg = t.currentKg,
             today = LocalDate.now(clock),
+            maintenance = m,
+            progress = pr,
+            adaptiveOn = s.adaptiveTdee,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -76,6 +88,8 @@ class ProfileGoalsViewModel @Inject constructor(
             ),
         )
     }
+
+    fun setAdaptive(on: Boolean) = launch { settings.setAdaptiveTdee(on) }
 
     fun setCustomBudget(kcal: Double?) = launch { profiles.setOverride(NutrientKey.ENERGY_KCAL, kcal) }
 

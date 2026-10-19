@@ -33,6 +33,7 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun updateAi(transform: (AiSettings) -> AiSettings) = state.update { it.copy(ai = transform(it.ai)) }
     override suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings) =
         state.update { it.copy(notifications = transform(it.notifications)) }
+    override suspend fun setAdaptiveTdee(enabled: Boolean) = state.update { it.copy(adaptiveTdee = enabled) }
 }
 
 class FakeWeightRepository : WeightRepository {

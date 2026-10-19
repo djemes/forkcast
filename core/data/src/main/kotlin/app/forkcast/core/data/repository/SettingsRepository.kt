@@ -18,6 +18,7 @@ interface SettingsRepository {
     suspend fun setWaterTargetMl(ml: Double?)
     suspend fun updateAi(transform: (AiSettings) -> AiSettings)
     suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings)
+    suspend fun setAdaptiveTdee(enabled: Boolean)
 }
 
 @Singleton
@@ -49,5 +50,9 @@ class DataStoreSettingsRepository @Inject constructor(
 
     override suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings) {
         dataStore.updateData { it.copy(notifications = transform(it.notifications)) }
+    }
+
+    override suspend fun setAdaptiveTdee(enabled: Boolean) {
+        dataStore.updateData { it.copy(adaptiveTdee = enabled) }
     }
 }

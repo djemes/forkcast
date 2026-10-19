@@ -41,6 +41,8 @@ fun BudgetSummary(
     sex: Sex,
     heightCm: Double,
     activity: ActivityLevel,
+    /** Added back (SPEC §5.2): the percent of active calories added each day; null when Included. */
+    addBackPct: Int? = null,
 ) {
     val f = UnitFormatter(units)
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -51,7 +53,7 @@ fun BudgetSummary(
         )
         MacroRow(targets, f)
         Guardrails(targets.guardrails, f)
-        HowWeCalculated(targets, f, sex, heightCm, activity)
+        HowWeCalculated(targets, f, sex, heightCm, activity, addBackPct)
         Text(
             stringResource(R.string.not_medical_advice),
             style = MaterialTheme.typography.bodyMedium,
@@ -102,7 +104,7 @@ fun Guardrails(guardrails: List<Guardrail>, f: UnitFormatter) {
 }
 
 @Composable
-private fun HowWeCalculated(t: DailyTargets, f: UnitFormatter, sex: Sex, heightCm: Double, activity: ActivityLevel) {
+private fun HowWeCalculated(t: DailyTargets, f: UnitFormatter, sex: Sex, heightCm: Double, activity: ActivityLevel, addBackPct: Int?) {
     var open by rememberSaveable { mutableStateOf(false) }
     Column {
         TextButton(onClick = { open = !open }) {
@@ -128,7 +130,17 @@ private fun HowWeCalculated(t: DailyTargets, f: UnitFormatter, sex: Sex, heightC
                             f.energy(t.bmrKcal),
                         ),
                     )
-                    add(stringResource(R.string.calc_tdee, f.number(activity.factor, 3), f.energy(t.tdeeKcal)))
+                    val factor = t.formulaTdeeKcal / t.bmrKcal
+                    if (addBackPct != null) {
+                        add(stringResource(R.string.calc_tdee_added_back, f.number(factor, 3), f.energy(t.formulaTdeeKcal)))
+                    } else {
+                        add(stringResource(R.string.calc_tdee, f.number(activity.factor, 3), f.energy(t.formulaTdeeKcal)))
+                    }
+                    // Adaptive maintenance replaces the formula (SPEC §5.6).
+                    t.adaptiveTdeeKcal?.let { adaptive ->
+                        add(stringResource(R.string.calc_adaptive, f.energy(adaptive), f.energy(t.formulaTdeeKcal)))
+                        if (t.avgExerciseBonusKcal > 0) add(stringResource(R.string.calc_adaptive_added_back, f.energy(t.avgExerciseBonusKcal), f.energy(t.tdeeKcal)))
+                    }
                     val delta = t.plan.dailyDeltaKcal
                     val rate = t.plan.pace?.kgPerWeek
                     add(
@@ -139,8 +151,9 @@ private fun HowWeCalculated(t: DailyTargets, f: UnitFormatter, sex: Sex, heightC
                         },
                     )
                     add(stringResource(R.string.calc_budget, f.energy(t.plan.budgetKcal.toDouble())))
+                    addBackPct?.let { add(stringResource(R.string.calc_added_back_note, it)) }
                     add(stringResource(R.string.calc_macros))
-                    add(stringResource(R.string.calc_adaptive_note))
+                    if (t.adaptiveTdeeKcal == null) add(stringResource(R.string.calc_adaptive_note))
                 }
                 lines.forEach { line ->
                     Row {
