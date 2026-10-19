@@ -227,12 +227,27 @@ class HealthConnectRepository @Inject constructor(
             val batch = dao.pendingLogEntries(BATCH)
             if (batch.isEmpty()) return
             val (deleted, live) = batch.partition { it.deletedAt != null }
+            // Drinks that count toward water are also Hydration records ("drink-<id>"), when water is written.
+            val water = settings.writeHydration && HealthPermissions.WRITE_HYDRATION in perms
             // Only rows that were written have something to delete; deleting unknown ids can fail the call.
             deleteEach(deleted.filter { it.healthConnectRecordId != null }.map { it.id }) { source.deleteNutrition(it) }
-            deleted.forEach { dao.markLogEntrySynced(it.id, null, it.updatedAt) }
+            if (water) {
+                val gone = deleted.filter { it.hcWaterRecordId != null } + live.filter { it.hcWaterRecordId != null && (it.waterMl ?: 0.0) <= 0.0 }
+                deleteEach(gone.map { drinkId(it.id) }) { source.deleteHydration(it) }
+            }
+            deleted.forEach { dao.markLogEntrySynced(it.id, null, null, it.updatedAt) }
+            val drinkIds = if (!water) emptyMap() else {
+                val drinks = live.filter { (it.waterMl ?: 0.0) > 0.0 }.map { it.toDrinkWrite() }
+                val ids = HashMap<String, String?>()
+                writeEach(drinks, write = { source.writeHydration(it) }) { w, recordId -> ids[w.clientId] = recordId }
+                ids
+            }
             val writes = live.map { it.toWrite(slotsById[it.mealSlotId]) }
+            val byId = live.associateBy { it.id }
             writeEach(writes, write = { source.writeNutrition(it) }) { w, recordId ->
-                dao.markLogEntrySynced(w.clientId, recordId, w.version)
+                val row = byId.getValue(w.clientId)
+                val waterId = if (water) drinkIds[drinkId(row.id)] else row.hcWaterRecordId
+                dao.markLogEntrySynced(w.clientId, recordId, waterId, w.version)
             }
             if (batch.size < BATCH) return
         }
@@ -302,6 +317,14 @@ class HealthConnectRepository @Inject constructor(
             meal = HealthRules.mealKind(slot?.name, slot?.startMinute),
             nutrients = nutrients,
         )
+    }
+
+    private fun drinkId(entryId: String) = "drink-$entryId"
+
+    private fun LogEntryEntity.toDrinkWrite(): HydrationWrite {
+        val zone = zoneOf(zoneId)
+        val start = HealthRules.nutritionStart(date, Instant.ofEpochMilli(loggedAt), zone, null)
+        return HydrationWrite(drinkId(id), updatedAt, start, zone.rules.getOffset(start), waterMl ?: 0.0)
     }
 
     private fun WaterEntryEntity.toWrite(): HydrationWrite {

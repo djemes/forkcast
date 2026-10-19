@@ -78,6 +78,7 @@ class RoomLogRepository @Inject constructor(
             zoneId = existing.zoneId,
             aiEstimateId = existing.aiEstimateId,
             healthConnectRecordId = existing.healthConnectRecordId,
+            hcWaterRecordId = existing.hcWaterRecordId,
         )))
     }
 
@@ -110,6 +111,7 @@ class RoomLogRepository @Inject constructor(
         loggedAt = loggedAt,
         createdAt = now,
         updatedAt = now,
+        waterMl = waterMl,
     )
 }
 
@@ -128,4 +130,5 @@ fun LogEntryEntity.toModel() = LogEntry(
     note = note,
     loggedAt = Instant.ofEpochMilli(loggedAt),
     aiEstimateId = aiEstimateId,
+    waterMl = waterMl,
 )

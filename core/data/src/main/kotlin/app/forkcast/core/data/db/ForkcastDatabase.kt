@@ -13,6 +13,7 @@ import androidx.room.TypeConverters
  * v2 (Phase 1): profile, goal, target_override, food, log_entry, saved_meal(+item), weight, water, day_status
  * v3 (Phase 2): ai_estimate, ai_component, ai_profile, usage_record, notification_log, ai_match_cache
  * v4 (Phase 3): activity_day, tdee_estimate; Health Connect write state on log_entry and water_entry
+ * v5: drinks count toward water (food.countsAsWater, log_entry/saved_meal_item.waterMl, log_entry.hcWaterRecordId)
  */
 @Database(
     entities = [
@@ -36,9 +37,9 @@ import androidx.room.TypeConverters
         ActivityDayEntity::class,
         TdeeEstimateEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5)],
 )
 @TypeConverters(Converters::class)
 abstract class ForkcastDatabase : RoomDatabase() {

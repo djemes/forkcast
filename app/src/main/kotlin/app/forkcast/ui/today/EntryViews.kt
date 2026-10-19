@@ -1,5 +1,8 @@
 package app.forkcast.ui.today
 
+import androidx.compose.ui.semantics.Role
+import androidx.compose.material3.Switch
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -240,12 +243,13 @@ fun EditEntrySheet(
     entry: LogEntry,
     meals: List<MealSlot>,
     f: UnitFormatter,
-    onSave: (quantity: Double, mealSlotId: String) -> Unit,
+    onSave: (quantity: Double, mealSlotId: String, countsAsWater: Boolean) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     var quantity by rememberSaveable(entry.id) { mutableStateOf<Double?>(entry.quantity) }
     var mealId by rememberSaveable(entry.id) { mutableStateOf(entry.mealSlotId) }
+    var countsWater by rememberSaveable(entry.id) { mutableStateOf(entry.waterMl != null) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -279,16 +283,42 @@ fun EditEntrySheet(
                     FilterChip(selected = m.id == mealId, onClick = { mealId = m.id }, label = { Text(m.name) })
                 }
             }
+            // A drink's water counts toward the day (needs its amount in grams/ml).
+            if (entry.grams != null) {
+                WaterToggle(countsWater) { countsWater = it }
+            }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(vertical = 8.dp)) {
                 OutlinedButton(onClick = onDelete, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.action_delete))
                 }
                 Button(
-                    onClick = { quantity?.let { onSave(it, mealId) } },
+                    onClick = { quantity?.let { onSave(it, mealId, countsWater) } },
                     enabled = (quantity ?: 0.0) > 0,
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.action_save)) }
             }
         }
+    }
+}
+
+/** "Counts toward water" switch, shared by the edit sheet and food detail. */
+@Composable
+fun WaterToggle(checked: Boolean, detail: String? = null, onChange: (Boolean) -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .toggleable(value = checked, role = Role.Switch, onValueChange = onChange),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.water_counts), style = MaterialTheme.typography.bodyLarge)
+            Text(
+                detail ?: stringResource(R.string.water_counts_body),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Switch(checked = checked, onCheckedChange = null, modifier = Modifier.padding(start = 16.dp))
     }
 }

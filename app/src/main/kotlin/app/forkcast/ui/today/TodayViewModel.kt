@@ -21,6 +21,7 @@ import app.forkcast.core.domain.AdaptiveTdee
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
+import app.forkcast.core.domain.DrinkWater
 import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.domain.Forecast
 import app.forkcast.core.domain.MealSlotPicker
@@ -88,6 +89,8 @@ data class WaterSummary(
     /** One tap on "+ glass": 8 fl oz for US units, 250 ml for metric. */
     val glassMl: Double = 250.0,
     val lastEntryId: String? = null,
+    /** Part of [ml] that came from logged drinks. */
+    val fromDrinksMl: Double = 0.0,
 )
 
 /** Latest weigh-in and the trend's weekly change (negative = losing). */
@@ -145,7 +148,7 @@ sealed interface TodayEvent {
     data class ToggleSelect(val id: String) : TodayEvent
     data object ClearSelection : TodayEvent
     data object DeleteSelected : TodayEvent
-    data class UpdateEntry(val entry: LogEntry, val quantity: Double, val mealSlotId: String) : TodayEvent
+    data class UpdateEntry(val entry: LogEntry, val quantity: Double, val mealSlotId: String, val countsAsWater: Boolean = entry.waterMl != null) : TodayEvent
     data class QuickAdd(val mealSlotId: String, val label: String, val kcal: Double, val protein: Double?, val carbs: Double?, val fat: Double?) : TodayEvent
     data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
     /** Copies entries to [toDate], into [toMealSlotId] or (null) each entry's own meal. */
@@ -297,7 +300,9 @@ class TodayViewModel @Inject constructor(
             savedMeals = x.saved,
             yesterdayMealIds = dayData.yesterdayMeals,
             water = WaterSummary(
-                ml = water.sumOf { it.ml },
+                // Drinks that count toward water add to it (SPEC §4.9).
+                ml = water.sumOf { it.ml } + entries.sumOf { it.waterMl ?: 0.0 },
+                fromDrinksMl = entries.sumOf { it.waterMl ?: 0.0 },
                 targetMl = x.settings.waterTargetMl
                     ?: if (profile?.sex == Sex.FEMALE) NutritionConstants.WATER_TARGET_FEMALE_ML else NutritionConstants.WATER_TARGET_MALE_ML,
                 glassMl = if (units.water == WaterUnit.FL_OZ) UnitConversions.flOzToMl(8.0) else 250.0,
@@ -404,6 +409,7 @@ class TodayViewModel @Inject constructor(
                         grams = grams,
                         nutrients = DayMath.rescale(e, event.quantity, grams),
                         mealSlotId = event.mealSlotId,
+                        waterMl = DrinkWater.waterMl(event.countsAsWater, grams),
                     ),
                 )
             }

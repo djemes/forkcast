@@ -121,6 +121,31 @@ class MigrationTest {
         }
     }
 
+    @Test fun migrate4To5AddsDrinkWaterColumns() {
+        helper.createDatabase(4).apply {
+            insertV1MealSlot()
+            execSQL(
+                "INSERT INTO log_entry (id, date, zoneId, mealSlotId, foodId, displayName, brand, quantity, servingLabel, grams, " +
+                    "nutrients, source, aiEstimateId, healthConnectRecordId, note, loggedAt, createdAt, updatedAt, deletedAt, hcSyncedAt) " +
+                    "VALUES ('e1', '2026-10-18', 'America/New_York', 'a', NULL, 'Tea', NULL, 1.0, 'cup', 237.0, " +
+                    "'{\"ENERGY_KCAL\":2.0}', 'USDA', NULL, NULL, NULL, 1, 1, 5, NULL, 5)",
+            )
+            close()
+        }
+        helper.runMigrationsAndValidate(5, emptyList()).apply {
+            // Old entries don't count toward water; nothing is rewritten to Health Connect.
+            prepare("SELECT displayName, waterMl, hcWaterRecordId, hcSyncedAt FROM log_entry").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getText(0)).isEqualTo("Tea")
+                assertThat(s.isNull(1)).isTrue()
+                assertThat(s.isNull(2)).isTrue()
+                assertThat(s.getLong(3)).isEqualTo(5)
+            }
+            prepare("SELECT count(*) FROM food WHERE countsAsWater IS NULL").use { s -> assertThat(s.step()).isTrue() }
+            close()
+        }
+    }
+
     /** A v1 file from Phase 0 opens with today's code, upgraded in place with its data. */
     @Test fun version1FileOpensWithCurrentCode() {
         helper.createDatabase(1).apply {
@@ -134,7 +159,7 @@ class MigrationTest {
             assertThat(c.moveToFirst()).isTrue()
             assertThat(c.getString(0)).isEqualTo("Lunch")
         }
-        assertThat(db.openHelper.writableDatabase.version).isEqualTo(4)
+        assertThat(db.openHelper.writableDatabase.version).isEqualTo(5)
         db.close()
     }
 

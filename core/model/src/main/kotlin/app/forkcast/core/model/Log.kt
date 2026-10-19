@@ -23,6 +23,8 @@ data class LogEntry(
     val loggedAt: Instant,
     /** The photo estimate this entry came from; opens the review screen. */
     val aiEstimateId: String? = null,
+    /** Water this drink adds to the day (ml), snapshotted when logged; null = not counted. */
+    val waterMl: Double? = null,
 )
 
 data class WeightEntry(
@@ -49,6 +51,7 @@ data class SavedMealItem(
     val grams: Double?,
     val nutrients: Nutrients,
     val source: FoodSource,
+    val waterMl: Double? = null,
 )
 
 data class UserProfile(

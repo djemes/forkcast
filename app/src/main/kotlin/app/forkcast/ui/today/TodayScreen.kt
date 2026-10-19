@@ -413,7 +413,7 @@ fun TodayScreen(
                 entry = entry,
                 meals = state.meals.map { it.slot },
                 f = f,
-                onSave = { q, meal -> onEvent(TodayEvent.UpdateEntry(entry, q, meal)); editingId = null },
+                onSave = { q, meal, water -> onEvent(TodayEvent.UpdateEntry(entry, q, meal, water)); editingId = null },
                 onDelete = { onEvent(TodayEvent.Delete(listOf(entry.id))); editingId = null },
                 onDismiss = { editingId = null },
             )

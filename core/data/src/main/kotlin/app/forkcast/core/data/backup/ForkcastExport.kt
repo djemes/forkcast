@@ -24,7 +24,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 /**
- * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v3.json). Field names mirror the
+ * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v4.json). Field names mirror the
  * Room entities. Secrets are never included: API keys live in an encrypted file outside the
  * database and [AppSettings] holds no secrets (keys travel only in the separate,
  * passphrase-encrypted settings export).
@@ -32,7 +32,8 @@ import kotlinx.serialization.json.JsonElement
  * v1 (Phase 1): core tracking tables. v2 (Phase 2): AI estimates and components, AI profiles
  * (no keys), usage, notification log, match cache. v3 (Phase 3): maintenance estimates,
  * Health Connect activity days, water's Health Connect record id. Older files read as v3 with
- * the newer arrays empty.
+ * the newer arrays empty. v4: drinks count toward water (food.countsAsWater, waterMl on log
+ * entries and saved-meal items); older files read with those null.
  */
 @Serializable
 data class ForkcastExport(
@@ -66,6 +67,6 @@ data class ForkcastExport(
     val settings: AppSettings? = null,
 ) {
     companion object {
-        const val SCHEMA_VERSION = 3
+        const val SCHEMA_VERSION = 4
     }
 }

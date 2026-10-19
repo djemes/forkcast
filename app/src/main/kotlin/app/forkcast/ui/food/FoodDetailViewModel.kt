@@ -8,6 +8,7 @@ import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
+import app.forkcast.core.domain.DrinkWater
 import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.MealSlot
@@ -50,6 +51,8 @@ data class FoodDetailState(
     val preview: Nutrients get() = food.nutrientsPer100g.forGrams(grams ?: 0.0)
     val canAdd: Boolean get() = (quantity ?: 0.0) > 0
     val mealName: String get() = meals.firstOrNull { it.id == mealSlotId }?.name.orEmpty()
+    /** The user's choice, or the drink rule (SPEC §4.9). */
+    val countsAsWater: Boolean get() = DrinkWater.countsAsWater(food)
 }
 
 private data class Selection(val servingLabel: String? = null, val quantity: Double? = null, val quantityTouched: Boolean = false, val mealSlotId: String? = null)
@@ -124,6 +127,11 @@ class FoodDetailViewModel @Inject constructor(
     }
 
     fun selectMeal(id: String) = selection.update { it.copy(mealSlotId = id) }
+
+    fun setCountsAsWater(counts: Boolean) {
+        val f = state.value?.food ?: return
+        viewModelScope.launch { foods.setCountsAsWater(f.id, counts) }
+    }
 
     fun toggleFavorite() {
         val f = state.value?.food ?: return

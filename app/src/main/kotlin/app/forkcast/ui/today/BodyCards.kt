@@ -84,6 +84,13 @@ fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onR
                 buttons()
             }
         }
+        if (water.fromDrinksMl > 0) {
+            Text(
+                stringResource(R.string.water_from_drinks, f.waterLiters(water.fromDrinksMl)),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         LinearProgressIndicator(
             progress = { if (water.targetMl > 0) (water.ml / water.targetMl).toFloat().coerceIn(0f, 1f) else 0f },
             color = ForkcastTheme.colors.protein,

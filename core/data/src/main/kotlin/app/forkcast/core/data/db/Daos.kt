@@ -90,6 +90,9 @@ interface FoodDao {
     @Query("UPDATE food SET isFavorite = :favorite, updatedAt = :now WHERE id = :id")
     suspend fun setFavorite(id: String, favorite: Boolean, now: Long)
 
+    @Query("UPDATE food SET countsAsWater = :counts, updatedAt = :now WHERE id = :id")
+    suspend fun setCountsAsWater(id: String, counts: Boolean?, now: Long)
+
     @Query("UPDATE food SET lastUsedAt = :now, lastQuantity = :quantity, lastServingLabel = :servingLabel, updatedAt = :now WHERE id = :id")
     suspend fun markUsed(id: String, quantity: Double, servingLabel: String, now: Long)
 

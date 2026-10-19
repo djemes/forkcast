@@ -37,8 +37,8 @@ interface HealthDao {
     suspend fun pendingLogEntries(limit: Int): List<LogEntryEntity>
 
     /** Only if the row hasn't changed since it was written, so a later edit stays pending. */
-    @Query("UPDATE log_entry SET healthConnectRecordId = :recordId, hcSyncedAt = :version WHERE id = :id AND updatedAt = :version")
-    suspend fun markLogEntrySynced(id: String, recordId: String?, version: Long)
+    @Query("UPDATE log_entry SET healthConnectRecordId = :recordId, hcWaterRecordId = :waterRecordId, hcSyncedAt = :version WHERE id = :id AND updatedAt = :version")
+    suspend fun markLogEntrySynced(id: String, recordId: String?, waterRecordId: String?, version: Long)
 
     @Query("SELECT * FROM water_entry WHERE hcSyncedAt IS NULL OR hcSyncedAt < updatedAt ORDER BY updatedAt LIMIT :limit")
     suspend fun pendingWater(limit: Int): List<WaterEntryEntity>

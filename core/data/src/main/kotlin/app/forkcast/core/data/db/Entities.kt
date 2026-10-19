@@ -97,6 +97,8 @@ data class FoodEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,
+    /** v5: true/false = the user's choice, null = the drink rule decides (DrinkWater). */
+    val countsAsWater: Boolean? = null,
 )
 
 @Serializable
@@ -123,6 +125,10 @@ data class LogEntryEntity(
     val updatedAt: Long,
     val deletedAt: Long? = null,
     @Transient val hcSyncedAt: Long? = null,
+    /** v5: water this drink adds to the day (ml), snapshotted when logged. */
+    val waterMl: Double? = null,
+    /** v5: the Hydration record written for that water (per phone, never exported). */
+    @Transient val hcWaterRecordId: String? = null,
 )
 
 @Serializable
@@ -152,6 +158,8 @@ data class SavedMealItemEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,
+    /** v5: see LogEntryEntity.waterMl. */
+    val waterMl: Double? = null,
 )
 
 @Serializable

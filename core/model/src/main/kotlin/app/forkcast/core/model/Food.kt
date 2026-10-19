@@ -28,6 +28,8 @@ data class Food(
     val lastUsedAt: Long?,
     val lastQuantity: Double?,
     val lastServingLabel: String?,
+    /** Counts toward the day's water when logged: true/false set by the user, null = decided by the drink rule. */
+    val countsAsWater: Boolean? = null,
 )
 
 /** Scales per-100 g nutrients to an amount in grams. */

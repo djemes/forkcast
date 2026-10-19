@@ -112,11 +112,11 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
 
-    /** docs/export-schema-v3.json must list exactly the fields the app writes, and the same enum values. */
+    /** docs/export-schema-v4.json must list exactly the fields the app writes, and the same enum values. */
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v3.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v4.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -163,7 +163,7 @@ class BackupRepositoryTest {
     }
 
     @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":4}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":5}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))

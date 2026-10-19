@@ -6,6 +6,10 @@
     <string name="water_add_glass">+ glass</string>
     <string name="water_add_glass_description">Add a glass of water (%1$s)</string>
     <string name="water_remove_last">Remove last water entry</string>
+    <string name="water_from_drinks">Includes %1$s from drinks you logged</string>
+    <string name="water_counts">Counts toward water</string>
+    <string name="water_counts_body">Water, sparkling water and plain tea count; sugary drinks, alcohol, milk drinks and shakes don\'t.</string>
+    <string name="water_counts_amount">Adds %1$s to the day\'s water</string>
 
     <!-- Weight card -->
     <string name="weight_title">Weight</string>

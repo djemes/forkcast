@@ -43,6 +43,8 @@ interface FoodRepository {
     fun observeFavorites(): Flow<List<Food>>
     fun observeCustom(): Flow<List<Food>>
     suspend fun setFavorite(id: String, favorite: Boolean)
+    /** The user's "counts toward water" choice for a food; null returns it to the drink rule. */
+    suspend fun setCountsAsWater(id: String, counts: Boolean?)
     /** Creates (id == "") or updates a custom/label food. Returns its id. */
     suspend fun saveCustom(food: Food): String
     suspend fun delete(id: String)
@@ -121,6 +123,8 @@ class DefaultFoodRepository @Inject constructor(
 
     override suspend fun setFavorite(id: String, favorite: Boolean) = dao.setFavorite(id, favorite, clock.millis())
 
+    override suspend fun setCountsAsWater(id: String, counts: Boolean?) = dao.setCountsAsWater(id, counts, clock.millis())
+
     override suspend fun saveCustom(food: Food): String {
         val now = clock.millis()
         val existing = food.id.takeIf { it.isNotEmpty() }?.let { dao.get(it) }
@@ -184,6 +188,7 @@ fun FoodEntity.toModel() = Food(
     lastUsedAt = lastUsedAt,
     lastQuantity = lastQuantity,
     lastServingLabel = lastServingLabel,
+    countsAsWater = countsAsWater,
 )
 
 private fun Food.toEntity(id: String, now: Long) = FoodEntity(
@@ -201,4 +206,5 @@ private fun Food.toEntity(id: String, now: Long) = FoodEntity(
     lastServingLabel = lastServingLabel,
     createdAt = now,
     updatedAt = now,
+    countsAsWater = countsAsWater,
 )

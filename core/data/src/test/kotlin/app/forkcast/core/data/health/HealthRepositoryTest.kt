@@ -112,6 +112,29 @@ class HealthRepositoryTest {
         assertThat(source.hydration).isEmpty()
     }
 
+    /** A tea that counts toward water is Nutrition and Hydration; un-counting it removes the Hydration. */
+    @Test fun countedDrinksAreAlsoHydration() = runTest {
+        seedSlots()
+        val (tea) = log.add(listOf(entry("Tea", "breakfast", 2.0).copy(grams = 237.0, waterMl = 237.0)))
+        repo.sync(SyncReason.WRITES)
+        assertThat(source.nutrition.keys).containsExactly(tea)
+        assertThat(source.hydration.getValue("drink-$tea").ml).isEqualTo(237.0)
+
+        clock.advance(Duration.ofMinutes(1))
+        log.update(log.get(tea)!!.copy(waterMl = null))
+        repo.sync(SyncReason.WRITES)
+        assertThat(source.hydration).isEmpty()
+
+        clock.advance(Duration.ofMinutes(1))
+        log.update(log.get(tea)!!.copy(waterMl = 237.0))
+        repo.sync(SyncReason.WRITES)
+        clock.advance(Duration.ofMinutes(1))
+        log.delete(listOf(tea))
+        repo.sync(SyncReason.WRITES)
+        assertThat(source.hydration).isEmpty()
+        assertThat(source.nutrition).isEmpty()
+    }
+
     @Test fun nothingHappensWhenNotConnectedOrWithoutPermission() = runTest {
         log.add(listOf(entry("Toast", "breakfast", 80.0)))
         settings.updateData { it.copy(health = HealthSettings(connected = false)) }

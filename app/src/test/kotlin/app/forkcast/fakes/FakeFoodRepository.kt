@@ -44,6 +44,7 @@ class FakeFoodRepository : FoodRepository {
     override fun observeFavorites() = foods.map { m -> m.values.filter { it.isFavorite } }
     override fun observeCustom() = foods.map { m -> m.values.filter { it.source == FoodSource.CUSTOM } }
     override suspend fun setFavorite(id: String, favorite: Boolean) = foods.update { m -> m[id]?.let { m + (id to it.copy(isFavorite = favorite)) } ?: m }
+    override suspend fun setCountsAsWater(id: String, counts: Boolean?) = foods.update { m -> m[id]?.let { m + (id to it.copy(countsAsWater = counts)) } ?: m }
     override suspend fun saveCustom(food: Food): String = put(food)
     override suspend fun delete(id: String) = foods.update { it - id }
     override suspend fun findLocalByBarcode(gtin14: String) = foods.value.values.firstOrNull { it.barcode == gtin14 }

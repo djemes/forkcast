@@ -55,6 +55,7 @@ class RoomSavedMealRepository @Inject constructor(
                     source = e.source,
                     createdAt = now,
                     updatedAt = now,
+                    waterMl = e.waterMl,
                 )
             },
         )
@@ -82,10 +83,11 @@ class RoomSavedMealRepository @Inject constructor(
                 source = i.source,
                 note = null,
                 loggedAt = now,
+                waterMl = i.waterMl,
             )
         }
     }
 }
 
 private fun SavedMealItemEntity.toModel() =
-    SavedMealItem(id, foodId, displayName, brand, quantity, servingLabel, grams, nutrients, source)
+    SavedMealItem(id, foodId, displayName, brand, quantity, servingLabel, grams, nutrients, source, waterMl)

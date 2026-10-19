@@ -76,6 +76,7 @@ fun FoodDetailRoute(
             onFavorite = viewModel::toggleFavorite,
             onEdit = { onEdit(it.food.id) },
             onAdd = viewModel::add,
+            onCountsAsWater = viewModel::setCountsAsWater,
         )
     }
 }
@@ -92,6 +93,7 @@ fun FoodDetailScreen(
     onFavorite: () -> Unit,
     onEdit: () -> Unit,
     onAdd: () -> Unit,
+    onCountsAsWater: (Boolean) -> Unit = {},
 ) {
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val food = state.food
@@ -218,6 +220,13 @@ fun FoodDetailScreen(
                     FilterChip(selected = m.id == state.mealSlotId, onClick = { onMeal(m.id) }, label = { Text(m.name) })
                 }
             }
+            // Water, sparkling water and plain tea count toward the day's water; the user can override it per food.
+            val counts = state.countsAsWater
+            app.forkcast.ui.today.WaterToggle(
+                checked = counts,
+                detail = state.grams?.takeIf { counts }?.let { stringResource(R.string.water_counts_amount, f.waterLiters(it)) },
+                onChange = onCountsAsWater,
+            )
             if (food.source == FoodSource.OFF) {
                 Text(stringResource(R.string.food_odbl), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

@@ -52,6 +52,7 @@ object FoodLogging {
             source = food.source,
             note = null,
             loggedAt = now,
+            waterMl = DrinkWater.waterMl(DrinkWater.countsAsWater(food), grams),
         )
     }
 
