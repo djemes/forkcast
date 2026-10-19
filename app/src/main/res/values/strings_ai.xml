@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › AI (SPEC §4.7) -->
+    <string name="ai_enabled">Photo estimates</string>
+    <string name="ai_enabled_body">Estimate a meal from a photo and a short description, using your own AI key.</string>
+    <string name="ai_chain_title">Use in this order</string>
+    <string name="ai_chain_body">Forkcast tries the first profile. If it\'s out of quota, busy or down, it moves to the next one.</string>
+    <string name="ai_no_profiles">No AI profiles yet. Add one to start estimating photo meals.</string>
+    <string name="ai_setup_free">Set up free Gemini</string>
+    <string name="ai_add_profile">Add profile</string>
+    <string name="ai_used_today">Used today: %1$d</string>
+    <string name="ai_no_key">No key saved</string>
+    <string name="ai_needs_attention">Key rejected. Check it.</string>
+    <string name="ai_cooling_down">Paused until %1$s (quota)</string>
+    <string name="ai_tier_free">free</string>
+    <string name="ai_tier_paid">paid</string>
+    <string name="ai_tier_unknown">tier not sure</string>
+    <string name="ai_test">Test</string>
+    <string name="ai_testing">Testing…</string>
+    <string name="ai_test_ok">Connected to %1$s in %2$d ms</string>
+    <string name="ai_drag_handle">Drag to reorder %1$s</string>
+    <string name="ai_move_up">Move up</string>
+    <string name="ai_move_down">Move down</string>
+    <string name="ai_profile_enabled">Use %1$s</string>
+    <string name="ai_personal_context">Personal context</string>
+    <string name="ai_personal_context_hint">e.g. I usually cook with olive oil; my dinner plates are 27 cm</string>
+    <string name="ai_personal_context_note">Sent with every photo. Don\'t include personal details.</string>
+    <string name="ai_auto_accept">Log estimates right away</string>
+    <string name="ai_auto_accept_body">Estimates count toward today immediately, marked AI·review until you check them.</string>
+    <string name="ai_photo_retention">Keep meal photos</string>
+    <string name="ai_retention_days">%1$d days</string>
+    <string name="ai_retention_forever">Forever</string>
+    <string name="ai_usage_title">Usage this month</string>
+    <string name="ai_usage_summary">%1$d estimates · %2$s tokens in · %3$s out · about %4$s</string>
+    <string name="ai_usage_none">No estimates yet this month.</string>
+    <string name="ai_usage_model">%1$s: %2$d requests · %3$s</string>
+    <string name="ai_usage_free">free</string>
+    <string name="ai_usage_no_price">no price set</string>
+    <string name="ai_edit_price">Edit price for %1$s</string>
+    <string name="ai_price_input">Input $ per 1M tokens</string>
+    <string name="ai_price_output">Output $ per 1M tokens</string>
+
+    <!-- Profile editor -->
+    <string name="ai_profile_new">New AI profile</string>
+    <string name="ai_profile_edit">Edit AI profile</string>
+    <string name="ai_provider">Provider</string>
+    <string name="ai_provider_claude">Claude (Anthropic)</string>
+    <string name="ai_provider_gemini">Gemini (Google)</string>
+    <string name="ai_provider_openai">OpenAI-compatible</string>
+    <string name="ai_tier_question">Is billing enabled on this key\'s Google Cloud project?</string>
+    <string name="ai_tier_free_option">Free</string>
+    <string name="ai_tier_paid_option">Paid</string>
+    <string name="ai_tier_unknown_option">Not sure</string>
+    <string name="ai_free_tier_note">On Gemini\'s free tier, Google may use your photos and descriptions to improve its products, and people may review them. Don\'t include faces, documents, or personal details. Users in the EEA, UK, or Switzerland need a paid key.</string>
+    <string name="ai_base_url">Server URL</string>
+    <string name="ai_base_url_hint">e.g. https://openrouter.ai/api or http://192.168.1.10:11434</string>
+    <string name="ai_cleartext_warning">This address isn\'t encrypted (http). Only use it on your own network or VPN.</string>
+    <string name="ai_api_key">API key</string>
+    <string name="ai_api_key_saved">A key is saved. Type a new one to replace it.</string>
+    <string name="ai_api_key_optional">Optional for local servers</string>
+    <string name="ai_get_key">Where to get a key</string>
+    <string name="ai_use_key_from">Use the key from %1$s</string>
+    <string name="ai_model">Model</string>
+    <string name="ai_choose_model">Choose from list</string>
+    <string name="ai_loading_models">Loading models…</string>
+    <string name="ai_recommended">Recommended</string>
+    <string name="ai_display_name">Name in the list</string>
+    <string name="ai_delete_profile">Delete profile</string>
+    <string name="ai_delete_confirm">Delete %1$s and its saved key?</string>
+    <string name="ai_save_and_test">Save and test</string>
+
+    <!-- Error messages (DESIGN.md §6 tone) -->
+    <string name="ai_err_invalid_key">%1$s rejected the API key. Check it in Settings → AI.</string>
+    <string name="ai_err_no_key">No API key saved for this profile.</string>
+    <string name="ai_err_rate_limited">%1$s is busy or at its limit. Try again in a minute.</string>
+    <string name="ai_err_quota">%1$s\'s quota is used up. It resets later.</string>
+    <string name="ai_err_model">%1$s doesn\'t have the model %2$s. Pick another in the profile.</string>
+    <string name="ai_err_refused">%1$s declined to estimate this photo.</string>
+    <string name="ai_err_bad_response">%1$s sent an answer Forkcast couldn\'t read. Try again.</string>
+    <string name="ai_err_request">%1$s rejected the request: %2$s</string>
+    <string name="ai_err_network">No connection. The estimate will run when you\'re back online.</string>
+    <string name="ai_err_timeout">%1$s took too long to answer. Try again.</string>
+    <string name="ai_err_server">%1$s had a problem (error %2$d). Try again later.</string>
+</resources>

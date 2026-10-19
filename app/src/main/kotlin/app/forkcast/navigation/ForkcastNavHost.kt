@@ -18,6 +18,9 @@ import app.forkcast.ui.scan.ScannerRoute
 import app.forkcast.ui.settings.AboutRoute
 import app.forkcast.ui.settings.AppearanceRoute
 import app.forkcast.ui.settings.FoodDatabasesRoute
+import app.forkcast.ui.ai.AiProfileEditRoute
+import app.forkcast.ui.ai.AiProfileEditViewModel
+import app.forkcast.ui.ai.AiSettingsRoute
 import app.forkcast.ui.backup.BackupRoute
 import app.forkcast.ui.settings.ProfileGoalsRoute
 import app.forkcast.ui.settings.SettingsScreen
@@ -35,6 +38,10 @@ import kotlinx.serialization.Serializable
 @Serializable data object FoodDatabasesDestination
 @Serializable data object BackupDestination
 @Serializable data object WeightDestination
+@Serializable data object AiSettingsDestination
+
+/** Edit [profileId], or create a new profile (null). [preset] "free_gemini" = guided free setup. */
+@Serializable data class AiProfileEditDestination(val profileId: String? = null, val preset: String? = null)
 
 /** Log into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
 @Serializable data class SearchDestination(val mealSlotId: String, val date: String)
@@ -157,6 +164,7 @@ fun ForkcastNavHost(
             SettingsScreen(
                 onBack = back,
                 onOpenProfileGoals = { navController.navigate(ProfileGoalsDestination) },
+                onOpenAi = { navController.navigate(AiSettingsDestination) },
                 onOpenFoodDatabases = { navController.navigate(FoodDatabasesDestination) },
                 onOpenBackup = { navController.navigate(BackupDestination) },
                 onOpenAppearance = { navController.navigate(AppearanceDestination) },
@@ -165,6 +173,14 @@ fun ForkcastNavHost(
         }
         composable<ProfileGoalsDestination> { ProfileGoalsRoute(onBack = back) }
         composable<FoodDatabasesDestination> { FoodDatabasesRoute(onBack = back) }
+        composable<AiSettingsDestination> {
+            AiSettingsRoute(
+                onBack = back,
+                onEditProfile = { id -> navController.navigate(AiProfileEditDestination(profileId = id)) },
+                onSetUpFreeGemini = { navController.navigate(AiProfileEditDestination(preset = AiProfileEditViewModel.FREE_GEMINI)) },
+            )
+        }
+        composable<AiProfileEditDestination> { AiProfileEditRoute(onBack = back) }
         composable<BackupDestination> { BackupRoute(onBack = back) }
         composable<WeightDestination> { WeightRoute(onBack = back) }
         composable<AppearanceDestination> { AppearanceRoute(onBack = back) }

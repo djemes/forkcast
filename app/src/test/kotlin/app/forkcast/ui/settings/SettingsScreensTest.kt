@@ -24,7 +24,7 @@ class SettingsScreensTest {
         var opened = ""
         compose.setContent {
             ForkcastTheme {
-                SettingsScreen(onBack = {}, onOpenProfileGoals = {}, onOpenFoodDatabases = {}, onOpenBackup = {}, onOpenAppearance = { opened += "A" }, onOpenAbout = { opened += "B" })
+                SettingsScreen(onBack = {}, onOpenProfileGoals = {}, onOpenAi = {}, onOpenFoodDatabases = {}, onOpenBackup = {}, onOpenAppearance = { opened += "A" }, onOpenAbout = { opened += "B" })
             }
         }
         compose.onNodeWithText("Profile & goals").assertIsDisplayed()

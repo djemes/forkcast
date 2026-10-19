@@ -136,6 +136,11 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
+    implementation(libs.coil.compose)
+    implementation(libs.reorderable)
+    implementation(libs.androidx.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
 
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)

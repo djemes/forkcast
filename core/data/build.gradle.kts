@@ -51,6 +51,10 @@ dependencies {
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)
+    api(libs.androidx.work.runtime)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.androidx.compiler)
+    implementation(libs.androidx.exifinterface)
 
     testImplementation(libs.junit4)
     testImplementation(libs.truth)
@@ -61,4 +65,5 @@ dependencies {
     testImplementation(libs.androidx.test.ext.junit)
     testImplementation(libs.room.testing)
     testImplementation(libs.ktor.client.mock)
+    testImplementation(libs.androidx.work.testing)
 }
