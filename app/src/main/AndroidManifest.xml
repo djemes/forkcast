@@ -35,6 +35,14 @@
             </intent-filter>
         </activity>
 
+        <!-- No telemetry (CLAUDE.md non-negotiables): ML Kit queues usage logs for
+             firebaselogging.googleapis.com through Google's datatransport. Without the backend
+             discovery service no backend is registered, so queued batches are deleted unsent.
+             Checked by ManifestPrivacyTest and on the emulator (DECISIONS.md 2026-10-19). -->
+        <service
+            android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+            tools:node="remove" />
+
         <!-- WorkManager is started by ForkcastApplication (Hilt worker factory), not by App Startup. -->
         <provider
             android:name="androidx.startup.InitializationProvider"
