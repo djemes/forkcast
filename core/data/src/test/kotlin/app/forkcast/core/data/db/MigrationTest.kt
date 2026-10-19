@@ -56,6 +56,33 @@ class MigrationTest {
         }
     }
 
+    @Test fun migrate2To3KeepsLogAndAddsAiTables() {
+        helper.createDatabase(2).apply {
+            insertV1MealSlot()
+            execSQL(
+                "INSERT INTO log_entry (id, date, zoneId, mealSlotId, foodId, displayName, brand, quantity, servingLabel, grams, " +
+                    "nutrients, source, aiEstimateId, healthConnectRecordId, note, loggedAt, createdAt, updatedAt, deletedAt) " +
+                    "VALUES ('e1', '2026-10-18', 'America/New_York', 'a', NULL, 'Toast', NULL, 1.0, 'slice', 30.0, " +
+                    "'{\"ENERGY_KCAL\":80.0}', 'QUICK_ADD', NULL, NULL, NULL, 1, 1, 1, NULL)",
+            )
+            close()
+        }
+        helper.runMigrationsAndValidate(3, emptyList()).apply {
+            prepare("SELECT displayName, nutrients FROM log_entry").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getText(0)).isEqualTo("Toast")
+                assertThat(s.getText(1)).isEqualTo("{\"ENERGY_KCAL\":80.0}")
+            }
+            for (table in listOf("ai_estimate", "ai_component", "ai_profile", "usage_record", "notification_log", "ai_match_cache")) {
+                prepare("SELECT count(*) FROM $table").use { s ->
+                    assertThat(s.step()).isTrue()
+                    assertThat(s.getLong(0)).isEqualTo(0)
+                }
+            }
+            close()
+        }
+    }
+
     /** A v1 file from Phase 0 opens with today's code, upgraded in place with its data. */
     @Test fun version1FileOpensWithCurrentCode() {
         helper.createDatabase(1).apply {
@@ -69,7 +96,7 @@ class MigrationTest {
             assertThat(c.moveToFirst()).isTrue()
             assertThat(c.getString(0)).isEqualTo("Lunch")
         }
-        assertThat(db.openHelper.writableDatabase.version).isEqualTo(2)
+        assertThat(db.openHelper.writableDatabase.version).isEqualTo(3)
         db.close()
     }
 

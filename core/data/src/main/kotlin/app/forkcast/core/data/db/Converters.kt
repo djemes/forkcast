@@ -1,6 +1,7 @@
 package app.forkcast.core.data.db
 
 import androidx.room.TypeConverter
+import app.forkcast.core.model.MealEstimateJson
 import app.forkcast.core.model.NutrientKey
 import app.forkcast.core.model.Nutrients
 import app.forkcast.core.model.ServingSize
@@ -27,6 +28,12 @@ class Converters {
 
     @TypeConverter fun jsonToServings(s: String): List<ServingSize> =
         json.decodeFromString(ListSerializer(ServingSize.serializer()), s)
+
+    @TypeConverter fun stringsToJson(list: List<String>): String = json.encodeToString(ListSerializer(String.serializer()), list)
+    @TypeConverter fun jsonToStrings(s: String): List<String> = json.decodeFromString(ListSerializer(String.serializer()), s)
+
+    @TypeConverter fun estimateToJson(e: MealEstimateJson?): String? = e?.let { json.encodeToString(MealEstimateJson.serializer(), it) }
+    @TypeConverter fun jsonToEstimate(s: String?): MealEstimateJson? = s?.let { json.decodeFromString(MealEstimateJson.serializer(), it) }
 
     private companion object {
         val json = Json { ignoreUnknownKeys = true }
