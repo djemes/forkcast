@@ -22,4 +22,19 @@
     <string name="estimate_question_notification">%1$s: the AI has a quick question before logging it. Tap to answer.</string>
     <string name="estimate_failed_title">Photo estimate paused</string>
     <string name="estimate_key_problem">An AI key was rejected. Check it in Settings → AI.</string>
+
+    <!-- Notification copy (DESIGN.md §9): plain, specific, kind; no exclamation marks. -->
+    <string name="notif_budget_title">Today\'s budget</string>
+    <string name="notif_budget_threshold">%1$s of %2$s kcal so far. About %3$s left for today.</string>
+    <string name="notif_budget_reached">%1$s of %2$s kcal so far. That\'s today\'s budget.</string>
+    <string name="notif_budget_over">You\'re %1$s kcal over today\'s budget.</string>
+    <string name="notif_evening_title">Evening outlook</string>
+    <string name="notif_evening">%1$s kcal left. Your usual %2$s is about %3$s.</string>
+    <string name="notif_evening_simple">%1$s kcal left for today.</string>
+    <string name="notif_evening_rest">rest of the day</string>
+    <string name="notif_protein_title">Protein check</string>
+    <string name="notif_protein">%1$s g protein to go today.</string>
+    <string name="notif_meal">Nothing logged for %1$s yet.</string>
+    <string name="notif_weigh_in_title">Weigh-in</string>
+    <string name="notif_weigh_in">No weigh-in yet today.</string>
 </resources>

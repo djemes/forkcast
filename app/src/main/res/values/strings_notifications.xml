@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › Notifications (SPEC §4.8) -->
+    <string name="nset_permission_off">Notifications are off for Forkcast in Android settings.</string>
+    <string name="nset_open_system">Open Android settings</string>
+    <string name="nset_budget">Budget thresholds</string>
+    <string name="nset_budget_body">When the day reaches a share of your budget. Each fires once a day.</string>
+    <string name="nset_threshold">%1$d%%</string>
+    <string name="nset_evening">Evening outlook</string>
+    <string name="nset_evening_body">What\'s left, and what you usually eat from then on.</string>
+    <string name="nset_protein">Protein check</string>
+    <string name="nset_protein_body">If more than a quarter of your protein target is still to go.</string>
+    <string name="nset_meals">Meal reminders</string>
+    <string name="nset_meals_body">If a meal is still empty at its time.</string>
+    <string name="nset_weigh_in">Weigh-in reminder</string>
+    <string name="nset_weigh_in_body">In the morning, if there\'s no weight for today.</string>
+    <string name="nset_estimate_ready">Estimate ready</string>
+    <string name="nset_estimate_ready_body">When a photo estimate finishes while Forkcast isn\'t open.</string>
+    <string name="nset_backup_failed">Backup problems</string>
+    <string name="nset_backup_failed_body">When a scheduled backup fails twice in a row.</string>
+    <string name="nset_quiet_hours">Quiet hours</string>
+    <string name="nset_quiet_body">Nothing is sent from %1$s to %2$s.</string>
+    <string name="nset_quiet_start">Starts</string>
+    <string name="nset_quiet_end">Ends</string>
+    <string name="nset_at_time">At %1$s</string>
+    <string name="nset_change_time">Change time for %1$s</string>
+</resources>
