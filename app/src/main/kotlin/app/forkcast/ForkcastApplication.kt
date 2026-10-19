@@ -22,6 +22,7 @@ class ForkcastApplication : Application(), Configuration.Provider {
     @Inject lateinit var estimates: AiEstimateRepository
     @Inject lateinit var notifications: NotificationStarter
     @Inject lateinit var health: HealthSyncStarter
+    @Inject lateinit var settings: app.forkcast.core.data.repository.SettingsRepository
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -36,8 +37,17 @@ class ForkcastApplication : Application(), Configuration.Provider {
             StrictMode.setVmPolicy(StrictMode.VmPolicy.Builder().detectLeakedClosableObjects().penaltyLog().build())
         }
         Channel.createAll(this)
-        // Meal photos older than the retention setting (default 90 days) are deleted (SPEC §4.6).
-        appScope.launch { runCatching { estimates.cleanUpPhotos() } }
+        appScope.launch {
+            // Settings saved with the old 90-day default move to the new 14 days, once (owner, 2026-10-19).
+            runCatching {
+                settings.updateAi { ai ->
+                    if (ai.photoRetention14Applied) ai
+                    else ai.copy(photoRetentionDays = if (ai.photoRetentionDays == 90) 14 else ai.photoRetentionDays, photoRetention14Applied = true)
+                }
+            }
+            // Meal photos older than the retention setting (default 14 days) are deleted; entries stay (SPEC §4.6).
+            runCatching { estimates.cleanUpPhotos() }
+        }
         notifications.start(appScope)
         health.start(appScope)
     }

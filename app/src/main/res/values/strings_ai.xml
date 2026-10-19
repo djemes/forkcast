@@ -38,9 +38,10 @@
     <string name="ai_personal_context_note">Sent with every photo. Don\'t include personal details.</string>
     <string name="ai_auto_accept">Log estimates right away</string>
     <string name="ai_auto_accept_body">Estimates count toward today immediately, marked AI·review until you check them.</string>
-    <string name="ai_photo_retention">Keep meal photos</string>
+    <string name="ai_photo_retention">Delete meal photos after</string>
+    <string name="ai_photo_retention_body">Only the photo is deleted. The log entry and its nutrition stay.</string>
     <string name="ai_retention_days">%1$d days</string>
-    <string name="ai_retention_forever">Forever</string>
+    <string name="ai_retention_forever">Never</string>
     <string name="ai_usage_title">Usage this month</string>
     <string name="ai_usage_summary">%1$d estimates · %2$s tokens in · %3$s out · about %4$s</string>
     <string name="ai_usage_none">No estimates yet this month.</string>

@@ -34,6 +34,7 @@ class MainActivity : ComponentActivity() {
 
     @Inject lateinit var health: HealthRepository
     @Inject lateinit var maintenance: MaintenanceRepository
+    @Inject lateinit var estimates: app.forkcast.core.data.ai.AiEstimateRepository
 
     /** What a tapped notification asked to open ("estimate:<id>", "settings_ai"), consumed once. */
     private val openRequest = MutableStateFlow<String?>(null)
@@ -84,6 +85,8 @@ class MainActivity : ComponentActivity() {
             runCatching { health.sync(SyncReason.OPEN) }
             // Weekly adaptive maintenance (SPEC §5.6), after the scale's weigh-ins are in.
             runCatching { maintenance.updateIfDue() }
+            // Old meal photos go even when the app stays in memory for days.
+            runCatching { estimates.cleanUpPhotos() }
         }
     }
 

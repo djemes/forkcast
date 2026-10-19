@@ -73,8 +73,10 @@ data class AiSettings(
     val personalContext: String = "",
     /** Log estimates immediately with an "AI · review" badge (SPEC §4.6 step 7). */
     val autoAccept: Boolean = true,
-    /** Delete meal photos older than this many days; null keeps them forever. */
-    val photoRetentionDays: Int? = 90,
+    /** Delete meal photos older than this many days (only the photo; entries stay); null keeps them. */
+    val photoRetentionDays: Int? = 14,
+    /** The 14-day default (owner, 2026-10-19) was applied once to settings saved with the old 90-day default. */
+    val photoRetention14Applied: Boolean = false,
     /** User-edited prices per 1M tokens, keyed by model id; overrides the defaults file. */
     val priceOverrides: Map<String, ModelPrice> = emptyMap(),
 )

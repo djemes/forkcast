@@ -105,7 +105,7 @@ fun AiSettingsRoute(
     AiSettingsScreen(state, viewModel::onEvent, onBack, onEditProfile, onSetUpFreeGemini, snackbar)
 }
 
-private val RETENTION_CHOICES = listOf(30, 90, 180, 365, null)
+private val RETENTION_CHOICES = listOf(7, 14, 30, 90, null)
 
 /**
  * Settings › AI (SPEC §4.7). The profile list answers at a glance: what each profile is
@@ -385,6 +385,7 @@ private fun RetentionPicker(days: Int?, onChange: (Int?) -> Unit) {
     ) {
         Text(stringResource(R.string.ai_photo_retention), style = MaterialTheme.typography.bodyLarge)
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(stringResource(R.string.ai_photo_retention_body), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     if (open) {
         AlertDialog(
