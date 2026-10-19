@@ -18,6 +18,9 @@ import app.forkcast.core.data.db.AiDao
 import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.data.notify.Channel
 import app.forkcast.core.data.notify.Notifier
+import app.forkcast.core.data.repository.SettingsRepository
+import app.forkcast.core.domain.NotificationRules
+import kotlinx.coroutines.flow.first
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -39,6 +42,7 @@ class EstimateWorker @AssistedInject constructor(
     private val scheduler: EstimateScheduler,
     private val notifier: Notifier,
     private val dao: AiDao,
+    private val settings: SettingsRepository,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
@@ -64,7 +68,10 @@ class EstimateWorker @AssistedInject constructor(
     /** "Lunch estimated: ~640 kcal (520–760). Tap to review." Only when the app isn't on screen. */
     private suspend fun notifyReady(id: String) {
         val e = dao.estimate(id) ?: return
-        if (e.notified || notifier.appInForeground()) {
+        val prefs = settings.settings.first().notifications
+        val now = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+        val quiet = NotificationRules.inQuietHours(now, prefs.quietStartMinute, prefs.quietEndMinute)
+        if (e.notified || notifier.appInForeground() || !prefs.estimateReadyEnabled || quiet) {
             estimates.markNotified(id)
             return
         }

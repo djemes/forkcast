@@ -6,6 +6,7 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import app.forkcast.core.data.ai.AiEstimateRepository
 import app.forkcast.core.data.notify.Channel
+import app.forkcast.core.data.notify.NotificationStarter
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -18,6 +19,7 @@ class ForkcastApplication : Application(), Configuration.Provider {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
     @Inject lateinit var estimates: AiEstimateRepository
+    @Inject lateinit var notifications: NotificationStarter
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -34,5 +36,6 @@ class ForkcastApplication : Application(), Configuration.Provider {
         Channel.createAll(this)
         // Meal photos older than the retention setting (default 90 days) are deleted (SPEC §4.6).
         appScope.launch { runCatching { estimates.cleanUpPhotos() } }
+        notifications.start(appScope)
     }
 }

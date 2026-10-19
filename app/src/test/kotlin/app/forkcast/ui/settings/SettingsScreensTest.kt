@@ -24,7 +24,7 @@ class SettingsScreensTest {
         var opened = ""
         compose.setContent {
             ForkcastTheme {
-                SettingsScreen(onBack = {}, onOpenProfileGoals = {}, onOpenAi = {}, onOpenFoodDatabases = {}, onOpenBackup = {}, onOpenAppearance = { opened += "A" }, onOpenAbout = { opened += "B" })
+                SettingsScreen(onBack = {}, onOpenProfileGoals = {}, onOpenNotifications = {}, onOpenAi = {}, onOpenFoodDatabases = {}, onOpenBackup = {}, onOpenAppearance = { opened += "A" }, onOpenAbout = { opened += "B" })
             }
         }
         compose.onNodeWithText("Profile & goals").assertIsDisplayed()
@@ -52,6 +52,24 @@ class SettingsScreensTest {
         compose.onNodeWithText("Use wallpaper colors").performClick()
         assertThat(picked).containsExactly(ThemeMode.DARK)
         assertThat(wallpaper).isTrue()
+    }
+
+    @Test fun notificationsToggleAndThresholds() {
+        var settings = app.forkcast.core.model.NotificationSettings(permissionAsked = true)
+        compose.setContent {
+            ForkcastTheme {
+                NotificationsScreen(
+                    state = NotificationsUiState(settings, app.forkcast.fakes.FakeMealSlotRepository.DEFAULT),
+                    onUpdate = { settings = it(settings) },
+                    onMealTime = { _, _ -> },
+                    onBack = {},
+                )
+            }
+        }
+        compose.onNodeWithText("Evening outlook").performClick()
+        assertThat(settings.eveningEnabled).isTrue()
+        compose.onNodeWithText("110%").performClick()
+        assertThat(settings.budgetThresholds).containsExactly(80, 100, 110).inOrder()
     }
 
     @Test fun aboutShowsVersion() {
