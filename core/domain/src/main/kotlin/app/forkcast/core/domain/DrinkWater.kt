@@ -31,6 +31,16 @@ object DrinkWater {
     private const val MAX_SUGAR_PER_100G = 1.0
     private const val MAX_PROTEIN_PER_100G = 0.5
 
+    /** Any drink, counted or not: where the "counts toward water" switch is worth showing. */
+    private val beverages = listOf(
+        "water", "tea", "coffee", "espresso", "juice", "milk", "soda", "cola", "drink", "beverage", "latte", "shake", "smoothie",
+        "lemonade", "kombucha", "beer", "wine", "seltzer", "sparkling", "cappuccino", "mocha", "café", "suco", "leite", "água", "chá",
+    ).map { Regex("""(?<![\p{L}])${Regex.escape(it)}s?(?![\p{L}])""") }
+
+    fun isDrink(food: Food): Boolean = food.countsAsWater != null || countsAsWater(food) || isDrinkName(food.name)
+
+    fun isDrinkName(name: String): Boolean = beverages.any { it.containsMatchIn(name.lowercase()) }
+
     fun countsAsWater(food: Food): Boolean = food.countsAsWater ?: looksLikeWater(listOfNotNull(food.name, food.brand).joinToString(" "), food.nutrientsPer100g)
 
     /** The automatic rule, from the name and nutrients per 100 g. */

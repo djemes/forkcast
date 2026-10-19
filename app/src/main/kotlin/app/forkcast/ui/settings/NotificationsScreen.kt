@@ -234,12 +234,10 @@ fun NotificationsScreen(
             style = MaterialTheme.typography.bodyMedium,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
-        TimeRow(stringResource(R.string.nset_quiet_start), s.quietStartMinute, label = stringResource(R.string.nset_quiet_start)) {
-            editing = TimeEdit(it, s.quietStartMinute) { m -> onUpdate { c -> c.copy(quietStartMinute = m) } }
-        }
-        TimeRow(stringResource(R.string.nset_quiet_end), s.quietEndMinute, label = stringResource(R.string.nset_quiet_end)) {
-            editing = TimeEdit(it, s.quietEndMinute) { m -> onUpdate { c -> c.copy(quietEndMinute = m) } }
-        }
+        val startLabel = stringResource(R.string.nset_quiet_start)
+        val endLabel = stringResource(R.string.nset_quiet_end)
+        LabeledTime(startLabel, s.quietStartMinute) { editing = TimeEdit(startLabel, s.quietStartMinute) { m -> onUpdate { c -> c.copy(quietStartMinute = m) } } }
+        LabeledTime(endLabel, s.quietEndMinute) { editing = TimeEdit(endLabel, s.quietEndMinute) { m -> onUpdate { c -> c.copy(quietEndMinute = m) } } }
     }
 
     editing?.let { e -> TimeDialog(e, onDismiss = { editing = null }) }
@@ -308,11 +306,15 @@ private fun TimeChip(what: String, minute: Int, onClick: () -> Unit) {
     )
 }
 
+/** A label and its time on one row (quiet hours). */
 @Composable
-private fun TimeRow(what: String, minute: Int, label: String? = null, onClick: (String) -> Unit) {
-    val description = stringResource(R.string.nset_change_time, what)
-    TextButton(onClick = { onClick(what) }, modifier = Modifier.padding(start = 8.dp).semantics { contentDescription = description }) {
-        Text(label?.let { "$it: ${timeText(minute)}" } ?: stringResource(R.string.nset_at_time, timeText(minute)))
+private fun LabeledTime(label: String, minute: Int, onClick: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(horizontal = 16.dp),
+    ) {
+        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        TimeChip(label, minute, onClick)
     }
 }
 

@@ -175,7 +175,7 @@ fun FoodDetailScreen(
                 NumberField(
                     initial = state.quantity?.let { UnitFormatter.trimNumber(it, 2) }.orEmpty(),
                     label = stringResource(R.string.food_quantity),
-                    suffix = state.serving.label.takeIf { it == "g" || it == "oz" } ?: "× ${state.serving.label}",
+                    suffix = state.serving.label.takeIf { it == "g" || it == "oz" || it == "ml" || it == "fl oz" } ?: "× ${state.serving.label}",
                     onValue = onQuantity,
                     // Re-seed the field when the serving or stepper changes the value.
                     key = "${state.serving.label}|${state.quantity}",
@@ -221,12 +221,15 @@ fun FoodDetailScreen(
                 }
             }
             // Water, sparkling water and plain tea count toward the day's water; the user can override it per food.
-            val counts = state.countsAsWater
-            app.forkcast.ui.today.WaterToggle(
-                checked = counts,
-                detail = state.grams?.takeIf { counts }?.let { stringResource(R.string.water_counts_amount, f.waterLiters(it)) },
-                onChange = onCountsAsWater,
-            )
+            // Shown for drinks only (any drink, so coffee or milk can be switched on by hand).
+            if (state.isDrink) {
+                val counts = state.countsAsWater
+                app.forkcast.ui.today.WaterToggle(
+                    checked = counts,
+                    detail = state.grams?.takeIf { counts }?.let { stringResource(R.string.water_counts_amount, f.waterLiters(it)) },
+                    onChange = onCountsAsWater,
+                )
+            }
             if (food.source == FoodSource.OFF) {
                 Text(stringResource(R.string.food_odbl), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

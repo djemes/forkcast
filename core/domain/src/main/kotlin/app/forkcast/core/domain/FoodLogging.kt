@@ -13,11 +13,22 @@ import java.time.LocalDate
 object FoodLogging {
     const val GRAM_LABEL = "g"
     const val OUNCE_LABEL = "oz"
+    const val ML_LABEL = "ml"
+    const val FL_OZ_LABEL = "fl oz"
 
-    /** The food's own servings, then grams and ounces (SPEC §4.3). */
-    fun servingOptions(food: Food): List<ServingSize> =
-        (food.servingSizes + ServingSize(GRAM_LABEL, 1.0) + ServingSize(OUNCE_LABEL, UnitConversions.G_PER_OZ))
+    /**
+     * The food's own servings, then grams and ounces (SPEC §4.3). Drinks that count toward water
+     * also get ml and fl oz (1 ml ≈ 1 g), so a tea logged "per bag" can be logged by the cup.
+     */
+    fun servingOptions(food: Food): List<ServingSize> {
+        val drink = if (DrinkWater.countsAsWater(food)) {
+            listOf(ServingSize(ML_LABEL, 1.0), ServingSize(FL_OZ_LABEL, UnitConversions.flOzToMl(1.0)))
+        } else {
+            emptyList()
+        }
+        return (food.servingSizes + drink + ServingSize(GRAM_LABEL, 1.0) + ServingSize(OUNCE_LABEL, UnitConversions.G_PER_OZ))
             .distinctBy { it.label.lowercase() }
+    }
 
     /** Last-used serving and quantity, else the food's first serving × 1, else 100 g. */
     fun defaultServing(food: Food): Pair<ServingSize, Double> {

@@ -53,6 +53,7 @@ data class FoodDetailState(
     val mealName: String get() = meals.firstOrNull { it.id == mealSlotId }?.name.orEmpty()
     /** The user's choice, or the drink rule (SPEC §4.9). */
     val countsAsWater: Boolean get() = DrinkWater.countsAsWater(food)
+    val isDrink: Boolean get() = DrinkWater.isDrink(food)
 }
 
 private data class Selection(val servingLabel: String? = null, val quantity: Double? = null, val quantityTouched: Boolean = false, val mealSlotId: String? = null)
@@ -121,7 +122,11 @@ class FoodDetailViewModel @Inject constructor(
 
     fun step(delta: Int) {
         val s = state.value ?: return
-        val stepSize = if (s.serving.label == FoodLogging.GRAM_LABEL) 10.0 else 0.25
+        val stepSize = when (s.serving.label) {
+            FoodLogging.GRAM_LABEL, FoodLogging.ML_LABEL -> 10.0
+            FoodLogging.FL_OZ_LABEL -> 1.0
+            else -> 0.25
+        }
         val next = ((s.quantity ?: 0.0) + delta * stepSize).coerceAtLeast(stepSize)
         setQuantity(next)
     }

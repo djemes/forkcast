@@ -90,7 +90,7 @@ fun SourceBadge(source: FoodSource, needsReview: Boolean = false) {
 fun servingText(quantity: Double, label: String): String {
     val qty = UnitFormatter.trimNumber(quantity, 2)
     return when {
-        label == "g" || label == "oz" -> "$qty\u2009$label"
+        label == "g" || label == "oz" || label == "ml" || label == "fl oz" -> "$qty\u2009$label"
         quantity == 1.0 -> label
         else -> "$qty × $label"
     }
@@ -98,7 +98,8 @@ fun servingText(quantity: Double, label: String): String {
 
 fun amountText(entry: LogEntry, f: UnitFormatter): String {
     val serving = servingText(entry.quantity, entry.servingLabel)
-    return entry.grams?.takeIf { entry.servingLabel != "g" }?.let { "$serving · ${f.grams(it)}" } ?: serving
+    // Grams add nothing to an amount already in g or in ml/fl oz.
+    return entry.grams?.takeIf { entry.servingLabel !in setOf("g", "ml", "fl oz") }?.let { "$serving · ${f.grams(it)}" } ?: serving
 }
 
 /** A single-line entry row: swipe left to delete, tap to edit, long-press to select. */
@@ -265,7 +266,7 @@ fun EditEntrySheet(
             NumberField(
                 initial = UnitFormatter.trimNumber(entry.quantity, 2),
                 label = stringResource(R.string.edit_quantity),
-                suffix = if (entry.servingLabel == "g") "g" else "× ${entry.servingLabel}",
+                suffix = if (entry.servingLabel in setOf("g", "oz", "ml", "fl oz")) entry.servingLabel else "× ${entry.servingLabel}",
                 onValue = { quantity = it },
                 key = entry.id,
             )
@@ -284,7 +285,7 @@ fun EditEntrySheet(
                 }
             }
             // A drink's water counts toward the day (needs its amount in grams/ml).
-            if (entry.grams != null) {
+            if (entry.grams != null && (entry.waterMl != null || app.forkcast.core.domain.DrinkWater.isDrinkName(entry.displayName))) {
                 WaterToggle(countsWater) { countsWater = it }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(vertical = 8.dp)) {

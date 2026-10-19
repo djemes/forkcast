@@ -40,7 +40,7 @@ data class SettingsActions(
 @Composable
 fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions) {
     SettingsScaffold(title = stringResource(R.string.settings), onBack = onBack) {
-        Group(R.string.settings_group_you)
+        Group(R.string.settings_group_you, divider = false)
         Item(R.string.settings_goal_budget, R.string.settings_goal_budget_summary, actions.goalBudget)
         Item(R.string.settings_profile, R.string.settings_profile_summary, actions.profile)
         Item(R.string.settings_daily_targets, R.string.settings_daily_targets_summary, actions.dailyTargets)
@@ -64,8 +64,8 @@ fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions) {
 }
 
 @Composable
-private fun Group(@StringRes title: Int) {
-    HorizontalDivider(Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
+private fun Group(@StringRes title: Int, divider: Boolean = true) {
+    if (divider) HorizontalDivider(Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
     Text(
         stringResource(title),
         style = MaterialTheme.typography.titleSmall,
