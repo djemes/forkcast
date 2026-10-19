@@ -191,7 +191,7 @@ private fun PeriodPicker(period: Trends.Period, onPeriod: (Trends.Period) -> Uni
                 onClick = { onPeriod(p) },
                 shape = SegmentedButtonDefaults.itemShape(i, options.size),
                 icon = {},
-            ) { Text(stringResource(text), maxLines = 1) }
+            ) { Text(stringResource(text), maxLines = 2, textAlign = TextAlign.Center) }
         }
     }
 }
@@ -373,10 +373,9 @@ private fun SplitBar(label: String, split: Trends.MacroSplit) {
     val c = ForkcastTheme.colors
     val text = stringResource(R.string.trends_split, split.proteinPct.roundToInt(), split.carbsPct.roundToInt(), split.fatPct.roundToInt())
     Column(Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}) {
-        Row(Modifier.fillMaxWidth()) {
-            Text(label, style = MaterialTheme.typography.labelLarge, modifier = Modifier.weight(1f))
-            Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.End)
-        }
+        // Stacked rather than side by side, so neither squeezes the other at 200 % font.
+        Text(label, style = MaterialTheme.typography.labelLarge)
+        Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth().padding(top = 4.dp).height(12.dp).clip(RoundedCornerShape(6.dp))) {
             listOf(split.proteinPct to c.protein, split.carbsPct to c.carbs, split.fatPct to c.fat).forEach { (pct, color) ->
                 if (pct > 0.5) Box(Modifier.weight(pct.toFloat()).fillMaxHeight().background(color))

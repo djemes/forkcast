@@ -242,7 +242,7 @@ fun WeightTrendChart(
     val lo = values.min()
     val hi = values.max()
     // At least 2 units of range so a flat week doesn't look like a cliff.
-    val step = niceStep(maxOf(hi - lo, 2.0), lines = 4)
+    val step = niceStep(maxOf(hi - lo, 2.0), lines = 3)
     val minY = floor((lo - step / 2) / step) * step
     val maxY = ceil((hi + step / 2) / step) * step
     val range = remember(minY, maxY) { CartesianLayerRangeProvider.fixed(minY = minY, maxY = maxY) }

@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -284,7 +285,8 @@ private fun Summary(r: app.forkcast.core.domain.RecipeMath.Result, f: UnitFormat
     ) {
         Text(stringResource(R.string.recipe_per_serving), style = MaterialTheme.typography.titleSmall)
         Text(f.energy(n[NutrientKey.ENERGY_KCAL] ?: 0.0), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
-        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+        // Wraps whole items at large font sizes instead of breaking "0.2 g" across lines.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Text("${stringResource(R.string.macro_protein)} ${f.grams(n[NutrientKey.PROTEIN_G] ?: 0.0)}", color = c.protein, style = MaterialTheme.typography.labelLarge)
             Text("${stringResource(R.string.macro_carbs)} ${f.grams(n[NutrientKey.CARBS_G] ?: 0.0)}", color = c.carbs, style = MaterialTheme.typography.labelLarge)
             Text("${stringResource(R.string.macro_fat)} ${f.grams(n[NutrientKey.FAT_G] ?: 0.0)}", color = c.fat, style = MaterialTheme.typography.labelLarge)
