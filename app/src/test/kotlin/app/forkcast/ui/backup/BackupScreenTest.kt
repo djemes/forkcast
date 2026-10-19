@@ -1,5 +1,11 @@
 package app.forkcast.ui.backup
 
+import androidx.compose.ui.test.assertIsEnabled
+
+import androidx.compose.ui.test.assertIsNotEnabled
+
+import androidx.compose.ui.test.performTextInput
+
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
@@ -75,5 +81,38 @@ class BackupScreenTest {
         }
         compose.onNodeWithText("Undo the last replace").performScrollTo().performClick()
         assertThat(events).containsExactly(BackupEvent.OpenSafetyBackup)
+    }
+
+    @Test fun passphraseMustMatchAndBeLongEnough() {
+        var result: CharArray? = null
+        compose.setContent { app.forkcast.ui.theme.ForkcastTheme { PassphraseDialog(confirm = true, onDone = { result = it }, onDismiss = {}) } }
+        compose.onNodeWithText("Passphrase").performTextInput("short")
+        compose.onNodeWithText("At least 8 characters").assertExists()
+        compose.onNodeWithText("Continue").assertIsNotEnabled()
+        compose.onNodeWithText("Passphrase").performTextInput(" horse battery")
+        compose.onNodeWithText("Passphrase again").performTextInput("short horse batter")
+        compose.onNodeWithText("The two don't match").assertExists()
+        compose.onNodeWithText("Continue").assertIsNotEnabled()
+        compose.onNodeWithText("Passphrase again").performTextInput("y")
+        compose.onNodeWithText("Continue").assertIsEnabled().performClick()
+        com.google.common.truth.Truth.assertThat(String(result!!)).isEqualTo("short horse battery")
+    }
+
+    @Test fun backupScreenOffersZipAndSettingsExport() {
+        var zip = false
+        compose.setContent {
+            app.forkcast.ui.theme.ForkcastTheme {
+                BackupScreen(
+                    state = BackupUiState(),
+                    onEvent = {},
+                    actions = BackupActions(exportJson = {}, exportZip = { zip = true }, exportFoodLog = {}, exportWeights = {}, import = {}),
+                    onBack = {},
+                    settingsSection = { SettingsTransferSection(busy = false, onExport = {}, onImport = {}) },
+                )
+            }
+        }
+        compose.onNodeWithText("Export with photos (.zip)").performClick()
+        com.google.common.truth.Truth.assertThat(zip).isTrue()
+        compose.onNodeWithText("Export settings…").performScrollTo().assertExists()
     }
 }

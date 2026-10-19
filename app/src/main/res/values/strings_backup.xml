@@ -3,6 +3,8 @@
     <string name="backup_export_title">Export</string>
     <string name="backup_export_body">Save everything (foods, food log, saved meals, weight, water, goals, and settings) as one file you can keep anywhere. API keys are never included.</string>
     <string name="backup_export_json">Export backup</string>
+    <string name="backup_export_zip">Export with photos (.zip)</string>
+    <string name="backup_saved_zip">Backup with photos saved</string>
     <string name="backup_csv_title">For spreadsheets</string>
     <string name="backup_csv_food_log">Food log (CSV)</string>
     <string name="backup_csv_weights">Weights (CSV)</string>
@@ -49,4 +51,32 @@
     <string name="backup_rejected_unreadable">This file couldn\'t be read. It may be damaged or not a Forkcast backup.</string>
     <string name="backup_read_failed">Couldn\'t open the file.</string>
     <string name="backup_import_failed">The import didn\'t finish, so nothing was changed.</string>
+
+    <!-- Settings export with API keys (SPEC §4.11) -->
+    <string name="settings_transfer_title">Settings and keys</string>
+    <string name="settings_transfer_body">A separate file with every setting, your AI profiles and their API keys, and the food database key. It\'s locked with a passphrase you choose. Use it to set up another phone.</string>
+    <string name="settings_export">Export settings…</string>
+    <string name="settings_import">Import settings…</string>
+    <string name="settings_passphrase_title_export">Lock with a passphrase</string>
+    <string name="settings_passphrase_body_export">Anyone with this file and the passphrase can use your API keys. There is no way to recover a forgotten passphrase.</string>
+    <string name="settings_passphrase_title_import">Passphrase for this file</string>
+    <string name="settings_passphrase">Passphrase</string>
+    <string name="settings_passphrase_again">Passphrase again</string>
+    <string name="settings_passphrase_short">At least 8 characters</string>
+    <string name="settings_passphrase_mismatch">The two don\'t match</string>
+    <string name="settings_strength_weak">Weak. A few unrelated words are stronger.</string>
+    <string name="settings_strength_fair">Fair</string>
+    <string name="settings_strength_strong">Strong</string>
+    <string name="settings_continue">Continue</string>
+    <string name="settings_preview_title">Replace settings and keys?</string>
+    <string name="settings_preview_body">From a file made %1$s. This replaces this phone\'s settings, AI profiles (%2$s) and %3$d saved keys. Your food log isn\'t touched.</string>
+    <string name="settings_preview_none">none</string>
+    <string name="settings_replace">Replace</string>
+    <string name="settings_saved">Settings file saved</string>
+    <string name="settings_imported">Settings and keys imported</string>
+    <string name="settings_wrong_passphrase">Wrong passphrase, or the file was changed.</string>
+    <string name="settings_not_forkcast">This isn\'t a Forkcast settings file.</string>
+    <string name="settings_newer">This file was made by a newer version of Forkcast. Update the app, then try again.</string>
+    <string name="settings_unreadable">This file couldn\'t be read.</string>
+    <string name="settings_failed">Couldn\'t save the file. Try another location.</string>
 </resources>

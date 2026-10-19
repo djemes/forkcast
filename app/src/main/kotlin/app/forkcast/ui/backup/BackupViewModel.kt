@@ -9,6 +9,7 @@ import app.forkcast.core.data.backup.ForkcastExport
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.ImportSummary
 import app.forkcast.core.data.backup.ParsedBackup
+import app.forkcast.core.data.backup.PhotoArchive
 import app.forkcast.core.data.backup.RejectReason
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
@@ -24,6 +25,8 @@ import javax.inject.Inject
 
 enum class ExportKind(val extension: String, val mimeType: String) {
     JSON("json", "application/json"),
+    /** JSON plus meal photos (SPEC §4.11 "Include photos"). */
+    ZIP("zip", "application/zip"),
     FOOD_LOG_CSV("csv", "text/csv"),
     WEIGHTS_CSV("csv", "text/csv"),
 }
@@ -65,6 +68,7 @@ sealed interface BackupEvent {
 class BackupViewModel @Inject constructor(
     private val backups: BackupRepository,
     private val documents: DocumentIo,
+    private val archive: PhotoArchive,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -73,6 +77,8 @@ class BackupViewModel @Inject constructor(
 
     /** The parsed file waiting on Merge/Replace; kept out of UiState because it can be large. */
     private var pending: ForkcastExport? = null
+    /** The pending file was a .zip whose photos are staged. */
+    private var hasStagedPhotos = false
 
     init {
         refreshSafetyBackup()
@@ -82,7 +88,7 @@ class BackupViewModel @Inject constructor(
     fun suggestedName(kind: ExportKind): String {
         val stamp = NAME_STAMP.format(clock.instant().atZone(clock.zone))
         val suffix = when (kind) {
-            ExportKind.JSON -> ""
+            ExportKind.JSON, ExportKind.ZIP -> ""
             ExportKind.FOOD_LOG_CSV -> "-food-log"
             ExportKind.WEIGHTS_CSV -> "-weights"
         }
@@ -92,12 +98,22 @@ class BackupViewModel @Inject constructor(
     fun onEvent(event: BackupEvent) {
         when (event) {
             is BackupEvent.Export -> export(event.kind, event.uri)
-            is BackupEvent.Open -> work { show(documents.readText(event.uri), isSafetyBackup = false) }
+            is BackupEvent.Open -> work {
+                // A .zip carries photos: they're staged now and kept only if the import goes ahead.
+                val text = documents.readStream(event.uri) { raw ->
+                    val input = raw.buffered()
+                    hasStagedPhotos = archive.isZip(input)
+                    if (hasStagedPhotos) archive.read(input) else input.readBytes().decodeToString()
+                }
+                show(text, isSafetyBackup = false)
+            }
             BackupEvent.OpenSafetyBackup -> work { backups.readSafetyBackup()?.let { show(it, isSafetyBackup = true) } }
             BackupEvent.Merge -> runImport(ImportMode.MERGE)
             BackupEvent.AskReplace -> _state.update { it.copy(dialog = BackupDialog.ConfirmReplace) }
             BackupEvent.Replace -> runImport(ImportMode.REPLACE)
             BackupEvent.DismissDialog -> {
+                if (hasStagedPhotos) viewModelScope.launch { archive.discardStaged() }
+                hasStagedPhotos = false
                 pending = null
                 _state.update { it.copy(dialog = null) }
             }
@@ -108,12 +124,15 @@ class BackupViewModel @Inject constructor(
     private fun export(kind: ExportKind, uri: Uri) = viewModelScope.launch {
         _state.update { it.copy(busy = true) }
         val notice = try {
-            val text = when (kind) {
-                ExportKind.JSON -> backups.exportJson()
-                ExportKind.FOOD_LOG_CSV -> backups.foodLogCsv()
-                ExportKind.WEIGHTS_CSV -> backups.weightsCsv()
+            when (kind) {
+                ExportKind.ZIP -> {
+                    val json = backups.exportJson()
+                    documents.writeStream(uri) { out -> archive.write(out, json) }
+                }
+                ExportKind.JSON -> documents.writeText(uri, backups.exportJson())
+                ExportKind.FOOD_LOG_CSV -> documents.writeText(uri, backups.foodLogCsv())
+                ExportKind.WEIGHTS_CSV -> documents.writeText(uri, backups.weightsCsv())
             }
-            documents.writeText(uri, text)
             BackupNotice.Exported(kind)
         } catch (e: IOException) {
             BackupNotice.ExportFailed
@@ -139,13 +158,14 @@ class BackupViewModel @Inject constructor(
         viewModelScope.launch {
             _state.update { it.copy(busy = true, dialog = null) }
             val dialog = try {
-                BackupDialog.Done(backups.import(export, mode))
+                BackupDialog.Done(backups.import(export, mode)).also { if (hasStagedPhotos) archive.commitStaged() }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) { // Room/IO failures roll back; tell the user nothing changed.
                 BackupDialog.ImportFailed
             }
             pending = null
+            hasStagedPhotos = false
             _state.update { it.copy(busy = false, dialog = dialog) }
             refreshSafetyBackup()
         }
