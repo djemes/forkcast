@@ -127,7 +127,7 @@
     <string name="exercise_included_body">Workouts from Health Connect are shown but don\'t change your budget. Best if your activity level already counts them.</string>
     <string name="exercise_added_back">Added back: %1$d %% of active calories</string>
     <string name="exercise_added_back_choice">Added back</string>
-    <string name="exercise_added_back_body">Your budget starts from a sedentary level, and a share of each day\'s active calories is added that day. Watches tend to overestimate, so 50 %% is a safe default.</string>
+    <string name="exercise_added_back_body" formatted="false">Your budget starts from a sedentary level, and a share of each day\'s active calories is added that day. Watches tend to overestimate, so 50 % is a safe default.</string>
     <string name="exercise_share">Share added back</string>
     <string name="exercise_share_value">%1$d %%</string>
     <string name="profile_units">Units</string>

@@ -140,7 +140,8 @@ fun BudgetRing(
                     color = if (over) colors.plum else MaterialTheme.colorScheme.onBackground,
                 )
                 Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                if (exercise) {
+                // At large font sizes this would cross the ring; the line under the ring says it too.
+                if (exercise && androidx.compose.ui.platform.LocalDensity.current.fontScale <= 1.3f) {
                     Text(
                         stringResource(R.string.ring_exercise_included, units.energyNumber(totals.exerciseKcal)),
                         style = MaterialTheme.typography.labelMedium,
