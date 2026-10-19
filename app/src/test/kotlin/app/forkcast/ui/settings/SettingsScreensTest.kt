@@ -62,6 +62,8 @@ class SettingsScreensTest {
                     state = NotificationsUiState(settings, app.forkcast.fakes.FakeMealSlotRepository.DEFAULT),
                     onUpdate = { settings = it(settings) },
                     onMealTime = { _, _ -> },
+                    onMeal = { _, _ -> },
+                    onMealCategory = {},
                     onBack = {},
                 )
             }

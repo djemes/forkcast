@@ -44,6 +44,41 @@ object NotificationRules {
         }
     }
 
+    /** A meal for the reminder rules: id, name, and the time to use when it has none yet. */
+    data class Meal(val id: String, val name: String, val fallbackMinute: Int)
+
+    /** Meal reminders as stored: the category switch, enabled meals with times, and remembered times of disabled ones. */
+    data class MealReminders(val categoryOn: Boolean, val enabled: Map<String, Int>, val off: Map<String, Int>)
+
+    /** Meals that remind, with times: what's enabled, or (never set up) the defaults. */
+    fun effectiveMeals(enabled: Map<String, Int>, off: Map<String, Int>, meals: List<Meal>): Map<String, Int> =
+        if (enabled.isEmpty() && off.isEmpty()) defaultMealReminders(meals.map { it.id to it.name }) else enabled
+
+    /**
+     * One meal switched (owner, 2026-10-19). Turning off the last enabled meal turns the
+     * category off instead, keeping the setup so it comes back as it was.
+     */
+    fun setMeal(r: MealReminders, meals: List<Meal>, mealId: String, on: Boolean): MealReminders {
+        val current = effectiveMeals(r.enabled, r.off, meals)
+        val fallback = meals.firstOrNull { it.id == mealId }?.fallbackMinute ?: DEFAULT_DINNER_MINUTE
+        return if (on) {
+            val minute = r.off[mealId] ?: current[mealId] ?: fallback
+            MealReminders(true, current + (mealId to minute), r.off - mealId)
+        } else {
+            val minute = current[mealId] ?: return r
+            if (current.keys == setOf(mealId)) MealReminders(false, current, r.off)
+            else MealReminders(r.categoryOn, current - mealId, r.off + (mealId to minute))
+        }
+    }
+
+    /** The category switched: off keeps every meal's setting; on restores it, or (nothing to restore) turns all meals on. */
+    fun setCategory(r: MealReminders, meals: List<Meal>, on: Boolean): MealReminders {
+        val current = effectiveMeals(r.enabled, r.off, meals)
+        if (!on) return MealReminders(false, current, r.off)
+        if (current.isNotEmpty()) return MealReminders(true, current, r.off)
+        return MealReminders(true, meals.associate { it.id to (r.off[it.id] ?: it.fallbackMinute) }, emptyMap())
+    }
+
     /**
      * The next time any reminder is due after [nowMinute]: minutes from now, wrapping to
      * tomorrow. Null when there are no reminders.

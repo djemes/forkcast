@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -64,9 +66,19 @@ import java.time.format.FormatStyle
 import javax.inject.Inject
 
 data class NotificationsUiState(val settings: NotificationSettings, val slots: List<MealSlot>) {
-    /** Reminder time per meal: the user's, or the defaults (Lunch 13:30, Dinner 20:00). */
+    val meals: List<NotificationRules.Meal>
+        get() = slots.map { NotificationRules.Meal(it.id, it.name, it.endMinute ?: NotificationRules.DEFAULT_DINNER_MINUTE) }
+
+    /** Reminder time per enabled meal: the user's setup, or the defaults (Lunch 13:30, Dinner 20:00). */
     val mealTimes: Map<String, Int>
-        get() = settings.mealReminderMinutes.ifEmpty { NotificationRules.defaultMealReminders(slots.map { it.id to it.name }) }
+        get() = NotificationRules.effectiveMeals(settings.mealReminderMinutes, settings.mealReminderOffMinutes, meals)
+
+    /** A disabled meal's remembered time, else its window end. */
+    fun timeFor(slot: MealSlot): Int =
+        mealTimes[slot.id] ?: settings.mealReminderOffMinutes[slot.id] ?: slot.endMinute ?: NotificationRules.DEFAULT_DINNER_MINUTE
+
+    val reminders: NotificationRules.MealReminders
+        get() = NotificationRules.MealReminders(settings.mealRemindersEnabled, settings.mealReminderMinutes, settings.mealReminderOffMinutes)
 }
 
 @HiltViewModel
@@ -80,10 +92,25 @@ class NotificationsViewModel @Inject constructor(
 
     fun update(change: (NotificationSettings) -> NotificationSettings) = viewModelScope.launch { settings.updateNotifications(change) }
 
-    fun setMealTime(slotId: String, minute: Int?) = update { s ->
-        val current = state.value?.mealTimes.orEmpty()
-        s.copy(mealReminderMinutes = if (minute == null) current - slotId else current + (slotId to minute))
+    fun setMealTime(slotId: String, minute: Int) = update { s ->
+        val st = state.value ?: return@update s
+        s.copy(mealReminderMinutes = st.mealTimes + (slotId to minute))
     }
+
+    /** One meal switched; switching off the last one turns the category off (owner, 2026-10-19). */
+    fun setMeal(slotId: String, on: Boolean) = update { s ->
+        val st = state.value ?: return@update s
+        s.with(NotificationRules.setMeal(st.reminders, st.meals, slotId, on))
+    }
+
+    /** The category switched: off keeps each meal's setup, on restores it. */
+    fun setMealCategory(on: Boolean) = update { s ->
+        val st = state.value ?: return@update s
+        s.with(NotificationRules.setCategory(st.reminders, st.meals, on))
+    }
+
+    private fun NotificationSettings.with(r: NotificationRules.MealReminders) =
+        copy(mealRemindersEnabled = r.categoryOn, mealReminderMinutes = r.enabled, mealReminderOffMinutes = r.off)
 }
 
 private val THRESHOLD_CHOICES = listOf(50, 80, 90, 100, 110, 125)
@@ -92,14 +119,23 @@ private val THRESHOLD_CHOICES = listOf(50, 80, 90, 100, 110, 125)
 fun NotificationsRoute(onBack: () -> Unit, viewModel: NotificationsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val s = state ?: return
-    NotificationsScreen(s, onUpdate = { viewModel.update(it) }, onMealTime = viewModel::setMealTime, onBack = onBack)
+    NotificationsScreen(
+        s,
+        onUpdate = { viewModel.update(it) },
+        onMealTime = viewModel::setMealTime,
+        onMeal = viewModel::setMeal,
+        onMealCategory = viewModel::setMealCategory,
+        onBack = onBack,
+    )
 }
 
 @Composable
 fun NotificationsScreen(
     state: NotificationsUiState,
     onUpdate: ((NotificationSettings) -> NotificationSettings) -> Unit,
-    onMealTime: (String, Int?) -> Unit,
+    onMealTime: (String, Int) -> Unit,
+    onMeal: (String, Boolean) -> Unit,
+    onMealCategory: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -132,7 +168,7 @@ fun NotificationsScreen(
 
         ToggleRow(R.string.nset_budget, R.string.nset_budget_body, s.budgetEnabled) { on -> enable(on) { it.copy(budgetEnabled = on) } }
         if (s.budgetEnabled) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(start = 32.dp, end = 16.dp)) {
                 for (t in THRESHOLD_CHOICES) {
                     FilterChip(
                         selected = t in s.budgetThresholds,
@@ -150,36 +186,39 @@ fun NotificationsScreen(
         }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
-        ToggleRow(R.string.nset_evening, R.string.nset_evening_body, s.eveningEnabled) { on -> enable(on) { it.copy(eveningEnabled = on) } }
-        if (s.eveningEnabled) TimeRow(stringResource(R.string.nset_evening), s.eveningMinute) { editing = TimeEdit(it, s.eveningMinute) { m -> onUpdate { c -> c.copy(eveningMinute = m) } } }
+        // Each reminder's time sits on its own row, next to its switch (owner, 2026-10-19).
+        val eveningTitle = stringResource(R.string.nset_evening)
+        ToggleRow(R.string.nset_evening, R.string.nset_evening_body, s.eveningEnabled, minute = s.eveningMinute,
+            onTime = { editing = TimeEdit(eveningTitle, s.eveningMinute) { m -> onUpdate { c -> c.copy(eveningMinute = m) } } },
+        ) { on -> enable(on) { it.copy(eveningEnabled = on) } }
 
-        ToggleRow(R.string.nset_protein, R.string.nset_protein_body, s.proteinEnabled) { on -> enable(on) { it.copy(proteinEnabled = on) } }
-        if (s.proteinEnabled) TimeRow(stringResource(R.string.nset_protein), s.proteinMinute) { editing = TimeEdit(it, s.proteinMinute) { m -> onUpdate { c -> c.copy(proteinMinute = m) } } }
+        val proteinTitle = stringResource(R.string.nset_protein)
+        ToggleRow(R.string.nset_protein, R.string.nset_protein_body, s.proteinEnabled, minute = s.proteinMinute,
+            onTime = { editing = TimeEdit(proteinTitle, s.proteinMinute) { m -> onUpdate { c -> c.copy(proteinMinute = m) } } },
+        ) { on -> enable(on) { it.copy(proteinEnabled = on) } }
 
-        ToggleRow(R.string.nset_meals, R.string.nset_meals_body, s.mealRemindersEnabled) { on -> enable(on) { it.copy(mealRemindersEnabled = on) } }
+        val weighTitle = stringResource(R.string.nset_weigh_in)
+        ToggleRow(R.string.nset_weigh_in, R.string.nset_weigh_in_body, s.weighInEnabled, minute = s.weighInMinute,
+            onTime = { editing = TimeEdit(weighTitle, s.weighInMinute) { m -> onUpdate { c -> c.copy(weighInMinute = m) } } },
+        ) { on -> enable(on) { it.copy(weighInEnabled = on) } }
+
+        ToggleRow(R.string.nset_meals, R.string.nset_meals_body, s.mealRemindersEnabled) { on ->
+            onMealCategory(on)
+            if (on) enable(true) { it }
+        }
         if (s.mealRemindersEnabled) {
             for (slot in state.slots) {
                 val minute = state.mealTimes[slot.id]
-                // Indented under "Meal reminders"; the whole row toggles, and its switch lines up with the others.
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .toggleable(value = minute != null, role = Role.Switch) { on ->
-                            onMealTime(slot.id, if (on) (slot.endMinute ?: (20 * 60)) else null)
-                        }
-                        .padding(start = 32.dp, end = 16.dp),
-                ) {
-                    Text(slot.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                    Switch(checked = minute != null, onCheckedChange = null, modifier = Modifier.padding(start = 16.dp))
-                }
-                if (minute != null) TimeRow(slot.name, minute) { editing = TimeEdit(it, minute) { m -> onMealTime(slot.id, m) } }
+                MealRow(
+                    name = slot.name,
+                    on = minute != null,
+                    minute = minute ?: state.timeFor(slot),
+                    onToggle = { on -> onMeal(slot.id, on) },
+                    onTime = { editing = TimeEdit(slot.name, minute ?: state.timeFor(slot)) { m -> onMealTime(slot.id, m) } },
+                )
             }
         }
-
-        ToggleRow(R.string.nset_weigh_in, R.string.nset_weigh_in_body, s.weighInEnabled) { on -> enable(on) { it.copy(weighInEnabled = on) } }
-        if (s.weighInEnabled) TimeRow(stringResource(R.string.nset_weigh_in), s.weighInMinute) { editing = TimeEdit(it, s.weighInMinute) { m -> onUpdate { c -> c.copy(weighInMinute = m) } } }
+        HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
         ToggleRow(R.string.nset_estimate_ready, R.string.nset_estimate_ready_body, s.estimateReadyEnabled) { on -> enable(on) { it.copy(estimateReadyEnabled = on) } }
         ToggleRow(R.string.nset_backup_failed, R.string.nset_backup_failed_body, s.backupFailedEnabled) { on -> enable(on) { it.copy(backupFailedEnabled = on) } }
@@ -208,22 +247,65 @@ fun NotificationsScreen(
 
 private class TimeEdit(val title: String, val minute: Int, val onPick: (Int) -> Unit)
 
+/**
+ * A notification with its switch and, when it has one, its time on the same row. At large font
+ * sizes the time moves under the description, still inside the row.
+ */
 @Composable
-private fun ToggleRow(title: Int, body: Int, checked: Boolean, onChange: (Boolean) -> Unit) {
+private fun ToggleRow(
+    title: Int,
+    body: Int,
+    checked: Boolean,
+    minute: Int? = null,
+    onTime: () -> Unit = {},
+    onChange: (Boolean) -> Unit,
+) {
+    val roomy = LocalDensity.current.fontScale <= 1.3f
+    val name = stringResource(title)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 56.dp)
             .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
+            .padding(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
     ) {
         Column(Modifier.weight(1f)) {
-            Text(stringResource(title), style = MaterialTheme.typography.bodyLarge)
+            Text(name, style = MaterialTheme.typography.bodyLarge)
             Text(stringResource(body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (minute != null && checked && !roomy) TimeChip(name, minute, onTime)
         }
-        Switch(checked = checked, onCheckedChange = null, modifier = Modifier.padding(start = 16.dp))
+        if (minute != null && checked && roomy) TimeChip(name, minute, onTime)
+        Switch(checked = checked, onCheckedChange = null, modifier = Modifier.padding(start = 12.dp))
     }
+}
+
+/** One meal under "Meal reminders": name, time and switch on one row. */
+@Composable
+private fun MealRow(name: String, on: Boolean, minute: Int, onToggle: (Boolean) -> Unit, onTime: () -> Unit) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 56.dp)
+            .toggleable(value = on, role = Role.Switch, onValueChange = onToggle)
+            .padding(start = 32.dp, end = 16.dp),
+    ) {
+        Text(name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+        if (on) TimeChip(name, minute, onTime)
+        Switch(checked = on, onCheckedChange = null, modifier = Modifier.padding(start = 12.dp))
+    }
+}
+
+/** The reminder's time; tapping it opens the time picker. */
+@Composable
+private fun TimeChip(what: String, minute: Int, onClick: () -> Unit) {
+    val description = stringResource(R.string.nset_change_time, what)
+    AssistChip(
+        onClick = onClick,
+        label = { Text(timeText(minute)) },
+        modifier = Modifier.heightIn(min = 48.dp).semantics { contentDescription = description },
+    )
 }
 
 @Composable

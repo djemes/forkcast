@@ -43,4 +43,42 @@ class NotificationRulesTest {
         assertThat(NotificationRules.minutesUntilNext(21 * 60, listOf(7 * 60 + 30))).isEqualTo(10 * 60 + 30)
         assertThat(NotificationRules.minutesUntilNext(12 * 60, emptyList())).isNull()
     }
+
+    private val meals = listOf(
+        NotificationRules.Meal("b", "Breakfast", 11 * 60),
+        NotificationRules.Meal("l", "Lunch", 15 * 60),
+        NotificationRules.Meal("d", "Dinner", 22 * 60),
+    )
+
+    @Test fun neverSetUpUsesDefaults() {
+        assertThat(NotificationRules.effectiveMeals(emptyMap(), emptyMap(), meals)).containsExactly("l", 13 * 60 + 30, "d", 20 * 60)
+    }
+
+    /** Turning off the last meal turns the category off and keeps that meal, so it all comes back as it was. */
+    @Test fun lastMealOffTurnsTheCategoryOffAndOnRestores() {
+        var r = NotificationRules.MealReminders(true, emptyMap(), emptyMap())
+        r = NotificationRules.setMeal(r, meals, "l", false)
+        assertThat(r).isEqualTo(NotificationRules.MealReminders(true, mapOf("d" to 1200), mapOf("l" to 810)))
+        r = NotificationRules.setMeal(r, meals, "d", false)
+        assertThat(r.categoryOn).isFalse()
+        assertThat(r.enabled).containsExactly("d", 1200)
+        r = NotificationRules.setCategory(r, meals, true)
+        assertThat(r).isEqualTo(NotificationRules.MealReminders(true, mapOf("d" to 1200), mapOf("l" to 810)))
+        // Back on: Lunch returns at its old time.
+        r = NotificationRules.setMeal(r, meals, "l", true)
+        assertThat(r.enabled).containsExactly("d", 1200, "l", 810)
+    }
+
+    @Test fun pausingTheCategoryKeepsEveryMeal() {
+        var r = NotificationRules.MealReminders(true, mapOf("b" to 600, "d" to 1230), mapOf("l" to 800))
+        r = NotificationRules.setCategory(r, meals, false)
+        r = NotificationRules.setCategory(r, meals, true)
+        assertThat(r).isEqualTo(NotificationRules.MealReminders(true, mapOf("b" to 600, "d" to 1230), mapOf("l" to 800)))
+    }
+
+    @Test fun nothingEverEnabledTurnsAllOn() {
+        val noDefaults = listOf(NotificationRules.Meal("x", "Meal 1", 600), NotificationRules.Meal("y", "Meal 2", 900))
+        val r = NotificationRules.setCategory(NotificationRules.MealReminders(false, emptyMap(), emptyMap()), noDefaults, true)
+        assertThat(r.enabled).containsExactly("x", 600, "y", 900)
+    }
 }

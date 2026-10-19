@@ -54,6 +54,8 @@ data class NotificationSettings(
     val mealRemindersEnabled: Boolean = true,
     /** Meal slot id → reminder time. Empty = defaults (Lunch 13:30, Dinner 20:00, matched by name). */
     val mealReminderMinutes: Map<String, Int> = emptyMap(),
+    /** Times of meals switched off, so switching them back on restores the time (and the category can restore them). */
+    val mealReminderOffMinutes: Map<String, Int> = emptyMap(),
     val weighInEnabled: Boolean = true,
     val weighInMinute: Int = 7 * 60 + 30,
     val estimateReadyEnabled: Boolean = true,

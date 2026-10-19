@@ -158,7 +158,11 @@ class NotificationEngine @Inject constructor(
     }
 
     private suspend fun mealReminders(s: NotificationSettings): Map<String, Int> =
-        s.mealReminderMinutes.ifEmpty { NotificationRules.defaultMealReminders(slots.observeMealSlots().first().map { it.id to it.name }) }
+        NotificationRules.effectiveMeals(
+            s.mealReminderMinutes,
+            s.mealReminderOffMinutes,
+            slots.observeMealSlots().first().map { NotificationRules.Meal(it.id, it.name, it.endMinute ?: NotificationRules.DEFAULT_DINNER_MINUTE) },
+        )
 
     private fun quiet(s: NotificationSettings): Boolean {
         val t = LocalTime.now(clock)
