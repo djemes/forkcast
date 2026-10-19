@@ -1,0 +1,27 @@
+{
+  "id": "int_1",
+  "object": "interaction",
+  "model": "gemini-3.8-flash",
+  "status": "completed",
+  "steps": [
+    {
+      "type": "thought",
+      "content": []
+    },
+    {
+      "type": "model_output",
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"meal_name\": \"Chicken and rice\", \"items\": [{\"name\": \"Chicken thigh\", \"usda_query\": \"Chicken, thigh, roasted, meat only\", \"preparation\": \"roasted\", \"grams\": 120, \"grams_low\": 95, \"grams_high\": 150, \"confidence\": 0.7, \"is_hidden_ingredient\": false, \"nutrients\": {\"kcal\": 250, \"protein_g\": 30, \"carbs_g\": 0, \"fat_g\": 14}}, {\"name\": \"White rice\", \"usda_query\": \"Rice, white, long-grain, cooked\", \"preparation\": \"boiled\", \"grams\": 220, \"grams_low\": 180, \"grams_high\": 270, \"confidence\": 0.75, \"is_hidden_ingredient\": false, \"nutrients\": {\"kcal\": 286, \"protein_g\": 5.9, \"carbs_g\": 62, \"fat_g\": 0.6, \"fiber_g\": 0.9}}, {\"name\": \"Olive oil\", \"usda_query\": \"Oil, olive, salad or cooking\", \"preparation\": \"unknown\", \"grams\": 7, \"grams_low\": 3, \"grams_high\": 14, \"confidence\": 0.4, \"is_hidden_ingredient\": true, \"nutrients\": {\"kcal\": 62, \"protein_g\": 0, \"carbs_g\": 0, \"fat_g\": 7}}], \"overall_confidence\": 0.65, \"assumptions\": [\"Rice is plain, cooked without butter\"], \"clarifying_question\": null}"
+        }
+      ]
+    }
+  ],
+  "usage": {
+    "total_input_tokens": 3100,
+    "total_output_tokens": 610,
+    "total_thought_tokens": 420,
+    "total_tokens": 4130
+  }
+}

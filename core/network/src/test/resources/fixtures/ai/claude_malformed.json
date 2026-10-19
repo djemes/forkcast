@@ -1,0 +1,23 @@
+{
+  "id": "msg_01",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-haiku-5-5",
+  "content": [
+    {
+      "type": "thinking",
+      "thinking": "",
+      "signature": "x"
+    },
+    {
+      "type": "text",
+      "text": "{\"meal_name\": \"Chicken and rice\", \"items\": ["
+    }
+  ],
+  "stop_reason": "end_turn",
+  "stop_details": null,
+  "usage": {
+    "input_tokens": 3712,
+    "output_tokens": 688
+  }
+}
