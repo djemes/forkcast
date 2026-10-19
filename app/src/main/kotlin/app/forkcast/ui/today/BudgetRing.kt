@@ -39,7 +39,6 @@ import app.forkcast.ui.theme.ForkcastTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -87,12 +86,15 @@ fun BudgetRing(
     val over = totals.state == BudgetState.OVER
     val bigNumber = units.energyNumber(if (over) totals.overKcal else totals.remainingKcal)
     val label = stringResource(if (over) R.string.ring_over else R.string.ring_left, units.energyUnitLabel)
-    val description = stringResource(
-        R.string.ring_description,
-        units.energy(totals.eatenKcal),
-        units.energy(totals.allowanceKcal),
-        "$bigNumber $label",
-    ) + (status?.let { " $it." } ?: "")
+    // Added-back exercise (SPEC §5.2) is part of what's left; it's named so the number never surprises.
+    val exercise = totals.exerciseKcal > 0
+    val description = (
+        if (exercise) {
+            stringResource(R.string.ring_description_exercise, units.energy(totals.eatenKcal), units.energy(totals.allowanceKcal), units.energy(totals.exerciseKcal), "$bigNumber $label")
+        } else {
+            stringResource(R.string.ring_description, units.energy(totals.eatenKcal), units.energy(totals.allowanceKcal), "$bigNumber $label")
+        }
+        ) + (status?.let { " $it." } ?: "")
 
     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = modifier) {
         Box(
@@ -138,15 +140,27 @@ fun BudgetRing(
                     color = if (over) colors.plum else MaterialTheme.colorScheme.onBackground,
                 )
                 Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (exercise) {
+                    Text(
+                        stringResource(R.string.ring_exercise_included, units.energyNumber(totals.exerciseKcal)),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = colors.pine,
+                        textAlign = TextAlign.Center,
+                    )
+                }
             }
         }
         Text(
-            stringResource(
-                R.string.ring_eaten_budget,
-                units.energyNumber(totals.eatenKcal),
-                units.energyNumber(totals.budgetKcal.toDouble()),
-                units.energyNumber(abs(totals.exerciseKcal)),
-            ),
+            if (exercise) {
+                stringResource(
+                    R.string.ring_eaten_budget_exercise,
+                    units.energyNumber(totals.eatenKcal),
+                    units.energyNumber(totals.budgetKcal.toDouble()),
+                    units.energyNumber(totals.exerciseKcal),
+                )
+            } else {
+                stringResource(R.string.ring_eaten_budget, units.energyNumber(totals.eatenKcal), units.energyNumber(totals.budgetKcal.toDouble()))
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

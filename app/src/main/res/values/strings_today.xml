@@ -3,7 +3,10 @@
     <!-- Budget ring -->
     <string name="ring_left">%1$s left</string>
     <string name="ring_over">%1$s over</string>
-    <string name="ring_eaten_budget">Eaten %1$s · Budget %2$s · +%3$s ex</string>
+    <string name="ring_eaten_budget">Eaten %1$s · Budget %2$s</string>
+    <string name="ring_eaten_budget_exercise">Eaten %1$s · Budget %2$s + exercise %3$s</string>
+    <string name="ring_exercise_included">incl. +%1$s exercise</string>
+    <string name="ring_description_exercise">%1$s eaten of %2$s, including %3$s from exercise. %4$s.</string>
     <string name="ring_description">%1$s eaten of %2$s. %3$s.</string>
     <!-- Forecast status line (DESIGN.md §5) -->
     <string name="forecast_on_course">On course</string>

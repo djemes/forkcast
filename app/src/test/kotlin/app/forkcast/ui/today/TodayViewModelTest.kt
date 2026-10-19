@@ -48,10 +48,34 @@ class TodayViewModelTest {
     private val saved = FakeSavedMealRepository()
     private val water = FakeWaterRepository()
     private val estimates = FakeAiEstimateRepository()
-    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, clock)
+    private val health = app.forkcast.fakes.FakeHealthRepository()
+    private val maintenance = app.forkcast.fakes.FakeMaintenanceRepository()
+
+    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, health, maintenance, clock)
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
+
+    /** Added back (SPEC §5.2): the day's bonus raises what's left; the Activity card says how. */
+    @Test fun exerciseBonusRaisesTheAllowance() = runTest {
+        maintenance.bonus.value = mapOf(TestData.TODAY to 200.0)
+        health.statusState.value = health.statusState.value.copy(settings = app.forkcast.core.model.HealthSettings(connected = true))
+        health.activity.value = mapOf(TestData.TODAY to app.forkcast.core.model.ActivityDay(TestData.TODAY, 9000, 400.0, null, null, emptyList()))
+        log.add(listOf(TestData.entry("Rice", "l", 205.0, 4.0)))
+        val s = vm().uiState.filterNotNull().first()
+        assertThat(s.totals!!.allowanceKcal).isEqualTo(2490.0)
+        assertThat(s.activity.connected).isTrue()
+        assertThat(s.activity.day!!.steps).isEqualTo(9000)
+        assertThat(s.activity.bonusKcal).isEqualTo(200.0)
+    }
+
+    @Test fun completenessFollowsTheRuleAndTheMark() = runTest {
+        log.add(listOf(TestData.entry("Yogurt", "b", 500.0, 20.0), TestData.entry("Rice", "l", 600.0, 4.0)))
+        val vm = vm()
+        assertThat(vm.uiState.filterNotNull().first().autoComplete).isTrue()
+        vm.onEvent(TodayEvent.SetCompleteness(app.forkcast.core.model.DayCompleteness.INCOMPLETE))
+        assertThat(vm.uiState.filterNotNull().first { it.completeness == app.forkcast.core.model.DayCompleteness.INCOMPLETE }).isNotNull()
+    }
 
     @Test fun totalsFollowTheLog() = runTest {
         log.add(listOf(TestData.entry("Yogurt", "b", 146.0, 20.0), TestData.entry("Rice", "l", 205.0, 4.0)))
@@ -253,7 +277,7 @@ class TodayViewModelTest {
 
     @Test fun resumingAfterMidnightMovesToTheNewDay() = runTest {
         val moving = MutableClock(clock.instant(), zone)
-        val vm = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, moving)
+        val vm = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, health, maintenance, moving)
         vm.uiState.filterNotNull().first()
         moving.now = moving.now.plusSeconds(12 * 3600) // 00:40 the next day
         vm.onEvent(TodayEvent.Resumed)

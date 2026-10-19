@@ -6,6 +6,9 @@ import app.forkcast.core.data.ai.AiEstimateRepository
 import app.forkcast.core.data.db.AiEstimateEntity
 import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.data.db.LoggedDay
+import app.forkcast.core.data.health.HcAvailability
+import app.forkcast.core.data.health.HealthRepository
+import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
@@ -14,6 +17,7 @@ import app.forkcast.core.data.repository.SavedMealRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WaterRepository
 import app.forkcast.core.data.repository.WeightRepository
+import app.forkcast.core.domain.AdaptiveTdee
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
@@ -24,7 +28,10 @@ import app.forkcast.core.domain.NutritionConstants
 import app.forkcast.core.domain.UnitConversions
 import app.forkcast.core.domain.WeighIn
 import app.forkcast.core.domain.WeightTrend
+import app.forkcast.core.model.ActivityDay
 import app.forkcast.core.model.AppSettings
+import app.forkcast.core.model.DayCompleteness
+import app.forkcast.core.model.ExerciseMode
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
@@ -112,6 +119,12 @@ data class TodayUiState(
     val forecastFromMinute: Int = 0,
     /** Most recent other day with entries, shown on an empty day so a log is never "lost". */
     val lastLogged: LoggedDay? = null,
+    /** Health Connect activity for the day (Phase 3). */
+    val activity: ActivitySummary = ActivitySummary(false, false, null, ExerciseMode.INCLUDED, 50, 0.0),
+    /** The user's mark for the day, for the maintenance estimate (SPEC §5.6). */
+    val completeness: DayCompleteness = DayCompleteness.AUTO,
+    /** The day meets the automatic rule (2 meals, 1,000 kcal). */
+    val autoComplete: Boolean = false,
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -143,6 +156,7 @@ sealed interface TodayEvent {
     data class DeleteSavedMeal(val savedMealId: String) : TodayEvent
     data class AddWater(val ml: Double) : TodayEvent
     data object RemoveLastWater : TodayEvent
+    data class SetCompleteness(val completeness: DayCompleteness) : TodayEvent
 }
 
 /** One-shot UI effects. */
@@ -165,6 +179,8 @@ class TodayViewModel @Inject constructor(
     weightRepository: WeightRepository,
     settingsRepository: SettingsRepository,
     estimateRepository: AiEstimateRepository,
+    health: HealthRepository,
+    private val maintenance: MaintenanceRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -187,7 +203,12 @@ class TodayViewModel @Inject constructor(
         val estimates: List<AiEstimateEntity>,
         val history: List<LogEntry>,
         val lastLogged: LoggedDay?,
+        val activity: ActivityDay?,
+        val exerciseBonus: Double,
+        val completeness: DayCompleteness,
     )
+
+    private data class DayHealth(val activity: ActivityDay?, val bonus: Double, val completeness: DayCompleteness)
 
     private val day: Flow<DayData> = selectedDate.flatMapLatest { d ->
         combine(
@@ -200,8 +221,11 @@ class TodayViewModel @Inject constructor(
             combine(
                 if (d == LocalDate.now(clock)) logRepository.observeRange(d.minusDays(60), d.minusDays(1)) else flowOf(emptyList()),
                 logRepository.observeLatestDay(d),
-            ) { h, l -> h to l },
-        ) { entries, yesterday, water, estimates, (history, last) -> DayData(d, entries, yesterday, water, estimates, history, last) }
+                combine(health.observeActivity(d), maintenance.observeExerciseBonus(d), maintenance.observeCompleteness(d), ::DayHealth),
+            ) { h, l, dh -> Triple(h, l, dh) },
+        ) { entries, yesterday, water, estimates, (history, last, dh) ->
+            DayData(d, entries, yesterday, water, estimates, history, last, dh.activity, dh.bonus, dh.completeness)
+        }
     }
 
     private val extras = combine(
@@ -212,6 +236,11 @@ class TodayViewModel @Inject constructor(
     ) { t, s, r, saved -> Extras(t, s, r, saved) }
 
     private val body = combine(weightRepository.entries, profileRepository.profile) { weights, profile -> weights to profile }
+
+    /** Connected with activity reads on, and whether Health Connect exists here at all. */
+    private val healthState = health.status.map { s ->
+        (s.connected && s.settings.readActivity) to (s.availability != HcAvailability.UNAVAILABLE)
+    }
 
     private data class Extras(
         val targets: DailyTargets?,
@@ -224,9 +253,10 @@ class TodayViewModel @Inject constructor(
         mealSlotRepository.observeMealSlots(),
         day,
         extras,
-        body,
+        combine(body, healthState) { b, h -> b to h },
         selection,
-    ) { slots, dayData, x, (weights, profile), selected ->
+    ) { slots, dayData, x, (b, healthFlags), selected ->
+        val (weights, profile) = b
         val date = dayData.date
         val entries = dayData.entries
         val estimates = dayData.estimates
@@ -243,7 +273,7 @@ class TodayViewModel @Inject constructor(
         val isToday = date == LocalDate.now(clock)
         val forecast = if (isToday && targets != null) {
             Forecast.expectedAfter(dayData.history.map { it.toLogged() }, date, nowMinute)?.let { expected ->
-                val t = DayMath.totals(entries, targets.budgetKcal)
+                val t = DayMath.totals(entries, targets.budgetKcal, dayData.exerciseBonus)
                 Forecast.outlook(t.eatenKcal, t.allowanceKcal, expected)
             }
         } else {
@@ -259,7 +289,7 @@ class TodayViewModel @Inject constructor(
             defaultMealId = MealSlotPicker.defaultFor(slots, now.hour * 60 + now.minute)?.id,
             units = units,
             targets = targets,
-            totals = targets?.let { DayMath.totals(entries, it.budgetKcal) },
+            totals = targets?.let { DayMath.totals(entries, it.budgetKcal, dayData.exerciseBonus) },
             selection = selected intersect entries.map { it.id }.toSet(),
             recents = x.recents,
             savedMeals = x.saved,
@@ -276,6 +306,18 @@ class TodayViewModel @Inject constructor(
             forecast = forecast,
             forecastFromMinute = nowMinute,
             lastLogged = dayData.lastLogged,
+            activity = ActivitySummary(
+                connected = healthFlags.first,
+                available = healthFlags.second,
+                day = dayData.activity,
+                mode = profile?.exerciseMode ?: ExerciseMode.INCLUDED,
+                addBackPct = profile?.exerciseAddBackPct ?: 50,
+                bonusKcal = dayData.exerciseBonus,
+            ),
+            completeness = dayData.completeness,
+            autoComplete = AdaptiveTdee.isComplete(
+                AdaptiveTdee.DayLog(date, entries.sumOf { it.nutrients.kcal }, entries.map { it.mealSlotId }.distinct().size),
+            ),
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -349,6 +391,7 @@ class TodayViewModel @Inject constructor(
             }
             is TodayEvent.DeleteSavedMeal -> viewModelScope.launch { savedMealRepository.delete(event.savedMealId) }
             is TodayEvent.AddWater -> viewModelScope.launch { waterRepository.add(selectedDate.value, event.ml) }
+            is TodayEvent.SetCompleteness -> viewModelScope.launch { maintenance.setCompleteness(selectedDate.value, event.completeness) }
             TodayEvent.RemoveLastWater -> viewModelScope.launch {
                 uiState.value?.water?.lastEntryId?.let { waterRepository.delete(it) }
             }

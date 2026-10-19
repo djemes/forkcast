@@ -71,6 +71,34 @@ class TodayScreenTest {
         compose.onNodeWithText("251 kcal").assertIsDisplayed()
     }
 
+    /** Added back: the ring names the exercise in what's left; the Activity card shows steps, workouts and the bonus. */
+    @Test fun addedBackExerciseShowsInRingAndActivityCard() {
+        val run = app.forkcast.core.model.ExerciseSession("s", null, 56, 0, 40 * 60_000L, 310.0)
+        val day = app.forkcast.core.model.ActivityDay(today, 8200, 400.0, 2650.0, 40, listOf(run))
+        val withExercise = state.copy(
+            totals = DayMath.totals(entries, targets.budgetKcal, 200.0),
+            activity = ActivitySummary(true, true, day, app.forkcast.core.model.ExerciseMode.ADDED_BACK, 50, 200.0),
+        )
+        compose.setContent { ForkcastTheme { TodayScreen(withExercise, onEvent = {}) } }
+        // Energy amounts use a thin space before the unit.
+        compose.onNodeWithContentDescription("including 200 kcal from exercise. 2,239 kcal left", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("2,039 kcal left", substring = true).assertDoesNotExist()
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("added to this day", substring = true))
+        compose.onNodeWithText("8,200 steps · 400 kcal active").assertExists()
+        compose.onNodeWithText("Run · 40 min · 310 kcal").assertExists()
+        compose.onNodeWithText("+200 kcal added to this day's budget (50 % of active calories)").assertIsDisplayed()
+    }
+
+    @Test fun notConnectedActivityCardOffersHealthConnect() {
+        var opened = false
+        compose.setContent {
+            ForkcastTheme { TodayScreen(state.copy(activity = state.activity.copy(available = true)), onEvent = {}, actions = TodayActions(openHealthConnect = { opened = true })) }
+        }
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("See steps and workouts", substring = true))
+        compose.onNodeWithText("See steps and workouts", substring = true).performClick()
+        assertThat(opened).isTrue()
+    }
+
     @Test fun logButtonOpensSheetForDefaultMealAndChipsSwitch() {
         compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = {}) } }
         compose.onNodeWithContentDescription("Log").performClick()

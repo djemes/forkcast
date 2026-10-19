@@ -15,6 +15,36 @@
     <string name="weight_none">No weigh-ins yet. Tap to log one.</string>
     <string name="weight_open">Open weight log</string>
 
+    <!-- Activity card (SPEC §4.2 item 7) -->
+    <string name="activity_title">Activity</string>
+    <string name="activity_steps">%1$s steps</string>
+    <string name="activity_active">%1$s active</string>
+    <string name="activity_minutes">%1$d min</string>
+    <string name="activity_none">No activity in Health Connect for this day.</string>
+    <string name="activity_connect">See steps and workouts from Health Connect</string>
+    <string name="activity_connect_action">Connect Health Connect</string>
+    <string name="activity_added_back">+%1$s added to this day\'s budget (%2$d %% of active calories)</string>
+    <string name="activity_included">Exercise is already part of your budget, through your activity level.</string>
+    <string name="activity_workout">Workout</string>
+    <string name="activity_running">Run</string>
+    <string name="activity_walking">Walk</string>
+    <string name="activity_biking">Ride</string>
+    <string name="activity_swimming">Swim</string>
+    <string name="activity_strength">Strength training</string>
+    <string name="activity_yoga">Yoga</string>
+    <string name="activity_hiking">Hike</string>
+    <string name="activity_hiit">HIIT</string>
+    <string name="activity_cardio_machine">Cardio machine</string>
+
+    <!-- Day completeness (SPEC §5.6) -->
+    <string name="day_counts">This day counts toward your maintenance estimate.</string>
+    <string name="day_not_counted">This day doesn\'t count toward your maintenance estimate yet (it needs 2 meals and 1,000 kcal).</string>
+    <string name="day_marked_complete">Marked as fully logged.</string>
+    <string name="day_marked_incomplete">Left out of your maintenance estimate.</string>
+    <string name="day_mark_incomplete">Not everything is logged</string>
+    <string name="day_mark_complete">Everything is logged</string>
+    <string name="day_mark_auto">Undo</string>
+
     <!-- Weight screen -->
     <string name="weight_log_title">Weight</string>
     <string name="weight_add_title">Log a weigh-in</string>

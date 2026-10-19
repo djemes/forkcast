@@ -132,6 +132,7 @@ fun ForkcastNavHost(
                     openWeight = { navController.navigate(WeightDestination) },
                     openPhoto = { meal, date -> navController.navigate(PhotoMealDestination(meal, date.toString())) },
                     openEstimate = { id -> navController.navigate(ReviewDestination(id)) },
+                    openHealthConnect = { navController.navigate(HealthConnectDestination) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },
