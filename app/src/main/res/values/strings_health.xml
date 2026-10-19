@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › Health Connect (SPEC §4.9) -->
+    <string name="hc_intro">Health Connect is where health apps on this phone share data. Forkcast can take in your scale\'s weigh-ins, steps and workouts, and send out what you eat and drink.</string>
+    <string name="hc_reads_title">Forkcast reads</string>
+    <string name="hc_read_weight">Weight, body fat and height</string>
+    <string name="hc_read_weight_body">Fills your weight log and trend. A scale reading replaces a weigh-in you typed within 10 minutes of it.</string>
+    <string name="hc_read_activity">Steps, calories burned and workouts</string>
+    <string name="hc_read_activity_body">Shown on Today, and used for exercise calories if you add them back to your budget.</string>
+    <string name="hc_writes_title">Forkcast writes</string>
+    <string name="hc_write_nutrition">Food</string>
+    <string name="hc_write_nutrition_body">Each entry as a nutrition record with its meal. Edits and deletions follow.</string>
+    <string name="hc_write_hydration">Water</string>
+    <string name="hc_write_hydration_body">Each entry as hydration.</string>
+    <string name="hc_privacy_note">Health data stays on this phone. Forkcast never sends it to your AI provider or anywhere else.</string>
+    <string name="hc_extra_note">Forkcast also asks to read your past data, so earlier weigh-ins come in, and to read in the background, so it can sync while closed. You can turn off any of these on the next screen.</string>
+    <string name="hc_connect">Connect</string>
+    <string name="hc_unavailable">Health Connect isn\'t available on this phone.</string>
+    <string name="hc_update_required">Health Connect needs an update before Forkcast can use it.</string>
+    <string name="hc_get">Get Health Connect</string>
+    <string name="hc_update">Update Health Connect</string>
+
+    <string name="hc_status_title">Status</string>
+    <string name="hc_status_synced">Last synced %1$s</string>
+    <string name="hc_status_never">Not synced yet</string>
+    <string name="hc_error_permission">Health Connect stopped Forkcast from reading or writing. Check its permissions.</string>
+    <string name="hc_error_rate_limited">Health Connect asked Forkcast to slow down. It will try again later.</string>
+    <string name="hc_error_unavailable">Health Connect isn\'t available right now.</string>
+    <string name="hc_error_failed">The last sync didn\'t finish. Forkcast will try again.</string>
+    <string name="hc_sync_now">Sync now</string>
+    <string name="hc_syncing">Syncing…</string>
+    <string name="hc_background_on">Syncs about once an hour, even when Forkcast is closed.</string>
+    <string name="hc_background_off">Syncs when you open Forkcast. Allow background reads in Health Connect to sync while it\'s closed.</string>
+    <string name="hc_history_on">Reads your full history.</string>
+    <string name="hc_history_off">Reads the last 30 days. Allow past data in Health Connect for older weigh-ins.</string>
+    <string name="hc_missing">Not allowed yet: %1$s</string>
+    <string name="hc_allow">Allow in Health Connect</string>
+    <string name="hc_allow_hint">If nothing opens, Health Connect has stopped asking. Open Health Connect, then App permissions › Forkcast.</string>
+    <string name="hc_open">Open Health Connect</string>
+    <string name="hc_height_title">Height in Health Connect: %1$s</string>
+    <string name="hc_height_body">Your profile says %1$s.</string>
+    <string name="hc_height_use">Use %1$s</string>
+    <string name="hc_disconnect">Disconnect</string>
+    <string name="hc_disconnect_title">Disconnect Health Connect?</string>
+    <string name="hc_disconnect_body">Forkcast stops reading and writing, and Health Connect removes its permissions. Food and water already written stay in Health Connect, where you can delete them. Weigh-ins already in your log stay in Forkcast.</string>
+
+    <string name="hc_perm_weight">weight</string>
+    <string name="hc_perm_body_fat">body fat</string>
+    <string name="hc_perm_height">height</string>
+    <string name="hc_perm_steps">steps</string>
+    <string name="hc_perm_active_calories">active calories</string>
+    <string name="hc_perm_total_calories">total calories</string>
+    <string name="hc_perm_exercise">workouts</string>
+    <string name="hc_perm_nutrition">food</string>
+    <string name="hc_perm_hydration">water</string>
+    <string name="hc_perm_history">past data</string>
+    <string name="hc_perm_background">background reads</string>
+
+    <!-- Opened from Health Connect's "privacy policy" link -->
+    <string name="hc_privacy_title">Forkcast and your health data</string>
+    <string name="hc_privacy_body">Forkcast reads weight, body fat, height, steps, calories burned and workouts from Health Connect to fill your weight log, show your activity, and adjust your calorie budget. It writes your food and water so other apps can see them.\n\nThis data stays on your phone. Forkcast has no server, no accounts, no analytics and no ads, and it never sends health data to AI providers, food databases or anyone else. Your own backups (a file you export, or your Google Drive once you set it up) can include your weight and activity log.\n\nYou can change what Forkcast may read or write at any time in Health Connect, or disconnect in Forkcast\'s Settings › Health Connect.</string>
+    <string name="hc_privacy_close">Close</string>
+</resources>

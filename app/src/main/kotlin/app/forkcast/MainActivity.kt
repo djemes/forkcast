@@ -14,17 +14,24 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import app.forkcast.core.data.health.HealthRepository
+import app.forkcast.core.data.health.SyncReason
 import app.forkcast.core.data.notify.Notifier
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.navigation.ForkcastNavHost
 import app.forkcast.ui.theme.ForkcastTheme
 import dagger.hilt.android.AndroidEntryPoint
+import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
+
+    @Inject lateinit var health: HealthRepository
 
     /** What a tapped notification asked to open ("estimate:<id>", "settings_ai"), consumed once. */
     private val openRequest = MutableStateFlow<String?>(null)
@@ -66,6 +73,12 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    /** Health Connect reads are allowed while the app is in the foreground (throttled in the repository). */
+    override fun onStart() {
+        super.onStart()
+        lifecycleScope.launch { runCatching { health.sync(SyncReason.OPEN) } }
     }
 
     override fun onNewIntent(intent: Intent) {

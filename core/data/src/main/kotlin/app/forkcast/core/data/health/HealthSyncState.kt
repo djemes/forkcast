@@ -20,6 +20,12 @@ enum class HealthError { UNAVAILABLE, PERMISSION, RATE_LIMITED, FAILED }
 data class HealthSyncState(
     /** Changes token for Weight (+ BodyFat when [bodyTokenHasBodyFat]). */
     val bodyToken: String? = null,
+    /**
+     * Write state in the database (hcSyncedAt) was reset for this install. Auto Backup restores
+     * the database but not this file, so a restored phone writes everything to its own Health
+     * Connect again instead of trusting the old phone's write state.
+     */
+    val writesInitialized: Boolean = false,
     val bodyTokenHasBodyFat: Boolean = false,
     /** The last full weight read went back past 30 days (history permission). */
     val weightsFullHistory: Boolean = false,

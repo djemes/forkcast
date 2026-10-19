@@ -167,6 +167,13 @@ class HealthConnectRepository @Inject constructor(
             stateStore.updateData { it.copy(lastError = HealthError.UNAVAILABLE) }
             return@withLock
         }
+        if (!stateStore.data.first().writesInitialized) {
+            db.withTransaction {
+                dao.resetLogSync()
+                dao.resetWaterSync()
+            }
+            stateStore.updateData { it.copy(writesInitialized = true) }
+        }
         val state = stateStore.data.first()
         val now = clock.instant()
         val recent = state.lastSyncAt?.let { Duration.between(Instant.ofEpochMilli(it), now) < OPEN_THROTTLE } == true

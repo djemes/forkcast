@@ -24,6 +24,7 @@ fun SettingsScreen(
     onOpenNotifications: () -> Unit,
     onOpenAi: () -> Unit,
     onOpenFoodDatabases: () -> Unit,
+    onOpenHealthConnect: () -> Unit,
     onOpenBackup: () -> Unit,
     onOpenAppearance: () -> Unit,
     onOpenAbout: () -> Unit,
@@ -35,7 +36,7 @@ fun SettingsScreen(
         SettingsItem(R.string.settings_notifications, onOpenNotifications)
         SettingsItem(R.string.settings_ai, onOpenAi)
         SettingsItem(R.string.settings_food_databases, onOpenFoodDatabases)
-        ComingSoonItem(R.string.settings_health_connect)
+        SettingsItem(R.string.settings_health_connect, onOpenHealthConnect)
         SettingsItem(R.string.settings_backup_data, onOpenBackup)
         SettingsItem(R.string.settings_appearance, onOpenAppearance)
         SettingsItem(R.string.settings_about, onOpenAbout)

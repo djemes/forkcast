@@ -6,10 +6,13 @@
         <exclude domain="file" path="secrets/" />
         <exclude domain="file" path="photos/" />
         <exclude domain="file" path="safety-backups/" />
+        <!-- Health Connect changes tokens belong to this phone's Health Connect. -->
+        <exclude domain="file" path="health-sync/" />
         <exclude domain="sharedpref" path="secrets.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="secrets/" />
+        <exclude domain="file" path="health-sync/" />
         <exclude domain="sharedpref" path="secrets.xml" />
     </device-transfer>
 </data-extraction-rules>
