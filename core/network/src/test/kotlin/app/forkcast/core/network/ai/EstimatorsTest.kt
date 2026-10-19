@@ -51,8 +51,8 @@ class EstimatorsTest {
     private fun claude(status: HttpStatusCode, file: String, headers: Map<String, String> = emptyMap()) =
         ClaudeEstimator(http(status, fixture(file), headers), { "sk-test" }, "claude-haiku-5-5")
 
-    private fun gemini(status: HttpStatusCode, file: String) =
-        GeminiEstimator(http(status, fixture(file)), { "g-test" }, "gemini-3.8-flash", "low", clock = Clock.fixed(now, ZoneOffset.UTC))
+    private fun gemini(status: HttpStatusCode, file: String, key: String = "g-test") =
+        GeminiEstimator(http(status, fixture(file)), { key }, "gemini-3.8-flash", "low", clock = Clock.fixed(now, ZoneOffset.UTC))
 
     private fun openAi(status: HttpStatusCode, file: String) =
         OpenAiCompatEstimator(http(status, fixture(file)), { "o-test" }, "gpt-test", "https://example.test/v1/")
@@ -187,6 +187,64 @@ class EstimatorsTest {
         assertThat(body).contains("\"store\":false")
         assertThat(body).contains("\"thinking_level\":\"low\"")
         assertThat(body).contains("\"mime_type\":\"application/json\"")
+    }
+
+    // ---- Gemini key formats and Google's error details (owner report 2026-10-19).
+
+    @Test fun geminiAcceptsClassicAndAqKeys() = runTest {
+        // Classic keys start with "AIza"; AI Studio issues "AQ." keys since mid-2026. No format
+        // check anywhere: each key goes out exactly as saved, in the header only.
+        val keys = listOf("AIzaSyD-classic-key-0123456789abcdefghij", "AQ.Ab8RN6Kq-new-format-key_0123456789")
+        for (key in keys) {
+            requests.clear()
+            assertThat(gemini(HttpStatusCode.OK, "gemini_valid.json", key).testConnection().isSuccess).isTrue()
+            assertThat(gemini(HttpStatusCode.OK, "gemini_valid.json", key).estimate(request("gemini-3.8-flash")).isSuccess).isTrue()
+            assertThat(gemini(HttpStatusCode.OK, "gemini_models.json", key).listModels().isSuccess).isTrue()
+            assertThat(requests).hasSize(3)
+            for (req in requests) {
+                assertThat(req.headers["x-goog-api-key"]).isEqualTo(key)
+                assertThat(req.headers[HttpHeaders.Authorization]).isNull()
+                assertThat(req.url.parameters["key"]).isNull()
+                assertThat(req.url.toString()).doesNotContain(key)
+            }
+        }
+    }
+
+    @Test fun geminiKeyErrorsCarryStatusAndGoogleReason() = runTest {
+        val tokenType = gemini(HttpStatusCode.Unauthorized, "gemini_401_token_type.json", "AQ.Ab8RN6Kq-new-format-key").testConnection().exceptionOrNull()
+        assertThat(tokenType).isInstanceOf(AiError.InvalidKey::class.java)
+        val reply = (tokenType as AiError).reply!!
+        assertThat(reply.httpStatus).isEqualTo(401)
+        assertThat(reply.code).isEqualTo("ACCESS_TOKEN_TYPE_UNSUPPORTED")
+        assertThat(reply.summary).isEqualTo("HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED")
+        assertThat(reply.message).startsWith("Request had invalid authentication credentials")
+        assertThat(tokenType.message).contains("HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED")
+
+        val disabled = gemini(HttpStatusCode.Forbidden, "gemini_403_service_disabled.json").testConnection().exceptionOrNull() as AiError
+        assertThat(disabled).isInstanceOf(AiError.InvalidKey::class.java)
+        assertThat(disabled.reply!!.summary).isEqualTo("HTTP 403 · SERVICE_DISABLED")
+
+        val invalid = gemini(HttpStatusCode.BadRequest, "gemini_400_key_invalid.json").estimate(request("m")).exceptionOrNull() as AiError
+        assertThat(invalid).isInstanceOf(AiError.InvalidKey::class.java)
+        assertThat(invalid.reply!!.summary).isEqualTo("HTTP 400 · API_KEY_INVALID")
+
+        // No ErrorInfo detail: Google's status stands in for the code.
+        val plain = gemini(HttpStatusCode.BadRequest, "gemini_401.json").testConnection().exceptionOrNull() as AiError
+        assertThat(plain.reply!!.summary).isEqualTo("HTTP 400 · INVALID_ARGUMENT")
+    }
+
+    @Test fun providerMessagesNeverEchoTheKey() = runTest {
+        val key = "AQ.Ab8RN6Kq-echoed-secret-key"
+        val body = """{"error":{"code":400,"message":"API key not valid: $key","status":"INVALID_ARGUMENT"}}"""
+        val e = GeminiEstimator(http(HttpStatusCode.BadRequest, body), { key }, "gemini-3.8-flash", "low").testConnection().exceptionOrNull() as AiError
+        assertThat(e.reply!!.message).doesNotContain(key)
+        assertThat(e.message).doesNotContain(key)
+    }
+
+    @Test fun missingKeyIsMarkedMissing() = runTest {
+        val e = GeminiEstimator(http(HttpStatusCode.OK, "{}"), { "" }, "m", null).testConnection().exceptionOrNull()
+        assertThat((e as AiError.InvalidKey).missing).isTrue()
+        assertThat(requests).isEmpty()
     }
 
     @Test fun geminiCountsThinkingAsOutput() = runTest {

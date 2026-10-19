@@ -53,7 +53,7 @@ class GeminiEstimator(
                     pageToken?.let { parameter("pageToken", it) }
                 }
             }
-            checkStatus(t)
+            checkStatus(t, key)
             val page = NetworkJson.decodeFromString(ModelsPage.serializer(), t.body)
             out += page.models
                 .filter { m -> m.name.startsWith("models/gemini") && EXCLUDED.none { m.name.contains(it) } }
@@ -124,12 +124,17 @@ class GeminiEstimator(
                 setBody(NetworkJson.encodeToString(JsonObject.serializer(), body))
             }
         }
-        checkStatus(t)
+        checkStatus(t, key)
         return t
     }
 
-    private suspend fun key(): String = apiKey()?.takeIf { it.isNotBlank() } ?: throw AiError.InvalidKey("no key saved")
+    private suspend fun key(): String = apiKey()?.takeIf { it.isNotBlank() } ?: throw AiError.InvalidKey(AiError.NO_KEY)
 
+    /**
+     * Every Gemini call sends the key in the `x-goog-api-key` header, never as `?key=` and never
+     * as a Bearer token, so both key formats work: classic `AIza…` keys and the `AQ.…` keys AI
+     * Studio issues since mid-2026. The key is sent exactly as saved; there is no format check.
+     */
     private fun HttpRequestBuilder.auth(key: String) = header("x-goog-api-key", key)
 
     private fun blockedOrBad(body: String): AiError =
@@ -139,35 +144,42 @@ class GeminiEstimator(
             AiError.BadResponse(body, "no text in reply")
         }
 
-    private fun checkStatus(t: Timed) {
+    private fun checkStatus(t: Timed, key: String) {
         val code = t.response.status.value
         if (code in 200..299) return
         val err = runCatching { NetworkJson.decodeFromString(ErrorEnvelope.serializer(), t.body).error }.getOrNull()
         val status = err?.status
-        val message = err?.message
+        val message = err?.message?.withoutKey(key)
+        val reason = err?.reason()
+        val reply = ProviderReply(code, reason ?: status, message)
         throw when {
-            code == 429 || status == "RESOURCE_EXHAUSTED" -> rateLimit(err)
-            code == 401 || code == 403 || status == "PERMISSION_DENIED" || status == "UNAUTHENTICATED" -> AiError.InvalidKey(message)
-            message?.contains("API key", ignoreCase = true) == true -> AiError.InvalidKey(message)
-            code == 404 || status == "NOT_FOUND" -> AiError.ModelNotFound(model)
-            code >= 500 -> AiError.Server(code)
-            status == "FAILED_PRECONDITION" && message?.contains("region", ignoreCase = true) == true -> AiError.InvalidRequest(message)
-            else -> AiError.InvalidRequest(message)
+            code == 429 || status == "RESOURCE_EXHAUSTED" -> rateLimit(err, reply)
+            reason in KEY_REASONS || reason?.startsWith("API_KEY_") == true -> AiError.InvalidKey(reply = reply)
+            code == 401 || code == 403 || status == "PERMISSION_DENIED" || status == "UNAUTHENTICATED" -> AiError.InvalidKey(reply = reply)
+            message?.contains("API key", ignoreCase = true) == true -> AiError.InvalidKey(reply = reply)
+            code == 404 || status == "NOT_FOUND" -> AiError.ModelNotFound(model, reply)
+            code >= 500 -> AiError.Server(code, reply)
+            else -> AiError.InvalidRequest(null, reply)
         }
     }
+
+    /** Google's machine-readable cause: `reason` of the `google.rpc.ErrorInfo` detail. */
+    private fun ErrorBody.reason(): String? = details.orEmpty()
+        .firstOrNull { it["@type"]?.jsonPrimitive?.contentOrNull?.endsWith("google.rpc.ErrorInfo") == true }
+        ?.get("reason")?.jsonPrimitive?.contentOrNull
 
     /**
      * Per-day quotas ("...PerDay..." quota ids) reset at midnight Pacific; anything else is a
      * short window with the server's RetryInfo delay (AI_PROVIDERS.md §2.5–2.6).
      */
-    private fun rateLimit(err: ErrorBody?): AiError {
+    private fun rateLimit(err: ErrorBody?, reply: ProviderReply): AiError {
         val details = err?.details.orEmpty()
         val daily = details.any { d ->
             (d["violations"] as? JsonArray)?.any { v -> v.jsonObject["quotaId"]?.jsonPrimitive?.contentOrNull?.contains("PerDay") == true } == true
         }
-        if (daily) return AiError.QuotaExhausted(QuotaWindows.nextMidnightPacific(clock.instant()).toEpochMilli(), err?.message)
+        if (daily) return AiError.QuotaExhausted(QuotaWindows.nextMidnightPacific(clock.instant()).toEpochMilli(), reply = reply)
         val delay = details.firstNotNullOfOrNull { it["retryDelay"]?.jsonPrimitive?.contentOrNull }
-        return AiError.RateLimited(delay?.removeSuffix("s")?.toDoubleOrNull()?.let { (it * 1000).toLong() })
+        return AiError.RateLimited(delay?.removeSuffix("s")?.toDoubleOrNull()?.let { (it * 1000).toLong() }, reply)
     }
 
     @Serializable
@@ -207,5 +219,13 @@ class GeminiEstimator(
         const val BASE = "https://generativelanguage.googleapis.com"
         /** Non-chat model families the picker hides. */
         private val EXCLUDED = listOf("embedding", "tts", "-image", "live", "audio", "aqa", "robotics", "computer-use")
+
+        /**
+         * `ErrorInfo.reason` values that mean "this key can't be used here", whatever the HTTP
+         * status: an invalid key, a key type the endpoint refuses (`ACCESS_TOKEN_TYPE_UNSUPPORTED`,
+         * reported for some `AQ.` keys), the API not enabled on the key's project, or API
+         * restrictions on the key (`API_KEY_*_BLOCKED`).
+         */
+        private val KEY_REASONS = setOf("API_KEY_INVALID", "ACCESS_TOKEN_TYPE_UNSUPPORTED", "SERVICE_DISABLED", "CONSUMER_SUSPENDED")
     }
 }

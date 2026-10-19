@@ -38,7 +38,7 @@ class ClaudeEstimator(
     override suspend fun listModels(): Result<List<ModelInfo>> = aiResult {
         val key = key()
         val t = timedCall { http.get("$baseUrl/v1/models") { auth(key); parameter("limit", 1000) } }
-        checkStatus(t)
+        checkStatus(t, key)
         NetworkJson.decodeFromString(ModelsPage.serializer(), t.body).data.map { m ->
             val vision = m.capabilities?.get("image_input")?.jsonObject?.get("supported")?.jsonPrimitive?.boolean
             ModelInfo(m.id, m.displayName ?: m.id, vision)
@@ -110,33 +110,34 @@ class ClaudeEstimator(
                 setBody(NetworkJson.encodeToString(JsonObject.serializer(), body))
             }
         }
-        checkStatus(t)
+        checkStatus(t, key)
         return t
     }
 
-    private suspend fun key(): String = apiKey()?.takeIf { it.isNotBlank() } ?: throw AiError.InvalidKey("no key saved")
+    private suspend fun key(): String = apiKey()?.takeIf { it.isNotBlank() } ?: throw AiError.InvalidKey(AiError.NO_KEY)
 
     private fun io.ktor.client.request.HttpRequestBuilder.auth(key: String) {
         header("x-api-key", key)
         header("anthropic-version", API_VERSION)
     }
 
-    private fun checkStatus(t: Timed) {
+    private fun checkStatus(t: Timed, key: String) {
         val code = t.response.status.value
         if (code in 200..299) return
         val err = runCatching { NetworkJson.decodeFromString(ErrorEnvelope.serializer(), t.body).error }.getOrNull()
         val type = err?.type
-        val message = err?.message
+        val message = err?.message?.withoutKey(key)
+        val reply = ProviderReply(code, type, message)
         throw when {
-            code == 401 || type == "authentication_error" -> AiError.InvalidKey(message)
-            code == 403 || type == "permission_error" -> AiError.InvalidKey(message)
-            code == 402 || type == "billing_error" -> AiError.QuotaExhausted(null, message)
-            code == 404 || type == "not_found_error" -> AiError.ModelNotFound(model)
-            code == 429 || type == "rate_limit_error" -> AiError.RateLimited(t.response.retryAfterMs())
-            code == 529 || type == "overloaded_error" -> AiError.Server(code)
-            code >= 500 -> AiError.Server(code)
-            message?.contains("credit balance", ignoreCase = true) == true -> AiError.QuotaExhausted(null, message)
-            else -> AiError.InvalidRequest(message)
+            code == 401 || type == "authentication_error" -> AiError.InvalidKey(reply = reply)
+            code == 403 || type == "permission_error" -> AiError.InvalidKey(reply = reply)
+            code == 402 || type == "billing_error" -> AiError.QuotaExhausted(null, reply = reply)
+            code == 404 || type == "not_found_error" -> AiError.ModelNotFound(model, reply)
+            code == 429 || type == "rate_limit_error" -> AiError.RateLimited(t.response.retryAfterMs(), reply)
+            code == 529 || type == "overloaded_error" -> AiError.Server(code, reply)
+            code >= 500 -> AiError.Server(code, reply)
+            message?.contains("credit balance", ignoreCase = true) == true -> AiError.QuotaExhausted(null, reply = reply)
+            else -> AiError.InvalidRequest(null, reply)
         }
     }
 

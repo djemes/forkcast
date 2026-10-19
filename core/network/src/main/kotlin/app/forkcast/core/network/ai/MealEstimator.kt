@@ -61,22 +61,57 @@ data class ModelInfo(
 
 data class ConnectionReport(val model: String, val latencyMs: Long)
 
-/** The one error type estimators report (AI_PROVIDERS.md §1). The UI shows a specific message for each. */
-sealed class AiError(message: String) : Exception(message) {
-    class InvalidKey(detail: String? = null) : AiError("API key rejected${detail.suffix()}")
-    /** Short window (per-minute limit, overload). [retryAfterMs] when the provider says. */
-    class RateLimited(val retryAfterMs: Long?) : AiError("Rate limited")
-    /** Daily quota or billing credit used up; [resetsAtMs] when known (Gemini: next midnight Pacific). */
-    class QuotaExhausted(val resetsAtMs: Long?, detail: String? = null) : AiError("Quota used up${detail.suffix()}")
-    class ModelNotFound(val model: String) : AiError("Model not found: $model")
-    class ContentRefused(detail: String? = null) : AiError("The provider declined this request${detail.suffix()}")
-    /** The provider accepted the request but the output wasn't a usable estimate. */
-    class BadResponse(val raw: String?, detail: String? = null) : AiError("Unexpected response${detail.suffix()}")
-    /** 4xx we can't classify further (e.g. the model doesn't accept images). */
-    class InvalidRequest(detail: String?) : AiError("Request rejected${detail.suffix()}")
-    class Network : AiError("No connection")
-    class Timeout : AiError("The provider took too long")
-    class Server(val code: Int) : AiError("Provider error $code")
+/**
+ * What the provider actually answered when it refused a request: the HTTP status, its own error
+ * code (Google's `ErrorInfo.reason` such as `ACCESS_TOKEN_TYPE_UNSUPPORTED`, else its status or
+ * error type) and its message. Shown under the friendly error so the real cause is visible.
+ * The estimator removes the API key from [message] before building this.
+ */
+data class ProviderReply(val httpStatus: Int, val code: String?, val message: String?) {
+    /** "HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED" */
+    val summary: String get() = listOfNotNull("HTTP $httpStatus", code?.takeIf { it.isNotBlank() }).joinToString(" · ")
 }
 
-private fun String?.suffix() = if (isNullOrBlank()) "" else ": ${take(200)}"
+/**
+ * The one error type estimators report (AI_PROVIDERS.md §1). The UI shows a specific message for
+ * each, plus [reply] when the provider sent one.
+ */
+sealed class AiError(message: String, val reply: ProviderReply? = null) : Exception(message) {
+    class InvalidKey(detail: String? = null, reply: ProviderReply? = null) : AiError(text("API key rejected", detail, reply), reply) {
+        /** No key is saved for the profile: nothing was sent. */
+        val missing: Boolean = detail == NO_KEY
+    }
+    /** Short window (per-minute limit, overload). [retryAfterMs] when the provider says. */
+    class RateLimited(val retryAfterMs: Long?, reply: ProviderReply? = null) : AiError(text("Rate limited", null, reply), reply)
+    /** Daily quota or billing credit used up; [resetsAtMs] when known (Gemini: next midnight Pacific). */
+    class QuotaExhausted(val resetsAtMs: Long?, detail: String? = null, reply: ProviderReply? = null) :
+        AiError(text("Quota used up", detail, reply), reply)
+    class ModelNotFound(val model: String, reply: ProviderReply? = null) : AiError(text("Model not found: $model", null, reply), reply)
+    class ContentRefused(detail: String? = null) : AiError(text("The provider declined this request", detail, null))
+    /** The provider accepted the request but the output wasn't a usable estimate. */
+    class BadResponse(val raw: String?, detail: String? = null) : AiError(text("Unexpected response", detail, null))
+    /** 4xx we can't classify further (e.g. the model doesn't accept images). */
+    class InvalidRequest(detail: String?, reply: ProviderReply? = null) : AiError(text("Request rejected", detail, reply), reply)
+    class Network : AiError("No connection")
+    class Timeout : AiError("The provider took too long")
+    class Server(val code: Int, reply: ProviderReply? = null) : AiError(text("Provider error $code", null, reply), reply)
+
+    companion object {
+        /** Detail of [InvalidKey] when the profile has no key at all. */
+        const val NO_KEY = "no key saved"
+
+        /** "API key rejected (HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED): Request had invalid…" */
+        private fun text(base: String, detail: String?, reply: ProviderReply?): String {
+            val head = reply?.let { "$base (${it.summary})" } ?: base
+            val tail = (detail ?: reply?.message)?.takeIf { it.isNotBlank() }?.take(200)
+            return if (tail == null) head else "$head: $tail"
+        }
+    }
+}
+
+/**
+ * Removes [key] from text a provider sent back (some error messages quote the request), so a key
+ * can never reach the screen, the database or an export through an error message.
+ */
+internal fun String.withoutKey(key: String?): String =
+    if (key.isNullOrBlank() || key.length < 8) this else replace(key, "•••")

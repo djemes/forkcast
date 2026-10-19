@@ -39,7 +39,7 @@ class OpenAiCompatEstimator(
     override suspend fun listModels(): Result<List<ModelInfo>> = aiResult {
         val key = apiKey()
         val t = timedCall { http.get("$root/v1/models") { auth(key) } }
-        checkStatus(t)
+        checkStatus(t, key)
         NetworkJson.decodeFromString(ModelsPage.serializer(), t.body).data.map { ModelInfo(it.id, it.id, supportsImages = null) }
     }
 
@@ -112,7 +112,7 @@ class OpenAiCompatEstimator(
                 setBody(NetworkJson.encodeToString(JsonObject.serializer(), body))
             }
         }
-        checkStatus(t)
+        checkStatus(t, key)
         return t
     }
 
@@ -121,18 +121,19 @@ class OpenAiCompatEstimator(
         if (!key.isNullOrBlank()) header("Authorization", "Bearer $key")
     }
 
-    private fun checkStatus(t: Timed) {
+    private fun checkStatus(t: Timed, key: String?) {
         val code = t.response.status.value
         if (code in 200..299) return
         val err = runCatching { NetworkJson.decodeFromString(ErrorEnvelope.serializer(), t.body).error }.getOrNull()
-        val message = err?.message
+        val message = err?.message?.withoutKey(key)
+        val reply = ProviderReply(code, err?.code ?: err?.type, message)
         throw when {
-            code == 401 || code == 403 -> AiError.InvalidKey(message)
-            code == 404 -> AiError.ModelNotFound(model)
-            code == 429 && (err?.code == "insufficient_quota" || err?.type == "insufficient_quota") -> AiError.QuotaExhausted(null, message)
-            code == 429 -> AiError.RateLimited(t.response.retryAfterMs())
-            code >= 500 -> AiError.Server(code)
-            else -> AiError.InvalidRequest(message)
+            code == 401 || code == 403 -> AiError.InvalidKey(reply = reply)
+            code == 404 -> AiError.ModelNotFound(model, reply)
+            code == 429 && (err?.code == "insufficient_quota" || err?.type == "insufficient_quota") -> AiError.QuotaExhausted(null, reply = reply)
+            code == 429 -> AiError.RateLimited(t.response.retryAfterMs(), reply)
+            code >= 500 -> AiError.Server(code, reply)
+            else -> AiError.InvalidRequest(null, reply)
         }
     }
 
