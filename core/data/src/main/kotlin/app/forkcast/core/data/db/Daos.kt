@@ -97,6 +97,9 @@ interface FoodDao {
     suspend fun softDelete(id: String, now: Long)
 }
 
+/** A day that has log entries, and how many. */
+data class LoggedDay(val date: LocalDate, val entries: Int)
+
 @Dao
 interface LogEntryDao {
     @Query("SELECT * FROM log_entry WHERE date = :date AND deletedAt IS NULL ORDER BY loggedAt")
@@ -111,6 +114,16 @@ interface LogEntryDao {
 
     @Query("SELECT * FROM log_entry WHERE date >= :from AND date <= :to AND deletedAt IS NULL ORDER BY loggedAt")
     suspend fun getRange(from: LocalDate, to: LocalDate): List<LogEntryEntity>
+
+    /** The most recent day with entries, other than [excluding] ("Last logged: Sat, Oct 18 · 6 entries"). */
+    @Query(
+        """
+        SELECT date, COUNT(*) AS entries FROM log_entry
+        WHERE deletedAt IS NULL AND date != :excluding
+        GROUP BY date ORDER BY date DESC LIMIT 1
+        """,
+    )
+    fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?>
 
     @Query("SELECT * FROM log_entry WHERE date = :date AND mealSlotId = :mealSlotId AND deletedAt IS NULL ORDER BY loggedAt")
     suspend fun getForMeal(date: LocalDate, mealSlotId: String): List<LogEntryEntity>

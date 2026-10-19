@@ -1,5 +1,6 @@
 package app.forkcast.fakes
 
+import app.forkcast.core.data.db.LoggedDay
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.model.LogEntry
@@ -21,6 +22,10 @@ class FakeLogRepository : LogRepository {
     override fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntry>> =
         rows.map { m -> m.values.filter { !it.second && it.first.date in from..to }.map { it.first }.sortedBy { it.loggedAt } }
     override suspend fun range(from: LocalDate, to: LocalDate) = observeRange(from, to).first()
+    override fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?> = rows.map { m ->
+        m.values.filter { !it.second && it.first.date != excluding }.groupBy { it.first.date }
+            .maxByOrNull { it.key }?.let { (d, list) -> LoggedDay(d, list.size) }
+    }
     override suspend fun entriesForMeal(date: LocalDate, mealSlotId: String) =
         rows.value.values.filter { !it.second && it.first.date == date && it.first.mealSlotId == mealSlotId }.map { it.first }
     override suspend fun get(id: String) = rows.value[id]?.takeIf { !it.second }?.first

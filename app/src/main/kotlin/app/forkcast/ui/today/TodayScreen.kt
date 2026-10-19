@@ -1,7 +1,13 @@
 package app.forkcast.ui.today
 
 import android.text.format.DateFormat
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
@@ -26,9 +32,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -44,6 +50,7 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -52,20 +59,32 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.input.pointer.util.VelocityTracker
 import androidx.compose.ui.platform.LocalLocale
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.core.data.db.LoggedDay
 import app.forkcast.ui.format.UnitFormatter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
@@ -74,6 +93,7 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import kotlin.math.abs
 
 /** Where the Log sheet and other Today actions lead. Filled in as Phase 1 features land. */
@@ -98,6 +118,8 @@ fun TodayRoute(
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    // Left open overnight, the screen moves on to the new day (unless you were looking at another one).
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onEvent(TodayEvent.Resumed) }
     state?.let {
         TodayScreen(
             state = it,
@@ -165,6 +187,14 @@ fun TodayScreen(
         }
     }
 
+    // Back clears a selection first, then returns to today from another day, then leaves the app.
+    BackHandler(enabled = state.isSelecting) { onEvent(TodayEvent.ClearSelection) }
+    BackHandler(enabled = !state.isSelecting && !state.isToday) { onEvent(TodayEvent.GoToToday) }
+
+    // Horizontal drag offset while swiping between days: the page follows the finger a little.
+    var dragX by remember { mutableFloatStateOf(0f) }
+    val dragScope = rememberCoroutineScope()
+
     Scaffold(
         topBar = {
             if (state.isSelecting) {
@@ -195,28 +225,50 @@ fun TodayScreen(
         },
     ) { padding ->
         // Swipe left/right anywhere not taken by an entry row changes the day (rows use swipe for delete).
+        // The new day slides in from the side you swiped toward; the arrows and Back use the same motion.
         AnimatedContent(
             targetState = state,
             contentKey = { it.date },
             transitionSpec = {
                 val forward = targetState.date > initialState.date
-                slideInHorizontally { if (forward) it / 3 else -it / 3 } togetherWith
-                    slideOutHorizontally { if (forward) -it / 3 else it / 3 }
+                val slide = tween<IntOffset>(DAY_SLIDE_MS, easing = FastOutSlowInEasing)
+                (slideInHorizontally(slide) { w -> if (forward) w else -w } + fadeIn(tween(DAY_SLIDE_MS))) togetherWith
+                    (slideOutHorizontally(slide) { w -> if (forward) -w else w } + fadeOut(tween(DAY_SLIDE_MS / 2)))
             },
             label = "day",
-            modifier = Modifier.pointerInput(state.isSelecting) {
-                if (state.isSelecting) return@pointerInput
-                var total = 0f
-                detectHorizontalDragGestures(
-                    onDragStart = { total = 0f },
-                    onDragEnd = {
-                        if (abs(total) > 120.dp.toPx()) currentOnEvent(if (total < 0) TodayEvent.NextDay else TodayEvent.PreviousDay)
-                    },
-                ) { _, dx -> total += dx }
-            },
+            modifier = Modifier
+                .clipToBounds()
+                .pointerInput(state.isSelecting) {
+                    if (state.isSelecting) return@pointerInput
+                    val threshold = DAY_SWIPE_THRESHOLD.toPx()
+                    val velocity = VelocityTracker()
+                    var total = 0f
+                    detectHorizontalDragGestures(
+                        onDragStart = {
+                            total = 0f
+                            velocity.resetTracking()
+                        },
+                        onDragEnd = {
+                            val fling = abs(velocity.calculateVelocity().x) > DAY_FLING_VELOCITY && abs(total) > threshold / 3
+                            if (abs(total) > threshold || fling) {
+                                dragX = 0f
+                                currentOnEvent(if (total < 0) TodayEvent.NextDay else TodayEvent.PreviousDay)
+                            } else {
+                                dragScope.launch { animate(dragX, 0f) { v, _ -> dragX = v } }
+                            }
+                        },
+                        onDragCancel = { dragScope.launch { animate(dragX, 0f) { v, _ -> dragX = v } } },
+                    ) { change, dx ->
+                        total += dx
+                        velocity.addPosition(change.uptimeMillis, change.position)
+                        dragX = total * DAY_DRAG_FOLLOW
+                    }
+                },
         ) { day ->
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .graphicsLayer { translationX = if (day.date == state.date) dragX else 0f },
                 contentPadding = PaddingValues(
                     start = 16.dp,
                     end = 16.dp,
@@ -231,6 +283,10 @@ fun TodayScreen(
                 if (totals != null && targets != null) {
                     item(key = "ring") { BudgetRing(totals, f, Modifier.fillMaxWidth(), day.forecast, day.forecastFromMinute) }
                     item(key = "macros") { MacroBars(totals, targets, f) { showNutrients = true } }
+                }
+                val last = day.lastLogged
+                if (day.isEmptyDay && last != null) {
+                    item(key = "last-logged") { LastLoggedRow(last, day.today) { onEvent(TodayEvent.PickDate(last.date)) } }
                 }
                 items(day.meals, key = { it.slot.id }) { meal ->
                     MealSectionView(
@@ -395,6 +451,11 @@ private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit, onCopy: () -
     }
 }
 
+/**
+ * Day header: ‹ [day ▾] › with the date under the name. On any day but today the name sits on a
+ * tinted pill and a "Today" button appears, so it's always obvious which day is on screen.
+ * The height never changes between days, so the page doesn't jump.
+ */
 @Composable
 private fun DateHeader(
     state: TodayUiState,
@@ -402,65 +463,149 @@ private fun DateHeader(
     onPickDate: () -> Unit,
     onOpenSettings: () -> Unit,
 ) {
-    val title = dateTitle(state.date, state.today)
-    Column(
+    val (title, subtitle) = dateLabels(state.date, state.today)
+    val pickLabel = stringResource(R.string.pick_date)
+    val otherDay = !state.isToday
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.background)
             .statusBarsPadding()
-            .padding(top = 8.dp, start = 4.dp, end = 4.dp),
+            .padding(horizontal = 4.dp, vertical = 4.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { onEvent(TodayEvent.PreviousDay) }) {
-                Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.previous_day))
-            }
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleLarge,
-                textAlign = TextAlign.Center,
+        IconButton(onClick = { onEvent(TodayEvent.PreviousDay) }) {
+            Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.previous_day))
+        }
+        Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
-                    .weight(1f)
-                    .clickable(onClickLabel = stringResource(R.string.pick_date), onClick = onPickDate)
-                    .padding(vertical = 8.dp)
-                    .semantics { heading() },
-            )
-            IconButton(onClick = { onEvent(TodayEvent.NextDay) }) {
-                Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.next_day))
-            }
-            IconButton(onClick = onPickDate) {
-                Icon(painterResource(R.drawable.ic_calendar), stringResource(R.string.pick_date))
-            }
-            IconButton(onClick = onOpenSettings) {
-                Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.open_settings))
+                    .clip(RoundedCornerShape(16.dp))
+                    .background(if (otherDay) MaterialTheme.colorScheme.secondaryContainer else Color.Transparent)
+                    .clickable(onClickLabel = pickLabel, role = Role.Button, onClick = onPickDate)
+                    .heightIn(min = 48.dp)
+                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                    // TalkBack announces the new day after an arrow, a swipe or Back.
+                    .semantics(mergeDescendants = true) {
+                        heading()
+                        liveRegion = LiveRegionMode.Polite
+                    },
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        textAlign = TextAlign.Center,
+                        color = if (otherDay) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onBackground,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Icon(painterResource(R.drawable.ic_arrow_drop_down), contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+                Text(
+                    text = subtitle,
+                    style = MaterialTheme.typography.bodyMedium,
+                    textAlign = TextAlign.Center,
+                    color = if (otherDay) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
         }
-        if (!state.isToday) {
+        IconButton(onClick = { onEvent(TodayEvent.NextDay) }) {
+            Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.next_day))
+        }
+        if (otherDay) {
+            val goLabel = stringResource(R.string.go_to_today)
             TextButton(
                 onClick = { onEvent(TodayEvent.GoToToday) },
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            ) { Text(stringResource(R.string.go_to_today)) }
+                modifier = Modifier.semantics { contentDescription = goLabel },
+            ) {
+                Icon(painterResource(R.drawable.ic_today), contentDescription = null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(stringResource(R.string.today))
+            }
+        } else {
+            IconButton(onClick = onPickDate) {
+                Icon(painterResource(R.drawable.ic_calendar), pickLabel)
+            }
+        }
+        IconButton(onClick = onOpenSettings) {
+            Icon(painterResource(R.drawable.ic_settings), stringResource(R.string.open_settings))
         }
     }
 }
 
+/** ("Today", "Mon, Oct 19"), ("Yesterday", "Sun, Oct 18"), ("Sat, Oct 17", "2 days ago"). */
 @Composable
-private fun dateTitle(date: LocalDate, today: LocalDate): String {
+private fun dateLabels(date: LocalDate, today: LocalDate): Pair<String, String> {
     val locale = LocalLocale.current.platformLocale
-    val sameYear = date.year == today.year
-    val relative = when (date) {
-        today -> stringResource(R.string.today)
-        today.minusDays(1) -> stringResource(R.string.yesterday)
-        today.plusDays(1) -> stringResource(R.string.tomorrow)
-        else -> null
-    }
-    val skeleton = when {
-        relative != null -> "MMMd"
-        sameYear -> "EEEMMMd"
-        else -> "EEEMMMdy"
-    }
+    val skeleton = if (date.year == today.year) "EEEMMMd" else "EEEMMMdy"
     val formatted = DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, skeleton), locale).format(date)
-    return if (relative != null) stringResource(R.string.today_date_header, relative, formatted) else formatted
+    val days = ChronoUnit.DAYS.between(today, date).toInt()
+    return when (days) {
+        0 -> stringResource(R.string.today) to formatted
+        -1 -> stringResource(R.string.yesterday) to formatted
+        1 -> stringResource(R.string.tomorrow) to formatted
+        else -> formatted to if (days < 0) {
+            pluralStringResource(R.plurals.days_ago, -days, -days)
+        } else {
+            pluralStringResource(R.plurals.days_ahead, days, days)
+        }
+    }
 }
+
+/** "Yesterday" / "Today" / "Sat, Oct 17", for the last-logged hint. */
+@Composable
+private fun shortDayLabel(date: LocalDate, today: LocalDate): String = when (ChronoUnit.DAYS.between(today, date)) {
+    0L -> stringResource(R.string.today)
+    -1L -> stringResource(R.string.yesterday)
+    1L -> stringResource(R.string.tomorrow)
+    else -> shortDate(date, LocalLocale.current.platformLocale)
+}
+
+/**
+ * On an empty day: where the last log is ("Last logged yesterday · 6 entries", Show). Today
+ * only shows the day on screen, so a morning after logging late looks empty without this.
+ */
+@Composable
+private fun LastLoggedRow(last: LoggedDay, today: LocalDate, onShow: () -> Unit) {
+    val dayText = shortDayLabel(last.date, today)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .clickable(onClick = onShow)
+            .heightIn(min = 56.dp)
+            .padding(start = 12.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
+    ) {
+        Icon(
+            painterResource(R.drawable.ic_history),
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(20.dp),
+        )
+        Column(
+            Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
+            Text(stringResource(R.string.day_empty), style = MaterialTheme.typography.bodyMedium)
+            Text(
+                pluralStringResource(R.plurals.last_logged, last.entries, dayText, last.entries),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        TextButton(onClick = onShow) { Text(stringResource(R.string.last_logged_show)) }
+    }
+}
+
+private const val DAY_SLIDE_MS = 280
+private val DAY_SWIPE_THRESHOLD = 96.dp
+/** Pixels per second; a quick flick changes the day even if it's short. */
+private const val DAY_FLING_VELOCITY = 1_200f
+/** How far the page follows the finger while swiping (fraction of the drag). */
+private const val DAY_DRAG_FOLLOW = 0.35f
 
 @Composable
 private fun MealSectionView(

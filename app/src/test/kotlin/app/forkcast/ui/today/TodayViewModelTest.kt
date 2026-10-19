@@ -26,7 +26,10 @@ import org.junit.Before
 import org.junit.Test
 import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.fakes.FakeAiEstimateRepository
+import app.forkcast.core.data.db.LoggedDay
+import kotlinx.coroutines.launch
 import java.time.Clock
+import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
@@ -226,5 +229,46 @@ class TodayViewModelTest {
         assertThat(vm.uiState.value!!.isSelecting).isFalse()
         vm.onEvent(TodayEvent.GoToToday)
         assertThat(vm.uiState.value!!.isToday).isTrue()
+    }
+
+    @Test fun dayChangeNeverShowsTheOtherDaysEntries() = runTest {
+        log.add(listOf(TestData.entry("Today oats", "b", 300.0), TestData.entry("Old pasta", "d", 650.0, date = TestData.TODAY.minusDays(1))))
+        val vm = vm()
+        val seen = mutableListOf<TodayUiState>()
+        val job = backgroundScope.launch { vm.uiState.filterNotNull().collect { seen += it } }
+        vm.onEvent(TodayEvent.PreviousDay)
+        vm.onEvent(TodayEvent.NextDay)
+        job.cancel()
+        // Every emitted state pairs a date with that date's own entries, never a mix.
+        assertThat(seen.map { it.date }).contains(TestData.TODAY.minusDays(1))
+        for (state in seen) assertThat(state.allEntries.all { it.date == state.date }).isTrue()
+    }
+
+    @Test fun emptyDayKnowsTheLastLoggedDay() = runTest {
+        log.add(listOf(TestData.entry("A", "b", 100.0, date = TestData.TODAY.minusDays(3)), TestData.entry("B", "l", 100.0, date = TestData.TODAY.minusDays(1)), TestData.entry("C", "d", 100.0, date = TestData.TODAY.minusDays(1))))
+        val s = vm().uiState.filterNotNull().first()
+        assertThat(s.isEmptyDay).isTrue()
+        assertThat(s.lastLogged).isEqualTo(LoggedDay(TestData.TODAY.minusDays(1), 2))
+    }
+
+    @Test fun resumingAfterMidnightMovesToTheNewDay() = runTest {
+        val moving = MutableClock(clock.instant(), zone)
+        val vm = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, moving)
+        vm.uiState.filterNotNull().first()
+        moving.now = moving.now.plusSeconds(12 * 3600) // 00:40 the next day
+        vm.onEvent(TodayEvent.Resumed)
+        assertThat(vm.uiState.filterNotNull().first { it.date == TestData.TODAY.plusDays(1) }.isToday).isTrue()
+
+        // Looking at another day on purpose: resuming doesn't move it.
+        vm.onEvent(TodayEvent.PreviousDay)
+        moving.now = moving.now.plusSeconds(24 * 3600)
+        vm.onEvent(TodayEvent.Resumed)
+        assertThat(vm.uiState.value!!.date).isEqualTo(TestData.TODAY)
+    }
+
+    private class MutableClock(var now: Instant, private val zone: ZoneId) : Clock() {
+        override fun getZone(): ZoneId = zone
+        override fun withZone(zone: ZoneId): Clock = MutableClock(now, zone)
+        override fun instant(): Instant = now
     }
 }

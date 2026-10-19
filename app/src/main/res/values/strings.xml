@@ -10,13 +10,26 @@
     <string name="today">Today</string>
     <string name="yesterday">Yesterday</string>
     <string name="tomorrow">Tomorrow</string>
-    <string name="today_date_header">%1$s, %2$s</string>
     <string name="previous_day">Previous day</string>
     <string name="next_day">Next day</string>
     <string name="pick_date">Pick a date</string>
     <string name="go_to_today">Go to today</string>
     <string name="open_settings">Settings</string>
     <string name="meal_empty">Nothing logged yet.</string>
+    <string name="day_empty">Nothing logged on this day yet.</string>
+    <string name="last_logged_show">Show</string>
+    <plurals name="last_logged">
+        <item quantity="one">Last logged: %1$s · %2$d entry</item>
+        <item quantity="other">Last logged: %1$s · %2$d entries</item>
+    </plurals>
+    <plurals name="days_ago">
+        <item quantity="one">%1$d day ago</item>
+        <item quantity="other">%1$d days ago</item>
+    </plurals>
+    <plurals name="days_ahead">
+        <item quantity="one">In %1$d day</item>
+        <item quantity="other">In %1$d days</item>
+    </plurals>
     <string name="add_to_meal">Add</string>
     <string name="add_to_meal_description">Add to %1$s</string>
     <string name="log">Log</string>

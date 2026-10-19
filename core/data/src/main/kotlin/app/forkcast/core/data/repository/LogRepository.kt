@@ -5,6 +5,7 @@ import app.forkcast.core.data.db.FoodDao
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.LogEntryDao
 import app.forkcast.core.data.db.LogEntryEntity
+import app.forkcast.core.data.db.LoggedDay
 import app.forkcast.core.model.LogEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -20,6 +21,8 @@ interface LogRepository {
     /** Entries from [from] to [to], inclusive. */
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntry>>
     suspend fun range(from: LocalDate, to: LocalDate): List<LogEntry>
+    /** The most recent day with entries other than [excluding], so an empty day can point to it. */
+    fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?>
     suspend fun entriesForMeal(date: LocalDate, mealSlotId: String): List<LogEntry>
     suspend fun get(id: String): LogEntry?
     /** Adds entries (ids are assigned) and marks their foods as recently used. Returns the new ids. */
@@ -47,6 +50,8 @@ class RoomLogRepository @Inject constructor(
         dao.observeRange(from, to).map { list -> list.map { it.toModel() } }
 
     override suspend fun range(from: LocalDate, to: LocalDate): List<LogEntry> = dao.getRange(from, to).map { it.toModel() }
+
+    override fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?> = dao.observeLatestDay(excluding)
 
     override suspend fun entriesForMeal(date: LocalDate, mealSlotId: String): List<LogEntry> =
         dao.getForMeal(date, mealSlotId).map { it.toModel() }

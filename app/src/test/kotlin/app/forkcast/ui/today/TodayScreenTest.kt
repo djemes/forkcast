@@ -20,6 +20,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.domain.DailyTargetsCalculator
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.model.UnitPrefs
+import app.forkcast.core.data.db.LoggedDay
 import app.forkcast.fakes.FakeMealSlotRepository
 import app.forkcast.fakes.TestData
 import app.forkcast.ui.theme.ForkcastTheme
@@ -59,7 +60,10 @@ class TodayScreenTest {
 
     @Test fun showsRingMacrosAndEntries() {
         compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = {}) } }
-        compose.onNodeWithText("Today, Oct 18").assertIsDisplayed()
+        compose.onNodeWithText("Today").assertIsDisplayed()
+        compose.onNodeWithText("Sun, Oct 18").assertIsDisplayed()
+        // On today there's no "Today" button, just the calendar.
+        compose.onNodeWithContentDescription("Go to today").assertDoesNotExist()
         // 2,290 budget - 251 eaten = 2,039 left (the ring is one merged node with a spoken summary)
         compose.onNodeWithContentDescription("2,039 kcal left", substring = true).assertIsDisplayed()
         row("Greek yogurt").assertIsDisplayed()
@@ -114,5 +118,32 @@ class TodayScreenTest {
         compose.onNodeWithContentDescription("Settings").assertIsDisplayed()
         compose.onNodeWithContentDescription("Log").assertIsDisplayed()
         row("Banana").assertIsDisplayed()
+    }
+
+    @Test fun otherDayIsObviousAndTodayIsOneTapAway() {
+        val events = mutableListOf<TodayEvent>()
+        val past = state.copy(date = today.minusDays(2), meals = state.meals.map { it.copy(entries = emptyList(), kcal = 0.0) })
+        compose.setContent { ForkcastTheme { TodayScreen(past, onEvent = { events += it }) } }
+        compose.onNodeWithText("Fri, Oct 16").assertIsDisplayed()
+        compose.onNodeWithText("2 days ago").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Go to today").performClick()
+        assertThat(events).contains(TodayEvent.GoToToday)
+    }
+
+    @Test fun emptyDayPointsToTheLastLog() {
+        val events = mutableListOf<TodayEvent>()
+        val empty = state.copy(
+            meals = state.meals.map { it.copy(entries = emptyList(), kcal = 0.0) },
+            lastLogged = LoggedDay(today.minusDays(1), 6),
+        )
+        compose.setContent { ForkcastTheme { TodayScreen(empty, onEvent = { events += it }) } }
+        compose.onNodeWithText("Last logged: Yesterday · 6 entries").assertIsDisplayed()
+        compose.onNodeWithText("Show").performClick()
+        assertThat(events).contains(TodayEvent.PickDate(today.minusDays(1)))
+    }
+
+    @Test fun dayWithEntriesHasNoLastLoggedHint() {
+        compose.setContent { ForkcastTheme { TodayScreen(state.copy(lastLogged = LoggedDay(today.minusDays(1), 6)), onEvent = {}) } }
+        compose.onNodeWithText("Last logged", substring = true).assertDoesNotExist()
     }
 }

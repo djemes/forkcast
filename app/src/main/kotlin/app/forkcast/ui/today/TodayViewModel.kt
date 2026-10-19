@@ -2,21 +2,23 @@ package app.forkcast.ui.today
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.ai.AiEstimateRepository
+import app.forkcast.core.data.db.AiEstimateEntity
 import app.forkcast.core.data.db.EstimateStatus
+import app.forkcast.core.data.db.LoggedDay
+import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.SavedMealRepository
+import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WaterRepository
 import app.forkcast.core.data.repository.WeightRepository
-import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
-import app.forkcast.core.domain.Forecast
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.FoodLogging
+import app.forkcast.core.domain.Forecast
 import app.forkcast.core.domain.MealSlotPicker
 import app.forkcast.core.domain.NutritionConstants
 import app.forkcast.core.domain.UnitConversions
@@ -28,9 +30,10 @@ import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.model.SavedMeal
 import app.forkcast.core.model.Sex
+import app.forkcast.core.model.UnitPrefs
+import app.forkcast.core.model.WaterEntry
 import app.forkcast.core.model.WaterUnit
 import app.forkcast.core.model.WeightEntry
-import app.forkcast.core.model.UnitPrefs
 import app.forkcast.core.model.kcal
 import app.forkcast.ui.format.UnitFormatter
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -106,16 +109,22 @@ data class TodayUiState(
     val forecast: Forecast.Outlook? = null,
     /** Minute of day the forecast counts from ("what you usually eat after 4 pm"). */
     val forecastFromMinute: Int = 0,
+    /** Most recent other day with entries, shown on an empty day so a log is never "lost". */
+    val lastLogged: LoggedDay? = null,
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
     val allEntries: List<LogEntry> get() = meals.flatMap { it.entries }
+    /** Nothing logged and nothing estimating on the day on screen. */
+    val isEmptyDay: Boolean get() = meals.all { it.entries.isEmpty() && it.pending.isEmpty() }
 }
 
 sealed interface TodayEvent {
     data object PreviousDay : TodayEvent
     data object NextDay : TodayEvent
     data object GoToToday : TodayEvent
+    /** The screen came back to the foreground: if it was showing today, follow the clock past midnight. */
+    data object Resumed : TodayEvent
     data class PickDate(val date: LocalDate) : TodayEvent
     data class Delete(val ids: List<String>) : TodayEvent
     data class Undo(val ids: List<String>) : TodayEvent
@@ -159,49 +168,64 @@ class TodayViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val selectedDate = MutableStateFlow(LocalDate.now(clock))
+    /** True while the screen shows today, so it moves to the new day after midnight (see [TodayEvent.Resumed]). */
+    private var followingToday = true
     private val selection = MutableStateFlow<Set<String>>(emptySet())
     private val effectChannel = Channel<TodayEffect>(Channel.BUFFERED)
     val effects: Flow<TodayEffect> = effectChannel.receiveAsFlow()
 
-    private val dayEntries = selectedDate.flatMapLatest { logRepository.observeDay(it) }
-    private val yesterdayMeals = selectedDate.flatMapLatest { d ->
-        logRepository.observeDay(d.minusDays(1)).map { list -> list.map { it.mealSlotId }.toSet() }
+    /**
+     * Everything that belongs to one date, built together so a new date never shows with the
+     * previous date's entries for a frame (the date and its data always arrive as one value).
+     */
+    private data class DayData(
+        val date: LocalDate,
+        val entries: List<LogEntry>,
+        val yesterdayMeals: Set<String>,
+        val water: List<WaterEntry>,
+        val estimates: List<AiEstimateEntity>,
+        val history: List<LogEntry>,
+        val lastLogged: LoggedDay?,
+    )
+
+    private val day: Flow<DayData> = selectedDate.flatMapLatest { d ->
+        combine(
+            logRepository.observeDay(d),
+            logRepository.observeDay(d.minusDays(1)).map { list -> list.map { it.mealSlotId }.toSet() },
+            waterRepository.observeDay(d),
+            estimateRepository.observeDay(d),
+            // Earlier days for the forecast; 60 calendar days comfortably hold the last 14 logged days.
+            combine(logRepository.observeRange(d.minusDays(60), d.minusDays(1)), logRepository.observeLatestDay(d)) { h, l -> h to l },
+        ) { entries, yesterday, water, estimates, (history, last) -> DayData(d, entries, yesterday, water, estimates, history, last) }
     }
+
     private val extras = combine(
         profileRepository.observeDailyTargets(),
         settingsRepository.settings,
         foodRepository.observeRecents(5),
         savedMealRepository.meals,
-        yesterdayMeals,
-    ) { t, s, r, saved, yesterday -> Extras(t, s, r, saved, yesterday) }
+    ) { t, s, r, saved -> Extras(t, s, r, saved) }
 
-    private val bodyAndWater = combine(
-        selectedDate.flatMapLatest { waterRepository.observeDay(it) },
-        weightRepository.entries,
-        profileRepository.profile,
-    ) { water, weights, profile -> Triple(water, weights, profile) }
-
-    private val dayEstimates = selectedDate.flatMapLatest { estimateRepository.observeDay(it) }
-
-    /** Earlier days for the forecast; 60 calendar days comfortably hold the last 14 logged days. */
-    private val history = selectedDate.flatMapLatest { d -> logRepository.observeRange(d.minusDays(60), d.minusDays(1)) }
+    private val body = combine(weightRepository.entries, profileRepository.profile) { weights, profile -> weights to profile }
 
     private data class Extras(
         val targets: DailyTargets?,
         val settings: AppSettings,
         val recents: List<Food>,
         val saved: List<SavedMeal>,
-        val yesterday: Set<String>,
     )
 
     val uiState: StateFlow<TodayUiState?> = combine(
         mealSlotRepository.observeMealSlots(),
-        selectedDate,
-        dayEntries,
-        combine(extras, bodyAndWater, dayEstimates, history) { x, b, est, h -> Quad(x, b, est, h) },
+        day,
+        extras,
+        body,
         selection,
-    ) { slots, date, entries, (x, body, estimates, past), selected ->
-        val (water, weights, profile) = body
+    ) { slots, dayData, x, (weights, profile), selected ->
+        val date = dayData.date
+        val entries = dayData.entries
+        val estimates = dayData.estimates
+        val water = dayData.water
         val loggedIds = entries.map { it.id }.toSet()
         // Once logged, an estimate is its entry (deleting the entry hides it; Undo brings it back).
         val pending = estimates
@@ -213,7 +237,7 @@ class TodayViewModel @Inject constructor(
         val nowMinute = now.hour * 60 + now.minute
         val isToday = date == LocalDate.now(clock)
         val forecast = if (isToday && targets != null) {
-            Forecast.expectedAfter(past.map { it.toLogged() }, date, nowMinute)?.let { expected ->
+            Forecast.expectedAfter(dayData.history.map { it.toLogged() }, date, nowMinute)?.let { expected ->
                 val t = DayMath.totals(entries, targets.budgetKcal)
                 Forecast.outlook(t.eatenKcal, t.allowanceKcal, expected)
             }
@@ -234,7 +258,7 @@ class TodayViewModel @Inject constructor(
             selection = selected intersect entries.map { it.id }.toSet(),
             recents = x.recents,
             savedMeals = x.saved,
-            yesterdayMealIds = x.yesterday,
+            yesterdayMealIds = dayData.yesterdayMeals,
             water = WaterSummary(
                 ml = water.sumOf { it.ml },
                 targetMl = x.settings.waterTargetMl
@@ -246,10 +270,9 @@ class TodayViewModel @Inject constructor(
             unreviewedEstimateIds = estimates.filter { it.logEntryId in loggedIds && it.reviewedAt == null }.map { it.id }.toSet(),
             forecast = forecast,
             forecastFromMinute = nowMinute,
+            lastLogged = dayData.lastLogged,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
-    private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
 
     private fun LogEntry.toLogged(): Forecast.Logged {
         val t = loggedAt.atZone(clock.zone).toLocalTime()
@@ -275,6 +298,7 @@ class TodayViewModel @Inject constructor(
             TodayEvent.PreviousDay -> changeDate { it.minusDays(1) }
             TodayEvent.NextDay -> changeDate { it.plusDays(1) }
             TodayEvent.GoToToday -> changeDate { LocalDate.now(clock) }
+            TodayEvent.Resumed -> if (followingToday && selectedDate.value != LocalDate.now(clock)) changeDate { LocalDate.now(clock) }
             is TodayEvent.PickDate -> changeDate { event.date }
             is TodayEvent.Delete -> delete(event.ids)
             is TodayEvent.Undo -> viewModelScope.launch { logRepository.restore(event.ids) }
@@ -351,6 +375,7 @@ class TodayViewModel @Inject constructor(
     private fun changeDate(change: (LocalDate) -> LocalDate) {
         selection.value = emptySet()
         selectedDate.update(change)
+        followingToday = selectedDate.value == LocalDate.now(clock)
     }
 
     private fun delete(ids: List<String>) {
