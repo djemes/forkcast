@@ -1,8 +1,8 @@
 package app.forkcast.ui.today
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -59,7 +59,7 @@ fun CopyDialog(
                 Text(stringResource(R.string.copy_day), style = MaterialTheme.typography.titleSmall)
                 DateField(date, "", date, { date = it })
                 Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     if (allowSameMeal) {
                         FilterChip(selected = mealId == null, onClick = { mealId = null }, label = { Text(stringResource(R.string.copy_same_meal)) })
                     }

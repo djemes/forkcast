@@ -2,7 +2,6 @@ package app.forkcast.ui.food
 
 import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -214,7 +213,7 @@ fun FoodDetailScreen(
             }
 
             Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.horizontalScroll(rememberScrollState())) {
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 state.meals.forEach { m ->
                     FilterChip(selected = m.id == state.mealSlotId, onClick = { onMeal(m.id) }, label = { Text(m.name) })
                 }

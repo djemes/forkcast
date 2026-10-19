@@ -35,12 +35,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -227,7 +227,8 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    OutlinedIconButton(onClick = openGallery, enabled = state.canAddPhoto, modifier = Modifier.size(56.dp)) {
+                    // Tonal, not outlined: an outline nearly vanished on the dark camera bar.
+                    FilledTonalIconButton(onClick = openGallery, enabled = state.canAddPhoto, modifier = Modifier.size(56.dp)) {
                         Icon(painterResource(R.drawable.ic_photo_library), stringResource(R.string.photo_gallery))
                     }
                 }

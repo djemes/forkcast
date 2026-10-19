@@ -59,6 +59,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
@@ -498,6 +500,8 @@ private fun DateHeader(
                         text = title,
                         style = MaterialTheme.typography.titleLarge,
                         textAlign = TextAlign.Center,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                         color = if (otherDay) MaterialTheme.colorScheme.onSecondaryContainer else MaterialTheme.colorScheme.onBackground,
                         modifier = Modifier.weight(1f, fill = false),
                     )
@@ -514,7 +518,13 @@ private fun DateHeader(
         IconButton(onClick = { onEvent(TodayEvent.NextDay) }) {
             Icon(painterResource(R.drawable.ic_chevron_right), stringResource(R.string.next_day))
         }
-        if (otherDay) {
+        // At large font sizes the "Today" button drops its word so the day name keeps one line.
+        val roomy = LocalDensity.current.fontScale <= 1.3f
+        if (otherDay && !roomy) {
+            IconButton(onClick = { onEvent(TodayEvent.GoToToday) }) {
+                Icon(painterResource(R.drawable.ic_today), stringResource(R.string.go_to_today))
+            }
+        } else if (otherDay) {
             val goLabel = stringResource(R.string.go_to_today)
             TextButton(
                 onClick = { onEvent(TodayEvent.GoToToday) },

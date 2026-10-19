@@ -66,7 +66,7 @@
     <string name="fdb_usda_key">API key</string>
     <string name="fdb_paste">Paste</string>
     <string name="fdb_get_key">Get a free key</string>
-    <string name="fdb_status_own">Using your key. Stored encrypted on this phone, never backed up or exported.</string>
+    <string name="fdb_status_own">Using your key.</string>
     <string name="fdb_status_demo">Using the shared demo key.</string>
     <string name="fdb_remove_key">Remove key</string>
     <string name="fdb_saved">Key saved</string>

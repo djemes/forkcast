@@ -254,6 +254,8 @@ private fun PreviewText(preview: BackupPreview) {
             Text(stringResource(R.string.backup_preview_saved_meals, savedMeals))
             Text(stringResource(R.string.backup_preview_weights, weights))
             Text(stringResource(R.string.backup_preview_water, water))
+            if (aiEstimates > 0) Text(stringResource(R.string.backup_preview_ai_estimates, aiEstimates))
+            if (aiProfiles > 0) Text(stringResource(R.string.backup_preview_ai_profiles, aiProfiles))
             if (!hasProfile) Text(stringResource(R.string.backup_preview_no_profile))
         }
         if (preview.firstDate != null && preview.lastDate != null) {

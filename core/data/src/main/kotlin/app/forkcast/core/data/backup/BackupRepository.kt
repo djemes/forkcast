@@ -43,6 +43,9 @@ data class BackupCounts(
     val water: Int,
     val goals: Int,
     val hasProfile: Boolean,
+    /** Export v2 (Phase 2); 0 for v1 files. */
+    val aiEstimates: Int = 0,
+    val aiProfiles: Int = 0,
 )
 
 data class BackupPreview(
@@ -322,6 +325,8 @@ internal fun preview(export: ForkcastExport): BackupPreview {
             water = export.water.count { it.deletedAt == null },
             goals = export.goals.count { it.deletedAt == null },
             hasProfile = export.profile != null && export.profile.deletedAt == null,
+            aiEstimates = export.aiEstimates.count { it.deletedAt == null },
+            aiProfiles = export.aiProfiles.count { it.deletedAt == null },
         ),
         firstDate = dates.minOrNull(),
         lastDate = dates.maxOrNull(),

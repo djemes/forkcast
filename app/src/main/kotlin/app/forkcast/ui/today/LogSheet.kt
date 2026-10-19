@@ -3,8 +3,8 @@ package app.forkcast.ui.today
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -96,11 +96,10 @@ fun LogSheet(
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
-            Row(
+            // Wraps rather than scrolls, so the selected meal is never off-screen at large font sizes.
+            FlowRow(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
                 meals.forEach { meal ->
                     FilterChip(selected = meal.id == selected?.id, onClick = { onSelectMeal(meal.id) }, label = { Text(meal.name) })

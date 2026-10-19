@@ -17,6 +17,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -40,12 +42,16 @@ fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onR
             .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
             .padding(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 12.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.water_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).semantics { heading() })
+        val title: @Composable (Modifier) -> Unit = { m ->
+            Text(stringResource(R.string.water_title), style = MaterialTheme.typography.titleMedium, modifier = m.semantics { heading() })
+        }
+        val amount: @Composable () -> Unit = {
             Text(
                 stringResource(R.string.water_progress, f.waterLiters(water.ml), f.waterLiters(water.targetMl)),
                 style = MaterialTheme.typography.labelLarge,
             )
+        }
+        val buttons: @Composable () -> Unit = {
             if (water.lastEntryId != null) {
                 IconButton(onClick = onRemoveLast) {
                     Icon(painterResource(R.drawable.ic_remove), stringResource(R.string.water_remove_last))
@@ -55,6 +61,22 @@ fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onR
                 onClick = onAddGlass,
                 modifier = Modifier.padding(start = 4.dp).semantics { contentDescription = addDescription },
             ) { Text(stringResource(R.string.water_add_glass)) }
+        }
+        // One row normally; at large font sizes the buttons move to their own row so nothing is squeezed.
+        if (LocalDensity.current.fontScale <= 1.3f) {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp)) {
+                title(Modifier.weight(1f))
+                amount()
+                buttons()
+            }
+        } else {
+            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp).padding(end = 8.dp)) {
+                title(Modifier.weight(1f))
+                amount()
+            }
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+                buttons()
+            }
         }
         LinearProgressIndicator(
             progress = { if (water.targetMl > 0) (water.ml / water.targetMl).toFloat().coerceIn(0f, 1f) else 0f },

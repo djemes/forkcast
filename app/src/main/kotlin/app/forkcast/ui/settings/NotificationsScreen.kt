@@ -160,12 +160,19 @@ fun NotificationsScreen(
         if (s.mealRemindersEnabled) {
             for (slot in state.slots) {
                 val minute = state.mealTimes[slot.id]
-                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp)) {
-                    Text(slot.name, modifier = Modifier.weight(1f))
-                    Switch(
-                        checked = minute != null,
-                        onCheckedChange = { on -> onMealTime(slot.id, if (on) (slot.endMinute ?: (20 * 60)) else null) },
-                    )
+                // Indented under "Meal reminders"; the whole row toggles, and its switch lines up with the others.
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 48.dp)
+                        .toggleable(value = minute != null, role = Role.Switch) { on ->
+                            onMealTime(slot.id, if (on) (slot.endMinute ?: (20 * 60)) else null)
+                        }
+                        .padding(start = 32.dp, end = 16.dp),
+                ) {
+                    Text(slot.name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                    Switch(checked = minute != null, onCheckedChange = null, modifier = Modifier.padding(start = 16.dp))
                 }
                 if (minute != null) TimeRow(slot.name, minute) { editing = TimeEdit(it, minute) { m -> onMealTime(slot.id, m) } }
             }

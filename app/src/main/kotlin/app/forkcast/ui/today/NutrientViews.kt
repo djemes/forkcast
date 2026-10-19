@@ -19,6 +19,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -104,7 +105,10 @@ private fun NutrientBar(label: String, eaten: Double, target: Double, color: Col
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics(mergeDescendants = true) {
         stateDescription = valueText
     }) {
-        Text(label, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.width(72.dp))
+        // The label column grows with the font size (200% wrapped "Protein"), and stays one width
+        // for all three rows so the bars line up.
+        val labelWidth = 72.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)
+        Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.width(labelWidth))
         LinearProgressIndicator(
             progress = { if (target > 0) (eaten / target).toFloat().coerceIn(0f, 1f) else 0f },
             color = color,
