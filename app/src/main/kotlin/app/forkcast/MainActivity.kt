@@ -17,6 +17,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.core.data.health.HealthRepository
 import app.forkcast.core.data.health.SyncReason
 import app.forkcast.core.data.notify.Notifier
+import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.navigation.ForkcastNavHost
 import app.forkcast.ui.theme.ForkcastTheme
@@ -32,6 +33,7 @@ class MainActivity : ComponentActivity() {
     private val viewModel: MainViewModel by viewModels()
 
     @Inject lateinit var health: HealthRepository
+    @Inject lateinit var maintenance: MaintenanceRepository
 
     /** What a tapped notification asked to open ("estimate:<id>", "settings_ai"), consumed once. */
     private val openRequest = MutableStateFlow<String?>(null)
@@ -78,7 +80,11 @@ class MainActivity : ComponentActivity() {
     /** Health Connect reads are allowed while the app is in the foreground (throttled in the repository). */
     override fun onStart() {
         super.onStart()
-        lifecycleScope.launch { runCatching { health.sync(SyncReason.OPEN) } }
+        lifecycleScope.launch {
+            runCatching { health.sync(SyncReason.OPEN) }
+            // Weekly adaptive maintenance (SPEC §5.6), after the scale's weigh-ins are in.
+            runCatching { maintenance.updateIfDue() }
+        }
     }
 
     override fun onNewIntent(intent: Intent) {

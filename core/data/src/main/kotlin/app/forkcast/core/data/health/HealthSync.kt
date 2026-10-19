@@ -8,6 +8,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import app.forkcast.core.data.db.HealthDao
+import app.forkcast.core.data.repository.MaintenanceRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -29,9 +30,11 @@ class HealthSyncWorker @AssistedInject constructor(
     @Assisted context: Context,
     @Assisted params: WorkerParameters,
     private val health: HealthRepository,
+    private val maintenance: MaintenanceRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         health.sync(SyncReason.BACKGROUND)
+        runCatching { maintenance.updateIfDue() }
         return Result.success()
     }
 }

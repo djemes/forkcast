@@ -1,5 +1,6 @@
 package app.forkcast.core.domain
 
+import app.forkcast.core.model.ExerciseMode
 import app.forkcast.core.model.Goal
 import app.forkcast.core.model.GoalType
 import app.forkcast.core.model.NutrientKey
@@ -11,7 +12,14 @@ data class DailyTargets(
     val ageYears: Int,
     val currentKg: Double,
     val bmrKcal: Double,
+    /** Maintenance the budget is built on (formula, or adaptive minus the average exercise bonus). */
     val tdeeKcal: Double,
+    /** The formula's maintenance (Added back: sedentary factor). */
+    val formulaTdeeKcal: Double,
+    /** The adaptive all-in estimate when it is in use (SPEC §5.6), else null. */
+    val adaptiveTdeeKcal: Double? = null,
+    /** Average daily exercise bonus subtracted from [adaptiveTdeeKcal] in Added-back mode. */
+    val avgExerciseBonusKcal: Double = 0.0,
     /** The goal-derived plan, before any user override of the calorie budget. */
     val plan: BudgetPlan,
     /** The budget actually used: the plan's, or the user's override. */
@@ -37,10 +45,17 @@ object DailyTargetsCalculator {
         currentKg: Double,
         today: LocalDate,
         overrides: Map<NutrientKey, Double> = emptyMap(),
+        /** Adaptive all-in maintenance to use instead of the formula (null = formula). */
+        adaptiveKcal: Double? = null,
+        /** Average daily Added-back bonus over the estimate's window (0 when Included). */
+        avgExerciseBonusKcal: Double = 0.0,
     ): DailyTargets {
         val age = EnergyMath.ageYears(profile.birthDate, today)
         val bmr = EnergyMath.bmrMifflinStJeor(profile.sex, currentKg, profile.heightCm, age)
-        val tdee = EnergyMath.tdee(bmr, profile.activityLevel)
+        val formula = bmr * ExerciseMath.activityFactor(profile)
+        // Adaptive maintenance includes exercise; Added back adds it per day, so take the average out once.
+        val bonus = if (adaptiveKcal != null && profile.exerciseMode == ExerciseMode.ADDED_BACK) avgExerciseBonusKcal else 0.0
+        val tdee = adaptiveKcal?.let { it - bonus } ?: formula
         val input = GoalInput(goal.goalType, currentKg, goal.targetWeightKg, paceOf(goal))
         val plan = GoalPlanner.plan(input, tdee, bmr, profile.sex, today)
 
@@ -55,6 +70,9 @@ object DailyTargetsCalculator {
             currentKg = currentKg,
             bmrKcal = bmr,
             tdeeKcal = tdee,
+            formulaTdeeKcal = formula,
+            adaptiveTdeeKcal = adaptiveKcal,
+            avgExerciseBonusKcal = bonus,
             plan = plan,
             budgetKcal = budget,
             isCustomBudget = overrideBudget != null,

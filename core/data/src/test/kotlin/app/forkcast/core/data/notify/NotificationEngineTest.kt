@@ -38,6 +38,12 @@ import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
+import app.forkcast.core.data.db.ActivityDayEntity
+import app.forkcast.core.data.db.ProfileEntity
+import app.forkcast.core.data.repository.RoomMaintenanceRepository
+import app.forkcast.core.model.ActivityLevel
+import app.forkcast.core.model.ExerciseMode
+import app.forkcast.core.model.Sex
 import java.time.ZonedDateTime
 
 @RunWith(AndroidJUnit4::class)
@@ -59,7 +65,7 @@ class NotificationEngineTest {
     private val weights = MutableStateFlow<List<WeightEntry>>(emptyList())
 
     private val targets = DailyTargets(
-        ageYears = 40, currentKg = 90.0, bmrKcal = 1800.0, tdeeKcal = 2600.0,
+        ageYears = 40, currentKg = 90.0, bmrKcal = 1800.0, tdeeKcal = 2600.0, formulaTdeeKcal = 2600.0,
         plan = BudgetPlan(2600.0, 600.0, 2000, null, emptyList()), budgetKcal = 2000, isCustomBudget = false,
         targets = mapOf(NutrientKey.PROTEIN_G to NutrientTarget(NutrientKey.PROTEIN_G, 140.0, TargetKind.GOAL)),
         guardrails = emptyList(),
@@ -80,7 +86,8 @@ class NotificationEngineTest {
         override suspend fun update(entry: WeightEntry) = Unit
         override suspend fun delete(id: String) = Unit
     }
-    private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db, db.mealSlotDao(), clock), db.aiDao(), clock)
+    private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db, db.mealSlotDao(), clock), db.aiDao(),
+        RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weightRepo, db.profileDao(), db.goalDao(), clock), clock)
     private val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
 
     init {
@@ -109,6 +116,20 @@ class NotificationEngineTest {
         eat(500.0)
         engine.checkBudget()
         assertThat(texts().last()).isEqualTo("You're 200 kcal over today's budget.")
+    }
+
+    /** Added back: half of 400 active kcal raises today's allowance to 2,200 (SPEC §5.2). */
+    @Test fun addedBackExerciseRaisesTheAllowance() = runTest {
+        db.profileDao().upsert(ProfileEntity(sex = Sex.MALE, birthDate = LocalDate.of(1985, 1, 1), heightCm = 180.0,
+            activityLevel = ActivityLevel.MODERATE, exerciseMode = ExerciseMode.ADDED_BACK, exerciseAddBackPct = 50, createdAt = 1, updatedAt = 1))
+        db.healthDao().upsertActivity(listOf(ActivityDayEntity("a", day, 9000, 400.0, null, null, emptyList(), 1, 1)))
+        eat(1700.0)
+        engine.checkBudget()
+        // 77 % of 2,200: under the 80 % threshold that 1,700 of 2,000 would have crossed.
+        assertThat(nm.allNotifications).isEmpty()
+        eat(100.0)
+        engine.checkBudget()
+        assertThat(texts()).containsExactly("1,800 of 2,200 kcal so far. About 400 left for today.")
     }
 
     @Test fun quietHoursSuppressButStillRecord() = runTest {

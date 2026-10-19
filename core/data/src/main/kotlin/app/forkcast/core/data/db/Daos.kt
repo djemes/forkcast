@@ -209,5 +209,8 @@ interface DayStatusDao {
     @Query("SELECT * FROM day_status WHERE date >= :from AND date <= :to AND deletedAt IS NULL")
     suspend fun range(from: LocalDate, to: LocalDate): List<DayStatusEntity>
 
+    @Query("SELECT * FROM day_status WHERE date >= :from AND date <= :to AND deletedAt IS NULL")
+    fun observeRange(from: LocalDate, to: LocalDate): Flow<List<DayStatusEntity>>
+
     @Upsert suspend fun upsert(status: DayStatusEntity)
 }

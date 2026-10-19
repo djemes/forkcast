@@ -5,6 +5,7 @@ import app.forkcast.core.data.R
 import app.forkcast.core.data.db.AiDao
 import app.forkcast.core.data.db.NotificationLogEntity
 import app.forkcast.core.data.repository.LogRepository
+import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.SettingsRepository
@@ -50,6 +51,7 @@ class NotificationEngine @Inject constructor(
     private val weights: WeightRepository,
     private val slots: MealSlotRepository,
     private val dao: AiDao,
+    private val maintenance: MaintenanceRepository,
     private val clock: Clock,
 ) {
     private val n get() = NumberFormat.getIntegerInstance()
@@ -60,8 +62,10 @@ class NotificationEngine @Inject constructor(
         if (!s.budgetEnabled) return
         val today = LocalDate.now(clock)
         val targets = profiles.observeDailyTargets().first() ?: return
-        val eaten = DayMath.totals(log.range(today, today), targets.budgetKcal).eatenKcal
-        val budget = targets.budgetKcal.toDouble()
+        // Added-back exercise raises the day's allowance (SPEC §5.2).
+        val totals = DayMath.totals(log.range(today, today), targets.budgetKcal, maintenance.exerciseBonus(today))
+        val eaten = totals.eatenKcal
+        val budget = totals.allowanceKcal
         val fired = dao.notificationsOn(today).filter { it.type == NotificationTypes.BUDGET }.map { it.threshold }.toSet()
         val decision = NotificationRules.budgetThresholds(eaten, budget, s.budgetThresholds, fired)
         decision.record.forEach { record(today, NotificationTypes.BUDGET, it) }
@@ -102,7 +106,7 @@ class NotificationEngine @Inject constructor(
 
         if (s.eveningEnabled && due(s.eveningMinute) && (NotificationTypes.EVENING to 0) !in fired && targets != null) {
             record(today, NotificationTypes.EVENING, 0)
-            val left = targets.budgetKcal - entries.sumOf { it.nutrients.kcal }
+            val left = targets.budgetKcal + maintenance.exerciseBonus(today) - entries.sumOf { it.nutrients.kcal }
             val history = log.range(today.minusDays(60), today.minusDays(1)).map {
                 val t = it.loggedAt.atZone(clock.zone).toLocalTime()
                 Forecast.Logged(it.date, t.hour * 60 + t.minute, it.nutrients.kcal)

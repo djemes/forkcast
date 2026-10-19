@@ -41,6 +41,8 @@ class RoomProfileRepository @Inject constructor(
     private val goalDao: GoalDao,
     private val overrideDao: TargetOverrideDao,
     private val weightRepository: WeightRepository,
+    private val maintenance: MaintenanceRepository,
+    private val settings: SettingsRepository,
     private val clock: Clock,
 ) : ProfileRepository {
 
@@ -103,14 +105,26 @@ class RoomProfileRepository @Inject constructor(
         }
     }
 
-    override fun observeDailyTargets(): Flow<DailyTargets?> =
-        combine(profile, activeGoal, overrides, weightRepository.latestKg) { p, g, o, latestKg ->
-            if (p == null || g == null) null
-            else DailyTargetsCalculator.compute(p, g, latestKg ?: g.startWeightKg, LocalDate.now(clock), o)
+    override fun observeDailyTargets(): Flow<DailyTargets?> {
+        val today = LocalDate.now(clock)
+        // Adaptive maintenance (SPEC §5.6) unless the user locked it to the formula.
+        val adaptive = combine(settings.settings.map { it.adaptiveTdee }.distinctUntilChanged(), maintenance.latest) { on, latest ->
+            if (on) latest?.kcal else null
         }
+        return combine(
+            combine(profile, activeGoal, overrides, weightRepository.latestKg) { p, g, o, kg -> Inputs(p, g, o, kg) },
+            adaptive,
+            maintenance.observeAverageBonus(today),
+        ) { i, adaptiveKcal, avgBonus ->
+            if (i.profile == null || i.goal == null) null
+            else DailyTargetsCalculator.compute(i.profile, i.goal, i.latestKg ?: i.goal.startWeightKg, LocalDate.now(clock), i.overrides, adaptiveKcal, avgBonus)
+        }
+    }
+
+    private data class Inputs(val profile: UserProfile?, val goal: Goal?, val overrides: Map<NutrientKey, Double>, val latestKg: Double?)
 }
 
-private fun ProfileEntity.toModel() = UserProfile(sex, birthDate, heightCm, activityLevel, exerciseMode, exerciseAddBackPct)
+internal fun ProfileEntity.toModel() = UserProfile(sex, birthDate, heightCm, activityLevel, exerciseMode, exerciseAddBackPct)
 
-private fun GoalEntity.toModel() =
+internal fun GoalEntity.toModel() =
     Goal(id, goalType, startDate, startWeightKg, targetWeightKg, targetDate, weeklyRateKg)
