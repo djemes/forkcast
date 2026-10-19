@@ -14,6 +14,7 @@ import app.forkcast.core.data.repository.WeightRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
+import app.forkcast.core.domain.Forecast
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.domain.MealSlotPicker
@@ -101,6 +102,10 @@ data class TodayUiState(
     val weight: WeightSummary? = null,
     /** Estimates logged by auto-accept and not reviewed yet: their entries show "AI·review". */
     val unreviewedEstimateIds: Set<String> = emptySet(),
+    /** Today only, after 7+ logged days (SPEC §4.2). */
+    val forecast: Forecast.Outlook? = null,
+    /** Minute of day the forecast counts from ("what you usually eat after 4 pm"). */
+    val forecastFromMinute: Int = 0,
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -178,6 +183,9 @@ class TodayViewModel @Inject constructor(
 
     private val dayEstimates = selectedDate.flatMapLatest { estimateRepository.observeDay(it) }
 
+    /** Earlier days for the forecast; 60 calendar days comfortably hold the last 14 logged days. */
+    private val history = selectedDate.flatMapLatest { d -> logRepository.observeRange(d.minusDays(60), d.minusDays(1)) }
+
     private data class Extras(
         val targets: DailyTargets?,
         val settings: AppSettings,
@@ -190,9 +198,9 @@ class TodayViewModel @Inject constructor(
         mealSlotRepository.observeMealSlots(),
         selectedDate,
         dayEntries,
-        combine(extras, bodyAndWater, dayEstimates) { x, b, est -> Triple(x, b, est) },
+        combine(extras, bodyAndWater, dayEstimates, history) { x, b, est, h -> Quad(x, b, est, h) },
         selection,
-    ) { slots, date, entries, (x, body, estimates), selected ->
+    ) { slots, date, entries, (x, body, estimates, past), selected ->
         val (water, weights, profile) = body
         val loggedIds = entries.map { it.id }.toSet()
         // Once logged, an estimate is its entry (deleting the entry hides it; Undo brings it back).
@@ -202,6 +210,16 @@ class TodayViewModel @Inject constructor(
         val targets = x.targets
         val units = x.settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
         val now = LocalTime.now(clock)
+        val nowMinute = now.hour * 60 + now.minute
+        val isToday = date == LocalDate.now(clock)
+        val forecast = if (isToday && targets != null) {
+            Forecast.expectedAfter(past.map { it.toLogged() }, date, nowMinute)?.let { expected ->
+                val t = DayMath.totals(entries, targets.budgetKcal)
+                Forecast.outlook(t.eatenKcal, t.allowanceKcal, expected)
+            }
+        } else {
+            null
+        }
         TodayUiState(
             date = date,
             today = LocalDate.now(clock),
@@ -226,8 +244,17 @@ class TodayViewModel @Inject constructor(
             ),
             weight = weightSummary(weights),
             unreviewedEstimateIds = estimates.filter { it.logEntryId in loggedIds && it.reviewedAt == null }.map { it.id }.toSet(),
+            forecast = forecast,
+            forecastFromMinute = nowMinute,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private data class Quad<A, B, C, D>(val a: A, val b: B, val c: C, val d: D)
+
+    private fun LogEntry.toLogged(): Forecast.Logged {
+        val t = loggedAt.atZone(clock.zone).toLocalTime()
+        return Forecast.Logged(date, t.hour * 60 + t.minute, nutrients.kcal)
+    }
 
     private fun weightSummary(weights: List<WeightEntry>): WeightSummary? {
         val latest = weights.maxByOrNull { it.timestamp } ?: return null

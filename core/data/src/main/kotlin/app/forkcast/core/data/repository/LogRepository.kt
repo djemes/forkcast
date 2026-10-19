@@ -17,6 +17,9 @@ import javax.inject.Singleton
 
 interface LogRepository {
     fun observeDay(date: LocalDate): Flow<List<LogEntry>>
+    /** Entries from [from] to [to], inclusive. */
+    fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntry>>
+    suspend fun range(from: LocalDate, to: LocalDate): List<LogEntry>
     suspend fun entriesForMeal(date: LocalDate, mealSlotId: String): List<LogEntry>
     suspend fun get(id: String): LogEntry?
     /** Adds entries (ids are assigned) and marks their foods as recently used. Returns the new ids. */
@@ -39,6 +42,11 @@ class RoomLogRepository @Inject constructor(
 
     override fun observeDay(date: LocalDate): Flow<List<LogEntry>> =
         dao.observeForDate(date).map { list -> list.map { it.toModel() } }
+
+    override fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntry>> =
+        dao.observeRange(from, to).map { list -> list.map { it.toModel() } }
+
+    override suspend fun range(from: LocalDate, to: LocalDate): List<LogEntry> = dao.getRange(from, to).map { it.toModel() }
 
     override suspend fun entriesForMeal(date: LocalDate, mealSlotId: String): List<LogEntry> =
         dao.getForMeal(date, mealSlotId).map { it.toModel() }

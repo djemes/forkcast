@@ -229,7 +229,7 @@ fun TodayScreen(
                 val totals = day.totals
                 val targets = day.targets
                 if (totals != null && targets != null) {
-                    item(key = "ring") { BudgetRing(totals, f, Modifier.fillMaxWidth()) }
+                    item(key = "ring") { BudgetRing(totals, f, Modifier.fillMaxWidth(), day.forecast, day.forecastFromMinute) }
                     item(key = "macros") { MacroBars(totals, targets, f) { showNutrients = true } }
                 }
                 items(day.meals, key = { it.slot.id }) { meal ->

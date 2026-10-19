@@ -5,6 +5,12 @@
     <string name="ring_over">%1$s over</string>
     <string name="ring_eaten_budget">Eaten %1$s · Budget %2$s · +%3$s ex</string>
     <string name="ring_description">%1$s eaten of %2$s. %3$s.</string>
+    <!-- Forecast status line (DESIGN.md §5) -->
+    <string name="forecast_on_course">On course</string>
+    <string name="forecast_tight">Tight</string>
+    <string name="forecast_likely_over">Likely over by ~%1$s</string>
+    <string name="forecast_over">%1$s over</string>
+    <string name="forecast_explain">Based on what you usually eat after %1$s, you\'ll likely end near %2$s.</string>
 
     <!-- Macros / nutrient panel -->
     <string name="macro_progress">%1$s / %2$s</string>
