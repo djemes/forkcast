@@ -77,7 +77,9 @@ data class LabelPrefill(
 
     companion object {
         fun from(p: ParsedLabel) = LabelPrefill(p.servingLabel, p.servingGrams, p.perServing.mapKeys { it.key.name })
-        fun decode(s: String): LabelPrefill? = runCatching { Json { ignoreUnknownKeys = true }.decodeFromString(serializer(), s) }.getOrNull()
+        private val lenient = Json { ignoreUnknownKeys = true }
+
+        fun decode(s: String): LabelPrefill? = runCatching { lenient.decodeFromString(serializer(), s) }.getOrNull()
     }
 }
 

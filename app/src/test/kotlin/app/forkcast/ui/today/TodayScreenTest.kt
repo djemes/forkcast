@@ -10,6 +10,9 @@ import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.longClick
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -137,6 +140,17 @@ class TodayScreenTest {
         compose.onNodeWithContentDescription("Previous day").performClick()
         compose.onNodeWithContentDescription("Next day").performClick()
         assertThat(events).containsExactly(TodayEvent.PreviousDay, TodayEvent.NextDay).inOrder()
+    }
+
+    /** Long-press on "+ glass" asks for another amount (SPEC §4.2 item 5). */
+    @Test fun waterOtherAmount() {
+        val events = mutableListOf<TodayEvent>()
+        compose.setContent { ForkcastTheme { TodayScreen(state.copy(units = UnitPrefs.METRIC), onEvent = { events += it }) } }
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("+ glass"))
+        compose.onNodeWithText("+ glass").performTouchInput { longClick() }
+        compose.onNodeWithText("Amount (ml)").performTextInput("330")
+        compose.onAllNodesWithText("Add").filterToOne(hasAnyAncestor(isDialog())).performClick()
+        assertThat(events).contains(TodayEvent.AddWater(330.0))
     }
 
     @Test fun noNextDayOnToday() {

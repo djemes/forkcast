@@ -329,6 +329,7 @@ fun TodayScreen(
                         f = f,
                         onAddGlass = { onEvent(TodayEvent.AddWater(day.water.glassMl)) },
                         onRemoveLast = { onEvent(TodayEvent.RemoveLastWater) },
+                        onAddAmount = { ml -> onEvent(TodayEvent.AddWater(ml)) },
                     )
                 }
                 item(key = "weight") { WeightCard(day.weight, f, actions.openWeight) }
@@ -356,6 +357,7 @@ fun TodayScreen(
                 savedMeals = { logSheetMealId = null; savedMealsFor = mealId },
             ),
             recents = state.recents,
+            recentsAreFavorites = state.recentsAreFavorites,
             f = f,
             onAddRecent = { food ->
                 logSheetMealId = null

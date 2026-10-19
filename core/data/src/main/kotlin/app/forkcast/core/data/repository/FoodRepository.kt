@@ -103,8 +103,9 @@ class DefaultFoodRepository @Inject constructor(
 
     override suspend fun refreshDetails(id: String) {
         val local = dao.get(id) ?: return
-        if (local.source != FoodSource.USDA || local.sourceId == null) return
-        val fresh = runCatching { usda.food(local.sourceId!!) }.getOrNull() ?: return
+        val fdcId = local.sourceId
+        if (local.source != FoodSource.USDA || fdcId == null) return
+        val fresh = runCatching { usda.food(fdcId) }.getOrNull() ?: return
         dao.upsert(
             local.copy(
                 servingSizes = fresh.servingSizes.ifEmpty { local.servingSizes },

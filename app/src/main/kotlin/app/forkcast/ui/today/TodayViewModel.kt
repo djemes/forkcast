@@ -109,6 +109,8 @@ data class TodayUiState(
     val selection: Set<String> = emptySet(),
     /** For one-tap add in the Log sheet. */
     val recents: List<Food> = emptyList(),
+    /** [recents] are favorites (nothing logged yet). */
+    val recentsAreFavorites: Boolean = false,
     val savedMeals: List<SavedMeal> = emptyList(),
     /** Meals that had entries yesterday: these get a "Same as yesterday" button when empty. */
     val yesterdayMealIds: Set<String> = emptySet(),
@@ -236,9 +238,10 @@ class TodayViewModel @Inject constructor(
     private val extras = combine(
         profileRepository.observeDailyTargets(),
         settingsRepository.settings,
-        foodRepository.observeRecents(5),
+        // One-tap foods: recents, or favorites before anything has been logged.
+        combine(foodRepository.observeRecents(5), foodRepository.observeFavorites()) { r, fav -> if (r.isNotEmpty()) r to false else fav.take(5) to true },
         savedMealRepository.meals,
-    ) { t, s, r, saved -> Extras(t, s, r, saved) }
+    ) { t, s, (r, favorites), saved -> Extras(t, s, r, saved, favorites) }
 
     private val body = combine(weightRepository.entries, profileRepository.profile) { weights, profile -> weights to profile }
 
@@ -252,6 +255,7 @@ class TodayViewModel @Inject constructor(
         val settings: AppSettings,
         val recents: List<Food>,
         val saved: List<SavedMeal>,
+        val recentsAreFavorites: Boolean = false,
     )
 
     val uiState: StateFlow<TodayUiState?> = combine(
@@ -297,6 +301,7 @@ class TodayViewModel @Inject constructor(
             totals = targets?.let { DayMath.totals(entries, it.budgetKcal, dayData.exerciseBonus) },
             selection = selected intersect entries.map { it.id }.toSet(),
             recents = x.recents,
+            recentsAreFavorites = x.recentsAreFavorites,
             savedMeals = x.saved,
             yesterdayMealIds = dayData.yesterdayMeals,
             water = WaterSummary(

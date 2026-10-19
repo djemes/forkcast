@@ -45,6 +45,7 @@
     <string name="log_quick_add">Quick add calories</string>
     <string name="log_saved_meals">Saved meals</string>
     <string name="log_recent">Recent</string>
+    <string name="log_favorites">Favorites</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>

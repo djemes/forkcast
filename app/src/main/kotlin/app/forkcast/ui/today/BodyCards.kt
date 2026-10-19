@@ -1,5 +1,15 @@
 package app.forkcast.ui.today
 
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.AlertDialog
+import androidx.compose.ui.draw.clip
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -39,9 +49,11 @@ import kotlin.math.abs
 
 /** Water card (DESIGN.md §5): progress toward the daily goal, + glass, and undo of the last glass. */
 @Composable
-fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onRemoveLast: () -> Unit) {
+fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onRemoveLast: () -> Unit, onAddAmount: (Double) -> Unit = {}) {
     val glass = f.waterLiters(water.glassMl)
     val addDescription = stringResource(R.string.water_add_glass_description, glass)
+    val otherLabel = stringResource(R.string.water_other_amount)
+    var askAmount by remember { mutableStateOf(false) }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -63,10 +75,23 @@ fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onR
                     Icon(painterResource(R.drawable.ic_remove), stringResource(R.string.water_remove_last))
                 }
             }
-            FilledTonalButton(
-                onClick = onAddGlass,
-                modifier = Modifier.padding(start = 4.dp).semantics { contentDescription = addDescription },
-            ) { Text(stringResource(R.string.water_add_glass)) }
+            // Tap adds a glass; long-press asks for another amount.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(start = 4.dp)
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(50))
+                    .background(MaterialTheme.colorScheme.secondaryContainer)
+                    .combinedClickable(onClick = onAddGlass, onLongClick = { askAmount = true }, onLongClickLabel = otherLabel, role = Role.Button)
+                    .semantics {
+                        contentDescription = addDescription
+                        customActions = listOf(CustomAccessibilityAction(otherLabel) { askAmount = true; true })
+                    }
+                    .padding(horizontal = 24.dp, vertical = 10.dp),
+            ) {
+                Text(stringResource(R.string.water_add_glass), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
+            }
         }
         // One row normally; at large font sizes the buttons move to their own row so nothing is squeezed.
         if (LocalDensity.current.fontScale <= 1.3f) {
@@ -90,6 +115,9 @@ fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onR
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+        }
+        if (askAmount) {
+            WaterAmountDialog(f, onDismiss = { askAmount = false }) { ml -> askAmount = false; onAddAmount(ml) }
         }
         LinearProgressIndicator(
             progress = { if (water.targetMl > 0) (water.ml / water.targetMl).toFloat().coerceIn(0f, 1f) else 0f },
@@ -244,4 +272,27 @@ fun DayCompletenessRow(completeness: DayCompleteness, autoComplete: Boolean, onS
         Text(stringResource(text), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         TextButton(onClick = { onSet(next) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(action)) }
     }
+}
+
+/** "Other amount" for water, in the user's unit. */
+@Composable
+private fun WaterAmountDialog(f: UnitFormatter, onDismiss: () -> Unit, onAdd: (Double) -> Unit) {
+    var value by remember { mutableStateOf<Double?>(null) }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.water_other_amount)) },
+        text = {
+            app.forkcast.ui.onboarding.NumberField(
+                initial = "",
+                label = stringResource(R.string.water_amount_field, f.waterUnitLabel),
+                onValue = { value = it },
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = { value?.takeIf { it > 0 }?.let { onAdd(f.waterToMl(it)) } }, enabled = (value ?: 0.0) > 0) {
+                Text(stringResource(R.string.water_add))
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }

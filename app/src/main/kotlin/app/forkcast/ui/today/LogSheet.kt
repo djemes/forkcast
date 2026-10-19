@@ -67,6 +67,7 @@ fun LogSheet(
     onDismiss: () -> Unit,
     actions: LogSheetActions = LogSheetActions(),
     recents: List<Food> = emptyList(),
+    recentsAreFavorites: Boolean = false,
     f: UnitFormatter? = null,
     onAddRecent: (Food) -> Unit = {},
     /** Set when the day on screen isn't today ("Yesterday"), so it's clear where the entry goes. */
@@ -119,7 +120,7 @@ fun LogSheet(
             LogRow(R.drawable.ic_bookmark, R.string.log_saved_meals, actions.savedMeals)
             if (recents.isNotEmpty() && f != null) {
                 Text(
-                    stringResource(R.string.log_recent),
+                    stringResource(if (recentsAreFavorites) R.string.log_favorites else R.string.log_recent),
                     style = MaterialTheme.typography.titleSmall,
                     modifier = Modifier
                         .padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
