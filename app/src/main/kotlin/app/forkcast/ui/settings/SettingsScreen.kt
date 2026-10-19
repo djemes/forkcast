@@ -19,6 +19,7 @@ import app.forkcast.R
 fun SettingsScreen(
     onBack: () -> Unit,
     onOpenProfileGoals: () -> Unit,
+    onOpenAi: () -> Unit,
     onOpenFoodDatabases: () -> Unit,
     onOpenBackup: () -> Unit,
     onOpenAppearance: () -> Unit,
@@ -29,7 +30,7 @@ fun SettingsScreen(
         ComingSoonItem(R.string.settings_daily_targets)
         ComingSoonItem(R.string.settings_meals)
         ComingSoonItem(R.string.settings_notifications)
-        ComingSoonItem(R.string.settings_ai)
+        SettingsItem(R.string.settings_ai, onOpenAi)
         SettingsItem(R.string.settings_food_databases, onOpenFoodDatabases)
         ComingSoonItem(R.string.settings_health_connect)
         SettingsItem(R.string.settings_backup_data, onOpenBackup)
