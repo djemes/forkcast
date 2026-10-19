@@ -51,7 +51,7 @@ class TodayViewModelTest {
     private val health = app.forkcast.fakes.FakeHealthRepository()
     private val maintenance = app.forkcast.fakes.FakeMaintenanceRepository()
 
-    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, health, maintenance, clock)
+    private fun vm() = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, health, maintenance, app.forkcast.fakes.FakeMissingKeysRepository(), clock)
 
     @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
     @After fun tearDown() = Dispatchers.resetMain()
@@ -285,7 +285,7 @@ class TodayViewModelTest {
 
     @Test fun resumingAfterMidnightMovesToTheNewDay() = runTest {
         val moving = MutableClock(clock.instant(), zone)
-        val vm = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, health, maintenance, moving)
+        val vm = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, health, maintenance, app.forkcast.fakes.FakeMissingKeysRepository(), moving)
         vm.uiState.filterNotNull().first()
         moving.now = moving.now.plusSeconds(12 * 3600) // 00:40 the next day
         vm.onEvent(TodayEvent.Resumed)

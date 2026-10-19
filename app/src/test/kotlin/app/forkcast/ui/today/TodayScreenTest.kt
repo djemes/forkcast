@@ -210,4 +210,28 @@ class TodayScreenTest {
         compose.setContent { ForkcastTheme { TodayScreen(state.copy(lastLogged = LoggedDay(today.minusDays(1), 6)), onEvent = {}) } }
         compose.onNodeWithText("Last logged", substring = true).assertDoesNotExist()
     }
+
+    @Test fun missingKeysAskOnceWithNames() {
+        val events = mutableListOf<TodayEvent>()
+        var opened: Boolean? = null
+        val missing = listOf(
+            app.forkcast.core.data.repository.MissingKey("ai:1", "Gemini (free)"),
+            app.forkcast.core.data.repository.MissingKey("usda", null),
+        )
+        compose.setContent {
+            ForkcastTheme { TodayScreen(state.copy(missingKeys = missing), onEvent = { events += it }, actions = TodayActions(openKeys = { opened = it })) }
+        }
+        compose.onNodeWithText("Gemini (free), USDA food database", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Add keys").performClick()
+        assertThat(opened).isTrue()
+        compose.onNodeWithText("Not now").performClick()
+        assertThat(events).contains(TodayEvent.DismissMissingKeys)
+    }
+
+    @Test fun trendsIconOnTodayOnly() {
+        var trends = 0
+        compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = {}, actions = TodayActions(openTrends = { trends++ })) } }
+        compose.onNodeWithContentDescription("Open trends").performClick()
+        assertThat(trends).isEqualTo(1)
+    }
 }

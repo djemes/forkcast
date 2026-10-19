@@ -20,6 +20,7 @@ interface SettingsRepository {
     suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings)
     suspend fun setAdaptiveTdee(enabled: Boolean)
     suspend fun setActivityBonus(enabled: Boolean)
+    suspend fun update(transform: (AppSettings) -> AppSettings)
 }
 
 @Singleton
@@ -59,5 +60,9 @@ class DataStoreSettingsRepository @Inject constructor(
 
     override suspend fun setActivityBonus(enabled: Boolean) {
         dataStore.updateData { it.copy(activityBonus = enabled) }
+    }
+
+    override suspend fun update(transform: (AppSettings) -> AppSettings) {
+        dataStore.updateData(transform)
     }
 }

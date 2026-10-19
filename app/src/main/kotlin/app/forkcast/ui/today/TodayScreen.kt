@@ -118,6 +118,8 @@ data class TodayActions(
     val openTrends: () -> Unit = {},
     /** Opens the recipe list to log into [mealSlotId] on [date]. */
     val openRecipes: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
+    /** Missing keys: Settings › AI (true) or Food databases (false). */
+    val openKeys: (ai: Boolean) -> Unit = {},
 )
 
 @Composable
@@ -305,6 +307,15 @@ fun TodayScreen(
             ) {
                 val totals = day.totals
                 val targets = day.targets
+                if (day.isToday && day.missingKeys.isNotEmpty()) {
+                    item(key = "missing-keys") {
+                        MissingKeysCard(
+                            day.missingKeys,
+                            onAdd = { actions.openKeys(day.missingKeys.any { it.isAi }) },
+                            onDismiss = { onEvent(TodayEvent.DismissMissingKeys) },
+                        )
+                    }
+                }
                 if (totals != null && targets != null) {
                     item(key = "ring") { BudgetRing(totals, f, Modifier.fillMaxWidth(), day.forecast, day.forecastFromMinute) }
                     item(key = "macros") { MacroBars(totals, targets, f) { showNutrients = true } }
@@ -645,6 +656,41 @@ private fun LastLoggedRow(last: LoggedDay, today: LocalDate, onShow: () -> Unit)
             )
         }
         TextButton(onClick = onShow) { Text(stringResource(R.string.last_logged_show)) }
+    }
+}
+
+/**
+ * Backups never include API keys, so after a restore or a move to a new phone this asks for
+ * them once, naming what is missing (SPEC §4.11). "Not now" stops asking about these keys.
+ */
+@Composable
+private fun MissingKeysCard(missing: List<app.forkcast.core.data.repository.MissingKey>, onAdd: () -> Unit, onDismiss: () -> Unit) {
+    val usda = stringResource(R.string.missing_keys_usda)
+    val names = missing.joinToString(", ") { it.profileName ?: usda }
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(20.dp))
+            .background(MaterialTheme.colorScheme.tertiaryContainer)
+            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
+    ) {
+        Text(
+            stringResource(R.string.missing_keys_title),
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.semantics { heading() },
+        )
+        Text(
+            stringResource(R.string.missing_keys_body, names),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onTertiaryContainer,
+            modifier = Modifier.padding(end = 8.dp),
+        )
+        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.missing_keys_not_now)) }
+            TextButton(onClick = onAdd) { Text(stringResource(R.string.missing_keys_add)) }
+        }
     }
 }
 

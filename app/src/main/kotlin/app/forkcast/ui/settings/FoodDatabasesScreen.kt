@@ -50,7 +50,10 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class FoodDatabasesViewModel @Inject constructor(private val secrets: SecretStore) : ViewModel() {
+class FoodDatabasesViewModel @Inject constructor(
+    private val secrets: SecretStore,
+    private val missingKeys: app.forkcast.core.data.repository.MissingKeysRepository,
+) : ViewModel() {
     /**
      * The saved USDA key, for the masked field with show/hide and copy (owner request
      * 2026-10-19). It stays encrypted at rest and is never logged.
@@ -63,8 +66,16 @@ class FoodDatabasesViewModel @Inject constructor(private val secrets: SecretStor
         viewModelScope.launch { secrets.refresh() }
     }
 
-    fun saveUsdaKey(key: String) = viewModelScope.launch { secrets.set(SecretName.USDA_API_KEY, key) }
-    fun removeUsdaKey() = viewModelScope.launch { secrets.set(SecretName.USDA_API_KEY, null) }
+    fun saveUsdaKey(key: String) = viewModelScope.launch {
+        secrets.set(SecretName.USDA_API_KEY, key)
+        missingKeys.noteFoodDatabaseKey(true)
+    }
+
+    /** Removed on purpose: don't ask for it after a restore. */
+    fun removeUsdaKey() = viewModelScope.launch {
+        secrets.set(SecretName.USDA_API_KEY, null)
+        missingKeys.noteFoodDatabaseKey(false)
+    }
 }
 
 @Composable

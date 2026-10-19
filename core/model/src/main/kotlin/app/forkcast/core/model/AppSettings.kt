@@ -23,6 +23,14 @@ data class AppSettings(
      * activity only. Replaces the Phase 3 Included/Added-back profile modes (owner, 2026-10-19).
      */
     val activityBonus: Boolean = true,
+    /** What the user had saved as keys, so a restored phone (keys are never backed up) can ask for them (SPEC §4.11). */
+    val keyNotes: KeyNotes = KeyNotes(),
+)
+
+/** Never the keys themselves: only that a food-database key was saved (dismissed prompts are per phone, in DevicePrefs). */
+@Serializable
+data class KeyNotes(
+    val foodDatabaseKeySaved: Boolean = false,
 )
 
 /**

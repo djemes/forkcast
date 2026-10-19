@@ -31,6 +31,7 @@ class FakeSettingsRepository : SettingsRepository {
     override suspend fun setUnits(units: UnitPrefs) = state.update { it.copy(units = units) }
     override suspend fun setWaterTargetMl(ml: Double?) = state.update { it.copy(waterTargetMl = ml) }
     override suspend fun updateAi(transform: (AiSettings) -> AiSettings) = state.update { it.copy(ai = transform(it.ai)) }
+    override suspend fun update(transform: (AppSettings) -> AppSettings) = state.update(transform)
     override suspend fun updateNotifications(transform: (NotificationSettings) -> NotificationSettings) =
         state.update { it.copy(notifications = transform(it.notifications)) }
     override suspend fun setAdaptiveTdee(enabled: Boolean) = state.update { it.copy(adaptiveTdee = enabled) }
@@ -74,4 +75,12 @@ class FakeProfileRepository(
         combine(profileState, goalState, overrideState, weights.latestKg) { p, g, o, w ->
             if (p == null || g == null) null else DailyTargetsCalculator.compute(p, g, w ?: g.startWeightKg, today(), o)
         }
+}
+
+class FakeMissingKeysRepository(initial: List<app.forkcast.core.data.repository.MissingKey> = emptyList()) : app.forkcast.core.data.repository.MissingKeysRepository {
+    val state = MutableStateFlow(initial)
+    override val missing: Flow<List<app.forkcast.core.data.repository.MissingKey>> = state
+    override suspend fun dismiss(ids: Collection<String>) = state.update { list -> list.filter { it.id !in ids } }
+    override suspend fun noteFoodDatabaseKey(saved: Boolean) = Unit
+    override fun start(scope: kotlinx.coroutines.CoroutineScope) = Unit
 }

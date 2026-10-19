@@ -131,6 +131,8 @@ data class TodayUiState(
     val completeness: DayCompleteness = DayCompleteness.AUTO,
     /** The day meets the automatic rule (2 meals, 1,000 kcal). */
     val autoComplete: Boolean = false,
+    /** Keys lost in a restore or a move to a new phone (backups never carry keys). */
+    val missingKeys: List<app.forkcast.core.data.repository.MissingKey> = emptyList(),
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -172,6 +174,8 @@ sealed interface TodayEvent {
     data class AddWater(val ml: Double) : TodayEvent
     data object RemoveLastWater : TodayEvent
     data class SetCompleteness(val completeness: DayCompleteness) : TodayEvent
+    /** "Not now" on the missing-keys card. */
+    data object DismissMissingKeys : TodayEvent
 }
 
 /** One-shot UI effects. */
@@ -196,6 +200,7 @@ class TodayViewModel @Inject constructor(
     estimateRepository: AiEstimateRepository,
     health: HealthRepository,
     private val maintenance: MaintenanceRepository,
+    private val missingKeys: app.forkcast.core.data.repository.MissingKeysRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -254,7 +259,8 @@ class TodayViewModel @Inject constructor(
         // One-tap foods: recents, or favorites before anything has been logged.
         combine(foods.observeRecents(5), foods.observeFavorites()) { r, fav -> if (r.isNotEmpty()) r to false else fav.take(5) to true },
         savedMealRepository.meals,
-    ) { t, s, (r, favorites), saved -> Extras(t, s, r, saved, favorites) }
+        missingKeys.missing,
+    ) { t, s, (r, favorites), saved, missing -> Extras(t, s, r, saved, favorites, missing) }
 
     private val body = combine(weightRepository.entries, profileRepository.profile) { weights, profile -> weights to profile }
 
@@ -269,6 +275,7 @@ class TodayViewModel @Inject constructor(
         val recents: List<Food>,
         val saved: List<SavedMeal>,
         val recentsAreFavorites: Boolean = false,
+        val missingKeys: List<app.forkcast.core.data.repository.MissingKey> = emptyList(),
     )
 
     val uiState: StateFlow<TodayUiState?> = combine(
@@ -338,6 +345,7 @@ class TodayViewModel @Inject constructor(
                 bonus = dayData.bonus,
             ),
             completeness = dayData.completeness,
+            missingKeys = x.missingKeys,
             autoComplete = AdaptiveTdee.isComplete(
                 AdaptiveTdee.DayLog(date, entries.sumOf { it.nutrients.kcal }, entries.map { it.mealSlotId }.distinct().size),
             ),
@@ -415,6 +423,9 @@ class TodayViewModel @Inject constructor(
             is TodayEvent.DeleteSavedMeal -> viewModelScope.launch { savedMealRepository.delete(event.savedMealId) }
             is TodayEvent.AddWater -> viewModelScope.launch { waterRepository.add(selectedDate.value, event.ml) }
             is TodayEvent.SetCompleteness -> viewModelScope.launch { maintenance.setCompleteness(selectedDate.value, event.completeness) }
+            TodayEvent.DismissMissingKeys -> viewModelScope.launch {
+                missingKeys.dismiss(uiState.value?.missingKeys.orEmpty().map { it.id })
+            }
             TodayEvent.RemoveLastWater -> viewModelScope.launch {
                 uiState.value?.water?.lastEntryId?.let { waterRepository.delete(it) }
             }

@@ -178,6 +178,7 @@ fun ForkcastNavHost(
                     openActivity = { date -> navController.navigate(ActivityDestination(date.toString())) },
                     openTrends = { navController.navigate(TrendsDestination) },
                     openRecipes = { meal, date -> navController.navigate(RecipesDestination(meal, date.toString())) },
+                    openKeys = { ai -> navController.navigate(if (ai) AiSettingsDestination else FoodDatabasesDestination) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },

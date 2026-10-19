@@ -23,6 +23,7 @@ class ForkcastApplication : Application(), Configuration.Provider {
     @Inject lateinit var notifications: NotificationStarter
     @Inject lateinit var health: HealthSyncStarter
     @Inject lateinit var settings: app.forkcast.core.data.repository.SettingsRepository
+    @Inject lateinit var missingKeys: app.forkcast.core.data.repository.MissingKeysRepository
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -50,5 +51,6 @@ class ForkcastApplication : Application(), Configuration.Provider {
         }
         notifications.start(appScope)
         health.start(appScope)
+        missingKeys.start(appScope)
     }
 }
