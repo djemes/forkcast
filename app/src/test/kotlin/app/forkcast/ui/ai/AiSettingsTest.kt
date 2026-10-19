@@ -299,7 +299,7 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithContentDescription("More options for Gemini 3.8 Flash").performClick()
+        compose.onNodeWithContentDescription("More options for Gemini 3.8 Flash").performScrollTo().performClick()
         compose.onNodeWithText("Delete profile").performClick()
         // Nothing is deleted until the dialog is confirmed; it says what moves up.
         assertThat(events.filterIsInstance<AiSettingsEvent.Delete>()).isEmpty()
@@ -326,7 +326,7 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithContentDescription("More options for B").performClick()
+        compose.onNodeWithContentDescription("More options for B").performScrollTo().performClick()
         compose.onNodeWithText("Move up").performClick()
         assertThat(events).contains(AiSettingsEvent.Move(1, 0))
     }

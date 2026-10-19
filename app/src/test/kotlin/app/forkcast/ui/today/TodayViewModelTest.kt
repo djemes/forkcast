@@ -235,7 +235,7 @@ class TodayViewModelTest {
         log.add(listOf(TestData.entry("Today oats", "b", 300.0), TestData.entry("Old pasta", "d", 650.0, date = TestData.TODAY.minusDays(1))))
         val vm = vm()
         val seen = mutableListOf<TodayUiState>()
-        val job = backgroundScope.launch { vm.uiState.filterNotNull().collect { seen += it } }
+        val job = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.uiState.filterNotNull().collect { seen += it } }
         vm.onEvent(TodayEvent.PreviousDay)
         vm.onEvent(TodayEvent.NextDay)
         job.cancel()

@@ -137,7 +137,7 @@ class TodayScreenTest {
             lastLogged = LoggedDay(today.minusDays(1), 6),
         )
         compose.setContent { ForkcastTheme { TodayScreen(empty, onEvent = { events += it }) } }
-        compose.onNodeWithText("Last logged: Yesterday · 6 entries").assertIsDisplayed()
+        row("Last logged: Yesterday · 6 entries").assertIsDisplayed()
         compose.onNodeWithText("Show").performClick()
         assertThat(events).contains(TodayEvent.PickDate(today.minusDays(1)))
     }
