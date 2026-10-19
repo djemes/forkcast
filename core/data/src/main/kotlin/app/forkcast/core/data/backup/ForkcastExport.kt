@@ -13,6 +13,8 @@ import app.forkcast.core.data.db.GoalEntity
 import app.forkcast.core.data.db.LogEntryEntity
 import app.forkcast.core.data.db.MealSlotEntity
 import app.forkcast.core.data.db.ProfileEntity
+import app.forkcast.core.data.db.RecipeEntity
+import app.forkcast.core.data.db.RecipeIngredientEntity
 import app.forkcast.core.data.db.SavedMealEntity
 import app.forkcast.core.data.db.SavedMealItemEntity
 import app.forkcast.core.data.db.TargetOverrideEntity
@@ -21,10 +23,9 @@ import app.forkcast.core.data.db.WaterEntryEntity
 import app.forkcast.core.data.db.WeightEntryEntity
 import app.forkcast.core.model.AppSettings
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.json.JsonElement
 
 /**
- * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v4.json). Field names mirror the
+ * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v5.json). Field names mirror the
  * Room entities. Secrets are never included: API keys live in an encrypted file outside the
  * database and [AppSettings] holds no secrets (keys travel only in the separate,
  * passphrase-encrypted settings export).
@@ -33,7 +34,8 @@ import kotlinx.serialization.json.JsonElement
  * (no keys), usage, notification log, match cache. v3 (Phase 3): maintenance estimates,
  * Health Connect activity days, water's Health Connect record id. Older files read as v3 with
  * the newer arrays empty. v4: drinks count toward water (food.countsAsWater, waterMl on log
- * entries and saved-meal items); older files read with those null.
+ * entries and saved-meal items); older files read with those null. v5 (Phase 4): recipes and
+ * their ingredients (older files wrote `recipes` as an always-empty array).
  */
 @Serializable
 data class ForkcastExport(
@@ -49,8 +51,9 @@ data class ForkcastExport(
     val tdeeEstimates: List<TdeeEstimateEntity> = emptyList(),
     val mealSlots: List<MealSlotEntity> = emptyList(),
     val foods: List<FoodEntity> = emptyList(),
-    /** Phase 4. */
-    val recipes: List<JsonElement> = emptyList(),
+    /** v5 (Phase 4). */
+    val recipes: List<RecipeEntity> = emptyList(),
+    val recipeIngredients: List<RecipeIngredientEntity> = emptyList(),
     val savedMeals: List<SavedMealEntity> = emptyList(),
     val savedMealItems: List<SavedMealItemEntity> = emptyList(),
     val logEntries: List<LogEntryEntity> = emptyList(),
@@ -67,6 +70,6 @@ data class ForkcastExport(
     val settings: AppSettings? = null,
 ) {
     companion object {
-        const val SCHEMA_VERSION = 4
+        const val SCHEMA_VERSION = 5
     }
 }

@@ -88,6 +88,7 @@ object DataModule {
     @Provides fun provideDayStatusDao(db: ForkcastDatabase): DayStatusDao = db.dayStatusDao()
     @Provides fun provideAiDao(db: ForkcastDatabase): AiDao = db.aiDao()
     @Provides fun provideHealthDao(db: ForkcastDatabase): HealthDao = db.healthDao()
+    @Provides fun provideRecipeDao(db: ForkcastDatabase): app.forkcast.core.data.db.RecipeDao = db.recipeDao()
 
     @Provides
     @Singleton
@@ -128,6 +129,9 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindWeeklyCheckInRepository(impl: app.forkcast.core.data.repository.RoomWeeklyCheckInRepository): app.forkcast.core.data.repository.WeeklyCheckInRepository
+
+    @Binds
+    abstract fun bindRecipeRepository(impl: app.forkcast.core.data.repository.RoomRecipeRepository): app.forkcast.core.data.repository.RecipeRepository
 
     @Binds
     abstract fun bindTrendsRepository(impl: app.forkcast.core.data.repository.RoomTrendsRepository): app.forkcast.core.data.repository.TrendsRepository

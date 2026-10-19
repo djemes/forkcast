@@ -27,6 +27,8 @@ interface BackupDao {
     @Query("SELECT * FROM ai_match_cache") suspend fun aiMatchCache(): List<AiMatchCacheEntity>
     @Query("SELECT * FROM activity_day") suspend fun activityDays(): List<ActivityDayEntity>
     @Query("SELECT * FROM tdee_estimate") suspend fun tdeeEstimates(): List<TdeeEstimateEntity>
+    @Query("SELECT * FROM recipe") suspend fun recipes(): List<RecipeEntity>
+    @Query("SELECT * FROM recipe_ingredient") suspend fun recipeIngredients(): List<RecipeIngredientEntity>
 
     @Upsert suspend fun upsertProfiles(rows: List<ProfileEntity>)
     @Upsert suspend fun upsertGoals(rows: List<GoalEntity>)
@@ -47,6 +49,8 @@ interface BackupDao {
     @Upsert suspend fun upsertAiMatchCache(rows: List<AiMatchCacheEntity>)
     @Upsert suspend fun upsertActivityDays(rows: List<ActivityDayEntity>)
     @Upsert suspend fun upsertTdeeEstimates(rows: List<TdeeEstimateEntity>)
+    @Upsert suspend fun upsertRecipes(rows: List<RecipeEntity>)
+    @Upsert suspend fun upsertRecipeIngredients(rows: List<RecipeIngredientEntity>)
 
     @Query("DELETE FROM profile") suspend fun clearProfiles()
     @Query("DELETE FROM goal") suspend fun clearGoals()
@@ -67,6 +71,8 @@ interface BackupDao {
     @Query("DELETE FROM ai_match_cache") suspend fun clearAiMatchCache()
     @Query("DELETE FROM activity_day") suspend fun clearActivityDays()
     @Query("DELETE FROM tdee_estimate") suspend fun clearTdeeEstimates()
+    @Query("DELETE FROM recipe") suspend fun clearRecipes()
+    @Query("DELETE FROM recipe_ingredient") suspend fun clearRecipeIngredients()
     @Query("DELETE FROM day_status WHERE id = :id") suspend fun deleteDayStatus(id: String)
     @Query("DELETE FROM activity_day WHERE id = :id") suspend fun deleteActivityDay(id: String)
 
@@ -75,6 +81,6 @@ interface BackupDao {
         clearProfiles(); clearGoals(); clearTargetOverrides(); clearMealSlots(); clearFoods()
         clearSavedMeals(); clearSavedMealItems(); clearLogEntries(); clearWeights(); clearWater(); clearDayStatus()
         clearAiEstimates(); clearAiComponents(); clearAiProfiles(); clearUsageRecords(); clearNotificationLog(); clearAiMatchCache()
-        clearActivityDays(); clearTdeeEstimates()
+        clearActivityDays(); clearTdeeEstimates(); clearRecipes(); clearRecipeIngredients()
     }
 }

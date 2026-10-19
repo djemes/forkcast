@@ -14,6 +14,7 @@ import androidx.room.TypeConverters
  * v3 (Phase 2): ai_estimate, ai_component, ai_profile, usage_record, notification_log, ai_match_cache
  * v4 (Phase 3): activity_day, tdee_estimate; Health Connect write state on log_entry and water_entry
  * v5: drinks count toward water (food.countsAsWater, log_entry/saved_meal_item.waterMl, log_entry.hcWaterRecordId)
+ * v6 (Phase 4): recipe, recipe_ingredient
  */
 @Database(
     entities = [
@@ -36,10 +37,12 @@ import androidx.room.TypeConverters
         AiMatchCacheEntity::class,
         ActivityDayEntity::class,
         TdeeEstimateEntity::class,
+        RecipeEntity::class,
+        RecipeIngredientEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6)],
 )
 @TypeConverters(Converters::class)
 abstract class ForkcastDatabase : RoomDatabase() {
@@ -56,6 +59,7 @@ abstract class ForkcastDatabase : RoomDatabase() {
     abstract fun backupDao(): BackupDao
     abstract fun aiDao(): AiDao
     abstract fun healthDao(): HealthDao
+    abstract fun recipeDao(): RecipeDao
 
     companion object {
         const val NAME = "forkcast.db"

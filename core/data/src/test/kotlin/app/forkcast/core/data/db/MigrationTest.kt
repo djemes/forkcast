@@ -146,6 +146,29 @@ class MigrationTest {
         }
     }
 
+    @Test fun migrate5To6KeepsLogAndAddsRecipeTables() {
+        helper.createDatabase(5).apply {
+            insertV1MealSlot()
+            execSQL(
+                "INSERT INTO log_entry (id, date, zoneId, mealSlotId, foodId, displayName, brand, quantity, servingLabel, grams, " +
+                    "nutrients, source, aiEstimateId, healthConnectRecordId, note, loggedAt, createdAt, updatedAt, deletedAt, hcSyncedAt, waterMl, hcWaterRecordId) " +
+                    "VALUES ('e1', '2026-10-18', 'America/New_York', 'a', NULL, 'Tea', NULL, 1.0, 'cup', 237.0, " +
+                    "'{\"ENERGY_KCAL\":2.0}', 'USDA', NULL, NULL, NULL, 1, 1, 5, NULL, 5, 237.0, NULL)",
+            )
+            close()
+        }
+        helper.runMigrationsAndValidate(6, emptyList()).apply {
+            prepare("SELECT displayName, waterMl FROM log_entry").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getText(0)).isEqualTo("Tea")
+                assertThat(s.getDouble(1)).isEqualTo(237.0)
+            }
+            prepare("SELECT count(*) FROM recipe").use { s -> assertThat(s.step()).isTrue(); assertThat(s.getLong(0)).isEqualTo(0) }
+            prepare("SELECT count(*) FROM recipe_ingredient").use { s -> assertThat(s.step()).isTrue(); assertThat(s.getLong(0)).isEqualTo(0) }
+            close()
+        }
+    }
+
     /** A v1 file from Phase 0 opens with today's code, upgraded in place with its data. */
     @Test fun version1FileOpensWithCurrentCode() {
         helper.createDatabase(1).apply {
@@ -159,7 +182,7 @@ class MigrationTest {
             assertThat(c.moveToFirst()).isTrue()
             assertThat(c.getString(0)).isEqualTo("Lunch")
         }
-        assertThat(db.openHelper.writableDatabase.version).isEqualTo(5)
+        assertThat(db.openHelper.writableDatabase.version).isEqualTo(6)
         db.close()
     }
 

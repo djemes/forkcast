@@ -162,6 +162,39 @@ data class SavedMealItemEntity(
     val waterMl: Double? = null,
 )
 
+/** v6 (Phase 4): a recipe; [foodId] is its loggable food (source RECIPE). */
+@Serializable
+@Entity(tableName = "recipe", indices = [Index("foodId")])
+data class RecipeEntity(
+    @PrimaryKey val id: String,
+    val name: String,
+    val servings: Double,
+    val cookedWeightG: Double?,
+    val foodId: String?,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val deletedAt: Long? = null,
+)
+
+/** v6: one ingredient of a recipe, with its nutrients snapshotted for [grams]. */
+@Serializable
+@Entity(tableName = "recipe_ingredient", indices = [Index("recipeId")])
+data class RecipeIngredientEntity(
+    @PrimaryKey val id: String,
+    val recipeId: String,
+    val sortOrder: Int,
+    val foodId: String?,
+    val displayName: String,
+    val brand: String?,
+    val quantity: Double,
+    val servingLabel: String,
+    val grams: Double,
+    @Serializable(with = NutrientsSerializer::class) val nutrients: Nutrients,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val deletedAt: Long? = null,
+)
+
 @Serializable
 @Entity(tableName = "weight_entry", indices = [Index("timestamp")])
 data class WeightEntryEntity(

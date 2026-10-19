@@ -82,7 +82,7 @@ interface FoodDao {
     @Query("SELECT * FROM food WHERE deletedAt IS NULL AND isFavorite = 1 ORDER BY name")
     fun observeFavorites(): Flow<List<FoodEntity>>
 
-    @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source IN ('CUSTOM', 'LABEL') ORDER BY name")
+    @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source IN ('CUSTOM', 'LABEL', 'RECIPE') ORDER BY name")
     fun observeCustom(): Flow<List<FoodEntity>>
 
     @Upsert suspend fun upsert(food: FoodEntity)
@@ -220,4 +220,29 @@ interface DayStatusDao {
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<DayStatusEntity>>
 
     @Upsert suspend fun upsert(status: DayStatusEntity)
+}
+
+@Dao
+interface RecipeDao {
+    @Query("SELECT * FROM recipe WHERE deletedAt IS NULL ORDER BY name COLLATE NOCASE")
+    fun observeRecipes(): Flow<List<RecipeEntity>>
+
+    @Query("SELECT * FROM recipe_ingredient WHERE deletedAt IS NULL ORDER BY recipeId, sortOrder")
+    fun observeIngredients(): Flow<List<RecipeIngredientEntity>>
+
+    @Query("SELECT * FROM recipe WHERE id = :id")
+    suspend fun get(id: String): RecipeEntity?
+
+    @Query("SELECT * FROM recipe WHERE foodId = :foodId AND deletedAt IS NULL LIMIT 1")
+    suspend fun getByFood(foodId: String): RecipeEntity?
+
+    @Query("SELECT * FROM recipe_ingredient WHERE recipeId = :recipeId AND deletedAt IS NULL ORDER BY sortOrder")
+    suspend fun ingredientsFor(recipeId: String): List<RecipeIngredientEntity>
+
+    @Upsert suspend fun upsert(recipe: RecipeEntity)
+
+    @Upsert suspend fun upsertIngredients(rows: List<RecipeIngredientEntity>)
+
+    @Query("UPDATE recipe_ingredient SET deletedAt = :now, updatedAt = :now WHERE recipeId = :recipeId AND deletedAt IS NULL AND id NOT IN (:keep)")
+    suspend fun softDeleteIngredientsExcept(recipeId: String, keep: List<String>, now: Long)
 }

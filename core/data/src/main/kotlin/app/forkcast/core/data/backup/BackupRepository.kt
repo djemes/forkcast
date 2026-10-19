@@ -46,6 +46,8 @@ data class BackupCounts(
     /** Export v2 (Phase 2); 0 for v1 files. */
     val aiEstimates: Int = 0,
     val aiProfiles: Int = 0,
+    /** Export v5 (Phase 4). */
+    val recipes: Int = 0,
 )
 
 data class BackupPreview(
@@ -111,6 +113,8 @@ class RoomBackupRepository @Inject constructor(
             targetOverrides = dao.targetOverrides(),
             mealSlots = dao.mealSlots(),
             foods = dao.foods(),
+            recipes = dao.recipes(),
+            recipeIngredients = dao.recipeIngredients(),
             savedMeals = dao.savedMeals(),
             savedMealItems = dao.savedMealItems(),
             logEntries = dao.logEntries(),
@@ -144,7 +148,7 @@ class RoomBackupRepository @Inject constructor(
         val version = root["schemaVersion"]?.jsonPrimitive?.intOrNull
             ?: return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         if (version > ForkcastExport.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
-        // v1 → v2 → v3 only added arrays and nullable fields, which default to empty/null;
+        // v1 → … → v5 only added arrays and nullable fields, which default to empty/null;
         // older files decode as they are (v1/v2 wrote tdeeEstimates and activityDays as []).
         val export = try {
             BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), root)
@@ -174,6 +178,8 @@ class RoomBackupRepository @Inject constructor(
             dao.upsertTargetOverrides(export.targetOverrides)
             dao.upsertMealSlots(export.mealSlots)
             dao.upsertFoods(export.foods)
+            dao.upsertRecipes(export.recipes)
+            dao.upsertRecipeIngredients(export.recipeIngredients)
             dao.upsertSavedMeals(export.savedMeals)
             dao.upsertSavedMealItems(export.savedMealItems)
             dao.upsertLogEntries(export.logEntries)
@@ -203,6 +209,8 @@ class RoomBackupRepository @Inject constructor(
             keepOneActiveGoal(dao.goals())
             dao.upsertTargetOverrides(newer(dao.targetOverrides(), export.targetOverrides, { it.id }, { it.updatedAt }, tally))
             dao.upsertFoods(newer(dao.foods(), export.foods, { it.id }, { it.updatedAt }, tally))
+            dao.upsertRecipes(newer(dao.recipes(), export.recipes, { it.id }, { it.updatedAt }, tally))
+            dao.upsertRecipeIngredients(newer(dao.recipeIngredients(), export.recipeIngredients, { it.id }, { it.updatedAt }, tally))
             dao.upsertSavedMeals(newer(dao.savedMeals(), export.savedMeals, { it.id }, { it.updatedAt }, tally))
             dao.upsertSavedMealItems(newer(dao.savedMealItems(), export.savedMealItems, { it.id }, { it.updatedAt }, tally))
             val entries = export.logEntries.map { it.copy(mealSlotId = slotIds[it.mealSlotId] ?: it.mealSlotId) }
@@ -318,7 +326,7 @@ private fun JsonObject.string(name: String): String? =
 private fun ForkcastExport.rowCount() =
     (if (profile != null) 1 else 0) + goals.size + targetOverrides.size + mealSlots.size + foods.size +
         savedMeals.size + savedMealItems.size + logEntries.size + weights.size + water.size + dayStatus.size +
-        tdeeEstimates.size + activityDays.size
+        tdeeEstimates.size + activityDays.size + recipes.size + recipeIngredients.size
 
 internal fun preview(export: ForkcastExport): BackupPreview {
     val dates = export.logEntries.filter { it.deletedAt == null }.map { it.date } +
@@ -339,6 +347,7 @@ internal fun preview(export: ForkcastExport): BackupPreview {
             hasProfile = export.profile != null && export.profile.deletedAt == null,
             aiEstimates = export.aiEstimates.count { it.deletedAt == null },
             aiProfiles = export.aiProfiles.count { it.deletedAt == null },
+            recipes = export.recipes.count { it.deletedAt == null },
         ),
         firstDate = dates.minOrNull(),
         lastDate = dates.maxOrNull(),

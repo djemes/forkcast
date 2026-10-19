@@ -103,7 +103,7 @@ class BackupRepositoryTest {
         val root = BackupJson.parseToJsonElement(json).jsonObject
         assertThat(root.keys).containsAtLeast(
             "schemaVersion", "app", "appVersion", "exportedAt", "timeZone", "profile", "goals",
-            "targetOverrides", "tdeeEstimates", "mealSlots", "foods", "recipes", "savedMeals",
+            "targetOverrides", "tdeeEstimates", "mealSlots", "foods", "recipes", "recipeIngredients", "savedMeals",
             "logEntries", "aiEstimates", "aiComponents", "aiProfiles", "usageRecords", "notificationLog", "aiMatchCache", "weights", "water", "activityDays", "dayStatus", "settings",
         )
         assertThat(root["exportedAt"].toString()).isEqualTo("\"2026-10-18T16:00:00Z\"")
@@ -112,11 +112,11 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
 
-    /** docs/export-schema-v4.json must list exactly the fields the app writes, and the same enum values. */
+    /** docs/export-schema-v5.json must list exactly the fields the app writes, and the same enum values. */
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v4.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v5.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -127,6 +127,7 @@ class BackupRepositoryTest {
             "aiEstimates" to "aiEstimate", "aiComponents" to "aiComponent", "aiProfiles" to "aiProfile",
             "usageRecords" to "usageRecord", "notificationLog" to "notificationLog", "aiMatchCache" to "aiMatchCache",
             "tdeeEstimates" to "tdeeEstimate", "activityDays" to "activityDay",
+            "recipes" to "recipe", "recipeIngredients" to "recipeIngredient",
         )
         tables.forEach { (table, def) ->
             val row = export.getValue(table).jsonArray.first().jsonObject
@@ -163,7 +164,7 @@ class BackupRepositoryTest {
     }
 
     @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":5}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":6}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
@@ -314,6 +315,9 @@ class BackupRepositoryTest {
         dao.upsertFoods(listOf(FoodEntity("f1", "Rice, \"white\"", null, FoodSource.USDA, "123", "00012345678905",
             listOf(ServingSize("1 cup", 158.0)), mapOf(NutrientKey.ENERGY_KCAL to 130.0), true, 5, 1.0, "1 cup", 1, 5)))
         dao.upsertSavedMeals(listOf(SavedMealEntity("m1", "Lunch box", 1, 1)))
+        dao.upsertRecipes(listOf(app.forkcast.core.data.db.RecipeEntity("r1", "Chili", 4.0, 1200.0, "f1", 1, 2)))
+        dao.upsertRecipeIngredients(listOf(app.forkcast.core.data.db.RecipeIngredientEntity("ri1", "r1", 0, "f1", "Rice", null, 1.0, "1 cup", 158.0,
+            mapOf(NutrientKey.ENERGY_KCAL to 205.0), 1, 1)))
         dao.upsertSavedMealItems(listOf(SavedMealItemEntity("i1", "m1", 0, "f1", "Rice", null, 1.0, "1 cup", 158.0,
             mapOf(NutrientKey.ENERGY_KCAL to 205.0), FoodSource.USDA, 1, 1)))
         dao.upsertLogEntries(listOf(entry("e1", "Rice"), entry("e2", "Deleted", updatedAt = 50, deletedAt = 50, date = day.minusDays(9))))
