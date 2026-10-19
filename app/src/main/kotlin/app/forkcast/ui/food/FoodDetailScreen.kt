@@ -1,5 +1,6 @@
 package app.forkcast.ui.food
 
+import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -38,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +52,8 @@ import app.forkcast.ui.theme.ForkcastTheme
 import app.forkcast.ui.today.SourceBadge
 import app.forkcast.ui.today.formatNutrient
 import app.forkcast.ui.today.nutrientName
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @Composable
 fun FoodDetailRoute(
@@ -127,7 +131,17 @@ fun FoodDetailScreen(
                     .imePadding()
                     .padding(16.dp)
                     .heightIn(min = 56.dp),
-            ) { Text(stringResource(R.string.food_add_to, state.mealName)) }
+            ) {
+                // Logging goes to the day on Today's screen; name it when it isn't today.
+                val date = state.date
+                val label = when {
+                    state.daysFromToday == 0L || date == null -> stringResource(R.string.food_add_to, state.mealName)
+                    state.daysFromToday == -1L -> stringResource(R.string.food_add_to_day, state.mealName, stringResource(R.string.yesterday))
+                    state.daysFromToday == 1L -> stringResource(R.string.food_add_to_day, state.mealName, stringResource(R.string.tomorrow))
+                    else -> stringResource(R.string.food_add_to_day, state.mealName, shortDate(date))
+                }
+                Text(label, textAlign = TextAlign.Center)
+            }
         },
     ) { padding ->
         Column(
@@ -218,4 +232,10 @@ private fun Big(value: String, label: String, color: androidx.compose.ui.graphic
         Text(value, style = MaterialTheme.typography.headlineSmall, color = color)
         Text(label, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
+}
+
+@Composable
+private fun shortDate(date: LocalDate): String {
+    val locale = LocalLocale.current.platformLocale
+    return DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "EEEMMMd"), locale).format(date)
 }

@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 import javax.inject.Inject
 
@@ -41,6 +42,9 @@ data class FoodDetailState(
     val meals: List<MealSlot>,
     val mealSlotId: String,
     val units: UnitPrefs,
+    /** Day the entry goes to, relative to today (0 = today, -1 = yesterday). */
+    val daysFromToday: Long = 0,
+    val date: LocalDate? = null,
 ) {
     val grams: Double? get() = quantity?.let { it * serving.grams }
     val preview: Nutrients get() = food.nutrientsPer100g.forGrams(grams ?: 0.0)
@@ -65,6 +69,7 @@ class FoodDetailViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val args: FoodDetailDestination = savedState.toRoute()
+    private val logDate: LocalDate? = runCatching { LocalDate.parse(args.date) }.getOrNull()
     private val selection = MutableStateFlow(Selection(mealSlotId = args.mealSlotId))
     private val effectChannel = Channel<FoodDetailEffect>(Channel.BUFFERED)
     val effects: Flow<FoodDetailEffect> = effectChannel.receiveAsFlow()
@@ -85,6 +90,8 @@ class FoodDetailViewModel @Inject constructor(
             meals = meals,
             mealSlotId = sel.mealSlotId ?: meals.firstOrNull()?.id.orEmpty(),
             units = s.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
+            daysFromToday = logDate?.let { ChronoUnit.DAYS.between(LocalDate.now(clock), it) } ?: 0,
+            date = logDate,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

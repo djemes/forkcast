@@ -75,4 +75,20 @@ class FoodScreensTest {
         compose.onNodeWithText("Add to Lunch").assertIsEnabled().performClick()
         assertThat(added).isTrue()
     }
+
+    @Test fun detailNamesTheDayWhenItIsntToday() {
+        val state = FoodDetailState(
+            food = rice,
+            servings = FoodLogging.servingOptions(rice),
+            serving = rice.servingSizes.first(),
+            quantity = 1.0,
+            meals = FakeMealSlotRepository.DEFAULT,
+            mealSlotId = "l",
+            units = UnitPrefs.US,
+            daysFromToday = -1,
+            date = java.time.LocalDate.of(2026, 10, 17),
+        )
+        compose.setContent { ForkcastTheme { FoodDetailScreen(state, {}, {}, {}, {}, {}, {}, {}, onAdd = {}) } }
+        compose.onNodeWithText("Add to Lunch · Yesterday").assertIsDisplayed()
+    }
 }

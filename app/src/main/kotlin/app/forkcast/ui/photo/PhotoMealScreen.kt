@@ -4,11 +4,15 @@ import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.util.Size
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.camera.core.ImageCapture
 import androidx.camera.core.ImageCaptureException
+import androidx.camera.core.resolutionselector.AspectRatioStrategy
+import androidx.camera.core.resolutionselector.ResolutionSelector
+import androidx.camera.core.resolutionselector.ResolutionStrategy
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -123,7 +127,19 @@ fun PhotoMealScreen(
 @Composable
 private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit, onBack: () -> Unit, openGallery: () -> Unit) {
     val context = LocalContext.current
-    val capture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY).build() }
+    // Photos are downscaled to 1568 px before they're sent (AI_PROVIDERS.md §5), so capture near
+    // 2048 × 1536 instead of the full sensor (up to 200 MP on the S25 Ultra): faster shutter, small files.
+    val capture = remember {
+        ImageCapture.Builder()
+            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
+            .setResolutionSelector(
+                ResolutionSelector.Builder()
+                    .setAspectRatioStrategy(AspectRatioStrategy.RATIO_4_3_FALLBACK_AUTO_STRATEGY)
+                    .setResolutionStrategy(ResolutionStrategy(Size(2048, 1536), ResolutionStrategy.FALLBACK_RULE_CLOSEST_HIGHER_THEN_LOWER))
+                    .build(),
+            )
+            .build()
+    }
     val (granted, request) = rememberCameraPermission()
     var busy by remember { mutableStateOf(false) }
     LaunchedEffect(granted) { if (!granted) request() }

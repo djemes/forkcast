@@ -45,6 +45,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -194,8 +195,12 @@ class TodayViewModel @Inject constructor(
             logRepository.observeDay(d.minusDays(1)).map { list -> list.map { it.mealSlotId }.toSet() },
             waterRepository.observeDay(d),
             estimateRepository.observeDay(d),
-            // Earlier days for the forecast; 60 calendar days comfortably hold the last 14 logged days.
-            combine(logRepository.observeRange(d.minusDays(60), d.minusDays(1)), logRepository.observeLatestDay(d)) { h, l -> h to l },
+            // Earlier days for the forecast (today only); 60 calendar days comfortably hold the last
+            // 14 logged days. Other days skip the query: it re-reads every entry on each change.
+            combine(
+                if (d == LocalDate.now(clock)) logRepository.observeRange(d.minusDays(60), d.minusDays(1)) else flowOf(emptyList()),
+                logRepository.observeLatestDay(d),
+            ) { h, l -> h to l },
         ) { entries, yesterday, water, estimates, (history, last) -> DayData(d, entries, yesterday, water, estimates, history, last) }
     }
 

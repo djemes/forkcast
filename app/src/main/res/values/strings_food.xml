@@ -27,6 +27,7 @@
     <string name="food_increase">Increase amount</string>
     <string name="food_decrease">Decrease amount</string>
     <string name="food_add_to">Add to %1$s</string>
+    <string name="food_add_to_day">Add to %1$s · %2$s</string>
     <string name="food_added_to">Added to %1$s</string>
     <string name="food_all_nutrients">All nutrients</string>
     <string name="food_favorite_add">Add to favorites</string>
