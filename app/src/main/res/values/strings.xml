@@ -49,6 +49,27 @@
     <!-- Settings -->
     <string name="settings">Settings</string>
     <string name="settings_profile_goals">Profile &amp; goals</string>
+    <string name="settings_group_you">You and your goal</string>
+    <string name="settings_group_logging">Logging</string>
+    <string name="settings_group_connections">Connected services</string>
+    <string name="settings_group_app">App</string>
+    <string name="settings_goal_budget">Goal &amp; budget</string>
+    <string name="settings_goal_budget_summary">Target weight, pace, calorie budget, maintenance, activity</string>
+    <string name="settings_profile">Profile</string>
+    <string name="settings_profile_summary">Sex, age, height and activity level for the formula</string>
+    <string name="settings_daily_targets_summary">Protein, carbs, fat, fiber and other nutrients</string>
+    <string name="settings_meals_summary">Names, order and time windows</string>
+    <string name="settings_water">Water</string>
+    <string name="settings_water_summary">Daily water goal</string>
+    <string name="settings_units">Units</string>
+    <string name="settings_units_summary">Weight, height, energy and water</string>
+    <string name="settings_health_connect_summary">Weight, steps and workouts in; food and water out</string>
+    <string name="settings_ai_summary">Photo estimates: AI services, keys, order, photos</string>
+    <string name="settings_food_databases_summary">USDA key and Open Food Facts</string>
+    <string name="settings_notifications_summary">Budget, reminders, quiet hours</string>
+    <string name="settings_backup_data_summary">Export, import and settings transfer</string>
+    <string name="settings_appearance_summary">Light, dark and colors</string>
+    <string name="settings_about_summary">Version, privacy and licenses</string>
     <string name="settings_daily_targets">Daily targets</string>
     <string name="settings_meals">Meals</string>
     <string name="settings_notifications">Notifications</string>

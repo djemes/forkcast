@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.core.model.WaterUnit
 import app.forkcast.core.domain.DailyTargetsCalculator
 import app.forkcast.core.domain.GoalPace
 import app.forkcast.core.domain.GoalPlanner
@@ -55,16 +56,47 @@ import java.time.LocalDate
 
 private enum class EditField { UNITS, SEX, BIRTH, HEIGHT, ACTIVITY, GOAL, BUDGET }
 
+/** Settings › Profile: body details the formula uses (SPEC §4.1). */
 @Composable
-fun ProfileGoalsRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltViewModel()) {
+fun ProfileRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    SettingsScaffold(title = stringResource(R.string.settings_profile_goals), onBack = onBack) {
-        state?.let { ProfileGoalsContent(it, viewModel) }
+    SettingsScaffold(title = stringResource(R.string.settings_profile), onBack = onBack) {
+        state?.let { ProfileGoalsContent(it, viewModel, ProfilePart.PROFILE) }
     }
 }
 
+/** Settings › Goal & budget: the budget and how it's made, the goal, maintenance and activity. */
 @Composable
-private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel) {
+fun GoalBudgetRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltViewModel()) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    SettingsScaffold(title = stringResource(R.string.settings_goal_budget), onBack = onBack) {
+        state?.let { ProfileGoalsContent(it, viewModel, ProfilePart.GOAL) }
+    }
+}
+
+/** Settings › Units. */
+@Composable
+fun UnitsRoute(onBack: () -> Unit, viewModel: ProfileGoalsViewModel = hiltViewModel()) {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    SettingsScaffold(title = stringResource(R.string.settings_units), onBack = onBack) {
+        state?.let { s ->
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                UnitsInput(s.units) { viewModel.setUnits(it) }
+                SegmentRow(
+                    label = stringResource(R.string.units_water),
+                    options = listOf(WaterUnit.FL_OZ to R.string.unit_fl_oz, WaterUnit.ML to R.string.unit_ml),
+                    selected = s.units.water,
+                    onSelect = { viewModel.setUnits(s.units.copy(water = it)) },
+                )
+            }
+        }
+    }
+}
+
+enum class ProfilePart { PROFILE, GOAL }
+
+@Composable
+private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel, part: ProfilePart) {
     val f = UnitFormatter(s.units)
     var editing by rememberSaveable { mutableStateOf<EditField?>(null) }
     val colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background)
@@ -87,6 +119,7 @@ private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel)
             .semantics { heading() },
     )
 
+    if (part == ProfilePart.GOAL) {
     Column(Modifier.padding(horizontal = 16.dp)) {
         BudgetSummary(
             s.targets, s.units, s.profile.sex, s.profile.heightCm, s.profile.activityLevel,
@@ -100,7 +133,19 @@ private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel)
         EditField.BUDGET,
     )
 
-    Section(R.string.profile_section_maintenance)
+    Section(R.string.profile_section_goal)
+    Row(R.string.profile_goal_type, goalLabel(s.goal.goalType), EditField.GOAL)
+    if (s.goal.goalType != GoalType.MAINTAIN) {
+        Row(R.string.profile_target, f.weight(s.goal.targetWeightKg), EditField.GOAL)
+        s.targets.plan.pace?.let { p ->
+            Row(
+                R.string.profile_pace,
+                "${stringResource(R.string.pace_per_week, f.weight(p.kgPerWeek))} · ${formatDate(p.targetDate)}",
+                EditField.GOAL,
+            )
+        }
+    }
+    Section(R.string.profile_section_maintenance_activity)
     val m = s.maintenance
     Row(
         R.string.maintenance_estimate,
@@ -138,27 +183,16 @@ private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel)
         modifier = Modifier.toggleable(value = s.activityBonusOn, role = Role.Switch) { vm.setActivityBonus(it) },
     )
 
-    Section(R.string.profile_section_goal)
-    Row(R.string.profile_goal_type, goalLabel(s.goal.goalType), EditField.GOAL)
-    if (s.goal.goalType != GoalType.MAINTAIN) {
-        Row(R.string.profile_target, f.weight(s.goal.targetWeightKg), EditField.GOAL)
-        s.targets.plan.pace?.let { p ->
-            Row(
-                R.string.profile_pace,
-                "${stringResource(R.string.pace_per_week, f.weight(p.kgPerWeek))} · ${formatDate(p.targetDate)}",
-                EditField.GOAL,
-            )
-        }
     }
-    Row(R.string.profile_current_weight, stringResource(R.string.profile_current_weight_summary, f.weight(s.currentKg)), null)
 
-    Section(R.string.profile_section_body)
-    Row(R.string.profile_units, "${f.weightUnitLabel} · ${if (s.units.height.name == "CM") "cm" else "ft/in"} · ${f.energyUnitLabel}", EditField.UNITS)
+    if (part == ProfilePart.PROFILE) {
     Row(R.string.profile_sex, stringResource(if (s.profile.sex == Sex.MALE) R.string.sex_male else R.string.sex_female), EditField.SEX)
     Row(R.string.profile_birth, formatDate(s.profile.birthDate), EditField.BIRTH)
     Row(R.string.profile_height, f.height(s.profile.heightCm), EditField.HEIGHT)
     Row(R.string.profile_activity, activityLabel(s.profile.activityLevel), EditField.ACTIVITY)
     ActivityAdvice(s, f)
+    Row(R.string.profile_current_weight, stringResource(R.string.profile_current_weight_summary, f.weight(s.currentKg)), null)
+    }
 
     editing?.let { field -> EditDialog(field, s, vm) { editing = null } }
 }

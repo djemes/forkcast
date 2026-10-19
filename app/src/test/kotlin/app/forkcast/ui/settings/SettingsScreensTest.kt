@@ -24,13 +24,15 @@ class SettingsScreensTest {
         var opened = ""
         compose.setContent {
             ForkcastTheme {
-                SettingsScreen(onBack = {}, onOpenProfileGoals = {}, onOpenDailyTargets = {}, onOpenMeals = {}, onOpenNotifications = {}, onOpenAi = {}, onOpenFoodDatabases = {}, onOpenHealthConnect = {}, onOpenBackup = {}, onOpenAppearance = { opened += "A" }, onOpenAbout = { opened += "B" })
+                SettingsScreen(onBack = {}, actions = SettingsActions(units = { opened += "U" }, appearance = { opened += "A" }, about = { opened += "B" }))
             }
         }
-        compose.onNodeWithText("Profile & goals").assertIsDisplayed()
+        compose.onNodeWithText("Goal & budget").assertIsDisplayed()
+        compose.onNodeWithText("You and your goal").assertIsDisplayed()
+        compose.onNodeWithText("Units").performScrollTo().performClick()
         compose.onNodeWithText("Appearance").performScrollTo().performClick()
         compose.onNodeWithText("About").performScrollTo().performClick()
-        assertThat(opened).isEqualTo("AB")
+        assertThat(opened).isEqualTo("UAB")
     }
 
     @Test fun appearanceReportsThemeChoice() {

@@ -12,6 +12,9 @@
     <string name="units_weight">Weight</string>
     <string name="units_height">Height</string>
     <string name="units_energy">Energy</string>
+    <string name="units_water">Water</string>
+    <string name="unit_fl_oz">fl oz</string>
+    <string name="unit_ml">ml</string>
     <string name="unit_lb">lb</string>
     <string name="unit_kg">kg</string>
     <string name="unit_ft_in">ft / in</string>
@@ -118,6 +121,7 @@
     <string name="profile_section_body">You</string>
     <string name="profile_section_goal">Goal</string>
     <string name="profile_section_maintenance">Maintenance</string>
+    <string name="profile_section_maintenance_activity">Maintenance and activity</string>
     <string name="maintenance_estimate">Estimated maintenance</string>
     <string name="maintenance_estimate_value">%1$s, based on your last 4 weeks · %2$s confidence</string>
     <string name="maintenance_confidence_low">low</string>

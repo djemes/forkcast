@@ -8,6 +8,9 @@
     <string name="water_remove_last">Remove last water entry</string>
     <string name="water_from_drinks">Includes %1$s from drinks you logged</string>
     <string name="water_counts">Counts toward water</string>
+    <string name="water_goal_field">Daily goal (%1$s)</string>
+    <string name="water_goal_body">The default is %1$s, from the profile. Drinks such as water and plain tea count toward it when you log them.</string>
+    <string name="water_goal_reset">Use the default (%1$s)</string>
     <string name="water_counts_body">Water, sparkling water and plain tea count; sugary drinks, alcohol, milk drinks and shakes don\'t.</string>
     <string name="water_counts_amount">Adds %1$s to the day\'s water</string>
 

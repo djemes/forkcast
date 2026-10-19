@@ -30,7 +30,11 @@ import app.forkcast.ui.activity.ActivityRoute
 import app.forkcast.ui.health.HealthConnectRoute
 import app.forkcast.ui.photo.PhotoMealRoute
 import app.forkcast.ui.photo.ReviewRoute
-import app.forkcast.ui.settings.ProfileGoalsRoute
+import app.forkcast.ui.settings.GoalBudgetRoute
+import app.forkcast.ui.settings.ProfileRoute
+import app.forkcast.ui.settings.SettingsActions
+import app.forkcast.ui.settings.UnitsRoute
+import app.forkcast.ui.settings.WaterSettingsRoute
 import app.forkcast.ui.settings.SettingsScreen
 import app.forkcast.ui.today.TodayActions
 import app.forkcast.ui.today.TodayRoute
@@ -40,7 +44,11 @@ import kotlinx.serialization.Serializable
 @Serializable data object OnboardingDestination
 @Serializable data object TodayDestination
 @Serializable data object SettingsDestination
+/** Settings › Goal & budget (kept under its old name so saved navigation state still resolves). */
 @Serializable data object ProfileGoalsDestination
+@Serializable data object ProfileDestination
+@Serializable data object UnitsDestination
+@Serializable data object WaterSettingsDestination
 @Serializable data object AppearanceDestination
 @Serializable data object AboutDestination
 @Serializable data object FoodDatabasesDestination
@@ -204,19 +212,27 @@ fun ForkcastNavHost(
         composable<SettingsDestination> {
             SettingsScreen(
                 onBack = back,
-                onOpenProfileGoals = { navController.navigate(ProfileGoalsDestination) },
-                onOpenDailyTargets = { navController.navigate(DailyTargetsDestination) },
-                onOpenMeals = { navController.navigate(MealsDestination) },
-                onOpenNotifications = { navController.navigate(NotificationsDestination) },
-                onOpenAi = { navController.navigate(AiSettingsDestination) },
-                onOpenFoodDatabases = { navController.navigate(FoodDatabasesDestination) },
-                onOpenHealthConnect = { navController.navigate(HealthConnectDestination) },
-                onOpenBackup = { navController.navigate(BackupDestination) },
-                onOpenAppearance = { navController.navigate(AppearanceDestination) },
-                onOpenAbout = { navController.navigate(AboutDestination) },
+                actions = SettingsActions(
+                    profile = { navController.navigate(ProfileDestination) },
+                    goalBudget = { navController.navigate(ProfileGoalsDestination) },
+                    dailyTargets = { navController.navigate(DailyTargetsDestination) },
+                    meals = { navController.navigate(MealsDestination) },
+                    water = { navController.navigate(WaterSettingsDestination) },
+                    units = { navController.navigate(UnitsDestination) },
+                    healthConnect = { navController.navigate(HealthConnectDestination) },
+                    ai = { navController.navigate(AiSettingsDestination) },
+                    foodDatabases = { navController.navigate(FoodDatabasesDestination) },
+                    notifications = { navController.navigate(NotificationsDestination) },
+                    appearance = { navController.navigate(AppearanceDestination) },
+                    backup = { navController.navigate(BackupDestination) },
+                    about = { navController.navigate(AboutDestination) },
+                ),
             )
         }
-        composable<ProfileGoalsDestination> { ProfileGoalsRoute(onBack = back) }
+        composable<ProfileGoalsDestination> { GoalBudgetRoute(onBack = back) }
+        composable<ProfileDestination> { ProfileRoute(onBack = back) }
+        composable<UnitsDestination> { UnitsRoute(onBack = back) }
+        composable<WaterSettingsDestination> { WaterSettingsRoute(onBack = back) }
         composable<FoodDatabasesDestination> { FoodDatabasesRoute(onBack = back) }
         composable<AiSettingsDestination> { entry ->
             val deleteRequest by entry.savedStateHandle.getStateFlow<String?>(DELETE_AI_PROFILE, null).collectAsStateWithLifecycle()
