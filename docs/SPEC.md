@@ -193,7 +193,8 @@ Rules:
   - Built 2026-10-18 (Phase 1): JSON + CSV export, `.json` import. The "Include photos" `.zip` arrives with photos in Phase 2. Merge keeps this phone's settings (they have no edit times); Replace imports them. Merge maps meal slots from another install to local ones by name, and keeps one active goal (the most recently edited). The Replace safety backup goes to app storage (last 3 kept, excluded from Auto Backup) and Backup & data offers "Undo the last replace"
 - **Google Drive auto-backup** (Phase 4): sign in with Google using the `drive.file` scope (the app only sees files it created). Creates a "Forkcast Backups" folder; uploads a gzipped JSON daily (configurable: daily/weekly, Wi-Fi only, charging only); keeps the last 14 daily + last 12 monthly; restore screen lists backups by date and runs the Import flow
 - **Android Auto Backup**: enabled, with `data_extraction_rules.xml` / `full_backup_content` that **exclude** the encrypted-secrets file and the photos folder (25 MB cap). After a restore onto a new phone, the app detects missing API keys and asks for them
-- Secrets (API keys, OAuth tokens) are never in any export or backup
+- Secrets (API keys, OAuth tokens) are never in the data export, CSV, Drive backup or Android Auto Backup
+- **Settings export** (Phase 2, owner request 2026-10-18): a separate "Export settings" button in Backup & data writes `forkcast-settings-YYYYMMDD-HHMM.fksettings` with every app setting, the AI profiles **and their API keys**, and the food-database key. The user types a passphrase (twice; minimum 8 characters, strength hint); the whole file is encrypted with AES-256-GCM using a key derived from it (PBKDF2-HMAC-SHA256, random salt, ≥ 600,000 iterations, parameters stored in the file header). "Import settings" asks for the passphrase, shows what will change, then replaces settings and keys. A wrong passphrase or tampered file fails cleanly with a clear message. The file is versioned (`settingsSchemaVersion`) and never written automatically, never part of Drive backup. There is no way to recover a forgotten passphrase
 
 ### 4.12 Settings (cumulative)
 
@@ -293,6 +294,7 @@ Map USDA nutrient numbers and OFF `nutriments` keys to these in one mapping file
 ```
 - Field names are camelCase and mirror the entities; nutrient maps use the enum names
 - `settings` excludes secrets; photos referenced by relative path only in `.zip` exports
+- **v2 (Phase 2):** adds `aiComponents`, `aiProfiles` (no keys), `usageRecords`, `notificationLog`, `aiMatchCache`; `aiEstimates` gets the full entity. Import accepts v1 and v2 (missing arrays = empty). Schema file `docs/export-schema-v2.json`
 - Write a JSON Schema file (`docs/export-schema-v1.json`) and a round-trip test: export → wipe → import → export again → identical except `exportedAt`
 
 ---
@@ -313,7 +315,7 @@ All network code: timeouts (connect 10 s, read 60 s for AI, 15 s otherwise), ret
 
 ## 8. Security and privacy
 
-- API keys: Tink AEAD with an Android Keystore master key; decrypted only in memory at request time; never logged (add an OkHttp/Ktor logging redactor for `x-api-key`, `x-goog-api-key`, `Authorization`)
+- API keys: Tink AEAD with an Android Keystore master key; decrypted only in memory at request time; leave the device only inside the passphrase-encrypted settings export (§4.11) when the user explicitly makes one; never logged (add an OkHttp/Ktor logging redactor for `x-api-key`, `x-goog-api-key`, `Authorization`)
 - Release builds: R8 enabled, logging stripped, `android:allowBackup` with explicit rules (§4.11)
 - Photos: app-private storage, EXIF (including GPS) stripped before storing and before upload
 - `network_security_config`: cleartext disabled except a user-opted toggle for a LAN/VPN OpenAI-compatible endpoint (e.g., `http://` Ollama over Tailscale), shown with a warning

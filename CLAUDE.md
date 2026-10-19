@@ -41,7 +41,7 @@ The owner wants to hand off everything possible. If a task can be done with the 
 - **Offline-first.** Every log, edit, and calculation works with no network. Network features degrade gracefully and queue.
 - **Log entries snapshot their nutrients.** Editing a food later must never change past days.
 - **Units:** store grams/kcal/mg internally; convert only at the UI edge. User chooses lb/kg, ft-in/cm.
-- **Secrets:** API keys never logged, never in exports/backups, never in crash reports, never in Git. Encrypted at rest. Excluded from Android Auto Backup.
+- **Secrets:** API keys never logged, never in data exports/backups, never in crash reports, never in Git. Encrypted at rest. Excluded from Android Auto Backup. Sole exception (owner, 2026-10-18): the user-initiated, passphrase-encrypted settings export (SPEC §4.11).
 - **No analytics, no tracking SDKs, no ads.** The only network calls are to services the user configured (food DBs, their AI provider, their Google Drive).
 - **Schema changes ship with a Room migration and a migration test.** Never use destructive fallback.
 - **Export format is versioned** (`schemaVersion`). Import must accept every older version.

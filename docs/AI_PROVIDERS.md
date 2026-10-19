@@ -1,6 +1,6 @@
 # AI providers — design, prompt, schema, costs
 
-Researched 2026-10-16. Prices and model IDs change; the app must read them from config/settings, never from logic. Re-check the official pages before release:
+Researched 2026-10-16; request shapes, model IDs and prices re-verified 2026-10-18 at the start of Phase 2. Prices and model IDs change; the app must read them from config/settings, never from logic. Re-check the official pages before release:
 - Claude pricing: https://platform.claude.com/docs/en/about-claude/pricing
 - Claude models: https://platform.claude.com/docs/en/models/overview
 - Gemini pricing: https://ai.google.dev/gemini-api/docs/pricing
@@ -48,19 +48,23 @@ data class MealEstimateResult(
 - `POST https://api.anthropic.com/v1/messages`
 - Headers: `x-api-key`, `anthropic-version: 2023-06-01`, `content-type: application/json`
 - Images: `{"type":"image","source":{"type":"base64","media_type":"image/jpeg","data":"..."}}` blocks placed **before** the text block
-- Structured output: use the native structured-outputs feature if available for the chosen model; otherwise define one tool `record_meal_estimate` with the §3 schema as `input_schema` and force it with `tool_choice: {"type":"tool","name":"record_meal_estimate"}`. `// VERIFY:` current structured-outputs request shape at https://platform.claude.com/docs/en/build-with-claude/structured-outputs
-- List models: `GET https://api.anthropic.com/v1/models`
+- Structured output (verified 2026-10-18): `"output_config": {"format": {"type": "json_schema", "schema": {...}}, "effort": "low"}`. The JSON arrives as the text of the first `text` content block. Supported on Sonnet 5.5, Haiku 5.5 and every current model. The schema sent to Claude must set `additionalProperties: false` on every object and must not use `minimum`/`maximum` (unsupported); the app enforces those ranges itself (§3 validation). **No forced-tool fallback:** `tool_choice` `tool`/`any` returns a 400 on Sonnet 5.5 and Opus 5.5
+- Thinking: leave `thinking` unset (adaptive, on by default) and set `output_config.effort` (`low` default for estimates, from the defaults file). Haiku 5.5 and Opus 5.5 default to `medium` if effort is omitted, so always send it. Never send `budget_tokens` or `temperature` (400 on current models). No assistant prefill (400)
+- Check `stop_reason`: `refusal` → `ContentRefused`; `max_tokens` → `BadResponse` (truncated JSON)
+- List models: `GET https://api.anthropic.com/v1/models` (each item has `id`, `display_name`, `max_input_tokens`, `max_tokens`, `capabilities`)
 - Usage: read `usage.input_tokens` / `usage.output_tokens`
 - Recommended defaults: **`claude-sonnet-5-5`** (best accuracy/cost balance), budget option **`claude-haiku-5-5`**
 
 ### 2.2 Gemini (Gemini Developer API)
-- `POST https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`
+- **Interactions API** (owner approved 2026-10-18; Google's docs call it GA and recommended for new projects, while `generateContent` is "legacy" but fully supported): `POST https://generativelanguage.googleapis.com/v1beta/interactions`
 - Header: `x-goog-api-key`
-- Images: `{"inline_data":{"mime_type":"image/jpeg","data":"..."}}` parts, then the text part
-- Structured output: `generationConfig.responseMimeType = "application/json"` plus the §3 schema (`responseJsonSchema` or `responseSchema`). `// VERIFY:` field name for the current API version, and whether `generateContent` or the newer Interactions API is preferred: https://ai.google.dev/gemini-api/docs/structured-output
-- Keep thinking low/minimal if the model supports a thinking budget — output pricing includes thinking tokens
+- Body: `{"model": "...", "system_instruction": "...", "input": [{"type":"text","text":"..."}, {"type":"image","data":"<base64>","mime_type":"image/jpeg"}], "response_format": {"type":"text","mime_type":"application/json","schema":{...}}, "generation_config": {"thinking_level": "low", "max_output_tokens": N}, "store": false}`
+- `store: false` on every request: the app keeps no server-side conversation ("Correct it" resends the previous JSON), and Google doesn't keep the interaction
+- Schema: Gemini supports `minimum`/`maximum`, `["string","null"]` type arrays and `additionalProperties`
+- Thinking (output pricing includes thinking tokens): `thinking_level` lowest per model: `low` on 3.8 Flash, `minimal` on 3.5 Flash-Lite and 3.6 Flash. Stored per model in the defaults file
+- Response: `steps` list; the JSON is the text of the final model output step (`output_text` is SDK sugar). `status` may be `incomplete` (treat as `BadResponse`). `// VERIFY:` exact REST field path of the output text against a live response in the first test call
+- Usage: `usage.total_input_tokens`, `usage.total_output_tokens`, `usage.total_thought_tokens` (billed as output)
 - List models: `GET https://generativelanguage.googleapis.com/v1beta/models`
-- Usage: `usageMetadata.promptTokenCount` / `candidatesTokenCount` (+ thoughts if reported)
 - Recommended defaults: **`gemini-3.8-flash`**, budget option **`gemini-3.5-flash-lite`**
 - Both are available on the **free tier** (no billing on the Google Cloud project). See §2.5.
 
@@ -145,6 +149,8 @@ App requirements that follow from this:
   }
 }
 ```
+
+This is the canonical schema. Each provider adapts it in code (Claude: strip `minimum`/`maximum`, add `additionalProperties: false` to every object; OpenAI-compatible strict mode: every property required, optional ones made nullable).
 
 Validate after parsing: grams > 0, low ≤ grams ≤ high, kcal plausible for grams (≤ 9.5 kcal/g). Clamp or reject the item and flag it; never crash on bad output.
 
