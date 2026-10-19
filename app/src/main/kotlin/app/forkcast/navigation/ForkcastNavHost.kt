@@ -39,6 +39,7 @@ import app.forkcast.ui.settings.WaterSettingsRoute
 import app.forkcast.ui.settings.SettingsScreen
 import app.forkcast.ui.today.TodayActions
 import app.forkcast.ui.today.TodayRoute
+import app.forkcast.ui.trends.TrendsRoute
 import app.forkcast.ui.weight.WeightRoute
 import kotlinx.serialization.Serializable
 
@@ -58,6 +59,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object FoodDatabasesDestination
 @Serializable data object BackupDestination
 @Serializable data object WeightDestination
+@Serializable data object TrendsDestination
 @Serializable data object AiSettingsDestination
 @Serializable data object NotificationsDestination
 @Serializable data object MealsDestination
@@ -96,6 +98,9 @@ import kotlinx.serialization.Serializable
 
 /** Key on Today's back-stack entry: the meal name to confirm ("Added to Lunch"). */
 private const val ADDED_TO = "added_to"
+
+/** Key on Today's back-stack entry: a day to show (ISO date), set by Trends' "Open day". */
+private const val OPEN_DATE = "open_date"
 
 /** Key on Settings › AI's back-stack entry: a profile the editor's Delete confirmed (the list deletes it, with Undo). */
 private const val DELETE_AI_PROFILE = "delete_ai_profile"
@@ -141,6 +146,7 @@ fun ForkcastNavHost(
         }
         composable<TodayDestination> { entry ->
             val added by entry.savedStateHandle.getStateFlow<String?>(ADDED_TO, null).collectAsStateWithLifecycle()
+            val openDate by entry.savedStateHandle.getStateFlow<String?>(OPEN_DATE, null).collectAsStateWithLifecycle()
             TodayRoute(
                 actions = TodayActions(
                     openSettings = { navController.navigate(SettingsDestination) },
@@ -151,9 +157,12 @@ fun ForkcastNavHost(
                     openEstimate = { id -> navController.navigate(ReviewDestination(id)) },
                     openHealthConnect = { navController.navigate(HealthConnectDestination) },
                     openActivity = { date -> navController.navigate(ActivityDestination(date.toString())) },
+                    openTrends = { navController.navigate(TrendsDestination) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },
+                openDate = openDate,
+                onOpenDateShown = { entry.savedStateHandle[OPEN_DATE] = null },
             )
         }
         composable<SearchDestination> { entry ->
@@ -274,6 +283,15 @@ fun ForkcastNavHost(
         composable<ReviewDestination> { ReviewRoute(onBack = back) }
         composable<BackupDestination> { BackupRoute(onBack = back) }
         composable<WeightDestination> { WeightRoute(onBack = back) }
+        composable<TrendsDestination> {
+            TrendsRoute(
+                onBack = back,
+                onOpenDay = { date ->
+                    runCatching { navController.getBackStackEntry<TodayDestination>().savedStateHandle[OPEN_DATE] = date.toString() }
+                    navController.popBackStack<TodayDestination>(inclusive = false)
+                },
+            )
+        }
         composable<AppearanceDestination> { AppearanceRoute(onBack = back) }
         composable<AboutDestination> { AboutRoute(onBack = back) }
     }

@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trends_title">Trends</string>
+    <string name="open_trends">Open trends</string>
+    <string name="trends_week">Week</string>
+    <string name="trends_month">Month</string>
+    <string name="trends_quarter">3 months</string>
+    <string name="trends_period_label">Period</string>
+    <string name="trends_nothing">Nothing logged in this period yet. Days you log show up here.</string>
+
+    <string name="trends_calories">Calories</string>
+    <string name="trends_avg_eaten">Average eaten</string>
+    <string name="trends_avg_allowance">Average budget</string>
+    <string name="trends_under">%1$s a day under budget on average</string>
+    <string name="trends_over">%1$s a day over budget on average</string>
+    <string name="trends_on_budget">On budget on average</string>
+    <plurals name="trends_days_over">
+        <item quantity="one">Over budget on %1$d of %2$d days</item>
+        <item quantity="other">Over budget on %1$d of %2$d days</item>
+    </plurals>
+    <plurals name="trends_averaged_complete">
+        <item quantity="one">Averages use %d complete day. Today isn\'t counted until it\'s over.</item>
+        <item quantity="other">Averages use %d complete days. Today isn\'t counted until it\'s over.</item>
+    </plurals>
+    <plurals name="trends_averaged_logged">
+        <item quantity="one">No complete days yet, so averages use the %d logged day. A complete day has 2 meals and 1,000 kcal, or you mark it on Today.</item>
+        <item quantity="other">No complete days yet, so averages use the %d logged days. A complete day has 2 meals and 1,000 kcal, or you mark it on Today.</item>
+    </plurals>
+    <string name="trends_calories_chart">Calories eaten each day, bars, with your budget as a dashed line. Average %1$s, budget %2$s.</string>
+    <string name="trends_tap_bar">Tap a bar to see that day.</string>
+    <string name="trends_day_value">%1$s of %2$s</string>
+    <string name="trends_day_empty">Nothing logged</string>
+    <string name="trends_open_day">Open day</string>
+    <string name="trends_weekly">Weekly averages</string>
+    <string name="trends_week_of">Week of %1$s</string>
+    <plurals name="trends_week_days">
+        <item quantity="one">%1$s · %2$d day</item>
+        <item quantity="other">%1$s · %2$d days</item>
+    </plurals>
+
+    <string name="trends_weight">Weight</string>
+    <string name="trends_weight_none">No weigh-ins yet. Log one from Today or connect Health Connect.</string>
+    <string name="trends_weight_none_in_period">No weigh-ins in this period. The line shows the trend carried forward.</string>
+    <string name="trends_weight_trend">Trend now</string>
+    <string name="trends_weight_rate">Change per week</string>
+    <string name="trends_weight_goal">Goal</string>
+    <string name="trends_goal_by">At this pace you reach %1$s around %2$s.</string>
+    <string name="trends_goal_too_far">At this pace your goal is more than 2 years away.</string>
+    <string name="trends_goal_not_toward">Your trend isn\'t moving toward %1$s right now.</string>
+    <string name="trends_goal_reached">You\'re at your goal weight.</string>
+    <string name="trends_goal_need_data">A goal date appears after about 2 weeks of weigh-ins.</string>
+    <string name="trends_weight_chart">Weight: weigh-ins as dots and the smoothed trend as a line. Trend now %1$s.</string>
+
+    <string name="trends_macros">Macros</string>
+    <string name="trends_macros_you">You</string>
+    <string name="trends_macros_target">Target</string>
+    <string name="trends_macro_avg">%1$s / %2$s a day</string>
+    <string name="trends_split">Protein %1$d %%, carbs %2$d %%, fat %3$d %%</string>
+    <string name="trends_split_hint">Share of calories from each macro, average over the period, compared with your targets.</string>
+
+    <string name="trends_nutrients">Nutrients</string>
+    <string name="trends_nutrients_hint">Daily average against your targets, furthest off first.</string>
+    <string name="trends_nutrient_under">Under</string>
+    <string name="trends_nutrient_over">Over</string>
+    <string name="trends_nutrient_ok">On target</string>
+    <string name="trends_nutrient_no_data">No data</string>
+    <string name="trends_nutrient_no_data_hint">Target %1$s. None of the foods you logged list it.</string>
+    <string name="trends_nutrient_value">%1$s / %2$s · %3$d %%</string>
+    <string name="trends_nutrient_partial">Only %1$d %% of your calories came from foods that list this, so the real number is likely higher.</string>
+    <string name="trends_show_all">Show all %d</string>
+    <string name="trends_show_fewer">Show fewer</string>
+
+    <string name="trends_logging">Logging</string>
+    <string name="trends_days_logged">Days logged</string>
+    <string name="trends_days_logged_value">%1$d of %2$d</string>
+    <string name="trends_streak">Current streak</string>
+    <string name="trends_longest">Longest streak</string>
+    <plurals name="trends_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
+</resources>

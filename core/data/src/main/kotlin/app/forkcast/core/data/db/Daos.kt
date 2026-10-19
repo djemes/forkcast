@@ -128,6 +128,10 @@ interface LogEntryDao {
     )
     fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?>
 
+    /** Every day with entries (Trends: days logged and streaks). */
+    @Query("SELECT DISTINCT date FROM log_entry WHERE deletedAt IS NULL")
+    fun observeLoggedDates(): Flow<List<LocalDate>>
+
     @Query("SELECT * FROM log_entry WHERE date = :date AND mealSlotId = :mealSlotId AND deletedAt IS NULL ORDER BY loggedAt")
     suspend fun getForMeal(date: LocalDate, mealSlotId: String): List<LogEntryEntity>
 

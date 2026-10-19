@@ -115,6 +115,7 @@ data class TodayActions(
     val openHealthConnect: () -> Unit = {},
     /** Opens the Activity detail on [date]. */
     val openActivity: (date: java.time.LocalDate) -> Unit = {},
+    val openTrends: () -> Unit = {},
 )
 
 @Composable
@@ -122,9 +123,16 @@ fun TodayRoute(
     actions: TodayActions,
     addedToMeal: String? = null,
     onAddedShown: () -> Unit = {},
+    /** A day to show, from Trends' "Open day" (ISO date). */
+    openDate: String? = null,
+    onOpenDateShown: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(openDate) {
+        openDate?.let { iso -> runCatching { LocalDate.parse(iso) }.getOrNull()?.let { viewModel.onEvent(TodayEvent.PickDate(it)) } }
+        if (openDate != null) onOpenDateShown()
+    }
     val editServings by viewModel.editServingsFor.collectAsStateWithLifecycle()
     // Left open overnight, the screen moves on to the new day (unless you were looking at another one).
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.onEvent(TodayEvent.Resumed) }
@@ -218,7 +226,7 @@ fun TodayScreen(
                     onSave = { saveRequest = SaveRequest(state.selection.toList(), "") },
                 )
             }
-            else DateHeader(state, onEvent, onPickDate = { showDatePicker = true }, onOpenSettings = actions.openSettings)
+            else DateHeader(state, onEvent, onPickDate = { showDatePicker = true }, onOpenSettings = actions.openSettings, onOpenTrends = actions.openTrends)
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
@@ -488,6 +496,7 @@ private fun DateHeader(
     onEvent: (TodayEvent) -> Unit,
     onPickDate: () -> Unit,
     onOpenSettings: () -> Unit,
+    onOpenTrends: () -> Unit,
 ) {
     val (title, subtitle) = dateLabels(state.date, state.today)
     val pickLabel = stringResource(R.string.pick_date)
@@ -559,8 +568,9 @@ private fun DateHeader(
                 Text(stringResource(R.string.today))
             }
         } else {
-            IconButton(onClick = onPickDate) {
-                Icon(painterResource(R.drawable.ic_calendar), pickLabel)
+            // On today the day name already opens the calendar, so this slot is Trends (owner, 2026-10-19).
+            IconButton(onClick = onOpenTrends) {
+                Icon(painterResource(R.drawable.ic_trends), stringResource(R.string.open_trends))
             }
         }
         IconButton(onClick = onOpenSettings) {
