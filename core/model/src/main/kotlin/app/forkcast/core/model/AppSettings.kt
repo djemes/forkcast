@@ -12,6 +12,26 @@ data class AppSettings(
     val waterTargetMl: Double? = null,
     val ai: AiSettings = AiSettings(),
     val notifications: NotificationSettings = NotificationSettings(),
+    val health: HealthSettings = HealthSettings(),
+    /**
+     * Use the adaptive maintenance estimate once there is enough data (SPEC §5.6).
+     * False locks maintenance to the formula value.
+     */
+    val adaptiveTdee: Boolean = true,
+)
+
+/**
+ * Settings › Health Connect (SPEC §4.9). What Android actually granted is asked from Health
+ * Connect each time; these are the user's choices inside Forkcast.
+ */
+@Serializable
+data class HealthSettings(
+    /** The user connected Forkcast to Health Connect (and hasn't disconnected). */
+    val connected: Boolean = false,
+    val readWeight: Boolean = true,
+    val readActivity: Boolean = true,
+    val writeNutrition: Boolean = true,
+    val writeHydration: Boolean = true,
 )
 
 /** Settings › Notifications (SPEC §4.8). Times are minutes after local midnight. */

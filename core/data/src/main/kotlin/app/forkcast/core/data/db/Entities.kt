@@ -7,13 +7,17 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import app.forkcast.core.model.ActivityLevel
 import app.forkcast.core.model.ExerciseMode
+import app.forkcast.core.model.ExerciseSession
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.model.GoalType
 import app.forkcast.core.model.Nutrients
 import app.forkcast.core.model.ServingSize
 import app.forkcast.core.model.Sex
+import app.forkcast.core.model.TdeeConfidence
+import app.forkcast.core.model.TdeeMethod
 import app.forkcast.core.model.WeightSource
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.Transient
 import kotlinx.serialization.UseSerializers
 import java.time.LocalDate
 
@@ -21,6 +25,8 @@ import java.time.LocalDate
 // Changing a field here changes the export format: bump schemaVersion and add an import migration.
 // All tables (SPEC §6): UUID string id, createdAt/updatedAt epoch ms UTC, nullable deletedAt (soft delete).
 // Log dates are the user's local date plus the zone in effect when logged.
+// hcSyncedAt is this phone's Health Connect write state (the updatedAt last written); it is
+// @Transient so exports never carry it and imported rows are written to Health Connect again.
 
 @Serializable
 @Entity(tableName = "profile")
@@ -116,6 +122,7 @@ data class LogEntryEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,
+    @Transient val hcSyncedAt: Long? = null,
 )
 
 @Serializable
@@ -172,6 +179,9 @@ data class WaterEntryEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,
+    /** The Hydration record written for this entry (v4). */
+    val hcRecordId: String? = null,
+    @Transient val hcSyncedAt: Long? = null,
 )
 
 @Serializable
@@ -181,6 +191,44 @@ data class DayStatusEntity(
     val date: LocalDate,
     val markedComplete: Boolean,
     val note: String?,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val deletedAt: Long? = null,
+)
+
+/** Daily cache of Health Connect activity (v4). One row per date. */
+@Serializable
+@Entity(tableName = "activity_day", indices = [Index("date", unique = true)])
+data class ActivityDayEntity(
+    @PrimaryKey val id: String,
+    val date: LocalDate,
+    val steps: Long?,
+    val activeKcal: Double?,
+    val totalKcal: Double?,
+    val exerciseMinutes: Int?,
+    val sessions: List<ExerciseSession>,
+    val createdAt: Long,
+    val updatedAt: Long,
+    val deletedAt: Long? = null,
+)
+
+/**
+ * Maintenance estimates (SPEC §5.6, v4). [kcal] is all-in maintenance, exercise included;
+ * Added-back mode subtracts the average exercise bonus when it builds the budget.
+ */
+@Serializable
+@Entity(tableName = "tdee_estimate", indices = [Index("date")])
+data class TdeeEstimateEntity(
+    @PrimaryKey val id: String,
+    /** The day the estimate was made; the trailing 28 days end the day before. */
+    val date: LocalDate,
+    val method: TdeeMethod,
+    val kcal: Double,
+    /** The raw observed value the weekly step moved toward (adaptive only). */
+    val observedKcal: Double?,
+    val confidence: TdeeConfidence?,
+    val completeDays: Int,
+    val weighIns: Int,
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,

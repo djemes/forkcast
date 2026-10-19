@@ -123,6 +123,8 @@ class RoomBackupRepository @Inject constructor(
             usageRecords = dao.usageRecords(),
             notificationLog = dao.notificationLog(),
             aiMatchCache = dao.aiMatchCache(),
+            tdeeEstimates = dao.tdeeEstimates(),
+            activityDays = dao.activityDays(),
         )
     }.copy(settings = settings.data.first())
 
@@ -142,7 +144,8 @@ class RoomBackupRepository @Inject constructor(
         val version = root["schemaVersion"]?.jsonPrimitive?.intOrNull
             ?: return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         if (version > ForkcastExport.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
-        // v1 → v2 only added arrays, which default to empty; older files decode as they are.
+        // v1 → v2 → v3 only added arrays and nullable fields, which default to empty/null;
+        // older files decode as they are (v1/v2 wrote tdeeEstimates and activityDays as []).
         val export = try {
             BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), root)
         } catch (e: IllegalArgumentException) {
@@ -183,6 +186,8 @@ class RoomBackupRepository @Inject constructor(
             dao.upsertUsageRecords(export.usageRecords)
             dao.upsertNotificationLog(export.notificationLog)
             dao.upsertAiMatchCache(export.aiMatchCache)
+            dao.upsertTdeeEstimates(export.tdeeEstimates)
+            dao.upsertActivityDays(export.activityDays)
         }
         export.settings?.let { imported -> settings.updateData { imported } }
         return ImportSummary(ImportMode.REPLACE, added = export.rowCount(), updated = 0, unchanged = 0)
@@ -218,6 +223,12 @@ class RoomBackupRepository @Inject constructor(
             val fired = dao.notificationLog().map { Triple(it.date, it.type, it.threshold) }.toSet()
             dao.upsertNotificationLog(export.notificationLog.filter { Triple(it.date, it.type, it.threshold) !in fired })
             dao.upsertAiMatchCache(newer(dao.aiMatchCache(), export.aiMatchCache, { it.id }, { it.updatedAt }, tally))
+            dao.upsertTdeeEstimates(newer(dao.tdeeEstimates(), export.tdeeEstimates, { it.id }, { it.updatedAt }, tally))
+            // One activity row per date (unique index), like day status.
+            val localActivity = dao.activityDays().associateBy { it.date }
+            val activity = newer(localActivity.values.toList(), export.activityDays, { it.date.toString() }, { it.updatedAt }, tally)
+            activity.forEach { row -> localActivity[row.date]?.takeIf { it.id != row.id }?.let { dao.deleteActivityDay(it.id) } }
+            dao.upsertActivityDays(activity)
         }
         return ImportSummary(ImportMode.MERGE, tally.added, tally.updated, tally.unchanged)
     }
@@ -306,7 +317,8 @@ private fun JsonObject.string(name: String): String? =
 
 private fun ForkcastExport.rowCount() =
     (if (profile != null) 1 else 0) + goals.size + targetOverrides.size + mealSlots.size + foods.size +
-        savedMeals.size + savedMealItems.size + logEntries.size + weights.size + water.size + dayStatus.size
+        savedMeals.size + savedMealItems.size + logEntries.size + weights.size + water.size + dayStatus.size +
+        tdeeEstimates.size + activityDays.size
 
 internal fun preview(export: ForkcastExport): BackupPreview {
     val dates = export.logEntries.filter { it.deletedAt == null }.map { it.date } +

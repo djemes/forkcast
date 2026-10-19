@@ -5,7 +5,12 @@ import androidx.datastore.core.DataStore
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import app.forkcast.core.data.db.ActivityDayEntity
 import app.forkcast.core.data.db.DayStatusEntity
+import app.forkcast.core.data.db.TdeeEstimateEntity
+import app.forkcast.core.model.ExerciseSession
+import app.forkcast.core.model.TdeeConfidence
+import app.forkcast.core.model.TdeeMethod
 import app.forkcast.core.data.db.FoodEntity
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.GoalEntity
@@ -107,11 +112,11 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
 
-    /** docs/export-schema-v2.json must list exactly the fields the app writes, and the same enum values. */
+    /** docs/export-schema-v3.json must list exactly the fields the app writes, and the same enum values. */
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v2.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v3.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -121,6 +126,7 @@ class BackupRepositoryTest {
             "weights" to "weight", "water" to "water", "dayStatus" to "dayStatus",
             "aiEstimates" to "aiEstimate", "aiComponents" to "aiComponent", "aiProfiles" to "aiProfile",
             "usageRecords" to "usageRecord", "notificationLog" to "notificationLog", "aiMatchCache" to "aiMatchCache",
+            "tdeeEstimates" to "tdeeEstimate", "activityDays" to "activityDay",
         )
         tables.forEach { (table, def) ->
             val row = export.getValue(table).jsonArray.first().jsonObject
@@ -157,13 +163,40 @@ class BackupRepositoryTest {
     }
 
     @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":3}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":4}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
         assertThat(repo.parse("not json")).isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
         assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":1,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
+    }
+
+    /** Phase 3 write state is per phone: never exported, so an imported row is written to Health Connect again. */
+    @Test fun healthConnectWriteStateIsNotExported() = runTest {
+        seedEveryTable()
+        val json = repo.exportJson()
+        assertThat(json).doesNotContain("hcSyncedAt")
+        assertThat(json).contains("\"hcRecordId\": \"hc-h1\"")
+        dao.clearAll()
+        repo.import((repo.parse(json) as ParsedBackup.Ok).export, ImportMode.REPLACE)
+        assertThat(dao.water().single().hcSyncedAt).isNull()
+    }
+
+    @Test fun acceptsV2FileWithReservedPhase3Arrays() {
+        val parsed = repo.parse(
+            """{"app":"Forkcast","schemaVersion":2,"appVersion":"0.2.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC",
+               "tdeeEstimates":[],"activityDays":[],
+               "water":[{"id":"h1","timestamp":1,"date":"2026-10-18","zoneId":"UTC","ml":250.0,"createdAt":1,"updatedAt":1,"deletedAt":null}]}""",
+        ) as ParsedBackup.Ok
+        assertThat(parsed.export.water.single().hcRecordId).isNull()
+        assertThat(parsed.export.activityDays).isEmpty()
+    }
+
+    @Test fun mergeMatchesActivityDaysByDate() = runTest {
+        dao.upsertActivityDays(listOf(ActivityDayEntity("mine", day, 100, null, null, null, emptyList(), 1, 10)))
+        repo.import(export(activityDays = listOf(ActivityDayEntity("theirs", day, 9000, null, null, null, emptyList(), 1, 20))), ImportMode.MERGE)
+        assertThat(dao.activityDays().map { it.id to it.steps }).containsExactly("theirs" to 9000L)
     }
 
     @Test fun acceptsMinimalV1AndUnknownFields() {
@@ -244,10 +277,12 @@ class BackupRepositoryTest {
         goals: List<GoalEntity> = emptyList(),
         logEntries: List<LogEntryEntity> = emptyList(),
         dayStatus: List<DayStatusEntity> = emptyList(),
+        activityDays: List<ActivityDayEntity> = emptyList(),
         settings: AppSettings? = null,
     ) = ForkcastExport(
         appVersion = "0.1.0", exportedAt = "2026-10-18T16:00:00Z", timeZone = "America/New_York",
-        mealSlots = mealSlots, goals = goals, logEntries = logEntries, dayStatus = dayStatus, settings = settings,
+        mealSlots = mealSlots, goals = goals, logEntries = logEntries, dayStatus = dayStatus,
+        activityDays = activityDays, settings = settings,
     )
 
     private fun slot(id: String, name: String) = MealSlotEntity(id, name, 0, null, null, 1, 1, null)
@@ -284,7 +319,10 @@ class BackupRepositoryTest {
         dao.upsertLogEntries(listOf(entry("e1", "Rice"), entry("e2", "Deleted", updatedAt = 50, deletedAt = 50, date = day.minusDays(9))))
         dao.upsertWeights(listOf(WeightEntryEntity("w1", day.minusDays(3).atTime(12, 0).atZone(clock.zone).toInstant().toEpochMilli(),
             80.5, null, WeightSource.MANUAL, null, 1, 1)))
-        dao.upsertWater(listOf(WaterEntryEntity("h1", 1, day, "America/New_York", 250.0, 1, 1)))
+        dao.upsertWater(listOf(WaterEntryEntity("h1", 1, day, "America/New_York", 250.0, 1, 1, hcRecordId = "hc-h1", hcSyncedAt = 1)))
+        dao.upsertActivityDays(listOf(ActivityDayEntity("ad1", day, 8200, 410.0, 2650.0, 35,
+            listOf(ExerciseSession("hc-s1", "Morning run", 56, 1_000, 2_000, 300.0)), 1, 1)))
+        dao.upsertTdeeEstimates(listOf(TdeeEstimateEntity("td1", day, TdeeMethod.ADAPTIVE, 2640.0, 2700.0, TdeeConfidence.MEDIUM, 18, 9, 1, 1)))
         dao.upsertDayStatus(listOf(DayStatusEntity("d1", day, true, null, 1, 1)))
         val ai = db.aiDao()
         ai.upsertEstimate(AiEstimateEntity(

@@ -25,6 +25,8 @@ interface BackupDao {
     @Query("SELECT * FROM usage_record") suspend fun usageRecords(): List<UsageRecordEntity>
     @Query("SELECT * FROM notification_log") suspend fun notificationLog(): List<NotificationLogEntity>
     @Query("SELECT * FROM ai_match_cache") suspend fun aiMatchCache(): List<AiMatchCacheEntity>
+    @Query("SELECT * FROM activity_day") suspend fun activityDays(): List<ActivityDayEntity>
+    @Query("SELECT * FROM tdee_estimate") suspend fun tdeeEstimates(): List<TdeeEstimateEntity>
 
     @Upsert suspend fun upsertProfiles(rows: List<ProfileEntity>)
     @Upsert suspend fun upsertGoals(rows: List<GoalEntity>)
@@ -43,6 +45,8 @@ interface BackupDao {
     @Upsert suspend fun upsertUsageRecords(rows: List<UsageRecordEntity>)
     @Upsert suspend fun upsertNotificationLog(rows: List<NotificationLogEntity>)
     @Upsert suspend fun upsertAiMatchCache(rows: List<AiMatchCacheEntity>)
+    @Upsert suspend fun upsertActivityDays(rows: List<ActivityDayEntity>)
+    @Upsert suspend fun upsertTdeeEstimates(rows: List<TdeeEstimateEntity>)
 
     @Query("DELETE FROM profile") suspend fun clearProfiles()
     @Query("DELETE FROM goal") suspend fun clearGoals()
@@ -61,12 +65,16 @@ interface BackupDao {
     @Query("DELETE FROM usage_record") suspend fun clearUsageRecords()
     @Query("DELETE FROM notification_log") suspend fun clearNotificationLog()
     @Query("DELETE FROM ai_match_cache") suspend fun clearAiMatchCache()
+    @Query("DELETE FROM activity_day") suspend fun clearActivityDays()
+    @Query("DELETE FROM tdee_estimate") suspend fun clearTdeeEstimates()
     @Query("DELETE FROM day_status WHERE id = :id") suspend fun deleteDayStatus(id: String)
+    @Query("DELETE FROM activity_day WHERE id = :id") suspend fun deleteActivityDay(id: String)
 
     @Transaction
     suspend fun clearAll() {
         clearProfiles(); clearGoals(); clearTargetOverrides(); clearMealSlots(); clearFoods()
         clearSavedMeals(); clearSavedMealItems(); clearLogEntries(); clearWeights(); clearWater(); clearDayStatus()
         clearAiEstimates(); clearAiComponents(); clearAiProfiles(); clearUsageRecords(); clearNotificationLog(); clearAiMatchCache()
+        clearActivityDays(); clearTdeeEstimates()
     }
 }

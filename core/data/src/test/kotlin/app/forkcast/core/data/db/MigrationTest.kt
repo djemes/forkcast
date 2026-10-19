@@ -83,6 +83,44 @@ class MigrationTest {
         }
     }
 
+    @Test fun migrate3To4KeepsLogAndWaterAndAddsHealthTables() {
+        helper.createDatabase(3).apply {
+            insertV1MealSlot()
+            execSQL(
+                "INSERT INTO log_entry (id, date, zoneId, mealSlotId, foodId, displayName, brand, quantity, servingLabel, grams, " +
+                    "nutrients, source, aiEstimateId, healthConnectRecordId, note, loggedAt, createdAt, updatedAt, deletedAt) " +
+                    "VALUES ('e1', '2026-10-18', 'America/New_York', 'a', NULL, 'Toast', NULL, 1.0, 'slice', 30.0, " +
+                    "'{\"ENERGY_KCAL\":80.0}', 'QUICK_ADD', NULL, NULL, NULL, 1, 1, 5, NULL)",
+            )
+            execSQL(
+                "INSERT INTO water_entry (id, timestamp, date, zoneId, ml, createdAt, updatedAt, deletedAt) " +
+                    "VALUES ('w1', 1, '2026-10-18', 'America/New_York', 250.0, 1, 1, NULL)",
+            )
+            close()
+        }
+        helper.runMigrationsAndValidate(4, emptyList()).apply {
+            // Existing rows are pending for Health Connect (never written).
+            prepare("SELECT displayName, hcSyncedAt FROM log_entry").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getText(0)).isEqualTo("Toast")
+                assertThat(s.isNull(1)).isTrue()
+            }
+            prepare("SELECT ml, hcRecordId, hcSyncedAt FROM water_entry").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getDouble(0)).isEqualTo(250.0)
+                assertThat(s.isNull(1)).isTrue()
+                assertThat(s.isNull(2)).isTrue()
+            }
+            for (table in listOf("activity_day", "tdee_estimate")) {
+                prepare("SELECT count(*) FROM $table").use { s ->
+                    assertThat(s.step()).isTrue()
+                    assertThat(s.getLong(0)).isEqualTo(0)
+                }
+            }
+            close()
+        }
+    }
+
     /** A v1 file from Phase 0 opens with today's code, upgraded in place with its data. */
     @Test fun version1FileOpensWithCurrentCode() {
         helper.createDatabase(1).apply {
@@ -96,7 +134,7 @@ class MigrationTest {
             assertThat(c.moveToFirst()).isTrue()
             assertThat(c.getString(0)).isEqualTo("Lunch")
         }
-        assertThat(db.openHelper.writableDatabase.version).isEqualTo(3)
+        assertThat(db.openHelper.writableDatabase.version).isEqualTo(4)
         db.close()
     }
 

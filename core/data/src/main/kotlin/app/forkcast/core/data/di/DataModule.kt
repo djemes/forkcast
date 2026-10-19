@@ -17,6 +17,7 @@ import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.DayStatusDao
 import app.forkcast.core.data.db.FoodDao
 import app.forkcast.core.data.db.GoalDao
+import app.forkcast.core.data.db.HealthDao
 import app.forkcast.core.data.db.LogEntryDao
 import app.forkcast.core.data.db.MealSlotDao
 import app.forkcast.core.data.db.ProfileDao
@@ -86,6 +87,7 @@ object DataModule {
     @Provides fun provideWaterDao(db: ForkcastDatabase): WaterDao = db.waterDao()
     @Provides fun provideDayStatusDao(db: ForkcastDatabase): DayStatusDao = db.dayStatusDao()
     @Provides fun provideAiDao(db: ForkcastDatabase): AiDao = db.aiDao()
+    @Provides fun provideHealthDao(db: ForkcastDatabase): HealthDao = db.healthDao()
 
     @Provides
     @Singleton

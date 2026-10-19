@@ -1,6 +1,7 @@
 package app.forkcast.core.data.db
 
 import androidx.room.TypeConverter
+import app.forkcast.core.model.ExerciseSession
 import app.forkcast.core.model.MealEstimateJson
 import app.forkcast.core.model.NutrientKey
 import app.forkcast.core.model.Nutrients
@@ -31,6 +32,12 @@ class Converters {
 
     @TypeConverter fun stringsToJson(list: List<String>): String = json.encodeToString(ListSerializer(String.serializer()), list)
     @TypeConverter fun jsonToStrings(s: String): List<String> = json.decodeFromString(ListSerializer(String.serializer()), s)
+
+    @TypeConverter fun sessionsToJson(list: List<ExerciseSession>): String =
+        json.encodeToString(ListSerializer(ExerciseSession.serializer()), list)
+
+    @TypeConverter fun jsonToSessions(s: String): List<ExerciseSession> =
+        json.decodeFromString(ListSerializer(ExerciseSession.serializer()), s)
 
     @TypeConverter fun estimateToJson(e: MealEstimateJson?): String? = e?.let { json.encodeToString(MealEstimateJson.serializer(), it) }
     @TypeConverter fun jsonToEstimate(s: String?): MealEstimateJson? = s?.let { json.decodeFromString(MealEstimateJson.serializer(), it) }
