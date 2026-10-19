@@ -79,7 +79,22 @@ data class AiSettings(
     val photoRetention14Applied: Boolean = false,
     /** User-edited prices per 1M tokens, keyed by model id; overrides the defaults file. */
     val priceOverrides: Map<String, ModelPrice> = emptyMap(),
+    /** The last connection test per profile id, so "does it work?" survives a restart. No secrets. */
+    val lastChecks: Map<String, ProfileCheck> = emptyMap(),
 )
+
+/** Outcome of a profile's last connection test. */
+@Serializable
+data class ProfileCheck(
+    val ok: Boolean,
+    val atMillis: Long,
+    val latencyMs: Long? = null,
+    /** Why it failed, coarse (no provider text: it can echo request details). */
+    val failure: CheckFailure? = null,
+)
+
+@Serializable
+enum class CheckFailure { KEY, QUOTA, MODEL, NETWORK, OTHER }
 
 @Serializable
 data class ModelPrice(val inputPerM: Double, val outputPerM: Double)

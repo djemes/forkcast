@@ -2,6 +2,11 @@ package app.forkcast.ui.ai
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.isDialog
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.filterToOne
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -54,7 +59,7 @@ class AiSettingsTest {
 
     @Test fun guidedFreeGeminiSetupAddsFlashLiteOnSameKey() = runTest(dispatcher) {
         val ai = FakeAiRepository()
-        val vm = AiProfileEditViewModel(ai, SavedStateHandle(mapOf("preset" to AiProfileEditViewModel.FREE_GEMINI)))
+        val vm = AiProfileEditViewModel(ai, SavedStateHandle(mapOf("preset" to AiProfileEditViewModel.FREE_GEMINI)), FakeSettingsRepository(), clock)
         advanceUntilIdle()
         val s = vm.state.value
         assertThat(s.provider).isEqualTo(ProviderId.GEMINI)
@@ -75,7 +80,7 @@ class AiSettingsTest {
 
     @Test fun failedTestKeepsEditorOpenWithReason() = runTest(dispatcher) {
         val ai = FakeAiRepository(testErrors = mapOf("p0" to AiError.InvalidKey()))
-        val vm = AiProfileEditViewModel(ai, SavedStateHandle())
+        val vm = AiProfileEditViewModel(ai, SavedStateHandle(), FakeSettingsRepository(), clock)
         advanceUntilIdle()
         vm.onEvent(AiProfileEditEvent.SetProvider(ProviderId.CLAUDE))
         assertThat(vm.state.value.model).isEqualTo("claude-sonnet-5-5")
@@ -90,7 +95,7 @@ class AiSettingsTest {
     }
 
     @Test fun openAiCompatibleNeedsUrlButNotKey() = runTest(dispatcher) {
-        val vm = AiProfileEditViewModel(FakeAiRepository(), SavedStateHandle())
+        val vm = AiProfileEditViewModel(FakeAiRepository(), SavedStateHandle(), FakeSettingsRepository(), clock)
         advanceUntilIdle()
         vm.onEvent(AiProfileEditEvent.SetProvider(ProviderId.OPENAI_COMPAT))
         vm.onEvent(AiProfileEditEvent.SetModel("llava"))
@@ -164,7 +169,7 @@ class AiSettingsTest {
     @Test fun saveAndTestAndListTestRunTheSameCall() = runTest(dispatcher) {
         val rejected = AiError.InvalidKey(reply = ProviderReply(401, "ACCESS_TOKEN_TYPE_UNSUPPORTED", "Request had invalid authentication credentials."))
         val ai = FakeAiRepository(testErrors = mapOf("p0" to rejected))
-        val editor = AiProfileEditViewModel(ai, SavedStateHandle())
+        val editor = AiProfileEditViewModel(ai, SavedStateHandle(), FakeSettingsRepository(), clock)
         advanceUntilIdle()
         editor.onEvent(AiProfileEditEvent.SetKey("AQ.Ab8RN6Kq-new-format-key"))
         editor.onEvent(AiProfileEditEvent.SaveAndTest)
@@ -282,7 +287,7 @@ class AiSettingsTest {
         effectJob.cancel()
     }
 
-    @Test fun deleteFromCardMenuAsksFirst() = runTest(dispatcher) {
+    @Test fun deleteFromCardAsksFirst() = runTest(dispatcher) {
         val ai = FakeAiRepository()
         ai.saveProfile(AiProfileDraft(null, "Gemini 3.8 Flash", ProviderId.GEMINI, "gemini-3.8-flash", null, TierLabel.FREE), "k")
         ai.saveProfile(AiProfileDraft(null, "Gemini 3.5 Flash-Lite", ProviderId.GEMINI, "gemini-3.5-flash-lite", null, TierLabel.FREE), "k")
@@ -299,17 +304,17 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithContentDescription("More options for Gemini 3.8 Flash").performScrollTo().performClick()
-        compose.onNodeWithText("Delete profile").performClick()
+        // Each card has its own visible Delete.
+        compose.onAllNodesWithText("Delete")[0].performScrollTo().performClick()
         // Nothing is deleted until the dialog is confirmed; it says what moves up.
         assertThat(events.filterIsInstance<AiSettingsEvent.Delete>()).isEmpty()
         compose.onNodeWithText("Delete Gemini 3.8 Flash?").assertIsDisplayed()
         compose.onNodeWithText("Gemini 3.5 Flash-Lite moves up one place", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Delete").performClick()
+        compose.onAllNodesWithText("Delete").filterToOne(hasAnyAncestor(isDialog())).performClick()
         assertThat(events.filterIsInstance<AiSettingsEvent.Delete>().single().id).isEqualTo("p0")
     }
 
-    @Test fun moveFromMenu() = runTest(dispatcher) {
+    @Test fun moveWithArrowsAndStatusSaysWhetherItWorks() = runTest(dispatcher) {
         val ai = FakeAiRepository()
         ai.saveProfile(AiProfileDraft(null, "A", ProviderId.GEMINI, "a", null, TierLabel.FREE), "k")
         ai.saveProfile(AiProfileDraft(null, "B", ProviderId.CLAUDE, "b", null, TierLabel.PAID), "k")
@@ -318,7 +323,17 @@ class AiSettingsTest {
         compose.setContent {
             ForkcastTheme {
                 AiSettingsScreen(
-                    state = AiSettingsUiState(loaded = true, profiles = statuses, roles = listOf(ProfileRole.FIRST, ProfileRole.BACKUP)),
+                    state = AiSettingsUiState(
+                        loaded = true,
+                        settings = app.forkcast.core.model.AiSettings(
+                            lastChecks = mapOf(
+                                "p0" to app.forkcast.core.model.ProfileCheck(ok = true, atMillis = 0, latencyMs = 800),
+                                "p1" to app.forkcast.core.model.ProfileCheck(ok = false, atMillis = 0, failure = app.forkcast.core.model.CheckFailure.KEY),
+                            ),
+                        ),
+                        profiles = statuses,
+                        roles = listOf(ProfileRole.FIRST, ProfileRole.BACKUP),
+                    ),
                     onEvent = { events += it },
                     onBack = {},
                     onEditProfile = {},
@@ -326,8 +341,10 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithContentDescription("More options for B").performScrollTo().performClick()
-        compose.onNodeWithText("Move up").performClick()
+        compose.onNodeWithText("Working: last test passed", substring = true).assertExists()
+        compose.onNodeWithText("the key was rejected", substring = true).assertExists()
+        compose.onNodeWithContentDescription("Move A up").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Move B up").performScrollTo().performClick()
         assertThat(events).contains(AiSettingsEvent.Move(1, 0))
     }
 

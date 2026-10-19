@@ -3,7 +3,6 @@ package app.forkcast.ui.ai
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -17,8 +16,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -33,22 +30,20 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,10 +53,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
 import app.forkcast.core.data.repository.AiProfileStatus
 import app.forkcast.core.data.repository.MonthUsage
+import app.forkcast.core.model.CheckFailure
 import app.forkcast.core.model.ModelPrice
+import app.forkcast.core.model.ProfileCheck
 import app.forkcast.core.model.ProviderId
 import app.forkcast.ui.settings.SettingsScaffold
-import sh.calvin.reorderable.ReorderableColumn
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -108,10 +104,10 @@ fun AiSettingsRoute(
 private val RETENTION_CHOICES = listOf(7, 14, 30, 90, null)
 
 /**
- * Settings › AI (SPEC §4.7). The profile list answers at a glance: what each profile is
- * (provider · model · tier), its place in the order, whether it's ready (status line with icon
- * and words), and every action: Test and Edit on the card, Move up/down and Delete in its menu,
- * drag to reorder.
+ * Settings › AI (SPEC §4.7), reworked 2026-10-19 so each card answers four questions in order:
+ * what it is (number, name, service · model), what it does (used first / backup / off), whether
+ * it works (last test, kept across restarts) and what you can do (Test, Edit, Delete, move up/down
+ * as visible buttons). The order is explained once at the top.
  */
 @Composable
 fun AiSettingsScreen(
@@ -132,9 +128,9 @@ fun AiSettingsScreen(
         if (!s.enabled) return@SettingsScaffold
         HorizontalDivider()
 
-        SectionTitle(R.string.ai_chain_title)
+        SectionTitle(R.string.ai_profiles_title)
         Text(
-            stringResource(R.string.ai_chain_body),
+            stringResource(R.string.ai_order_explain),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -145,34 +141,17 @@ fun AiSettingsScreen(
                 style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(16.dp),
             )
-            FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(horizontal = 16.dp),
-            ) {
-                Button(onClick = onSetUpFreeGemini) { Text(stringResource(R.string.ai_setup_free)) }
-                OutlinedButton(onClick = { onEditProfile(null) }) { Text(stringResource(R.string.ai_add_other)) }
-            }
         } else {
-            ReorderableColumn(
-                list = state.profiles,
-                onSettle = { from, to -> onEvent(AiSettingsEvent.Move(from, to)) },
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
-            ) { index, item, _ ->
-                key(item.profile.id) {
-                    ReorderableItem {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp)) {
+                state.profiles.forEachIndexed { index, item ->
+                    key(item.profile.id) {
                         ProfileCard(
                             item = item,
                             role = state.roleAt(index),
                             test = state.tests[item.profile.id],
+                            check = s.lastChecks[item.profile.id],
                             index = index,
                             count = state.profiles.size,
-                            dragHandle = { name ->
-                                IconButton(onClick = {}, modifier = Modifier.draggableHandle()) {
-                                    Icon(painterResource(R.drawable.ic_drag_handle), stringResource(R.string.ai_drag_handle, name))
-                                }
-                            },
                             onEvent = onEvent,
                             onEdit = { onEditProfile(item.profile.id) },
                             onDelete = { confirmDelete = item.profile.id },
@@ -180,13 +159,24 @@ fun AiSettingsScreen(
                     }
                 }
             }
-            OutlinedButton(onClick = { onEditProfile(null) }, modifier = Modifier.padding(horizontal = 16.dp)) {
+        }
+        // Adding is always one obvious button; the free Gemini setup is offered until there's a Gemini profile.
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+        ) {
+            if (state.profiles.none { it.profile.provider == ProviderId.GEMINI }) {
+                Button(onClick = onSetUpFreeGemini, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.ai_setup_free)) }
+            }
+            OutlinedButton(onClick = { onEditProfile(null) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Icon(painterResource(R.drawable.ic_add), contentDescription = null)
                 Text(stringResource(R.string.ai_add_profile), modifier = Modifier.padding(start = 8.dp))
             }
         }
         HorizontalDivider(Modifier.padding(top = 16.dp))
 
+        SectionTitle(R.string.ai_section_photos)
         PersonalContextField(s.personalContext) { onEvent(AiSettingsEvent.SetPersonalContext(it)) }
         SwitchRow(stringResource(R.string.ai_auto_accept), stringResource(R.string.ai_auto_accept_body), s.autoAccept) {
             onEvent(AiSettingsEvent.SetAutoAccept(it))
@@ -253,40 +243,28 @@ private fun ProfileCard(
     item: AiProfileStatus,
     role: ProfileRole,
     test: TestState?,
+    check: ProfileCheck?,
     index: Int,
     count: Int,
-    dragHandle: @Composable (String) -> Unit,
     onEvent: (AiSettingsEvent) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val p = item.profile
     val res = LocalResources.current
-    val moveUp = stringResource(R.string.ai_move_up)
-    val moveDown = stringResource(R.string.ai_move_down)
-    val delete = stringResource(R.string.ai_delete_profile)
-    var menuOpen by remember { mutableStateOf(false) }
+    val moveUp = stringResource(R.string.ai_move_up_named, p.name)
+    val moveDown = stringResource(R.string.ai_move_down_named, p.name)
     Column(
+        verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .fillMaxWidth()
             .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
-            .semantics {
-                customActions = buildList {
-                    if (index > 0) add(CustomAccessibilityAction(moveUp) { onEvent(AiSettingsEvent.Move(index, index - 1)); true })
-                    if (index < count - 1) add(CustomAccessibilityAction(moveDown) { onEvent(AiSettingsEvent.Move(index, index + 1)); true })
-                    add(CustomAccessibilityAction(delete) { onDelete(); true })
-                }
-            }
-            .padding(start = 4.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
+            .padding(start = 12.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
     ) {
+        // What it is
         Row(verticalAlignment = Alignment.CenterVertically) {
-            dragHandle(p.name)
             PositionBadge(index + 1, first = role == ProfileRole.FIRST)
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(start = 12.dp, end = 8.dp),
-            ) {
+            Column(Modifier.weight(1f).padding(start = 12.dp, end = 8.dp)) {
                 Text(p.name, style = MaterialTheme.typography.titleMedium)
                 Text(profileLine(item), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -296,54 +274,60 @@ private fun ProfileCard(
                 modifier = Modifier.semantics { contentDescription = res.getString(R.string.ai_profile_enabled, p.name) },
             )
         }
-        Column(
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.padding(start = 12.dp, top = 8.dp),
-        ) {
-            RoleLine(role, p.cooldownUntil?.let(::formatTime))
-            Text(
-                stringResource(R.string.ai_used_today, item.usedToday),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(start = 28.dp),
-            )
-            TestResult(test, p.provider, Modifier.padding(top = 4.dp))
-        }
+        // What it does, and whether it works
+        RoleLine(role, p.cooldownUntil?.let(::formatTime))
+        if (test != null) TestResult(test, p.provider) else CheckLine(check)
+        Text(
+            stringResource(R.string.ai_used_today, item.usedToday),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.padding(start = 28.dp),
+        )
+        // What you can do
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Spacer(Modifier.weight(1f))
             TextButton(onClick = { onEvent(AiSettingsEvent.Test(p.id)) }, enabled = test !is TestState.Running) {
                 Text(stringResource(if (test is TestState.Running) R.string.ai_testing else R.string.ai_test))
             }
             TextButton(onClick = onEdit) { Text(stringResource(R.string.ai_edit)) }
-            Box {
-                IconButton(onClick = { menuOpen = true }) {
-                    Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.ai_more, p.name))
-                }
-                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
-                    if (index > 0) {
-                        DropdownMenuItem(
-                            text = { Text(moveUp) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_arrow_upward), contentDescription = null) },
-                            onClick = { menuOpen = false; onEvent(AiSettingsEvent.Move(index, index - 1)) },
-                        )
-                    }
-                    if (index < count - 1) {
-                        DropdownMenuItem(
-                            text = { Text(moveDown) },
-                            leadingIcon = { Icon(painterResource(R.drawable.ic_arrow_downward), contentDescription = null) },
-                            onClick = { menuOpen = false; onEvent(AiSettingsEvent.Move(index, index + 1)) },
-                        )
-                    }
-                    DropdownMenuItem(
-                        text = { Text(delete, color = MaterialTheme.colorScheme.error) },
-                        leadingIcon = { Icon(painterResource(R.drawable.ic_delete), contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                        onClick = { menuOpen = false; onDelete() },
-                    )
-                }
+            TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+            Spacer(Modifier.weight(1f))
+            IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index - 1)) }, enabled = index > 0) {
+                Icon(painterResource(R.drawable.ic_arrow_upward), moveUp)
+            }
+            IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index + 1)) }, enabled = index < count - 1) {
+                Icon(painterResource(R.drawable.ic_arrow_downward), moveDown)
             }
         }
     }
 }
+
+/** The last test, remembered across restarts: when, and whether it worked. */
+@Composable
+private fun CheckLine(check: ProfileCheck?) {
+    if (check == null) {
+        IconLine(R.drawable.ic_remove_circle, stringResource(R.string.ai_check_never), MaterialTheme.colorScheme.onSurfaceVariant)
+        return
+    }
+    val time = formatDateTime(check.atMillis)
+    if (check.ok) {
+        IconLine(R.drawable.ic_check_circle, stringResource(R.string.ai_check_ok, time), MaterialTheme.colorScheme.primary)
+    } else {
+        val why = stringResource(
+            when (check.failure) {
+                CheckFailure.KEY -> R.string.ai_check_why_key
+                CheckFailure.QUOTA -> R.string.ai_check_why_quota
+                CheckFailure.MODEL -> R.string.ai_check_why_model
+                CheckFailure.NETWORK -> R.string.ai_check_why_network
+                else -> R.string.ai_check_why_other
+            },
+        )
+        IconLine(R.drawable.ic_error, stringResource(R.string.ai_check_failed, time, why), MaterialTheme.colorScheme.error)
+    }
+}
+
+private fun formatDateTime(epochMs: Long): String =
+    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withLocale(Locale.getDefault())
+        .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
 
 private fun formatTime(epochMs: Long): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(Locale.getDefault())

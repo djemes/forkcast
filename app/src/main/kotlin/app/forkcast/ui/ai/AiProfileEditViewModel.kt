@@ -77,6 +77,8 @@ sealed interface AiProfileEditEvent {
 class AiProfileEditViewModel @Inject constructor(
     private val ai: AiRepository,
     savedState: SavedStateHandle,
+    private val settings: app.forkcast.core.data.repository.SettingsRepository,
+    private val clock: java.time.Clock,
 ) : ViewModel() {
 
     private val profileId: String? = savedState["profileId"]
@@ -177,6 +179,7 @@ class AiProfileEditViewModel @Inject constructor(
             s.copyKeyFrom?.let { ai.copyKey(it.id, id) }
             if (preset == FREE_GEMINI && s.isNew && s.provider == ProviderId.GEMINI) addFlashLite(id, s.tier)
             val result = ai.runTest(id)
+            settings.recordCheck(id, result, clock.millis())
             val key = ai.savedKey(id)?.let(::SecretText)
             _state.update {
                 it.copy(
@@ -199,6 +202,7 @@ class AiProfileEditViewModel @Inject constructor(
         _state.update { it.copy(test = TestState.Running) }
         viewModelScope.launch {
             val result = ai.runTest(id)
+            settings.recordCheck(id, result, clock.millis())
             _state.update { it.copy(test = result) }
         }
     }

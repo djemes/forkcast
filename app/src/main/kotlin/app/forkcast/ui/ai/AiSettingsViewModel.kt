@@ -8,6 +8,9 @@ import app.forkcast.core.data.repository.DeletedAiProfile
 import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.model.AiSettings
+import app.forkcast.core.model.CheckFailure
+import app.forkcast.core.model.ProfileCheck
+import app.forkcast.core.network.ai.AiError
 import app.forkcast.core.model.ModelPrice
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.network.ai.ConnectionReport
@@ -39,6 +42,24 @@ sealed interface TestState {
  */
 suspend fun AiRepository.runTest(profileId: String): TestState =
     test(profileId).fold({ r -> TestState.Ok(r) }, { e -> TestState.Failed(e) })
+
+/** Remembers a finished test on the profile, so the list can say whether it works after a restart. */
+suspend fun SettingsRepository.recordCheck(profileId: String, result: TestState, nowMs: Long) {
+    val check = when (result) {
+        is TestState.Ok -> ProfileCheck(ok = true, atMillis = nowMs, latencyMs = result.report.latencyMs)
+        is TestState.Failed -> ProfileCheck(ok = false, atMillis = nowMs, failure = checkFailure(result.error))
+        TestState.Running -> return
+    }
+    updateAi { it.copy(lastChecks = it.lastChecks + (profileId to check)) }
+}
+
+fun checkFailure(error: Throwable?): CheckFailure = when (error) {
+    is AiError.InvalidKey -> CheckFailure.KEY
+    is AiError.RateLimited, is AiError.QuotaExhausted -> CheckFailure.QUOTA
+    is AiError.ModelNotFound -> CheckFailure.MODEL
+    is AiError.Network, is AiError.Timeout -> CheckFailure.NETWORK
+    else -> CheckFailure.OTHER
+}
 
 /** What a profile does in the fallback chain right now, as the list shows it. */
 enum class ProfileRole {
@@ -146,11 +167,13 @@ class AiSettingsViewModel @Inject constructor(
                     tests.update { it + (event.id to TestState.Running) }
                     val result = ai.runTest(event.id)
                     tests.update { it + (event.id to result) }
+                    settingsRepo.recordCheck(event.id, result, clock.millis())
                 }
                 is AiSettingsEvent.Delete -> {
                     val deleted = ai.deleteProfile(event.id) ?: return@launch
                     lastDeleted = deleted
                     tests.update { it - event.id }
+                    settingsRepo.updateAi { it.copy(lastChecks = it.lastChecks - event.id) }
                     effectChannel.send(AiSettingsEffect.Deleted(deleted.name))
                 }
                 AiSettingsEvent.UndoDelete -> {
