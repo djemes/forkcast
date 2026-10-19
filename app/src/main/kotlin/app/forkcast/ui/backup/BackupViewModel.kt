@@ -39,6 +39,8 @@ sealed interface BackupDialog {
     data class Rejected(val reason: RejectReason) : BackupDialog
     data object ReadFailed : BackupDialog
     data object ImportFailed : BackupDialog
+    /** Downloading a Drive backup failed; [problem] says why. */
+    data class DriveFailed(val problem: app.forkcast.core.data.drive.DriveProblem) : BackupDialog
 }
 
 sealed interface BackupNotice {
@@ -57,6 +59,8 @@ sealed interface BackupEvent {
     data class Export(val kind: ExportKind, val uri: Uri) : BackupEvent
     data class Open(val uri: Uri) : BackupEvent
     data object OpenSafetyBackup : BackupEvent
+    /** A backup picked in "Restore from Drive": download it, then the usual preview. */
+    data class OpenDrive(val id: String) : BackupEvent
     data object Merge : BackupEvent
     data object AskReplace : BackupEvent
     data object Replace : BackupEvent
@@ -69,6 +73,7 @@ class BackupViewModel @Inject constructor(
     private val backups: BackupRepository,
     private val documents: DocumentIo,
     private val archive: PhotoArchive,
+    private val drive: app.forkcast.core.data.drive.DriveBackupRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -108,6 +113,14 @@ class BackupViewModel @Inject constructor(
                 show(text, isSafetyBackup = false)
             }
             BackupEvent.OpenSafetyBackup -> work { backups.readSafetyBackup()?.let { show(it, isSafetyBackup = true) } }
+            is BackupEvent.OpenDrive -> work {
+                hasStagedPhotos = false
+                try {
+                    show(drive.download(event.id), isSafetyBackup = false)
+                } catch (e: app.forkcast.core.data.drive.DriveProblemException) {
+                    _state.update { it.copy(dialog = BackupDialog.DriveFailed(e.problem)) }
+                }
+            }
             BackupEvent.Merge -> runImport(ImportMode.MERGE)
             BackupEvent.AskReplace -> _state.update { it.copy(dialog = BackupDialog.ConfirmReplace) }
             BackupEvent.Replace -> runImport(ImportMode.REPLACE)

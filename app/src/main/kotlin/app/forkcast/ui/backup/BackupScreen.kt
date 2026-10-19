@@ -49,8 +49,10 @@ fun BackupRoute(
     onBack: () -> Unit,
     viewModel: BackupViewModel = hiltViewModel(),
     transfer: SettingsTransferViewModel = hiltViewModel(),
+    drive: DriveViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val driveState by drive.state.collectAsStateWithLifecycle()
     val transferState by transfer.state.collectAsStateWithLifecycle()
     val onEvent = viewModel::onEvent
 
@@ -90,6 +92,7 @@ fun BackupRoute(
             import = { open.launch(arrayOf("application/json", "application/zip", "application/octet-stream", "text/plain")) },
         ),
         onBack = onBack,
+        driveSection = { DriveSectionRoute(drive, driveState) { backup -> onEvent(BackupEvent.OpenDrive(backup.id)) } },
         settingsSection = {
             SettingsTransferSection(
                 busy = state.busy || transferState.busy,
@@ -121,6 +124,8 @@ fun BackupScreen(
     onEvent: (BackupEvent) -> Unit,
     actions: BackupActions,
     onBack: () -> Unit,
+    /** Google Drive backup (Phase 4), first: it's the backup most people want. */
+    driveSection: @Composable () -> Unit = {},
     settingsSection: @Composable () -> Unit = {},
     extraNotice: Int? = null,
     onExtraNoticeShown: () -> Unit = {},
@@ -145,7 +150,8 @@ fun BackupScreen(
                 LinearProgressIndicator(Modifier.fillMaxWidth().semantics { contentDescription = working })
             }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(16.dp)) {
-                SectionTitle(R.string.backup_export_title)
+                driveSection()
+                SectionTitle(R.string.backup_export_title, Modifier.padding(top = 16.dp))
                 Text(stringResource(R.string.backup_export_body), style = MaterialTheme.typography.bodyMedium)
                 Button(onClick = actions.exportJson, enabled = !state.busy) { Text(stringResource(R.string.backup_export_json)) }
                 OutlinedButton(onClick = actions.exportZip, enabled = !state.busy) { Text(stringResource(R.string.backup_export_zip)) }
@@ -236,6 +242,7 @@ private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) 
         )
         BackupDialog.ReadFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_read_failed), dismiss)
         BackupDialog.ImportFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_import_failed), dismiss)
+        is BackupDialog.DriveFailed -> MessageDialog(stringResource(R.string.drive_restore_failed), stringResource(driveProblemText(dialog.problem)), dismiss)
     }
 }
 

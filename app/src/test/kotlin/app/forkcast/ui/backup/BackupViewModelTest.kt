@@ -30,6 +30,7 @@ class BackupViewModelTest {
     private val dispatcher = StandardTestDispatcher()
     private val backups = FakeBackupRepository()
     private val documents = FakeDocumentIo()
+    private val drive = app.forkcast.fakes.FakeDriveBackupRepository()
     private val clock = Clock.fixed(Instant.parse("2026-10-18T16:05:00Z"), ZoneId.of("America/New_York"))
     private val uri: Uri = Uri.parse("content://test/file")
 
@@ -37,7 +38,7 @@ class BackupViewModelTest {
     @After fun tearDown() = Dispatchers.resetMain()
 
     private val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
-    private fun vm() = BackupViewModel(backups, documents, app.forkcast.core.data.backup.PhotoArchive(context, app.forkcast.core.data.ai.PhotoStore(context)), clock)
+    private fun vm() = BackupViewModel(backups, documents, app.forkcast.core.data.backup.PhotoArchive(context, app.forkcast.core.data.ai.PhotoStore(context)), drive, clock)
 
     @Test fun fileNamesUseLocalTime() {
         val vm = vm()
@@ -128,5 +129,19 @@ class BackupViewModelTest {
         advanceUntilIdle()
         assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.ImportFailed)
         assertThat(vm.state.value.busy).isFalse()
+    }
+
+    @Test fun driveBackupOpensTheSamePreview() = runTest(dispatcher) {
+        drive.files["b1"] = "good"
+        val vm = vm()
+        vm.onEvent(BackupEvent.OpenDrive("b1"))
+        advanceUntilIdle()
+        assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.Preview(FakeBackupRepository.PREVIEW, isSafetyBackup = false))
+
+        drive.problem = app.forkcast.core.data.drive.DriveProblem.OFFLINE
+        vm.onEvent(BackupEvent.DismissDialog)
+        vm.onEvent(BackupEvent.OpenDrive("b1"))
+        advanceUntilIdle()
+        assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.DriveFailed(app.forkcast.core.data.drive.DriveProblem.OFFLINE))
     }
 }

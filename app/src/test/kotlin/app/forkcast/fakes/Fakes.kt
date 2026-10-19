@@ -84,3 +84,20 @@ class FakeMissingKeysRepository(initial: List<app.forkcast.core.data.repository.
     override suspend fun noteFoodDatabaseKey(saved: Boolean) = Unit
     override fun start(scope: kotlinx.coroutines.CoroutineScope) = Unit
 }
+
+class FakeDriveBackupRepository : app.forkcast.core.data.drive.DriveBackupRepository {
+    val state = MutableStateFlow(app.forkcast.core.data.drive.DriveStatus(null, app.forkcast.core.model.BackupSettings(), null, null))
+    val files = mutableMapOf<String, String>()
+    var problem: app.forkcast.core.data.drive.DriveProblem? = null
+    var backups = 0
+    override val status: Flow<app.forkcast.core.data.drive.DriveStatus> = state
+    override suspend fun connect(token: String) = problem.also { if (it == null) state.update { s -> s.copy(account = "gabe@example.com") } }
+    override suspend fun backupNow(interactive: Boolean) = problem.also { if (it == null) backups++ }
+    override suspend fun backups(): List<app.forkcast.core.data.drive.DriveBackup> =
+        problem?.let { throw app.forkcast.core.data.drive.DriveProblemException(it) } ?: files.keys.map { app.forkcast.core.data.drive.DriveBackup(it, it, null, null) }
+    override suspend fun download(id: String): String =
+        problem?.let { throw app.forkcast.core.data.drive.DriveProblemException(it) } ?: files.getValue(id)
+    override suspend fun disconnect() = state.update { it.copy(account = null) }
+    override suspend fun updateSettings(transform: (app.forkcast.core.model.BackupSettings) -> app.forkcast.core.model.BackupSettings) =
+        state.update { it.copy(settings = transform(it.settings)) }
+}
