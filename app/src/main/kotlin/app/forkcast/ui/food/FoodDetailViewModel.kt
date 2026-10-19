@@ -46,6 +46,8 @@ data class FoodDetailState(
     /** Day the entry goes to, relative to today (0 = today, -1 = yesterday). */
     val daysFromToday: Long = 0,
     val date: LocalDate? = null,
+    /** Picking an ingredient for a recipe: no meal, the button says "Add to recipe". */
+    val forRecipe: Boolean = false,
 ) {
     val grams: Double? get() = quantity?.let { it * serving.grams }
     val preview: Nutrients get() = food.nutrientsPer100g.forGrams(grams ?: 0.0)
@@ -60,6 +62,7 @@ private data class Selection(val servingLabel: String? = null, val quantity: Dou
 
 sealed interface FoodDetailEffect {
     data class Added(val mealName: String) : FoodDetailEffect
+    data class Picked(val pick: app.forkcast.ui.recipes.RecipePick) : FoodDetailEffect
 }
 
 @HiltViewModel
@@ -96,6 +99,7 @@ class FoodDetailViewModel @Inject constructor(
             units = s.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
             daysFromToday = logDate?.let { ChronoUnit.DAYS.between(LocalDate.now(clock), it) } ?: 0,
             date = logDate,
+            forRecipe = args.forRecipe,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -146,6 +150,10 @@ class FoodDetailViewModel @Inject constructor(
     fun add() {
         val s = state.value ?: return
         val q = s.quantity ?: return
+        if (args.forRecipe) {
+            viewModelScope.launch { effectChannel.send(FoodDetailEffect.Picked(app.forkcast.ui.recipes.RecipePick(s.food.id, s.serving.label, q))) }
+            return
+        }
         viewModelScope.launch {
             log.add(listOf(FoodLogging.entry(s.food, s.serving, q, LocalDate.parse(args.date), s.mealSlotId, clock.instant())))
             effectChannel.send(FoodDetailEffect.Added(s.mealName))

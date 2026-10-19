@@ -116,6 +116,8 @@ data class TodayActions(
     /** Opens the Activity detail on [date]. */
     val openActivity: (date: java.time.LocalDate) -> Unit = {},
     val openTrends: () -> Unit = {},
+    /** Opens the recipe list to log into [mealSlotId] on [date]. */
+    val openRecipes: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
 )
 
 @Composable
@@ -369,6 +371,7 @@ fun TodayScreen(
                 photo = actions.openPhoto?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
                 savedMeals = { logSheetMealId = null; savedMealsFor = mealId },
+                recipes = actions.openRecipes?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
             ),
             recents = state.recents,
             recentsAreFavorites = state.recentsAreFavorites,

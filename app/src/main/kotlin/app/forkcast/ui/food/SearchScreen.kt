@@ -54,13 +54,16 @@ fun SearchRoute(
     onBack: () -> Unit,
     onOpenFood: (foodId: String) -> Unit,
     onCreateFood: () -> Unit,
+    /** Null while picking a recipe ingredient (no recipes inside recipes from here). */
+    onCreateRecipe: ((query: String) -> Unit)? = null,
+    forRecipe: Boolean = false,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.effects.collect { if (it is SearchEffect.OpenFood) onOpenFood(it.foodId) }
     }
-    SearchScreen(state, viewModel::onQueryChange, viewModel::open, onBack, onCreateFood)
+    SearchScreen(state, viewModel::onQueryChange, viewModel::open, onBack, onCreateFood, onCreateRecipe, forRecipe)
 }
 
 @Composable
@@ -70,6 +73,8 @@ fun SearchScreen(
     onOpen: (Food) -> Unit,
     onBack: () -> Unit,
     onCreateFood: () -> Unit,
+    onCreateRecipe: ((query: String) -> Unit)? = null,
+    forRecipe: Boolean = false,
 ) {
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val focus = remember { FocusRequester() }
@@ -84,7 +89,7 @@ fun SearchScreen(
                 OutlinedTextField(
                     value = state.query,
                     onValueChange = onQueryChange,
-                    placeholder = { Text(stringResource(R.string.search_hint)) },
+                    placeholder = { Text(stringResource(if (forRecipe) R.string.search_ingredient_hint else R.string.search_hint)) },
                     leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
                     trailingIcon = {
                         if (state.query.isNotEmpty()) {
@@ -121,6 +126,14 @@ fun SearchScreen(
                     TextButton(onClick = onCreateFood, modifier = Modifier.padding(top = 8.dp)) {
                         Icon(painterResource(R.drawable.ic_add), contentDescription = null)
                         Text(stringResource(R.string.search_create_food), modifier = Modifier.padding(start = 6.dp))
+                    }
+                }
+                onCreateRecipe?.let { create ->
+                    item {
+                        TextButton(onClick = { create(state.query.trim()) }) {
+                            Icon(painterResource(R.drawable.ic_recipe), contentDescription = null)
+                            Text(stringResource(R.string.search_create_recipe), modifier = Modifier.padding(start = 6.dp))
+                        }
                     }
                 }
             }

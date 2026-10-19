@@ -59,11 +59,20 @@ fun FoodDetailRoute(
     onBack: () -> Unit,
     onAdded: (mealName: String) -> Unit,
     onEdit: (foodId: String) -> Unit,
+    /** Recipe foods: opens the recipe editor. */
+    onEditRecipe: (foodId: String) -> Unit = {},
+    /** Picking an ingredient: hands the choice back to the recipe editor. */
+    onPicked: (app.forkcast.ui.recipes.RecipePick) -> Unit = {},
     viewModel: FoodDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
-        viewModel.effects.collect { if (it is FoodDetailEffect.Added) onAdded(it.mealName) }
+        viewModel.effects.collect {
+            when (it) {
+                is FoodDetailEffect.Added -> onAdded(it.mealName)
+                is FoodDetailEffect.Picked -> onPicked(it.pick)
+            }
+        }
     }
     state?.let {
         FoodDetailScreen(
@@ -74,7 +83,7 @@ fun FoodDetailRoute(
             onStep = viewModel::step,
             onMeal = viewModel::selectMeal,
             onFavorite = viewModel::toggleFavorite,
-            onEdit = { onEdit(it.food.id) },
+            onEdit = { if (it.food.source == FoodSource.RECIPE) onEditRecipe(it.food.id) else onEdit(it.food.id) },
             onAdd = viewModel::add,
             onCountsAsWater = viewModel::setCountsAsWater,
         )
@@ -98,7 +107,7 @@ fun FoodDetailScreen(
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val food = state.food
     var showAll by rememberSaveable { mutableStateOf(false) }
-    val editable = food.source == FoodSource.CUSTOM || food.source == FoodSource.LABEL
+    val editable = food.source == FoodSource.CUSTOM || food.source == FoodSource.LABEL || food.source == FoodSource.RECIPE
 
     Scaffold(
         topBar = {
@@ -109,7 +118,8 @@ fun FoodDetailScreen(
                 },
                 actions = {
                     if (editable) {
-                        IconButton(onClick = onEdit) { Icon(painterResource(R.drawable.ic_edit), stringResource(R.string.food_edit)) }
+                        val editLabel = stringResource(if (food.source == FoodSource.RECIPE) R.string.food_edit_recipe else R.string.food_edit)
+                        IconButton(onClick = onEdit) { Icon(painterResource(R.drawable.ic_edit), editLabel) }
                     }
                     IconButton(onClick = onFavorite) {
                         Icon(
@@ -136,6 +146,7 @@ fun FoodDetailScreen(
                 // Logging goes to the day on Today's screen; name it when it isn't today.
                 val date = state.date
                 val label = when {
+                    state.forRecipe -> stringResource(R.string.food_add_to_recipe)
                     state.daysFromToday == 0L || date == null -> stringResource(R.string.food_add_to, state.mealName)
                     state.daysFromToday == -1L -> stringResource(R.string.food_add_to_day, state.mealName, stringResource(R.string.yesterday))
                     state.daysFromToday == 1L -> stringResource(R.string.food_add_to_day, state.mealName, stringResource(R.string.tomorrow))
@@ -214,15 +225,17 @@ fun FoodDetailScreen(
                 }
             }
 
-            Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                state.meals.forEach { m ->
-                    FilterChip(selected = m.id == state.mealSlotId, onClick = { onMeal(m.id) }, label = { Text(m.name) })
+            if (!state.forRecipe) {
+                Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    state.meals.forEach { m ->
+                        FilterChip(selected = m.id == state.mealSlotId, onClick = { onMeal(m.id) }, label = { Text(m.name) })
+                    }
                 }
             }
             // Water, sparkling water and plain tea count toward the day's water; the user can override it per food.
             // Shown for drinks only (any drink, so coffee or milk can be switched on by hand).
-            if (state.isDrink) {
+            if (state.isDrink && !state.forRecipe) {
                 val counts = state.countsAsWater
                 app.forkcast.ui.today.WaterToggle(
                     checked = counts,

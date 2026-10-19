@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="log_recipes">Recipes</string>
+    <string name="recipes_title">Recipes</string>
+    <string name="recipes_new">New recipe</string>
+    <string name="recipes_empty">Build a dish you cook often from its ingredients, then log it by the serving. Editing a recipe later only changes future logs.</string>
+    <plurals name="recipes_row">
+        <item quantity="one">%1$s a serving · %2$s serving</item>
+        <item quantity="other">%1$s a serving · %2$s servings</item>
+    </plurals>
+    <string name="recipes_edit">Edit %1$s</string>
+    <string name="recipes_log_hint">Tap a recipe to log it to %1$s.</string>
+
+    <string name="recipe_new_title">New recipe</string>
+    <string name="recipe_edit_title">Edit recipe</string>
+    <string name="recipe_name">Name</string>
+    <string name="recipe_servings">Servings</string>
+    <string name="recipe_servings_help">How many portions the whole dish makes.</string>
+    <string name="recipe_cooked_weight">Cooked weight (optional)</string>
+    <string name="recipe_cooked_weight_help">Weigh the finished dish (without the pot) to log by weight accurately. Without it the ingredients\' raw weight is used: %1$s.</string>
+    <string name="recipe_cooked_weight_help_empty">Weigh the finished dish (without the pot) to log by weight accurately. Without it the ingredients\' raw weight is used.</string>
+    <string name="recipe_ingredients">Ingredients</string>
+    <string name="recipe_no_ingredients">No ingredients yet. Add them from search or scan a package.</string>
+    <string name="recipe_add_search">Add ingredient</string>
+    <string name="recipe_add_scan">Scan</string>
+    <string name="recipe_per_serving">Per serving</string>
+    <string name="recipe_per_serving_weight">One serving is %1$s</string>
+    <string name="recipe_whole">Whole recipe: %1$s</string>
+    <string name="recipe_save">Save recipe</string>
+    <string name="recipe_save_and_log">Save and log</string>
+    <string name="recipe_delete">Delete recipe</string>
+    <string name="recipe_more">More options for this recipe</string>
+    <string name="recipe_delete_confirm_title">Delete %1$s?</string>
+    <string name="recipe_delete_confirm_body">Days you already logged it keep their entries.</string>
+    <string name="recipe_discard_title">Discard changes?</string>
+    <string name="recipe_discard_body">Your changes to this recipe aren\'t saved.</string>
+    <string name="recipe_discard">Discard</string>
+    <string name="recipe_keep_editing">Keep editing</string>
+    <string name="recipe_ingredient_amount">Amount</string>
+    <string name="recipe_ingredient_remove">Remove %1$s</string>
+    <string name="recipe_ingredient_edit">Change amount of %1$s</string>
+    <string name="recipe_ingredient_added">Added %1$s</string>
+    <string name="recipe_not_itself">A recipe can\'t include itself.</string>
+    <string name="recipe_need_name">Give it a name</string>
+    <string name="recipe_need_ingredient">Add at least one ingredient</string>
+    <string name="recipe_saved">Saved %1$s</string>
+    <string name="search_create_recipe">Create recipe</string>
+    <string name="search_ingredient_hint">Search for an ingredient</string>
+    <string name="food_add_to_recipe">Add to recipe</string>
+    <string name="food_edit_recipe">Edit recipe</string>
+</resources>

@@ -12,6 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
@@ -54,7 +55,6 @@ import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.patrykandpatrick.vico.compose.common.data.ExtraStore
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.max
@@ -153,7 +153,7 @@ fun CaloriesChart(
     val step = niceStep(top)
     val maxY = ceil(top / step) * step
     val range = remember(maxY) { CartesianLayerRangeProvider.fixed(minY = 0.0, maxY = maxY) }
-    val locale = Locale.getDefault()
+    val locale = LocalLocale.current.platformLocale
     val dayFormat = remember(locale, days.size) {
         DateTimeFormatter.ofPattern(if (days.size <= 7) "EEE" else android.text.format.DateFormat.getBestDateTimePattern(locale, "MMMd"), locale)
     }
@@ -249,7 +249,7 @@ fun WeightTrendChart(
     val decimals = if (step < 1) 1 else 0
     val pine = ForkcastTheme.colors.pine
     val dots = MaterialTheme.colorScheme.onSurfaceVariant
-    val locale = Locale.getDefault()
+    val locale = LocalLocale.current.platformLocale
     val dateFormat = remember(locale) { DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, "MMMd"), locale) }
     val span = points.size
     val byOffset = remember(points) { points.associateBy { it.date.toEpochDay() - first.toEpochDay() } }

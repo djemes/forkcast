@@ -52,11 +52,12 @@ data class LogSheetActions(
     val search: (() -> Unit)? = null,
     val quickAdd: (() -> Unit)? = null,
     val savedMeals: (() -> Unit)? = null,
+    val recipes: (() -> Unit)? = null,
 )
 
 /**
  * The "Log" bottom sheet (DESIGN.md §6): Scan · Photo · Search tiles, then Quick add,
- * Saved meals, and the first 5 recent foods for one-tap add (≤ 3 taps from Today, SPEC §4.3).
+ * Saved meals, Recipes, and the first 5 recent foods for one-tap add (≤ 3 taps from Today, SPEC §4.3).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -118,6 +119,7 @@ fun LogSheet(
             }
             LogRow(R.drawable.ic_bolt, R.string.log_quick_add, actions.quickAdd)
             LogRow(R.drawable.ic_bookmark, R.string.log_saved_meals, actions.savedMeals)
+            LogRow(R.drawable.ic_recipe, R.string.log_recipes, actions.recipes)
             if (recents.isNotEmpty() && f != null) {
                 Text(
                     stringResource(if (recentsAreFavorites) R.string.log_favorites else R.string.log_recent),

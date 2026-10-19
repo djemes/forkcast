@@ -40,6 +40,8 @@ import app.forkcast.ui.settings.SettingsScreen
 import app.forkcast.ui.today.TodayActions
 import app.forkcast.ui.today.TodayRoute
 import app.forkcast.ui.trends.TrendsRoute
+import app.forkcast.ui.recipes.RecipeEditRoute
+import app.forkcast.ui.recipes.RecipesRoute
 import app.forkcast.ui.weight.WeightRoute
 import kotlinx.serialization.Serializable
 
@@ -78,9 +80,10 @@ import kotlinx.serialization.Serializable
 @Serializable data class AiProfileEditDestination(val profileId: String? = null, val preset: String? = null)
 
 /** Log into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
-@Serializable data class SearchDestination(val mealSlotId: String, val date: String)
+@Serializable data class SearchDestination(val mealSlotId: String, val date: String, val forRecipe: Boolean = false)
 
-@Serializable data class FoodDetailDestination(val foodId: String, val mealSlotId: String, val date: String)
+/** [forRecipe]: picking an ingredient ("Add to recipe"); [mealSlotId] and [date] are then empty. */
+@Serializable data class FoodDetailDestination(val foodId: String, val mealSlotId: String, val date: String, val forRecipe: Boolean = false)
 
 /** Create (foodId null) or edit a custom food; [barcode] and [prefill] (scanned label JSON) pre-fill a new one. */
 @Serializable data class CustomFoodDestination(
@@ -89,18 +92,34 @@ import kotlinx.serialization.Serializable
     val mealSlotId: String? = null,
     val date: String? = null,
     val prefill: String? = null,
+    val forRecipe: Boolean = false,
 )
 
-@Serializable data class ScannerDestination(val mealSlotId: String, val date: String)
+@Serializable data class ScannerDestination(val mealSlotId: String, val date: String, val forRecipe: Boolean = false)
 
 /** Photograph a Nutrition Facts panel for an unknown [barcode]. */
-@Serializable data class LabelScanDestination(val barcode: String, val mealSlotId: String, val date: String)
+@Serializable data class LabelScanDestination(val barcode: String, val mealSlotId: String, val date: String, val forRecipe: Boolean = false)
+
+/** Recipe list; with [mealSlotId] and [date] a tap logs the recipe there. */
+@Serializable data class RecipesDestination(val mealSlotId: String? = null, val date: String? = null)
+
+/** Edit [recipeId] (or the recipe behind [foodId]), or a new one named [name]; [mealSlotId]/[date] = log it after saving. */
+@Serializable data class RecipeEditDestination(
+    val recipeId: String? = null,
+    val foodId: String? = null,
+    val mealSlotId: String? = null,
+    val date: String? = null,
+    val name: String? = null,
+)
 
 /** Key on Today's back-stack entry: the meal name to confirm ("Added to Lunch"). */
 private const val ADDED_TO = "added_to"
 
 /** Key on Today's back-stack entry: a day to show (ISO date), set by Trends' "Open day". */
 private const val OPEN_DATE = "open_date"
+
+/** Key on the recipe editor's back-stack entry: an ingredient picked in food detail (RecipePick.encode). */
+private const val RECIPE_PICK = "recipe_pick"
 
 /** Key on Settings › AI's back-stack entry: a profile the editor's Delete confirmed (the list deletes it, with Undo). */
 private const val DELETE_AI_PROFILE = "delete_ai_profile"
@@ -158,6 +177,7 @@ fun ForkcastNavHost(
                     openHealthConnect = { navController.navigate(HealthConnectDestination) },
                     openActivity = { date -> navController.navigate(ActivityDestination(date.toString())) },
                     openTrends = { navController.navigate(TrendsDestination) },
+                    openRecipes = { meal, date -> navController.navigate(RecipesDestination(meal, date.toString())) },
                 ),
                 addedToMeal = added,
                 onAddedShown = { entry.savedStateHandle[ADDED_TO] = null },
@@ -167,23 +187,29 @@ fun ForkcastNavHost(
         }
         composable<SearchDestination> { entry ->
             val args = entry.routeOrNull<SearchDestination>()
+            val forRecipe = args?.forRecipe == true
             SearchRoute(
                 onBack = back,
                 onOpenFood = { id ->
-                    navController.navigate(FoodDetailDestination(id, args?.mealSlotId.orEmpty(), args?.date.orEmpty()))
+                    navController.navigate(FoodDetailDestination(id, args?.mealSlotId.orEmpty(), args?.date.orEmpty(), forRecipe))
                 },
-                onCreateFood = { navController.navigate(CustomFoodDestination(mealSlotId = args?.mealSlotId, date = args?.date)) },
+                onCreateFood = { navController.navigate(CustomFoodDestination(mealSlotId = args?.mealSlotId, date = args?.date, forRecipe = forRecipe)) },
+                onCreateRecipe = if (forRecipe) null else { query ->
+                    navController.navigate(RecipeEditDestination(mealSlotId = args?.mealSlotId, date = args?.date, name = query.ifBlank { null }))
+                },
+                forRecipe = forRecipe,
             )
         }
         composable<ScannerDestination> { entry ->
             val args = entry.routeOrNull<ScannerDestination>()
             val meal = args?.mealSlotId.orEmpty()
             val date = args?.date.orEmpty()
+            val forRecipe = args?.forRecipe == true
             ScannerRoute(
                 onBack = back,
-                onOpenFood = { id -> navController.navigate(FoodDetailDestination(id, meal, date)) },
-                onScanLabel = { gtin -> navController.navigate(LabelScanDestination(gtin, meal, date)) },
-                onEnterManually = { gtin -> navController.navigate(CustomFoodDestination(barcode = gtin, mealSlotId = meal, date = date)) },
+                onOpenFood = { id -> navController.navigate(FoodDetailDestination(id, meal, date, forRecipe)) },
+                onScanLabel = { gtin -> navController.navigate(LabelScanDestination(gtin, meal, date, forRecipe)) },
+                onEnterManually = { gtin -> navController.navigate(CustomFoodDestination(barcode = gtin, mealSlotId = meal, date = date, forRecipe = forRecipe)) },
             )
         }
         composable<LabelScanDestination> { entry ->
@@ -192,7 +218,9 @@ fun ForkcastNavHost(
                 onBack = back,
                 onParsed = { prefill ->
                     navController.navigate(
-                        CustomFoodDestination(barcode = args?.barcode, mealSlotId = args?.mealSlotId, date = args?.date, prefill = prefill.encode()),
+                        CustomFoodDestination(
+                            barcode = args?.barcode, mealSlotId = args?.mealSlotId, date = args?.date, prefill = prefill.encode(), forRecipe = args?.forRecipe == true,
+                        ),
                     ) { popUpTo<LabelScanDestination> { inclusive = true } }
                 },
             )
@@ -202,6 +230,11 @@ fun ForkcastNavHost(
                 onBack = back,
                 onAdded = ::addedTo,
                 onEdit = { id -> navController.navigate(CustomFoodDestination(foodId = id)) },
+                onEditRecipe = { id -> navController.navigate(RecipeEditDestination(foodId = id)) },
+                onPicked = { pick ->
+                    runCatching { navController.getBackStackEntry<RecipeEditDestination>().savedStateHandle[RECIPE_PICK] = pick.encode() }
+                    navController.popBackStack<RecipeEditDestination>(inclusive = false)
+                },
             )
         }
         composable<CustomFoodDestination> { entry ->
@@ -212,8 +245,8 @@ fun ForkcastNavHost(
                     val meal = args?.mealSlotId
                     val date = args?.date
                     if (isNew && meal != null && date != null) {
-                        // A new food goes straight to its detail screen, ready to log.
-                        navController.navigate(FoodDetailDestination(id, meal, date)) {
+                        // A new food goes straight to its detail screen, ready to log (or to add to the recipe).
+                        navController.navigate(FoodDetailDestination(id, meal, date, args.forRecipe)) {
                             popUpTo<CustomFoodDestination> { inclusive = true }
                         }
                     } else {
@@ -283,6 +316,51 @@ fun ForkcastNavHost(
         composable<ReviewDestination> { ReviewRoute(onBack = back) }
         composable<BackupDestination> { BackupRoute(onBack = back) }
         composable<WeightDestination> { WeightRoute(onBack = back) }
+        composable<RecipesDestination> { entry ->
+            val args = entry.routeOrNull<RecipesDestination>()
+            RecipesRoute(
+                mealSlotId = args?.mealSlotId,
+                onBack = back,
+                onLog = { r ->
+                    val meal = args?.mealSlotId
+                    val date = args?.date
+                    val foodId = r.foodId
+                    if (foodId != null && meal != null && date != null) navController.navigate(FoodDetailDestination(foodId, meal, date))
+                },
+                onEdit = { r -> navController.navigate(RecipeEditDestination(recipeId = r.id)) },
+                onNew = { navController.navigate(RecipeEditDestination(mealSlotId = args?.mealSlotId, date = args?.date)) },
+            )
+        }
+        composable<RecipeEditDestination> { entry ->
+            val args = entry.routeOrNull<RecipeEditDestination>()
+            val pick by entry.savedStateHandle.getStateFlow<String?>(RECIPE_PICK, null).collectAsStateWithLifecycle()
+            val meal = args?.mealSlotId
+            val date = args?.date
+            RecipeEditRoute(
+                onBack = back,
+                onAddIngredient = { navController.navigate(SearchDestination("", "", forRecipe = true)) },
+                onScanIngredient = { navController.navigate(ScannerDestination("", "", forRecipe = true)) },
+                onSaved = { saved ->
+                    if (saved.wasNew && meal != null && date != null && saved.foodId.isNotEmpty()) {
+                        // Built while logging: straight to its detail, one serving ready to add.
+                        navController.navigate(FoodDetailDestination(saved.foodId, meal, date)) {
+                            popUpTo<RecipeEditDestination> { inclusive = true }
+                        }
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
+                onDeleted = {
+                    // Its food detail (if open below) would show a deleted food: go back past it.
+                    val toList = runCatching { navController.getBackStackEntry<RecipesDestination>() }.isSuccess
+                    if (toList) navController.popBackStack<RecipesDestination>(inclusive = false)
+                    else navController.popBackStack<TodayDestination>(inclusive = false)
+                },
+                logAfterSave = meal != null && date != null,
+                pick = pick,
+                onPickHandled = { entry.savedStateHandle[RECIPE_PICK] = null },
+            )
+        }
         composable<TrendsDestination> {
             TrendsRoute(
                 onBack = back,
