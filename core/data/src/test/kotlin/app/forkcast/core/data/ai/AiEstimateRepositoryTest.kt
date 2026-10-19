@@ -12,6 +12,7 @@ import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.MealSlotEntity
 import app.forkcast.core.data.repository.AiProfileDraft
 import app.forkcast.core.data.repository.AiProfileStatus
+import app.forkcast.core.data.repository.DeletedAiProfile
 import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.DataStoreSettingsRepository
 import app.forkcast.core.data.repository.DefaultFoodRepository
@@ -290,7 +291,9 @@ class AiEstimateRepositoryTest {
         override suspend fun profilesNow() = list.toList()
         override suspend fun profile(id: String) = list.firstOrNull { it.id == id }
         override suspend fun saveProfile(draft: AiProfileDraft, key: String?) = error("unused")
-        override suspend fun deleteProfile(id: String) = Unit
+        override suspend fun deleteProfile(id: String) = null
+        override suspend fun restoreProfile(deleted: DeletedAiProfile) = Unit
+        override suspend fun savedKey(id: String): String? = null
         override suspend fun reorder(idsInOrder: List<String>) = Unit
         override suspend fun setEnabled(id: String, enabled: Boolean) = Unit
         override suspend fun copyKey(fromId: String, toId: String) = Unit

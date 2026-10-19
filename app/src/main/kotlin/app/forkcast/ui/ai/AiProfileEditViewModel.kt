@@ -8,8 +8,8 @@ import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.model.AiProfile
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
-import app.forkcast.core.network.ai.ConnectionReport
 import app.forkcast.core.network.ai.ModelInfo
+import app.forkcast.ui.common.SecretText
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,6 +34,10 @@ data class AiProfileEditUiState(
     val tier: TierLabel = TierLabel.FREE,
     val keyInput: String = "",
     val hasSavedKey: Boolean = false,
+    /** The saved key for the masked field with show/hide and copy (null while replacing or unknown). */
+    val savedKey: SecretText? = null,
+    /** True while typing a new key over a saved one. */
+    val replacingKey: Boolean = false,
     val copyKeyFrom: KeySource? = null,
     val keySources: List<KeySource> = emptyList(),
     val models: List<ModelInfo>? = null,
@@ -47,6 +51,8 @@ data class AiProfileEditUiState(
     val done: Boolean = false,
 ) {
     val keyReady: Boolean get() = keyInput.isNotBlank() || hasSavedKey || copyKeyFrom != null || provider == ProviderId.OPENAI_COMPAT
+    /** Show the saved key read-only (masked) instead of the entry field. */
+    val showSavedKey: Boolean get() = savedKey != null && !replacingKey && copyKeyFrom == null
     val canSave: Boolean get() = model.isNotBlank() && keyReady && (provider != ProviderId.OPENAI_COMPAT || baseUrl.isNotBlank()) && !saving
     val showFreeTierNote: Boolean get() = provider == ProviderId.GEMINI && tier != TierLabel.PAID
     val isCleartext: Boolean get() = provider == ProviderId.OPENAI_COMPAT && baseUrl.trim().startsWith("http://", ignoreCase = true)
@@ -62,7 +68,9 @@ sealed interface AiProfileEditEvent {
     data class UseKeyFrom(val source: KeySource?) : AiProfileEditEvent
     data object LoadModels : AiProfileEditEvent
     data object SaveAndTest : AiProfileEditEvent
-    data object Delete : AiProfileEditEvent
+    /** Re-runs the test on the saved profile: the same call as Test on the profile list. */
+    data object TestAgain : AiProfileEditEvent
+    data class ReplaceKey(val replacing: Boolean) : AiProfileEditEvent
 }
 
 @HiltViewModel
@@ -75,6 +83,8 @@ class AiProfileEditViewModel @Inject constructor(
     /** "free_gemini": the guided setup, which also adds Flash-Lite on the same key. */
     private val preset: String? = savedState["preset"]
     private var savedId: String? = profileId
+    /** The saved profile's id once it exists, for Delete (which the profile list carries out, with Undo). */
+    val savedProfileId: String? get() = savedId
     private var allProfiles: List<AiProfile> = emptyList()
     private var keysPresent: Set<String> = emptySet()
 
@@ -98,6 +108,7 @@ class AiProfileEditViewModel @Inject constructor(
                     baseUrl = existing.baseUrl.orEmpty(),
                     tier = existing.tierLabel,
                     hasSavedKey = existing.id in keysPresent,
+                    savedKey = ai.savedKey(existing.id)?.let(::SecretText),
                 ).withProviderInfo()
             } else {
                 val provider = ProviderId.GEMINI
@@ -123,13 +134,11 @@ class AiProfileEditViewModel @Inject constructor(
             is AiProfileEditEvent.SetBaseUrl -> _state.update { it.copy(baseUrl = event.url.trim()) }
             is AiProfileEditEvent.SetTier -> _state.update { it.copy(tier = event.tier) }
             is AiProfileEditEvent.SetKey -> _state.update { it.copy(keyInput = event.key.trim(), copyKeyFrom = null) }
+            is AiProfileEditEvent.ReplaceKey -> _state.update { it.copy(replacingKey = event.replacing, keyInput = "") }
             is AiProfileEditEvent.UseKeyFrom -> _state.update { it.copy(copyKeyFrom = event.source, keyInput = "") }
             AiProfileEditEvent.LoadModels -> loadModels()
             AiProfileEditEvent.SaveAndTest -> saveAndTest()
-            AiProfileEditEvent.Delete -> viewModelScope.launch {
-                savedId?.let { ai.deleteProfile(it) }
-                _state.update { it.copy(done = true) }
-            }
+            AiProfileEditEvent.TestAgain -> testAgain()
         }
     }
 
@@ -167,17 +176,30 @@ class AiProfileEditViewModel @Inject constructor(
             savedId = id
             s.copyKeyFrom?.let { ai.copyKey(it.id, id) }
             if (preset == FREE_GEMINI && s.isNew && s.provider == ProviderId.GEMINI) addFlashLite(id, s.tier)
-            val result = ai.test(id)
+            val result = ai.runTest(id)
+            val key = ai.savedKey(id)?.let(::SecretText)
             _state.update {
                 it.copy(
                     saving = false,
                     isNew = false,
-                    hasSavedKey = it.hasSavedKey || s.keyInput.isNotBlank() || s.copyKeyFrom != null,
+                    hasSavedKey = key != null,
+                    savedKey = key,
+                    replacingKey = false,
+                    copyKeyFrom = null,
                     keyInput = "",
-                    test = result.fold({ r: ConnectionReport -> TestState.Ok(r) }, { e -> TestState.Failed(e) }),
-                    done = result.isSuccess,
+                    test = result,
+                    done = result is TestState.Ok,
                 )
             }
+        }
+    }
+
+    private fun testAgain() {
+        val id = savedId ?: return
+        _state.update { it.copy(test = TestState.Running) }
+        viewModelScope.launch {
+            val result = ai.runTest(id)
+            _state.update { it.copy(test = result) }
         }
     }
 

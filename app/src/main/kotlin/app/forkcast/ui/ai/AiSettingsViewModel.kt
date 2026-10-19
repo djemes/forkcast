@@ -4,17 +4,22 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.core.data.repository.AiProfileStatus
 import app.forkcast.core.data.repository.AiRepository
+import app.forkcast.core.data.repository.DeletedAiProfile
 import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.model.AiSettings
 import app.forkcast.core.model.ModelPrice
+import app.forkcast.core.model.ProviderId
 import app.forkcast.core.network.ai.ConnectionReport
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -28,34 +33,87 @@ sealed interface TestState {
     data class Failed(val error: Throwable?) : TestState
 }
 
+/**
+ * The one test both "Save and test" (profile editor) and "Test" (profile list) run, so the two
+ * can never disagree: the same repository call, the same result mapping.
+ */
+suspend fun AiRepository.runTest(profileId: String): TestState =
+    test(profileId).fold({ r -> TestState.Ok(r) }, { e -> TestState.Failed(e) })
+
+/** What a profile does in the fallback chain right now, as the list shows it. */
+enum class ProfileRole {
+    /** The first profile a photo estimate goes to. */
+    FIRST,
+    /** Ready, used when the ones above can't answer. */
+    BACKUP,
+    OFF,
+    NO_KEY,
+    /** The last request said the key is wrong; skipped until a test passes. */
+    KEY_REJECTED,
+    /** Out of quota until its cooldown ends. */
+    PAUSED,
+}
+
+/** Roles in list order. Mirrors AiChain.usable, plus "no key" (such a profile can't answer). */
+fun profileRoles(profiles: List<AiProfileStatus>, nowMs: Long): List<ProfileRole> {
+    var firstTaken = false
+    return profiles.map { s ->
+        val p = s.profile
+        when {
+            !p.enabled -> ProfileRole.OFF
+            !s.hasKey && p.provider != ProviderId.OPENAI_COMPAT -> ProfileRole.NO_KEY
+            p.needsAttention -> ProfileRole.KEY_REJECTED
+            (p.cooldownUntil ?: 0) > nowMs -> ProfileRole.PAUSED
+            !firstTaken -> ProfileRole.FIRST.also { firstTaken = true }
+            else -> ProfileRole.BACKUP
+        }
+    }
+}
+
 data class AiSettingsUiState(
     val loaded: Boolean = false,
     val settings: AiSettings = AiSettings(),
     val profiles: List<AiProfileStatus> = emptyList(),
+    /** Same order as [profiles]. */
+    val roles: List<ProfileRole> = emptyList(),
     val usage: MonthUsage? = null,
     val tests: Map<String, TestState> = emptyMap(),
-)
+) {
+    fun roleAt(index: Int): ProfileRole = roles.getOrElse(index) { ProfileRole.BACKUP }
+}
 
 sealed interface AiSettingsEvent {
     data class SetEnabled(val enabled: Boolean) : AiSettingsEvent
     data class SetProfileEnabled(val id: String, val enabled: Boolean) : AiSettingsEvent
-    /** Move within the list, from the drag handle or the accessibility actions. */
+    /** Move within the list, from the drag handle, the Move up/down menu or the accessibility actions. */
     data class Move(val from: Int, val to: Int) : AiSettingsEvent
     data class Test(val id: String) : AiSettingsEvent
+    /** Already confirmed by the user (list menu or profile editor). Shows "Deleted …" with Undo. */
+    data class Delete(val id: String) : AiSettingsEvent
+    data object UndoDelete : AiSettingsEvent
     data class SetPersonalContext(val text: String) : AiSettingsEvent
     data class SetAutoAccept(val enabled: Boolean) : AiSettingsEvent
     data class SetRetention(val days: Int?) : AiSettingsEvent
     data class SetPrice(val model: String, val price: ModelPrice?) : AiSettingsEvent
 }
 
+sealed interface AiSettingsEffect {
+    data class Deleted(val name: String) : AiSettingsEffect
+}
+
 @HiltViewModel
 class AiSettingsViewModel @Inject constructor(
     private val ai: AiRepository,
     private val settingsRepo: SettingsRepository,
-    clock: Clock,
+    private val clock: Clock,
 ) : ViewModel() {
 
     private val tests = MutableStateFlow<Map<String, TestState>>(emptyMap())
+    private val effectChannel = Channel<AiSettingsEffect>(Channel.BUFFERED)
+    val effects: Flow<AiSettingsEffect> = effectChannel.receiveAsFlow()
+
+    /** The last deletion, until Undo or the next deletion. Holds the key in memory only. */
+    private var lastDeleted: DeletedAiProfile? = null
 
     val state: StateFlow<AiSettingsUiState> = combine(
         settingsRepo.settings.map { it.ai },
@@ -63,7 +121,14 @@ class AiSettingsViewModel @Inject constructor(
         ai.monthUsage(YearMonth.now(clock)),
         tests,
     ) { settings, profiles, usage, t ->
-        AiSettingsUiState(loaded = true, settings = settings, profiles = profiles, usage = usage, tests = t)
+        AiSettingsUiState(
+            loaded = true,
+            settings = settings,
+            profiles = profiles,
+            roles = profileRoles(profiles, clock.millis()),
+            usage = usage,
+            tests = t,
+        )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AiSettingsUiState())
 
     fun onEvent(event: AiSettingsEvent) {
@@ -72,17 +137,26 @@ class AiSettingsViewModel @Inject constructor(
                 is AiSettingsEvent.SetEnabled -> settingsRepo.updateAi { it.copy(enabled = event.enabled) }
                 is AiSettingsEvent.SetProfileEnabled -> ai.setEnabled(event.id, event.enabled)
                 is AiSettingsEvent.Move -> {
-                    val ids = state.value.profiles.map { it.profile.id }.toMutableList()
+                    val ids = ai.profilesNow().sortedBy { it.order }.map { it.id }.toMutableList()
                     if (event.from !in ids.indices || event.to !in ids.indices) return@launch
                     ids.add(event.to, ids.removeAt(event.from))
                     ai.reorder(ids)
                 }
                 is AiSettingsEvent.Test -> {
                     tests.update { it + (event.id to TestState.Running) }
-                    val result = ai.test(event.id)
-                    tests.update {
-                        it + (event.id to result.fold({ r -> TestState.Ok(r) }, { e -> TestState.Failed(e) }))
-                    }
+                    val result = ai.runTest(event.id)
+                    tests.update { it + (event.id to result) }
+                }
+                is AiSettingsEvent.Delete -> {
+                    val deleted = ai.deleteProfile(event.id) ?: return@launch
+                    lastDeleted = deleted
+                    tests.update { it - event.id }
+                    effectChannel.send(AiSettingsEffect.Deleted(deleted.name))
+                }
+                AiSettingsEvent.UndoDelete -> {
+                    val deleted = lastDeleted ?: return@launch
+                    lastDeleted = null
+                    ai.restoreProfile(deleted)
                 }
                 is AiSettingsEvent.SetPersonalContext -> settingsRepo.updateAi { it.copy(personalContext = event.text) }
                 is AiSettingsEvent.SetAutoAccept -> settingsRepo.updateAi { it.copy(autoAccept = event.enabled) }
@@ -92,5 +166,9 @@ class AiSettingsViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    override fun onCleared() {
+        lastDeleted = null
     }
 }

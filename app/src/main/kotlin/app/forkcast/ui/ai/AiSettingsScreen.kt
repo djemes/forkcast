@@ -1,19 +1,24 @@
 package app.forkcast.ui.ai
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -21,6 +26,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -34,7 +42,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -66,14 +74,45 @@ fun AiSettingsRoute(
     onBack: () -> Unit,
     onEditProfile: (String?) -> Unit,
     onSetUpFreeGemini: () -> Unit,
+    /** A delete the profile editor already confirmed; this screen does it and offers Undo. */
+    deleteRequest: String? = null,
+    onDeleteHandled: () -> Unit = {},
     viewModel: AiSettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    AiSettingsScreen(state, viewModel::onEvent, onBack, onEditProfile, onSetUpFreeGemini)
+    val snackbar = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    LaunchedEffect(deleteRequest) {
+        if (deleteRequest != null) {
+            viewModel.onEvent(AiSettingsEvent.Delete(deleteRequest))
+            onDeleteHandled()
+        }
+    }
+    LaunchedEffect(viewModel) {
+        viewModel.effects.collect { effect ->
+            when (effect) {
+                is AiSettingsEffect.Deleted -> {
+                    val result = snackbar.showSnackbar(
+                        resources.getString(R.string.ai_deleted, effect.name),
+                        resources.getString(R.string.undo),
+                        duration = SnackbarDuration.Long,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) viewModel.onEvent(AiSettingsEvent.UndoDelete)
+                }
+            }
+        }
+    }
+    AiSettingsScreen(state, viewModel::onEvent, onBack, onEditProfile, onSetUpFreeGemini, snackbar)
 }
 
 private val RETENTION_CHOICES = listOf(30, 90, 180, 365, null)
 
+/**
+ * Settings › AI (SPEC §4.7). The profile list answers at a glance: what each profile is
+ * (provider · model · tier), its place in the order, whether it's ready (status line with icon
+ * and words), and every action: Test and Edit on the card, Move up/down and Delete in its menu,
+ * drag to reorder.
+ */
 @Composable
 fun AiSettingsScreen(
     state: AiSettingsUiState,
@@ -81,8 +120,10 @@ fun AiSettingsScreen(
     onBack: () -> Unit,
     onEditProfile: (String?) -> Unit,
     onSetUpFreeGemini: () -> Unit,
+    snackbarHostState: SnackbarHostState? = null,
 ) {
-    SettingsScaffold(title = stringResource(R.string.settings_ai), onBack = onBack) {
+    var confirmDelete by remember { mutableStateOf<String?>(null) }
+    SettingsScaffold(title = stringResource(R.string.settings_ai), onBack = onBack, snackbarHostState = snackbarHostState) {
         if (!state.loaded) return@SettingsScaffold
         val s = state.settings
         SwitchRow(stringResource(R.string.ai_enabled), stringResource(R.string.ai_enabled_body), s.enabled) {
@@ -95,28 +136,35 @@ fun AiSettingsScreen(
         Text(
             stringResource(R.string.ai_chain_body),
             style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
         )
         if (state.profiles.isEmpty()) {
             Text(
                 stringResource(R.string.ai_no_profiles),
-                style = MaterialTheme.typography.bodyMedium,
+                style = MaterialTheme.typography.bodyLarge,
                 modifier = Modifier.padding(16.dp),
             )
-            Button(onClick = onSetUpFreeGemini, modifier = Modifier.padding(horizontal = 16.dp)) {
-                Text(stringResource(R.string.ai_setup_free))
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            ) {
+                Button(onClick = onSetUpFreeGemini) { Text(stringResource(R.string.ai_setup_free)) }
+                OutlinedButton(onClick = { onEditProfile(null) }) { Text(stringResource(R.string.ai_add_other)) }
             }
         } else {
             ReorderableColumn(
                 list = state.profiles,
                 onSettle = { from, to -> onEvent(AiSettingsEvent.Move(from, to)) },
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
             ) { index, item, _ ->
                 key(item.profile.id) {
                     ReorderableItem {
                         ProfileCard(
                             item = item,
+                            role = state.roleAt(index),
                             test = state.tests[item.profile.id],
                             index = index,
                             count = state.profiles.size,
@@ -127,16 +175,17 @@ fun AiSettingsScreen(
                             },
                             onEvent = onEvent,
                             onEdit = { onEditProfile(item.profile.id) },
+                            onDelete = { confirmDelete = item.profile.id },
                         )
                     }
                 }
             }
+            OutlinedButton(onClick = { onEditProfile(null) }, modifier = Modifier.padding(horizontal = 16.dp)) {
+                Icon(painterResource(R.drawable.ic_add), contentDescription = null)
+                Text(stringResource(R.string.ai_add_profile), modifier = Modifier.padding(start = 8.dp))
+            }
         }
-        OutlinedButton(onClick = { onEditProfile(null) }, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-            Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-            Text(stringResource(R.string.ai_add_profile), modifier = Modifier.padding(start = 8.dp))
-        }
-        HorizontalDivider(Modifier.padding(top = 8.dp))
+        HorizontalDivider(Modifier.padding(top = 16.dp))
 
         PersonalContextField(s.personalContext) { onEvent(AiSettingsEvent.SetPersonalContext(it)) }
         SwitchRow(stringResource(R.string.ai_auto_accept), stringResource(R.string.ai_auto_accept_body), s.autoAccept) {
@@ -146,6 +195,21 @@ fun AiSettingsScreen(
         HorizontalDivider()
 
         UsageSection(state.usage, s.priceOverrides, onEvent)
+    }
+
+    confirmDelete?.let { id ->
+        val index = state.profiles.indexOfFirst { it.profile.id == id }
+        val profile = state.profiles.getOrNull(index)?.profile
+        if (profile == null) {
+            confirmDelete = null
+        } else {
+            DeleteProfileDialog(
+                name = profile.name,
+                movesUp = state.profiles.getOrNull(index + 1)?.profile?.name,
+                onConfirm = { confirmDelete = null; onEvent(AiSettingsEvent.Delete(id)) },
+                onDismiss = { confirmDelete = null },
+            )
+        }
     }
 }
 
@@ -176,42 +240,55 @@ private fun SwitchRow(title: String, body: String?, checked: Boolean, onChange: 
     }
 }
 
+/** "Gemini (Google) · gemini-3.8-flash · free" */
+@Composable
+private fun profileLine(item: AiProfileStatus): String {
+    val p = item.profile
+    val tier = if (p.provider == ProviderId.GEMINI) stringResource(p.tierLabel.label()) else null
+    return listOfNotNull(stringResource(p.provider.label()), p.model, tier).joinToString(" · ")
+}
+
 @Composable
 private fun ProfileCard(
     item: AiProfileStatus,
+    role: ProfileRole,
     test: TestState?,
     index: Int,
     count: Int,
     dragHandle: @Composable (String) -> Unit,
     onEvent: (AiSettingsEvent) -> Unit,
     onEdit: () -> Unit,
+    onDelete: () -> Unit,
 ) {
     val p = item.profile
-    val res = LocalContext.current.resources
+    val res = LocalResources.current
     val moveUp = stringResource(R.string.ai_move_up)
     val moveDown = stringResource(R.string.ai_move_down)
-    Card(
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),
+    val delete = stringResource(R.string.ai_delete_profile)
+    var menuOpen by remember { mutableStateOf(false) }
+    Column(
         modifier = Modifier
             .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
             .semantics {
                 customActions = buildList {
                     if (index > 0) add(CustomAccessibilityAction(moveUp) { onEvent(AiSettingsEvent.Move(index, index - 1)); true })
                     if (index < count - 1) add(CustomAccessibilityAction(moveDown) { onEvent(AiSettingsEvent.Move(index, index + 1)); true })
+                    add(CustomAccessibilityAction(delete) { onDelete(); true })
                 }
-            },
+            }
+            .padding(start = 4.dp, end = 8.dp, top = 8.dp, bottom = 4.dp),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 4.dp, end = 8.dp, top = 4.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             dragHandle(p.name)
+            PositionBadge(index + 1, first = role == ProfileRole.FIRST)
             Column(
                 Modifier
                     .weight(1f)
-                    .clickable(onClick = onEdit)
-                    .padding(vertical = 8.dp),
+                    .padding(start = 12.dp, end = 8.dp),
             ) {
-                Text("${index + 1}. ${p.name}", style = MaterialTheme.typography.titleSmall)
-                val tier = if (p.provider == ProviderId.GEMINI) " · " + stringResource(p.tierLabel.label()) else ""
-                Text(p.model + tier, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(p.name, style = MaterialTheme.typography.titleMedium)
+                Text(profileLine(item), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Switch(
                 checked = p.enabled,
@@ -219,38 +296,50 @@ private fun ProfileCard(
                 modifier = Modifier.semantics { contentDescription = res.getString(R.string.ai_profile_enabled, p.name) },
             )
         }
-        Column(Modifier.padding(start = 16.dp, end = 16.dp, bottom = 8.dp)) {
-            val status = when {
-                p.needsAttention -> stringResource(R.string.ai_needs_attention)
-                !item.hasKey && p.provider != ProviderId.OPENAI_COMPAT -> stringResource(R.string.ai_no_key)
-                (p.cooldownUntil ?: 0) > System.currentTimeMillis() -> stringResource(R.string.ai_cooling_down, formatTime(p.cooldownUntil!!))
-                else -> null
+        Column(
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.padding(start = 12.dp, top = 8.dp),
+        ) {
+            RoleLine(role, p.cooldownUntil?.let(::formatTime))
+            Text(
+                stringResource(R.string.ai_used_today, item.usedToday),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(start = 28.dp),
+            )
+            TestResult(test, p.provider, Modifier.padding(top = 4.dp))
+        }
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            Spacer(Modifier.weight(1f))
+            TextButton(onClick = { onEvent(AiSettingsEvent.Test(p.id)) }, enabled = test !is TestState.Running) {
+                Text(stringResource(if (test is TestState.Running) R.string.ai_testing else R.string.ai_test))
             }
-            if (status != null) {
-                Text(status, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    stringResource(R.string.ai_used_today, item.usedToday),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(onClick = { onEvent(AiSettingsEvent.Test(p.id)) }, enabled = test !is TestState.Running) {
-                    Text(stringResource(if (test is TestState.Running) R.string.ai_testing else R.string.ai_test))
+            TextButton(onClick = onEdit) { Text(stringResource(R.string.ai_edit)) }
+            Box {
+                IconButton(onClick = { menuOpen = true }) {
+                    Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.ai_more, p.name))
                 }
-            }
-            when (test) {
-                is TestState.Ok -> Text(
-                    stringResource(R.string.ai_test_ok, test.report.model, test.report.latencyMs.toInt()),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                is TestState.Failed -> Text(
-                    res.aiErrorMessage(test.error, p.provider),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.error,
-                )
-                else -> Unit
+                DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
+                    if (index > 0) {
+                        DropdownMenuItem(
+                            text = { Text(moveUp) },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_arrow_upward), contentDescription = null) },
+                            onClick = { menuOpen = false; onEvent(AiSettingsEvent.Move(index, index - 1)) },
+                        )
+                    }
+                    if (index < count - 1) {
+                        DropdownMenuItem(
+                            text = { Text(moveDown) },
+                            leadingIcon = { Icon(painterResource(R.drawable.ic_arrow_downward), contentDescription = null) },
+                            onClick = { menuOpen = false; onEvent(AiSettingsEvent.Move(index, index + 1)) },
+                        )
+                    }
+                    DropdownMenuItem(
+                        text = { Text(delete, color = MaterialTheme.colorScheme.error) },
+                        leadingIcon = { Icon(painterResource(R.drawable.ic_delete), contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                        onClick = { menuOpen = false; onDelete() },
+                    )
+                }
             }
         }
     }

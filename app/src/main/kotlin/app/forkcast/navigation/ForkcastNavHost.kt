@@ -75,6 +75,9 @@ import kotlinx.serialization.Serializable
 /** Key on Today's back-stack entry: the meal name to confirm ("Added to Lunch"). */
 private const val ADDED_TO = "added_to"
 
+/** Key on Settings › AI's back-stack entry: a profile the editor's Delete confirmed (the list deletes it, with Undo). */
+private const val DELETE_AI_PROFILE = "delete_ai_profile"
+
 @Composable
 fun ForkcastNavHost(
     startWithOnboarding: Boolean,
@@ -200,14 +203,25 @@ fun ForkcastNavHost(
         }
         composable<ProfileGoalsDestination> { ProfileGoalsRoute(onBack = back) }
         composable<FoodDatabasesDestination> { FoodDatabasesRoute(onBack = back) }
-        composable<AiSettingsDestination> {
+        composable<AiSettingsDestination> { entry ->
+            val deleteRequest by entry.savedStateHandle.getStateFlow<String?>(DELETE_AI_PROFILE, null).collectAsStateWithLifecycle()
             AiSettingsRoute(
                 onBack = back,
                 onEditProfile = { id -> navController.navigate(AiProfileEditDestination(profileId = id)) },
                 onSetUpFreeGemini = { navController.navigate(AiProfileEditDestination(preset = AiProfileEditViewModel.FREE_GEMINI)) },
+                deleteRequest = deleteRequest,
+                onDeleteHandled = { entry.savedStateHandle[DELETE_AI_PROFILE] = null },
             )
         }
-        composable<AiProfileEditDestination> { AiProfileEditRoute(onBack = back) }
+        composable<AiProfileEditDestination> {
+            AiProfileEditRoute(
+                onBack = back,
+                onDelete = { id ->
+                    runCatching { navController.getBackStackEntry<AiSettingsDestination>().savedStateHandle[DELETE_AI_PROFILE] = id }
+                    navController.popBackStack<AiSettingsDestination>(inclusive = false)
+                },
+            )
+        }
         composable<NotificationsDestination> { NotificationsRoute(onBack = back) }
         composable<PhotoMealDestination> {
             PhotoMealRoute(

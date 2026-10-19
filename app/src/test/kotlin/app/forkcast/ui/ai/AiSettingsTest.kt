@@ -2,18 +2,24 @@ package app.forkcast.ui.ai
 
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.lifecycle.SavedStateHandle
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.data.repository.AiProfileDraft
+import app.forkcast.core.data.repository.AiProfileStatus
+import app.forkcast.core.model.AiProfile
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.AiError
+import app.forkcast.core.network.ai.ProviderReply
 import app.forkcast.fakes.FakeAiRepository
 import app.forkcast.fakes.FakeSettingsRepository
+import app.forkcast.ui.common.SecretText
 import app.forkcast.ui.theme.ForkcastTheme
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
@@ -135,7 +141,7 @@ class AiSettingsTest {
         compose.setContent {
             ForkcastTheme {
                 AiSettingsScreen(
-                    state = AiSettingsUiState(loaded = true, profiles = statuses.map { it.copy(usedToday = 3) }),
+                    state = AiSettingsUiState(loaded = true, profiles = statuses.map { it.copy(usedToday = 3) }, roles = listOf(ProfileRole.FIRST)),
                     onEvent = { if (it is AiSettingsEvent.Test) tested = it.id },
                     onBack = {},
                     onEditProfile = {},
@@ -143,10 +149,208 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithText("1. Gemini 3.8 Flash").assertIsDisplayed()
+        compose.onNodeWithText("Gemini 3.8 Flash").assertIsDisplayed()
+        compose.onNodeWithText("Gemini (Google) · gemini-3.8-flash · free").assertIsDisplayed()
+        compose.onNodeWithText("Used first").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Number 1 in the order").assertIsDisplayed()
         compose.onNodeWithText("Used today: 3").assertIsDisplayed()
         compose.onNodeWithText("Test").performClick()
         assertThat(tested).isEqualTo("p0")
         compose.onNodeWithText("Personal context").performScrollTo().performTextInput("olive oil")
+    }
+
+    // ---- Owner report 2026-10-19: Save and test failed while Test on the list passed.
+
+    @Test fun saveAndTestAndListTestRunTheSameCall() = runTest(dispatcher) {
+        val rejected = AiError.InvalidKey(reply = ProviderReply(401, "ACCESS_TOKEN_TYPE_UNSUPPORTED", "Request had invalid authentication credentials."))
+        val ai = FakeAiRepository(testErrors = mapOf("p0" to rejected))
+        val editor = AiProfileEditViewModel(ai, SavedStateHandle())
+        advanceUntilIdle()
+        editor.onEvent(AiProfileEditEvent.SetKey("AQ.Ab8RN6Kq-new-format-key"))
+        editor.onEvent(AiProfileEditEvent.SaveAndTest)
+        advanceUntilIdle()
+        val fromEditor = editor.state.value.test
+
+        val list = AiSettingsViewModel(ai, FakeSettingsRepository(), clock)
+        val job = backgroundScope.launch { list.state.collect {} }
+        list.onEvent(AiSettingsEvent.Test("p0"))
+        advanceUntilIdle()
+        val fromList = list.state.value.tests["p0"]
+
+        // Same repository call, same id, same result.
+        assertThat(ai.tested).containsExactly("p0", "p0")
+        assertThat(fromEditor).isEqualTo(fromList)
+        assertThat((fromEditor as TestState.Failed).error).isSameInstanceAs(rejected)
+        // The key went in exactly as typed (no format check) and shows masked afterwards.
+        assertThat(ai.keys["p0"]).isEqualTo("AQ.Ab8RN6Kq-new-format-key")
+        assertThat(editor.state.value.showSavedKey).isTrue()
+
+        // Once Google accepts the key, Test again passes through the same call.
+        ai.testErrors = emptyMap()
+        editor.onEvent(AiProfileEditEvent.TestAgain)
+        advanceUntilIdle()
+        assertThat(editor.state.value.test).isInstanceOf(TestState.Ok::class.java)
+        assertThat(ai.tested).hasSize(3)
+        job.cancel()
+    }
+
+    @Test fun keyErrorShowsHttpStatusAndGoogleCode() {
+        val res = ApplicationProvider.getApplicationContext<android.content.Context>().resources
+        val tokenType = AiError.InvalidKey(reply = ProviderReply(401, "ACCESS_TOKEN_TYPE_UNSUPPORTED", "Expected OAuth 2 access token"))
+        val text = res.aiErrorMessage(tokenType, ProviderId.GEMINI)
+        assertThat(text).contains("Gemini rejected the API key (HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED)")
+        assertThat(text).contains("wait a few minutes")
+        assertThat(aiErrorDetail(tokenType)).isEqualTo("Expected OAuth 2 access token")
+
+        val disabled = AiError.InvalidKey(reply = ProviderReply(403, "SERVICE_DISABLED", null))
+        assertThat(res.aiErrorMessage(disabled, ProviderId.GEMINI)).contains("(HTTP 403 · SERVICE_DISABLED)")
+        assertThat(res.aiErrorMessage(AiError.InvalidKey(AiError.NO_KEY), ProviderId.GEMINI)).isEqualTo("No API key saved for this profile.")
+        // Without a provider reply the classic message stays.
+        assertThat(res.aiErrorMessage(AiError.InvalidKey(), ProviderId.CLAUDE)).isEqualTo("Claude rejected the API key. Check it in Settings → AI.")
+    }
+
+    @Test fun failedTestOnScreenShowsStatusCodeAndGoogleWords() {
+        val error = AiError.InvalidKey(reply = ProviderReply(401, "ACCESS_TOKEN_TYPE_UNSUPPORTED", "Request had invalid authentication credentials."))
+        compose.setContent {
+            ForkcastTheme {
+                AiProfileEditScreen(
+                    state = AiProfileEditUiState(loaded = true, isNew = false, provider = ProviderId.GEMINI, model = "gemini-3.8-flash", name = "Gemini 3.8 Flash", hasSavedKey = true, savedKey = SecretText("AQ.Ab8RN6Kq-new-format-key"), test = TestState.Failed(error)),
+                    onEvent = {},
+                    onBack = {},
+                )
+            }
+        }
+        compose.onNodeWithText("HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED", substring = true).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Gemini said: Request had invalid authentication credentials.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Test again").performScrollTo().assertIsDisplayed()
+    }
+
+    // ---- Saved keys: masked, show/hide, copy (owner request 2026-10-19).
+
+    @Test fun savedKeyIsMaskedUntilShown() {
+        compose.setContent {
+            ForkcastTheme {
+                AiProfileEditScreen(
+                    state = AiProfileEditUiState(loaded = true, isNew = false, provider = ProviderId.CLAUDE, model = "claude-sonnet-5-5", name = "Claude", hasSavedKey = true, savedKey = SecretText("sk-ant-api03-secret-tail1234")),
+                    onEvent = {},
+                    onBack = {},
+                )
+            }
+        }
+        compose.onNodeWithText("sk-ant-api03-secret-tail1234").assertDoesNotExist()
+        compose.onNodeWithText("••••••••••••1234").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Show key").performClick()
+        compose.onNodeWithText("sk-ant-api03-secret-tail1234").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Copy key").assertIsDisplayed()
+        compose.onNodeWithText("Replace key").assertIsDisplayed()
+    }
+
+    @Test fun secretTextNeverPrintsItsValue() {
+        val s = SecretText("AQ.Ab8RN6Kq-new-format-key")
+        assertThat(s.toString()).doesNotContain("AQ.")
+        assertThat(AiProfileEditUiState(savedKey = s).toString()).doesNotContain("new-format-key")
+        assertThat(SecretText("short").masked).doesNotContain("short")
+    }
+
+    // ---- Delete: confirmation, Undo, order stays right.
+
+    @Test fun deleteConfirmsThenUndoRestoresOrder() = runTest(dispatcher) {
+        val ai = FakeAiRepository()
+        for (n in listOf("A", "B", "C")) ai.saveProfile(AiProfileDraft(null, n, ProviderId.GEMINI, "m-$n", null, TierLabel.FREE), "key-$n")
+        val vm = AiSettingsViewModel(ai, FakeSettingsRepository(), clock)
+        val job = backgroundScope.launch { vm.state.collect {} }
+        val effects = mutableListOf<AiSettingsEffect>()
+        val effectJob = backgroundScope.launch { vm.effects.collect { effects += it } }
+        advanceUntilIdle()
+
+        vm.onEvent(AiSettingsEvent.Delete("p0"))
+        advanceUntilIdle()
+        assertThat(vm.state.value.profiles.map { it.profile.name }).containsExactly("B", "C").inOrder()
+        assertThat(vm.state.value.roles).containsExactly(ProfileRole.FIRST, ProfileRole.BACKUP).inOrder()
+        assertThat(effects).containsExactly(AiSettingsEffect.Deleted("A"))
+        assertThat(ai.keys).doesNotContainKey("p0")
+
+        vm.onEvent(AiSettingsEvent.UndoDelete)
+        advanceUntilIdle()
+        assertThat(vm.state.value.profiles.map { it.profile.name to it.profile.order }).containsExactly("A" to 0, "B" to 1, "C" to 2).inOrder()
+        assertThat(ai.keys["p0"]).isEqualTo("key-A")
+        // A second Undo does nothing.
+        vm.onEvent(AiSettingsEvent.UndoDelete)
+        advanceUntilIdle()
+        assertThat(vm.state.value.profiles).hasSize(3)
+        job.cancel()
+        effectJob.cancel()
+    }
+
+    @Test fun deleteFromCardMenuAsksFirst() = runTest(dispatcher) {
+        val ai = FakeAiRepository()
+        ai.saveProfile(AiProfileDraft(null, "Gemini 3.8 Flash", ProviderId.GEMINI, "gemini-3.8-flash", null, TierLabel.FREE), "k")
+        ai.saveProfile(AiProfileDraft(null, "Gemini 3.5 Flash-Lite", ProviderId.GEMINI, "gemini-3.5-flash-lite", null, TierLabel.FREE), "k")
+        val statuses = ai.profiles.first()
+        val events = mutableListOf<AiSettingsEvent>()
+        compose.setContent {
+            ForkcastTheme {
+                AiSettingsScreen(
+                    state = AiSettingsUiState(loaded = true, profiles = statuses, roles = listOf(ProfileRole.FIRST, ProfileRole.BACKUP)),
+                    onEvent = { events += it },
+                    onBack = {},
+                    onEditProfile = {},
+                    onSetUpFreeGemini = {},
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("More options for Gemini 3.8 Flash").performClick()
+        compose.onNodeWithText("Delete profile").performClick()
+        // Nothing is deleted until the dialog is confirmed; it says what moves up.
+        assertThat(events.filterIsInstance<AiSettingsEvent.Delete>()).isEmpty()
+        compose.onNodeWithText("Delete Gemini 3.8 Flash?").assertIsDisplayed()
+        compose.onNodeWithText("Gemini 3.5 Flash-Lite moves up one place", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Delete").performClick()
+        assertThat(events.filterIsInstance<AiSettingsEvent.Delete>().single().id).isEqualTo("p0")
+    }
+
+    @Test fun moveFromMenu() = runTest(dispatcher) {
+        val ai = FakeAiRepository()
+        ai.saveProfile(AiProfileDraft(null, "A", ProviderId.GEMINI, "a", null, TierLabel.FREE), "k")
+        ai.saveProfile(AiProfileDraft(null, "B", ProviderId.CLAUDE, "b", null, TierLabel.PAID), "k")
+        val statuses = ai.profiles.first()
+        val events = mutableListOf<AiSettingsEvent>()
+        compose.setContent {
+            ForkcastTheme {
+                AiSettingsScreen(
+                    state = AiSettingsUiState(loaded = true, profiles = statuses, roles = listOf(ProfileRole.FIRST, ProfileRole.BACKUP)),
+                    onEvent = { events += it },
+                    onBack = {},
+                    onEditProfile = {},
+                    onSetUpFreeGemini = {},
+                )
+            }
+        }
+        compose.onNodeWithContentDescription("More options for B").performClick()
+        compose.onNodeWithText("Move up").performClick()
+        assertThat(events).contains(AiSettingsEvent.Move(1, 0))
+    }
+
+    @Test fun rolesFollowTheChain() {
+        fun status(id: String, enabled: Boolean = true, key: Boolean = true, attention: Boolean = false, cooldown: Long? = null) = AiProfileStatus(
+            AiProfile(id, id, ProviderId.GEMINI, "m", null, TierLabel.FREE, 0, enabled, attention, cooldown), key, 0,
+        )
+        val now = 1_000L
+        val roles = profileRoles(
+            listOf(
+                status("off", enabled = false),
+                status("nokey", key = false),
+                status("rejected", attention = true),
+                status("paused", cooldown = 5_000L),
+                status("first"),
+                status("backup"),
+                status("cooled", cooldown = 500L),
+            ),
+            now,
+        )
+        assertThat(roles).containsExactly(
+            ProfileRole.OFF, ProfileRole.NO_KEY, ProfileRole.KEY_REJECTED, ProfileRole.PAUSED,
+            ProfileRole.FIRST, ProfileRole.BACKUP, ProfileRole.BACKUP,
+        ).inOrder()
     }
 }

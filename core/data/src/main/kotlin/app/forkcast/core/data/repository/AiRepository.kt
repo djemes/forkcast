@@ -41,6 +41,14 @@ data class AiProfileDraft(
     val tierLabel: TierLabel,
 )
 
+/**
+ * What [AiRepository.deleteProfile] removed, kept by the screen for Undo. The key stays in memory
+ * only for the Undo window and never prints ([toString] leaves it out).
+ */
+class DeletedAiProfile(val id: String, val name: String, val position: Int, val key: String?) {
+    override fun toString() = "DeletedAiProfile(id=$id, position=$position)"
+}
+
 /** Usage for one model in a month (SPEC §4.7 "Usage"). */
 data class ModelUsage(
     val model: String,
@@ -67,7 +75,15 @@ interface AiRepository {
     suspend fun profile(id: String): AiProfile?
     /** Creates or updates; [key] null leaves the stored key unchanged, blank clears it. */
     suspend fun saveProfile(draft: AiProfileDraft, key: String?): String
-    suspend fun deleteProfile(id: String)
+    /**
+     * Deletes the profile and its key. The profiles after it move up one place, so the fallback
+     * order stays 1, 2, 3… Returns what [restoreProfile] needs for Undo.
+     */
+    suspend fun deleteProfile(id: String): DeletedAiProfile?
+    /** Undo for [deleteProfile]: back at its old place, with its key. */
+    suspend fun restoreProfile(deleted: DeletedAiProfile)
+    /** The saved key, for the show/copy buttons on the profile screen. Never log it. */
+    suspend fun savedKey(id: String): String?
     suspend fun reorder(idsInOrder: List<String>)
     suspend fun setEnabled(id: String, enabled: Boolean)
     /** Same key in another profile (e.g. Flash-Lite on the free Gemini key). */
@@ -138,11 +154,32 @@ class DefaultAiRepository @Inject constructor(
         return id
     }
 
-    override suspend fun deleteProfile(id: String) {
-        val p = dao.profile(id) ?: return
+    override suspend fun deleteProfile(id: String): DeletedAiProfile? {
+        val p = dao.profile(id)?.takeIf { it.deletedAt == null } ?: return null
         val now = clock.millis()
+        val position = dao.profiles().indexOfFirst { it.id == id }
+        val deleted = DeletedAiProfile(id, p.name, position, secrets.aiKey(id))
         dao.upsertProfile(p.copy(deletedAt = now, updatedAt = now))
         secrets.setAiKey(id, null)
+        renumber(dao.profiles(), now)
+        return deleted
+    }
+
+    override suspend fun restoreProfile(deleted: DeletedAiProfile) {
+        val p = dao.profile(deleted.id) ?: return
+        val now = clock.millis()
+        val restored = p.copy(deletedAt = null, updatedAt = now)
+        val others = dao.profiles().filterNot { it.id == deleted.id }.toMutableList()
+        others.add(deleted.position.coerceIn(0, others.size), restored)
+        renumber(others, now)
+        if (deleted.key != null) secrets.setAiKey(deleted.id, deleted.key)
+    }
+
+    override suspend fun savedKey(id: String): String? = secrets.aiKey(id)
+
+    /** Writes sortOrder 0, 1, 2… in list order (no gaps after a delete or restore). */
+    private suspend fun renumber(inOrder: List<AiProfileEntity>, now: Long) {
+        dao.upsertProfiles(inOrder.mapIndexed { i, row -> if (row.sortOrder == i) row else row.copy(sortOrder = i, updatedAt = now) })
     }
 
     override suspend fun reorder(idsInOrder: List<String>) {

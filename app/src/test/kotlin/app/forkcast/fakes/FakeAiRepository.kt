@@ -3,6 +3,7 @@ package app.forkcast.fakes
 import app.forkcast.core.data.repository.AiProfileDraft
 import app.forkcast.core.data.repository.AiProfileStatus
 import app.forkcast.core.data.repository.AiRepository
+import app.forkcast.core.data.repository.DeletedAiProfile
 import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.model.AiProfile
 import app.forkcast.core.model.ProviderId
@@ -27,6 +28,9 @@ class FakeAiRepository(
     val state = MutableStateFlow<List<AiProfileStatus>>(emptyList())
     val keys = mutableMapOf<String, String>()
     val recorded = mutableListOf<AiChain.Attempt>()
+    /** Ids passed to [test], in order: both test paths must land here. */
+    val tested = mutableListOf<String>()
+    private val removed = mutableMapOf<String, AiProfileStatus>()
     private var next = 0
 
     override val profiles: Flow<List<AiProfileStatus>> = state
@@ -47,7 +51,24 @@ class FakeAiRepository(
         return id
     }
 
-    override suspend fun deleteProfile(id: String) = state.update { l -> l.filterNot { it.profile.id == id } }
+    override suspend fun deleteProfile(id: String): DeletedAiProfile? {
+        val list = state.value
+        val index = list.indexOfFirst { it.profile.id == id }.takeIf { it >= 0 } ?: return null
+        val deleted = DeletedAiProfile(id, list[index].profile.name, index, keys.remove(id))
+        removed[id] = list[index]
+        state.value = (list - list[index]).mapIndexed { i, s -> s.copy(profile = s.profile.copy(order = i)) }
+        return deleted
+    }
+
+    override suspend fun restoreProfile(deleted: DeletedAiProfile) {
+        val item = removed.remove(deleted.id) ?: return
+        deleted.key?.let { keys[deleted.id] = it }
+        val list = state.value.toMutableList()
+        list.add(deleted.position.coerceIn(0, list.size), item.copy(hasKey = deleted.id in keys))
+        state.value = list.mapIndexed { i, s -> s.copy(profile = s.profile.copy(order = i)) }
+    }
+
+    override suspend fun savedKey(id: String): String? = keys[id]
 
     override suspend fun reorder(idsInOrder: List<String>) = state.update { l ->
         idsInOrder.mapIndexedNotNull { i, id -> l.firstOrNull { it.profile.id == id }?.let { it.copy(profile = it.profile.copy(order = i)) } }
@@ -62,8 +83,10 @@ class FakeAiRepository(
         state.update { l -> l.map { if (it.profile.id == toId) it.copy(hasKey = toId in keys) else it } }
     }
 
-    override suspend fun test(id: String): Result<ConnectionReport> =
-        testErrors[id]?.let { Result.failure(it) } ?: Result.success(ConnectionReport(profile(id)?.model ?: "m", 420))
+    override suspend fun test(id: String): Result<ConnectionReport> {
+        tested += id
+        return testErrors[id]?.let { Result.failure(it) } ?: Result.success(ConnectionReport(profile(id)?.model ?: "m", 420))
+    }
 
     override suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?) = Result.success(models)
     override fun estimatorFor(profile: AiProfile): MealEstimator = estimator(profile)

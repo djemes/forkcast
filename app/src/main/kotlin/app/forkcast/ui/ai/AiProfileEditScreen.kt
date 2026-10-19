@@ -12,6 +12,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -33,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,18 +49,25 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
+import app.forkcast.ui.common.SavedKeyField
 import app.forkcast.ui.settings.SettingsScaffold
 import kotlinx.coroutines.launch
 
+/** [onDelete] gets the profile id after the user confirmed; the profile list deletes it and offers Undo. */
 @Composable
-fun AiProfileEditRoute(onBack: () -> Unit, viewModel: AiProfileEditViewModel = hiltViewModel()) {
+fun AiProfileEditRoute(onBack: () -> Unit, onDelete: (String) -> Unit, viewModel: AiProfileEditViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.done) { if (state.done) onBack() }
-    AiProfileEditScreen(state, viewModel::onEvent, onBack)
+    AiProfileEditScreen(state, viewModel::onEvent, onBack, onDelete = { viewModel.savedProfileId?.let(onDelete) })
 }
 
 @Composable
-fun AiProfileEditScreen(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) -> Unit, onBack: () -> Unit) {
+fun AiProfileEditScreen(
+    state: AiProfileEditUiState,
+    onEvent: (AiProfileEditEvent) -> Unit,
+    onBack: () -> Unit,
+    onDelete: () -> Unit = {},
+) {
     val title = stringResource(if (state.isNew) R.string.ai_profile_new else R.string.ai_profile_edit)
     var confirmDelete by remember { mutableStateOf(false) }
     var pickModel by remember { mutableStateOf(false) }
@@ -141,9 +148,7 @@ fun AiProfileEditScreen(state: AiProfileEditUiState, onEvent: (AiProfileEditEven
                 onClick = { onEvent(AiProfileEditEvent.LoadModels); pickModel = true },
                 enabled = state.keyReady && !state.loadingModels,
             ) { Text(stringResource(if (state.loadingModels) R.string.ai_loading_models else R.string.ai_choose_model)) }
-            state.modelsError?.let {
-                Text(LocalContext.current.resources.aiErrorMessage(it, state.provider), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-            }
+            state.modelsError?.let { TestResult(TestState.Failed(it), state.provider) }
 
             OutlinedTextField(
                 value = state.name,
@@ -153,16 +158,27 @@ fun AiProfileEditScreen(state: AiProfileEditUiState, onEvent: (AiProfileEditEven
                 modifier = Modifier.fillMaxWidth(),
             )
 
-            Button(onClick = { onEvent(AiProfileEditEvent.SaveAndTest) }, enabled = state.canSave, modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { onEvent(AiProfileEditEvent.SaveAndTest) },
+                enabled = state.canSave,
+                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
+            ) {
                 Text(stringResource(if (state.saving) R.string.ai_testing else R.string.ai_save_and_test))
             }
-            when (val t = state.test) {
-                is TestState.Ok -> Text(stringResource(R.string.ai_test_ok, t.report.model, t.report.latencyMs.toInt()), color = MaterialTheme.colorScheme.primary)
-                is TestState.Failed -> Text(LocalContext.current.resources.aiErrorMessage(t.error, state.provider), color = MaterialTheme.colorScheme.error)
-                else -> Unit
+            // Same result view as the profile list's Test (TestResult), from the same call (runTest).
+            if (!state.saving) TestResult(state.test, state.provider)
+            if (state.test is TestState.Failed && !state.isNew) {
+                OutlinedButton(onClick = { onEvent(AiProfileEditEvent.TestAgain) }) { Text(stringResource(R.string.ai_test_again)) }
             }
             if (!state.isNew) {
-                TextButton(onClick = { confirmDelete = true }) { Text(stringResource(R.string.ai_delete_profile)) }
+                OutlinedButton(
+                    onClick = { confirmDelete = true },
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.padding(top = 16.dp).heightIn(min = 48.dp),
+                ) {
+                    Icon(painterResource(R.drawable.ic_delete), contentDescription = null)
+                    Text(stringResource(R.string.ai_delete_profile), modifier = Modifier.padding(start = 8.dp))
+                }
             }
         }
     }
@@ -171,11 +187,11 @@ fun AiProfileEditScreen(state: AiProfileEditUiState, onEvent: (AiProfileEditEven
         ModelPicker(state, onPick = { onEvent(AiProfileEditEvent.SetModel(it)); pickModel = false }, onDismiss = { pickModel = false })
     }
     if (confirmDelete) {
-        AlertDialog(
-            onDismissRequest = { confirmDelete = false },
-            text = { Text(stringResource(R.string.ai_delete_confirm, state.name)) },
-            confirmButton = { TextButton(onClick = { confirmDelete = false; onEvent(AiProfileEditEvent.Delete) }) { Text(stringResource(R.string.action_delete)) } },
-            dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.cancel)) } },
+        DeleteProfileDialog(
+            name = state.name,
+            movesUp = null,
+            onConfirm = { confirmDelete = false; onDelete() },
+            onDismiss = { confirmDelete = false },
         )
     }
 }
@@ -202,13 +218,21 @@ private fun KeyField(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) 
             )
         }
     }
-    if (state.copyKeyFrom == null) {
+    val saved = state.savedKey
+    if (saved != null && state.showSavedKey) {
+        // A saved key shows masked, with show/hide and copy (owner request 2026-10-19).
+        SavedKeyField(stringResource(R.string.ai_api_key), saved)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            OutlinedButton(onClick = { onEvent(AiProfileEditEvent.ReplaceKey(true)) }) { Text(stringResource(R.string.key_replace)) }
+            state.keyUrl?.let { url -> TextButton(onClick = { uri.openUri(url) }) { Text(stringResource(R.string.ai_get_key)) } }
+        }
+    } else if (state.copyKeyFrom == null) {
         OutlinedTextField(
             value = state.keyInput,
             onValueChange = { onEvent(AiProfileEditEvent.SetKey(it)) },
-            label = { Text(stringResource(R.string.ai_api_key)) },
+            label = { Text(stringResource(if (state.replacingKey) R.string.key_new else R.string.ai_api_key)) },
             supportingText = when {
-                state.hasSavedKey -> { { Text(stringResource(R.string.ai_api_key_saved)) } }
+                state.replacingKey -> { { Text(stringResource(R.string.ai_api_key_replacing)) } }
                 state.provider == ProviderId.OPENAI_COMPAT -> { { Text(stringResource(R.string.ai_api_key_optional)) } }
                 else -> null
             },
@@ -225,7 +249,7 @@ private fun KeyField(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) 
             },
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = {
                 scope.launch {
                     clipboard.getClipEntry()?.clipData?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.let {
@@ -233,6 +257,9 @@ private fun KeyField(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) 
                     }
                 }
             }) { Text(stringResource(R.string.fdb_paste)) }
+            if (state.replacingKey) {
+                TextButton(onClick = { onEvent(AiProfileEditEvent.ReplaceKey(false)) }) { Text(stringResource(R.string.cancel)) }
+            }
             state.keyUrl?.let { url -> TextButton(onClick = { uri.openUri(url) }) { Text(stringResource(R.string.ai_get_key)) } }
         }
     }

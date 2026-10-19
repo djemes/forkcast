@@ -61,4 +61,13 @@
     <string name="about_medical_body">Forkcast gives estimates, especially from photos. Weigh food when accuracy matters, and talk to a doctor or dietitian before big changes.</string>
     <string name="about_licenses_title">Licenses</string>
     <string name="about_license_manrope">Manrope font, SIL Open Font License 1.1</string>
+
+    <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
+    <string name="key_saved_encrypted">Stored encrypted. Only the passphrase-protected settings export includes it.</string>
+    <string name="key_copy">Copy key</string>
+    <string name="key_copied">Copied</string>
+    <string name="key_state_shown">Key shown</string>
+    <string name="key_state_hidden">Key hidden</string>
+    <string name="key_replace">Replace key</string>
+    <string name="key_new">New key</string>
 </resources>
