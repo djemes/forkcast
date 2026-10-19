@@ -1,0 +1,18 @@
+[{
+  "error": {
+    "code": 401,
+    "message": "API key not valid. Please pass a valid API key.",
+    "status": "UNAUTHENTICATED",
+    "details": [
+      {
+        "@type": "type.googleapis.com/google.rpc.ErrorInfo",
+        "reason": "ACCESS_TOKEN_TYPE_UNSUPPORTED",
+        "metadata": {
+          "method": "google.learning.gemini.api.interactions.v1beta.InteractionsService.CreateInteractionHttp",
+          "service": "generativelanguage.googleapis.com"
+        }
+      }
+    ]
+  }
+}
+]

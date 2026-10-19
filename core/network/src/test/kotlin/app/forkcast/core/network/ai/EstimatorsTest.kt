@@ -210,6 +210,15 @@ class EstimatorsTest {
         }
     }
 
+    /** The Interactions endpoint wraps its error in an array (captured live with a fake key, 2026-10-19). */
+    @Test fun geminiInteractionsArrayErrorKeepsGoogleReason() = runTest {
+        val e = gemini(HttpStatusCode.Unauthorized, "gemini_401_interactions_array.json", "AQ.FakeKeyForTesting0123456789abcdef")
+            .testConnection().exceptionOrNull() as AiError
+        assertThat(e).isInstanceOf(AiError.InvalidKey::class.java)
+        assertThat(e.reply!!.summary).isEqualTo("HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED")
+        assertThat(e.reply!!.message).isEqualTo("API key not valid. Please pass a valid API key.")
+    }
+
     @Test fun geminiKeyErrorsCarryStatusAndGoogleReason() = runTest {
         val tokenType = gemini(HttpStatusCode.Unauthorized, "gemini_401_token_type.json", "AQ.Ab8RN6Kq-new-format-key").testConnection().exceptionOrNull()
         assertThat(tokenType).isInstanceOf(AiError.InvalidKey::class.java)

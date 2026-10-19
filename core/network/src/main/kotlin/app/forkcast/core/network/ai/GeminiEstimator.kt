@@ -147,7 +147,7 @@ class GeminiEstimator(
     private fun checkStatus(t: Timed, key: String) {
         val code = t.response.status.value
         if (code in 200..299) return
-        val err = runCatching { NetworkJson.decodeFromString(ErrorEnvelope.serializer(), t.body).error }.getOrNull()
+        val err = parseError(t.body)
         val status = err?.status
         val message = err?.message?.withoutKey(key)
         val reason = err?.reason()
@@ -211,6 +211,17 @@ class GeminiEstimator(
 
     @Serializable
     private data class ErrorEnvelope(val error: ErrorBody? = null)
+
+    /**
+     * Google sends the error as an object (models list) or, from the Interactions endpoint, as a
+     * one-element array: `[{"error":{...}}]` (seen live 2026-10-19). Both must parse, or the
+     * ErrorInfo reason is lost.
+     */
+    private fun parseError(body: String): ErrorBody? = runCatching {
+        val root = NetworkJson.parseToJsonElement(body)
+        val envelope = if (root is kotlinx.serialization.json.JsonArray) root.firstOrNull() ?: return null else root
+        NetworkJson.decodeFromJsonElement(ErrorEnvelope.serializer(), envelope).error
+    }.getOrNull()
 
     @Serializable
     private data class ErrorBody(val code: Int? = null, val message: String? = null, val status: String? = null, val details: List<JsonObject>? = null)
