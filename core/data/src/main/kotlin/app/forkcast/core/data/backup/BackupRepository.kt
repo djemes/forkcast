@@ -69,19 +69,31 @@ data class ImportSummary(
     val unchanged: Int,
 )
 
+/** JSON and CSV export, import with preview (SPEC §4.11, §6.3). */
+interface BackupRepository {
+    suspend fun exportJson(): String
+    suspend fun foodLogCsv(): String
+    suspend fun weightsCsv(): String
+    fun parse(text: String): ParsedBackup
+    suspend fun import(export: ExportV1, mode: ImportMode): ImportSummary
+    /** The newest safety backup taken before a Replace, or null if there is none. */
+    suspend fun readSafetyBackup(): String?
+}
+
 /**
  * JSON export/import (SPEC §4.11, §6.3). Merge upserts by id with the newer updatedAt
  * winning; soft-deleted rows travel like any other row, so a newer deletion wins too.
  * Replace wipes everything after writing a safety backup to app storage.
  */
 @Singleton
-class BackupRepository @Inject constructor(
+class RoomBackupRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val db: ForkcastDatabase,
     private val settings: DataStore<AppSettings>,
     private val clock: Clock,
     @Named(APP_VERSION) private val appVersion: String,
-) {
+    private val csv: CsvExporter,
+) : BackupRepository {
     private val dao: BackupDao = db.backupDao()
 
     private val safetyDir get() = File(context.filesDir, SAFETY_DIR)
@@ -105,9 +117,13 @@ class BackupRepository @Inject constructor(
         )
     }.copy(settings = settings.data.first())
 
-    suspend fun exportJson(): String = BackupJson.encodeToString(ExportV1.serializer(), export())
+    override suspend fun exportJson(): String = BackupJson.encodeToString(ExportV1.serializer(), export())
 
-    fun parse(text: String): ParsedBackup {
+    override suspend fun foodLogCsv(): String = csv.foodLog()
+
+    override suspend fun weightsCsv(): String = csv.weights()
+
+    override fun parse(text: String): ParsedBackup {
         val root = try {
             BackupJson.parseToJsonElement(text).jsonObject
         } catch (e: IllegalArgumentException) { // includes SerializationException
@@ -128,14 +144,13 @@ class BackupRepository @Inject constructor(
         return ParsedBackup.Ok(export, preview(export))
     }
 
-    suspend fun import(export: ExportV1, mode: ImportMode): ImportSummary = when (mode) {
+    override suspend fun import(export: ExportV1, mode: ImportMode): ImportSummary = when (mode) {
         ImportMode.REPLACE -> replace(export)
         ImportMode.MERGE -> merge(export)
     }
 
-    /** The newest safety backup taken before a Replace, if any. */
-    suspend fun latestSafetyBackup(): File? = withContext(Dispatchers.IO) {
-        safetyDir.listFiles { f -> f.name.endsWith(".json") }?.maxByOrNull { it.name }
+    override suspend fun readSafetyBackup(): String? = withContext(Dispatchers.IO) {
+        safetyDir.listFiles { f -> f.name.endsWith(".json") }?.maxByOrNull { it.name }?.readText()
     }
 
     private suspend fun replace(export: ExportV1): ImportSummary {

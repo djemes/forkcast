@@ -1,0 +1,64 @@
+package app.forkcast.fakes
+
+import android.net.Uri
+import app.forkcast.core.data.backup.BackupCounts
+import app.forkcast.core.data.backup.BackupPreview
+import app.forkcast.core.data.backup.BackupRepository
+import app.forkcast.core.data.backup.ExportV1
+import app.forkcast.core.data.backup.ImportMode
+import app.forkcast.core.data.backup.ImportSummary
+import app.forkcast.core.data.backup.ParsedBackup
+import app.forkcast.core.data.backup.RejectReason
+import app.forkcast.ui.backup.DocumentIo
+import java.io.IOException
+import java.time.LocalDate
+
+/** Files are plain strings: "good" parses, "newer" is rejected, anything else is unreadable. */
+class FakeBackupRepository : BackupRepository {
+    val imports = mutableListOf<ImportMode>()
+    var safetyBackup: String? = null
+    var failImport = false
+
+    override suspend fun exportJson() = "{json}"
+    override suspend fun foodLogCsv() = "food,csv"
+    override suspend fun weightsCsv() = "weights,csv"
+
+    override fun parse(text: String): ParsedBackup = when (text) {
+        "good" -> ParsedBackup.Ok(EXPORT, PREVIEW)
+        "newer" -> ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
+        else -> ParsedBackup.Rejected(RejectReason.UNREADABLE)
+    }
+
+    override suspend fun import(export: ExportV1, mode: ImportMode): ImportSummary {
+        if (failImport) throw IllegalStateException("disk full")
+        imports += mode
+        if (mode == ImportMode.REPLACE) safetyBackup = "good"
+        return ImportSummary(mode, added = 3, updated = 1, unchanged = 2)
+    }
+
+    override suspend fun readSafetyBackup() = safetyBackup
+
+    companion object {
+        val EXPORT = ExportV1(appVersion = "0.1.0", exportedAt = "2026-10-18T16:00:00Z", timeZone = "UTC")
+        val PREVIEW = BackupPreview(
+            exportedAt = null,
+            appVersion = "0.1.0",
+            counts = BackupCounts(foods = 12, logEntries = 340, savedMeals = 2, weights = 30, water = 90, goals = 1, hasProfile = true),
+            firstDate = LocalDate.of(2026, 9, 1),
+            lastDate = LocalDate.of(2026, 10, 18),
+        )
+    }
+}
+
+class FakeDocumentIo : DocumentIo {
+    val written = mutableMapOf<Uri, String>()
+    val files = mutableMapOf<Uri, String>()
+    var failWrites = false
+
+    override suspend fun writeText(uri: Uri, text: String) {
+        if (failWrites) throw IOException("read-only")
+        written[uri] = text
+    }
+
+    override suspend fun readText(uri: Uri) = files[uri] ?: throw IOException("missing")
+}

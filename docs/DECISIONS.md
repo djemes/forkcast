@@ -27,6 +27,7 @@ One dated line per non-obvious choice. Newest at the bottom.
 - 2026-10-18 · **Custom foods take label values per serving**; stored per 100 g. Serving weight in grams is required (needed for the conversion); ml servings are treated as grams.
 - 2026-10-18 · **Water:** one tap adds a glass (8 fl oz for US units, 250 ml metric); the − button removes the last entry. Target default 2.5 L men / 2.0 L women, stored as an optional override in settings.
 - 2026-10-18 · **Weight chart y-axis fits the data** (padded min/max) instead of Vico's default zero baseline, so trends are visible. Past-dated weigh-ins are stamped 07:00 local (the trend uses the earliest reading per day).
+- 2026-10-18 · **Export/import (§4.11):** the export mirrors the Room rows (entities are `@Serializable`; `BackupRepositoryTest.schemaFileMatchesExport` keeps `docs/export-schema-v1.json` in sync). Soft-deleted rows are exported so a newer deletion wins on merge. Settings are imported on Replace only. Meal slots from another install are matched by name on merge (each install seeds its own random ids). Replace writes a safety backup to app storage first (last 3 kept, not in Auto Backup) with an "Undo the last replace" button. CSV uses dot decimals and defuses formula-like text. Zip-with-photos waits for Phase 2 (no photos yet).
 - 2026-10-18 · **Toolchain versions at setup:** AGP 9.4.0 (Gradle 9.6.0 min), max API 37; SDK platform `android-37.0`, build-tools 37.0.0, platform-tools 37.0.1, cmdline-tools build 15859902.
 
 ## Signing certificate fingerprints (not secret)

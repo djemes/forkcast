@@ -28,16 +28,20 @@ import app.forkcast.core.model.Sex
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.core.model.WeightSource
 import com.google.common.truth.Truth.assertThat
+import com.google.common.truth.Truth.assertWithMessage
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.junit.After
 import org.junit.Test
 import org.junit.runner.RunWith
+import java.io.File
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -51,13 +55,13 @@ class BackupRepositoryTest {
         .allowMainThreadQueries().build()
     private val clock = Clock.fixed(Instant.parse("2026-10-18T16:00:00Z"), ZoneId.of("America/New_York"))
     private val settings = MemoryDataStore(AppSettings())
-    private val repo = BackupRepository(context, db, settings, clock, "0.1.0")
+    private val repo = RoomBackupRepository(context, db, settings, clock, "0.1.0", CsvExporter(db, clock))
     private val dao = db.backupDao()
     private val day = LocalDate.of(2026, 10, 18)
 
     @After fun tearDown() {
         db.close()
-        context.filesDir.resolve(BackupRepository.SAFETY_DIR).deleteRecursively()
+        context.filesDir.resolve(RoomBackupRepository.SAFETY_DIR).deleteRecursively()
     }
 
     @Test fun roundTripIsIdenticalExceptExportedAt() = runTest {
@@ -91,6 +95,41 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("apikey")
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
+
+    /** docs/export-schema-v1.json must list exactly the fields the app writes, and the same enum values. */
+    @Test fun schemaFileMatchesExport() = runTest {
+        seedEveryTable()
+        val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
+        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v1.json").readText()).jsonObject
+        val defs = schema.getValue("\$defs").jsonObject
+
+        assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
+        val tables = mapOf(
+            "goals" to "goal", "targetOverrides" to "targetOverride", "mealSlots" to "mealSlot", "foods" to "food",
+            "savedMeals" to "savedMeal", "savedMealItems" to "savedMealItem", "logEntries" to "logEntry",
+            "weights" to "weight", "water" to "water", "dayStatus" to "dayStatus",
+        )
+        tables.forEach { (table, def) ->
+            val row = export.getValue(table).jsonArray.first().jsonObject
+            assertWithMessage(def).that(defs.getValue(def).jsonObject.getValue("properties").jsonObject.keys)
+                .containsExactlyElementsIn(row.keys)
+        }
+        assertThat(defs.getValue("profile").jsonObject.getValue("properties").jsonObject.keys)
+            .containsExactlyElementsIn(export.getValue("profile").jsonObject.keys)
+
+        fun enumOf(vararg path: String): List<String> {
+            var node: JsonObject = defs
+            path.forEach { node = node.getValue(it).jsonObject }
+            return node.getValue("enum").jsonArray.map { it.jsonPrimitive.content }
+        }
+        assertThat(enumOf("foodSource")).containsExactlyElementsIn(FoodSource.entries.map { it.name })
+        assertThat(enumOf("profile", "properties", "activityLevel")).containsExactlyElementsIn(ActivityLevel.entries.map { it.name })
+        assertThat(enumOf("goal", "properties", "goalType")).containsExactlyElementsIn(GoalType.entries.map { it.name })
+        assertThat(enumOf("weight", "properties", "source")).containsExactlyElementsIn(WeightSource.entries.map { it.name })
+    }
+
+    private fun findDoc(name: String): File =
+        generateSequence(File("").absoluteFile) { it.parentFile }.map { File(it, "docs/$name") }.first { it.exists() }
 
     @Test fun previewCountsVisibleRowsAndDateRange() = runTest {
         seedEveryTable()
@@ -146,7 +185,7 @@ class BackupRepositoryTest {
         settings.updateData { it.copy(waterTargetMl = 3000.0) }
         repo.import(export(settings = AppSettings(waterTargetMl = 1000.0)), ImportMode.MERGE)
         assertThat(settings.data.first().waterTargetMl).isEqualTo(3000.0)
-        assertThat(repo.latestSafetyBackup()).isNull()
+        assertThat(repo.readSafetyBackup()).isNull()
     }
 
     @Test fun mergeMapsMealSlotsFromAnotherPhoneByName() = runTest {
@@ -180,8 +219,7 @@ class BackupRepositoryTest {
         repo.import(export(logEntries = listOf(entry("new", "After"))), ImportMode.REPLACE)
 
         assertThat(dao.logEntries().map { it.id }).containsExactly("new")
-        val safety = repo.latestSafetyBackup()!!
-        val saved = (repo.parse(safety.readText()) as ParsedBackup.Ok).export
+        val saved = (repo.parse(repo.readSafetyBackup()!!) as ParsedBackup.Ok).export
         assertThat(saved.logEntries.map { it.id }).containsExactly("old")
     }
 

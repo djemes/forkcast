@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_export_title">Export</string>
+    <string name="backup_export_body">Save everything (foods, food log, saved meals, weight, water, goals, and settings) as one file you can keep anywhere. API keys are never included.</string>
+    <string name="backup_export_json">Export backup</string>
+    <string name="backup_csv_title">For spreadsheets</string>
+    <string name="backup_csv_food_log">Food log (CSV)</string>
+    <string name="backup_csv_weights">Weights (CSV)</string>
+    <string name="backup_import_title">Import</string>
+    <string name="backup_import_body">Open a Forkcast backup file. You\'ll see what\'s in it before anything changes.</string>
+    <string name="backup_import">Import backup</string>
+    <string name="backup_restore_safety">Undo the last replace</string>
+    <string name="backup_restore_safety_body">Forkcast saved a copy of your data before the last replace. Opening it shows the same import choices.</string>
+    <string name="backup_working">Working…</string>
+
+    <string name="backup_saved_json">Backup saved</string>
+    <string name="backup_saved_food_log">Food log saved</string>
+    <string name="backup_saved_weights">Weights saved</string>
+    <string name="backup_save_failed">Couldn\'t save the file. Try another location.</string>
+
+    <string name="backup_preview_title">Import this backup?</string>
+    <string name="backup_preview_safety_title">Restore the safety copy?</string>
+    <string name="backup_preview_made">Made %1$s by Forkcast %2$s</string>
+    <string name="backup_preview_log">Food log entries: %1$d</string>
+    <string name="backup_preview_foods">Foods: %1$d</string>
+    <string name="backup_preview_saved_meals">Saved meals: %1$d</string>
+    <string name="backup_preview_weights">Weigh-ins: %1$d</string>
+    <string name="backup_preview_water">Water entries: %1$d</string>
+    <string name="backup_preview_dates">Dates: %1$s to %2$s</string>
+    <string name="backup_preview_no_profile">No profile in this file.</string>
+    <string name="backup_preview_choices">Merge adds what\'s new and keeps whichever copy was edited last. Replace deletes everything on this phone first.</string>
+    <string name="backup_merge">Merge</string>
+    <string name="backup_replace_ellipsis">Replace…</string>
+
+    <string name="backup_replace_title">Replace everything?</string>
+    <string name="backup_replace_body">Everything on this phone will be deleted and replaced with the backup, including settings. A safety copy of your current data is saved first, so you can undo this from Backup &amp; data.</string>
+    <string name="backup_replace">Replace</string>
+
+    <string name="backup_done_title">Import finished</string>
+    <string name="backup_done_merge">Added %1$d, updated %2$d, already up to date %3$d.</string>
+    <plurals name="backup_done_replace">
+        <item quantity="one">Restored %1$d record. A safety copy of your previous data was saved.</item>
+        <item quantity="other">Restored %1$d records. A safety copy of your previous data was saved.</item>
+    </plurals>
+
+    <string name="backup_rejected_title">Can\'t import this file</string>
+    <string name="backup_rejected_newer">This backup was made by a newer version of Forkcast. Update the app, then try again.</string>
+    <string name="backup_rejected_other">This file isn\'t a Forkcast backup.</string>
+    <string name="backup_rejected_unreadable">This file couldn\'t be read. It may be damaged or not a Forkcast backup.</string>
+    <string name="backup_read_failed">Couldn\'t open the file.</string>
+    <string name="backup_import_failed">The import didn\'t finish, so nothing was changed.</string>
+</resources>

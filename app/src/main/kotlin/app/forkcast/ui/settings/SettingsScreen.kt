@@ -20,6 +20,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
     onOpenProfileGoals: () -> Unit,
     onOpenFoodDatabases: () -> Unit,
+    onOpenBackup: () -> Unit,
     onOpenAppearance: () -> Unit,
     onOpenAbout: () -> Unit,
 ) {
@@ -31,7 +32,7 @@ fun SettingsScreen(
         ComingSoonItem(R.string.settings_ai)
         SettingsItem(R.string.settings_food_databases, onOpenFoodDatabases)
         ComingSoonItem(R.string.settings_health_connect)
-        ComingSoonItem(R.string.settings_backup_data)
+        SettingsItem(R.string.settings_backup_data, onOpenBackup)
         SettingsItem(R.string.settings_appearance, onOpenAppearance)
         SettingsItem(R.string.settings_about, onOpenAbout)
     }
