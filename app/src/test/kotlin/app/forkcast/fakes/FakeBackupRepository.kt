@@ -4,7 +4,7 @@ import android.net.Uri
 import app.forkcast.core.data.backup.BackupCounts
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.BackupRepository
-import app.forkcast.core.data.backup.ExportV1
+import app.forkcast.core.data.backup.ForkcastExport
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.ImportSummary
 import app.forkcast.core.data.backup.ParsedBackup
@@ -29,7 +29,7 @@ class FakeBackupRepository : BackupRepository {
         else -> ParsedBackup.Rejected(RejectReason.UNREADABLE)
     }
 
-    override suspend fun import(export: ExportV1, mode: ImportMode): ImportSummary {
+    override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary {
         if (failImport) throw IllegalStateException("disk full")
         imports += mode
         if (mode == ImportMode.REPLACE) safetyBackup = "good"
@@ -39,7 +39,7 @@ class FakeBackupRepository : BackupRepository {
     override suspend fun readSafetyBackup() = safetyBackup
 
     companion object {
-        val EXPORT = ExportV1(appVersion = "0.1.0", exportedAt = "2026-10-18T16:00:00Z", timeZone = "UTC")
+        val EXPORT = ForkcastExport(appVersion = "0.1.0", exportedAt = "2026-10-18T16:00:00Z", timeZone = "UTC")
         val PREVIEW = BackupPreview(
             exportedAt = null,
             appVersion = "0.1.0",

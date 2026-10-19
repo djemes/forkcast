@@ -21,6 +21,17 @@ import app.forkcast.core.model.ActivityLevel
 import app.forkcast.core.model.AppSettings
 import app.forkcast.core.model.ExerciseMode
 import app.forkcast.core.model.FoodSource
+import app.forkcast.core.model.MealEstimateJson
+import app.forkcast.core.model.ProviderId
+import app.forkcast.core.model.TierLabel
+import app.forkcast.core.data.db.AiComponentEntity
+import app.forkcast.core.data.db.AiEstimateEntity
+import app.forkcast.core.data.db.AiMatchCacheEntity
+import app.forkcast.core.data.db.AiProfileEntity
+import app.forkcast.core.data.db.ComponentSource
+import app.forkcast.core.data.db.EstimateStatus
+import app.forkcast.core.data.db.NotificationLogEntity
+import app.forkcast.core.data.db.UsageRecordEntity
 import app.forkcast.core.model.GoalType
 import app.forkcast.core.model.NutrientKey
 import app.forkcast.core.model.ServingSize
@@ -88,7 +99,7 @@ class BackupRepositoryTest {
         assertThat(root.keys).containsAtLeast(
             "schemaVersion", "app", "appVersion", "exportedAt", "timeZone", "profile", "goals",
             "targetOverrides", "tdeeEstimates", "mealSlots", "foods", "recipes", "savedMeals",
-            "logEntries", "aiEstimates", "weights", "water", "activityDays", "dayStatus", "settings",
+            "logEntries", "aiEstimates", "aiComponents", "aiProfiles", "usageRecords", "notificationLog", "aiMatchCache", "weights", "water", "activityDays", "dayStatus", "settings",
         )
         assertThat(root["exportedAt"].toString()).isEqualTo("\"2026-10-18T16:00:00Z\"")
         assertThat(json).contains("\"ENERGY_KCAL\"")
@@ -96,11 +107,11 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
 
-    /** docs/export-schema-v1.json must list exactly the fields the app writes, and the same enum values. */
+    /** docs/export-schema-v2.json must list exactly the fields the app writes, and the same enum values. */
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v1.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v2.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -108,6 +119,8 @@ class BackupRepositoryTest {
             "goals" to "goal", "targetOverrides" to "targetOverride", "mealSlots" to "mealSlot", "foods" to "food",
             "savedMeals" to "savedMeal", "savedMealItems" to "savedMealItem", "logEntries" to "logEntry",
             "weights" to "weight", "water" to "water", "dayStatus" to "dayStatus",
+            "aiEstimates" to "aiEstimate", "aiComponents" to "aiComponent", "aiProfiles" to "aiProfile",
+            "usageRecords" to "usageRecord", "notificationLog" to "notificationLog", "aiMatchCache" to "aiMatchCache",
         )
         tables.forEach { (table, def) ->
             val row = export.getValue(table).jsonArray.first().jsonObject
@@ -144,7 +157,7 @@ class BackupRepositoryTest {
     }
 
     @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":2}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":3}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
@@ -232,7 +245,7 @@ class BackupRepositoryTest {
         logEntries: List<LogEntryEntity> = emptyList(),
         dayStatus: List<DayStatusEntity> = emptyList(),
         settings: AppSettings? = null,
-    ) = ExportV1(
+    ) = ForkcastExport(
         appVersion = "0.1.0", exportedAt = "2026-10-18T16:00:00Z", timeZone = "America/New_York",
         mealSlots = mealSlots, goals = goals, logEntries = logEntries, dayStatus = dayStatus, settings = settings,
     )
@@ -273,6 +286,22 @@ class BackupRepositoryTest {
             80.5, null, WeightSource.MANUAL, null, 1, 1)))
         dao.upsertWater(listOf(WaterEntryEntity("h1", 1, day, "America/New_York", 250.0, 1, 1)))
         dao.upsertDayStatus(listOf(DayStatusEntity("d1", day, true, null, 1, 1)))
+        val ai = db.aiDao()
+        ai.upsertEstimate(AiEstimateEntity(
+            id = "a1", date = day, zoneId = "America/New_York", mealSlotId = "lunch", logEntryId = "e1", status = EstimateStatus.DONE,
+            profileId = "p1", profileName = "Gemini", provider = ProviderId.GEMINI, model = "gemini-3.8-flash", tierLabel = TierLabel.FREE,
+            description = "rice", personalContext = null, photoPaths = listOf("a1/0.jpg"), localTime = "12:40", unitsHint = "metric",
+            correction = null, promptVersion = "meal-v1", rawJson = "{}", result = MealEstimateJson("Rice"), warnings = emptyList(),
+            mealName = "Rice", kcalLow = 150.0, kcalExpected = 205.0, kcalHigh = 260.0, inputTokens = 10, outputTokens = 5, latencyMs = 900,
+            errorCode = null, errorDetail = null, attempts = 1, retryAfter = null, notified = true, reviewedAt = null, createdAt = 1, updatedAt = 1,
+        ))
+        ai.upsertComponents(listOf(AiComponentEntity("c1", "a1", 0, "Rice", "boiled", 158.0, 120.0, 200.0, 0.8, false, "Rice, white, cooked",
+            "f1", "123", "Rice", 0.9, mapOf(NutrientKey.ENERGY_KCAL to 130.0), mapOf(NutrientKey.ENERGY_KCAL to 130.0), ComponentSource.USDA,
+            mapOf(NutrientKey.ENERGY_KCAL to 205.0), 1, 1)))
+        ai.upsertProfile(AiProfileEntity("p1", "Gemini", ProviderId.GEMINI, "gemini-3.8-flash", null, TierLabel.FREE, 0, true, false, null, 1, 1))
+        ai.upsertUsage(UsageRecordEntity("u1", day, "p1", ProviderId.GEMINI, "gemini-3.8-flash", 2, 1, 0, 0, 10, 5, 1, 1))
+        ai.insertNotification(NotificationLogEntity("n1", day, "budget", 80, 1, 1, 1))
+        ai.upsertMatch(AiMatchCacheEntity("rice white cooked | boiled", "f1", "123", 0.9, 1, 1))
     }
 }
 

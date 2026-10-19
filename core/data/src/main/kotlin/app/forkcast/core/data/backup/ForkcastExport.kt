@@ -1,6 +1,12 @@
 package app.forkcast.core.data.backup
 
+import app.forkcast.core.data.db.AiComponentEntity
+import app.forkcast.core.data.db.AiEstimateEntity
+import app.forkcast.core.data.db.AiMatchCacheEntity
+import app.forkcast.core.data.db.AiProfileEntity
 import app.forkcast.core.data.db.DayStatusEntity
+import app.forkcast.core.data.db.NotificationLogEntity
+import app.forkcast.core.data.db.UsageRecordEntity
 import app.forkcast.core.data.db.FoodEntity
 import app.forkcast.core.data.db.GoalEntity
 import app.forkcast.core.data.db.LogEntryEntity
@@ -16,12 +22,16 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 
 /**
- * Export file, schema version 1 (SPEC §6.3; JSON Schema in docs/export-schema-v1.json).
- * Field names mirror the Room entities. Secrets are never included: API keys live in an
- * encrypted file outside the database and [AppSettings] holds no secrets.
+ * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v2.json). Field names mirror the
+ * Room entities. Secrets are never included: API keys live in an encrypted file outside the
+ * database and [AppSettings] holds no secrets (keys travel only in the separate,
+ * passphrase-encrypted settings export).
+ *
+ * v1 (Phase 1): core tracking tables. v2 (Phase 2): AI estimates and components, AI profiles
+ * (no keys), usage, notification log, match cache. A v1 file reads as v2 with those empty.
  */
 @Serializable
-data class ExportV1(
+data class ForkcastExport(
     val schemaVersion: Int = SCHEMA_VERSION,
     val app: String = "Forkcast",
     val appVersion: String,
@@ -31,7 +41,7 @@ data class ExportV1(
     val profile: ProfileEntity? = null,
     val goals: List<GoalEntity> = emptyList(),
     val targetOverrides: List<TargetOverrideEntity> = emptyList(),
-    /** Phase 3 (adaptive TDEE); always empty in v1 files written by Phase 1. */
+    /** Phase 3 (adaptive TDEE); always empty so far. */
     val tdeeEstimates: List<JsonElement> = emptyList(),
     val mealSlots: List<MealSlotEntity> = emptyList(),
     val foods: List<FoodEntity> = emptyList(),
@@ -40,8 +50,12 @@ data class ExportV1(
     val savedMeals: List<SavedMealEntity> = emptyList(),
     val savedMealItems: List<SavedMealItemEntity> = emptyList(),
     val logEntries: List<LogEntryEntity> = emptyList(),
-    /** Phase 2. */
-    val aiEstimates: List<JsonElement> = emptyList(),
+    val aiEstimates: List<AiEstimateEntity> = emptyList(),
+    val aiComponents: List<AiComponentEntity> = emptyList(),
+    val aiProfiles: List<AiProfileEntity> = emptyList(),
+    val usageRecords: List<UsageRecordEntity> = emptyList(),
+    val notificationLog: List<NotificationLogEntity> = emptyList(),
+    val aiMatchCache: List<AiMatchCacheEntity> = emptyList(),
     val weights: List<WeightEntryEntity> = emptyList(),
     val water: List<WaterEntryEntity> = emptyList(),
     /** Phase 3. */
@@ -50,6 +64,6 @@ data class ExportV1(
     val settings: AppSettings? = null,
 ) {
     companion object {
-        const val SCHEMA_VERSION = 1
+        const val SCHEMA_VERSION = 2
     }
 }
