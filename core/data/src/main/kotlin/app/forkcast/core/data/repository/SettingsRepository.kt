@@ -1,6 +1,7 @@
 package app.forkcast.core.data.repository
 
 import androidx.datastore.core.DataStore
+import app.forkcast.core.model.AiSettings
 import app.forkcast.core.model.AppSettings
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.core.model.UnitPrefs
@@ -14,6 +15,7 @@ interface SettingsRepository {
     suspend fun setUseWallpaperColors(enabled: Boolean)
     suspend fun setUnits(units: UnitPrefs)
     suspend fun setWaterTargetMl(ml: Double?)
+    suspend fun updateAi(transform: (AiSettings) -> AiSettings)
 }
 
 @Singleton
@@ -37,5 +39,9 @@ class DataStoreSettingsRepository @Inject constructor(
 
     override suspend fun setWaterTargetMl(ml: Double?) {
         dataStore.updateData { it.copy(waterTargetMl = ml) }
+    }
+
+    override suspend fun updateAi(transform: (AiSettings) -> AiSettings) {
+        dataStore.updateData { it.copy(ai = transform(it.ai)) }
     }
 }

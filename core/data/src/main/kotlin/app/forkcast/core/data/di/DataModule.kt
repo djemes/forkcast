@@ -11,6 +11,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import app.forkcast.core.data.R
 import app.forkcast.core.data.backup.BackupRepository
 import app.forkcast.core.data.backup.RoomBackupRepository
+import app.forkcast.core.data.db.AiDao
 import app.forkcast.core.data.db.DefaultMealSlots
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.DayStatusDao
@@ -84,6 +85,7 @@ object DataModule {
     @Provides fun provideWeightDao(db: ForkcastDatabase): WeightDao = db.weightDao()
     @Provides fun provideWaterDao(db: ForkcastDatabase): WaterDao = db.waterDao()
     @Provides fun provideDayStatusDao(db: ForkcastDatabase): DayStatusDao = db.dayStatusDao()
+    @Provides fun provideAiDao(db: ForkcastDatabase): AiDao = db.aiDao()
 
     @Provides
     @Singleton

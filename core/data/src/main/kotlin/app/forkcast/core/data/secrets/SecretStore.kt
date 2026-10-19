@@ -40,29 +40,58 @@ class SecretStore(
     /** Which secrets exist (never their values), for settings screens. */
     val present: StateFlow<Set<SecretName>> = _present.asStateFlow()
 
-    suspend fun get(name: SecretName): String? = withContext(io) { mutex.withLock { readAll()[name.name] } }
+    private val _aiKeysPresent = MutableStateFlow<Set<String>>(emptySet())
+    /** AI profile ids that have a key (never the values). */
+    val aiKeysPresent: StateFlow<Set<String>> = _aiKeysPresent.asStateFlow()
 
-    suspend fun set(name: SecretName, value: String?) = withContext(io) {
-        mutex.withLock {
-            val all = readAll().toMutableMap()
-            if (value.isNullOrBlank()) all.remove(name.name) else all[name.name] = value.trim()
-            file.parentFile?.mkdirs()
-            val bytes = json.encodeToString(serializer, all).encodeToByteArray()
-            val tmp = File(file.parentFile, file.name + ".tmp")
-            tmp.writeBytes(aead.encrypt(bytes, ASSOCIATED_DATA))
-            if (!tmp.renameTo(file)) {
-                file.delete()
-                tmp.renameTo(file)
-            }
-            publish(all)
-        }
+    suspend fun get(name: SecretName): String? = read(name.name)
+
+    suspend fun set(name: SecretName, value: String?) = write(name.name, value)
+
+    /** Key for an AI profile (SPEC §4.7), stored under `ai:<profileId>`. */
+    suspend fun aiKey(profileId: String): String? = read(AI_PREFIX + profileId)
+
+    suspend fun setAiKey(profileId: String, value: String?) = write(AI_PREFIX + profileId, value)
+
+    /**
+     * Every stored secret, for the passphrase-encrypted settings export only (SPEC §4.11).
+     * No other caller may use this.
+     */
+    internal suspend fun exportAll(): Map<String, String> = withContext(io) { mutex.withLock { readAll() } }
+
+    /** Replaces every secret (settings import). */
+    internal suspend fun replaceAll(values: Map<String, String>) = withContext(io) {
+        mutex.withLock { persist(values.filterValues { it.isNotBlank() }) }
     }
 
     /** Loads presence at startup. */
     suspend fun refresh() = withContext(io) { mutex.withLock { publish(readAll()) } }
 
+    private suspend fun read(key: String): String? = withContext(io) { mutex.withLock { readAll()[key] } }
+
+    private suspend fun write(key: String, value: String?) = withContext(io) {
+        mutex.withLock {
+            val all = readAll().toMutableMap()
+            if (value.isNullOrBlank()) all.remove(key) else all[key] = value.trim()
+            persist(all)
+        }
+    }
+
+    private fun persist(all: Map<String, String>) {
+        file.parentFile?.mkdirs()
+        val bytes = json.encodeToString(serializer, all).encodeToByteArray()
+        val tmp = File(file.parentFile, file.name + ".tmp")
+        tmp.writeBytes(aead.encrypt(bytes, ASSOCIATED_DATA))
+        if (!tmp.renameTo(file)) {
+            file.delete()
+            tmp.renameTo(file)
+        }
+        publish(all)
+    }
+
     private fun publish(all: Map<String, String>) {
         _present.value = all.keys.mapNotNull { runCatching { SecretName.valueOf(it) }.getOrNull() }.toSet()
+        _aiKeysPresent.value = all.keys.filter { it.startsWith(AI_PREFIX) }.map { it.removePrefix(AI_PREFIX) }.toSet()
     }
 
     private fun readAll(): Map<String, String> {
@@ -77,6 +106,7 @@ class SecretStore(
     }
 
     companion object {
+        private const val AI_PREFIX = "ai:"
         private val ASSOCIATED_DATA = "forkcast-secrets-v1".encodeToByteArray()
         private const val KEYSET_NAME = "forkcast_secrets_keyset"
         /** Must match the exclusion in data_extraction_rules.xml / backup_rules.xml. */

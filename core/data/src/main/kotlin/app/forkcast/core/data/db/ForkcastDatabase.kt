@@ -11,6 +11,7 @@ import androidx.room.TypeConverters
  *
  * v1 (Phase 0): meal_slot
  * v2 (Phase 1): profile, goal, target_override, food, log_entry, saved_meal(+item), weight, water, day_status
+ * v3 (Phase 2): ai_estimate, ai_component, ai_profile, usage_record, notification_log, ai_match_cache
  */
 @Database(
     entities = [
@@ -25,10 +26,16 @@ import androidx.room.TypeConverters
         WeightEntryEntity::class,
         WaterEntryEntity::class,
         DayStatusEntity::class,
+        AiEstimateEntity::class,
+        AiComponentEntity::class,
+        AiProfileEntity::class,
+        UsageRecordEntity::class,
+        NotificationLogEntity::class,
+        AiMatchCacheEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @TypeConverters(Converters::class)
 abstract class ForkcastDatabase : RoomDatabase() {
@@ -43,6 +50,7 @@ abstract class ForkcastDatabase : RoomDatabase() {
     abstract fun waterDao(): WaterDao
     abstract fun dayStatusDao(): DayStatusDao
     abstract fun backupDao(): BackupDao
+    abstract fun aiDao(): AiDao
 
     companion object {
         const val NAME = "forkcast.db"

@@ -13,8 +13,9 @@ class MealEstimatorFactory(
     private val defaults: AiDefaults,
     private val keyFor: suspend (profileId: String) -> String?,
 ) {
-    fun create(profile: AiProfile, model: String = profile.model): MealEstimator {
-        val key: suspend () -> String? = { keyFor(profile.id) }
+    /** [keyOverride]: a key typed in the editor but not saved yet (model list, first test). */
+    fun create(profile: AiProfile, model: String = profile.model, keyOverride: String? = null): MealEstimator {
+        val key: suspend () -> String? = if (keyOverride != null) ({ keyOverride }) else ({ keyFor(profile.id) })
         val modelDefaults = defaults.models[model]
         return when (profile.provider) {
             ProviderId.CLAUDE -> ClaudeEstimator(

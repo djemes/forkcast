@@ -10,7 +10,26 @@ data class AppSettings(
     val units: UnitPrefs? = null,
     /** Daily water goal in ml; null = default by sex (SPEC §4.9). */
     val waterTargetMl: Double? = null,
+    val ai: AiSettings = AiSettings(),
 )
+
+/** Settings › AI (SPEC §4.7). Profiles live in the database; keys in the encrypted store. */
+@Serializable
+data class AiSettings(
+    /** "Off" turns photo estimation off entirely. */
+    val enabled: Boolean = true,
+    /** Sent with every photo. Never body data (the screen says so). */
+    val personalContext: String = "",
+    /** Log estimates immediately with an "AI · review" badge (SPEC §4.6 step 7). */
+    val autoAccept: Boolean = true,
+    /** Delete meal photos older than this many days; null keeps them forever. */
+    val photoRetentionDays: Int? = 90,
+    /** User-edited prices per 1M tokens, keyed by model id; overrides the defaults file. */
+    val priceOverrides: Map<String, ModelPrice> = emptyMap(),
+)
+
+@Serializable
+data class ModelPrice(val inputPerM: Double, val outputPerM: Double)
 
 @Serializable
 data class AppearanceSettings(
