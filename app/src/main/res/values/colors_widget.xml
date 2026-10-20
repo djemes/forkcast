@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Widget glass (DESIGN.md §11). Android 12+ swaps in the system's wallpaper-derived neutrals (values-v31). -->
+    <color name="widget_glass_light">#FFFFFFFF</color>
+    <color name="widget_glass_dark">#FF16201C</color>
+    <color name="widget_glass_auto">@color/widget_glass_light</color>
+    <dimen name="widget_radius">16dp</dimen>
+</resources>

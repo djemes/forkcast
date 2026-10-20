@@ -79,6 +79,9 @@
 
         <!-- Home-screen widgets (Glance). -->
         <receiver
+            android:name=".widget.UndoExpiredReceiver"
+            android:exported="false" />
+        <receiver
             android:name=".widget.CaloriesWidgetReceiver"
             android:exported="true"
             android:label="@string/widget_calories_name">

@@ -23,13 +23,13 @@
     <string name="widget_water_now">Water today: %1$s of %2$s. Tap to add %3$s.</string>
     <string name="widget_water_of_goal">of %1$s</string>
     <string name="widget_settings_title">Widget style</string>
-    <string name="widget_settings_background">Background</string>
-    <string name="widget_settings_background_hint" formatted="false">0 % is fully transparent, 100 % is solid.</string>
-    <string name="widget_settings_text">Text and icons</string>
+    <string name="widget_settings_background">Glass background</string>
+    <string name="widget_settings_background_hint" formatted="false">0 % is fully transparent, 100 % is solid. In between, the widget is frosted glass tinted to your phone\'s color palette.</string>
+    <string name="widget_settings_text">Widget color</string>
     <string name="widget_text_auto">Auto</string>
     <string name="widget_text_light">Light</string>
     <string name="widget_text_dark">Dark</string>
-    <string name="widget_settings_text_hint">Auto follows your phone\'s light or dark mode. With a see-through background, pick Light on a dark wallpaper and Dark on a light one.</string>
+    <string name="widget_settings_text_hint">Auto follows your phone\'s light or dark mode. Light has dark text, Dark has light text. With a see-through background, pick Dark on a dark wallpaper and Light on a light one.</string>
     <string name="widget_settings_done">Done</string>
     <string name="widget_preview_light">Preview on a light wallpaper</string>
     <string name="widget_preview_dark">Preview on a dark wallpaper</string>

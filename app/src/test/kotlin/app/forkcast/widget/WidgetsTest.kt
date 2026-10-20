@@ -3,6 +3,7 @@ package app.forkcast.widget
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.mutablePreferencesOf
+import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
 import androidx.glance.testing.unit.hasContentDescription
 import androidx.glance.testing.unit.hasText
@@ -58,21 +59,37 @@ class WidgetsTest {
     @Test fun waterWidgetShowsAmountThenUndo() = runGlanceAppWidgetUnitTest {
         setContext(ApplicationProvider.getApplicationContext())
         setAppWidgetSize(WaterWidget.SMALL)
-        provideComposable { WaterContent(day, WidgetStyle(), undoId = null, undoUntil = 0L, animate = false) }
+        provideComposable { WaterContent(day, WidgetStyle(), undoId = null, undoUntil = 0L) }
         onNode(hasContentDescription("Water today")).assertExists()
-        onNode(hasText("42")).assertExists()
+        // 1,250 ml in US units, with the short "oz" so it fits the 1x1 button.
+        onNode(hasText("42 oz")).assertExists()
+        onNode(hasText("fl oz")).assertDoesNotExist()
+    }
+
+    @Test fun wideWaterWidgetShowsTheGoalBesideTheGauge() = runGlanceAppWidgetUnitTest {
+        setContext(ApplicationProvider.getApplicationContext())
+        setAppWidgetSize(WaterWidget.WIDE)
+        provideComposable { WaterContent(day, WidgetStyle(), undoId = null, undoUntil = 0L) }
+        onNode(hasText("Water")).assertExists()
+        onNode(hasText("of 85 oz")).assertExists()
     }
 
     @Test fun waterWidgetOffersUndoRightAfterATap() = runGlanceAppWidgetUnitTest {
         setContext(ApplicationProvider.getApplicationContext())
         setAppWidgetSize(WaterWidget.SMALL)
-        provideComposable { WaterContent(day, WidgetStyle(), undoId = "w1", undoUntil = System.currentTimeMillis() + 60_000, animate = false) }
+        provideComposable { WaterContent(day, WidgetStyle(), undoId = "w1", undoUntil = System.currentTimeMillis() + 60_000) }
         onNode(hasText("Undo")).assertExists()
     }
 
     @Test fun styleReadsBackFromWidgetState() {
-        val prefs = mutablePreferencesOf(WidgetStyle.BACKGROUND to 0.25f, WidgetStyle.TEXT to "LIGHT")
-        assertThat(WidgetStyle.from(prefs)).isEqualTo(WidgetStyle(0.25f, TextMode.LIGHT))
+        val prefs = mutablePreferencesOf(WidgetStyle.BACKGROUND to 0.25f, WidgetStyle.THEME to "DARK")
+        assertThat(WidgetStyle.from(prefs)).isEqualTo(WidgetStyle(0.25f, WidgetTheme.DARK))
         assertThat(WidgetStyle.from(mutablePreferencesOf())).isEqualTo(WidgetStyle())
+    }
+
+    @Test fun firstBuildsTextColorBecomesTheMatchingWidgetColor() {
+        // The first build stored the text color: light text is a Dark widget.
+        val old = mutablePreferencesOf(stringPreferencesKey("text") to "LIGHT")
+        assertThat(WidgetStyle.from(old).theme).isEqualTo(WidgetTheme.DARK)
     }
 }

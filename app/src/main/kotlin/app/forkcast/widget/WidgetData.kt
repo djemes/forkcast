@@ -65,6 +65,8 @@ data class TodaySnapshot(
     val units: UnitPrefs,
 ) {
     val format: UnitFormatter get() = UnitFormatter(units)
+    /** How full the water gauge is, 0–1. */
+    val waterFraction: Float get() = if (waterTargetMl > 0) (waterMl / waterTargetMl).toFloat().coerceIn(0f, 1f) else 0f
 }
 
 object WidgetData {

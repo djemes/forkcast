@@ -76,8 +76,12 @@ object WidgetArt {
         return bmp
     }
 
-    private fun manrope(context: Context): Typeface =
-        runCatching { ResourcesCompat.getFont(context, R.font.manrope) }.getOrNull() ?: Typeface.DEFAULT_BOLD
+    // Loaded once per process: every widget frame draws a number.
+    @Volatile private var font: Typeface? = null
+
+    private fun manrope(context: Context): Typeface = font
+        ?: (runCatching { ResourcesCompat.getFont(context.applicationContext, R.font.manrope) }.getOrNull() ?: Typeface.DEFAULT_BOLD)
+            .also { font = it }
 
     private fun mask(w: Int, h: Int) = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8)
 
