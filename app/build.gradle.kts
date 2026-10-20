@@ -136,6 +136,9 @@ dependencies {
     implementation(libs.kotlinx.coroutines.play.services)
     implementation(libs.vico.compose)
     implementation(libs.vico.compose.m3)
+    // Home-screen widgets (Phase 5)
+    implementation(libs.glance.appwidget)
+    implementation(libs.glance.material3)
     implementation(libs.coil.compose)
     implementation(libs.reorderable)
     implementation(libs.androidx.work.runtime)
@@ -146,6 +149,7 @@ dependencies {
     ksp(libs.hilt.compiler)
     implementation(libs.hilt.lifecycle.viewmodel.compose)
 
+    testImplementation(libs.glance.appwidget.testing)
     testImplementation(libs.junit4)
     testImplementation(libs.truth)
     testImplementation(libs.turbine)

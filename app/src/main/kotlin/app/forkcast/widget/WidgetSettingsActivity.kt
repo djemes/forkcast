@@ -1,0 +1,208 @@
+package app.forkcast.widget
+
+import android.appwidget.AppWidgetManager
+import android.content.Intent
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Slider
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.dp
+import androidx.datastore.preferences.core.Preferences
+import androidx.glance.appwidget.GlanceAppWidgetManager
+import androidx.glance.appwidget.state.getAppWidgetState
+import androidx.glance.appwidget.state.updateAppWidgetState
+import androidx.glance.state.PreferencesGlanceStateDefinition
+import androidx.lifecycle.lifecycleScope
+import app.forkcast.R
+import app.forkcast.ui.settings.SettingsScaffold
+import app.forkcast.ui.theme.DarkForkcastColors
+import app.forkcast.ui.theme.ForkcastColors
+import app.forkcast.ui.theme.ForkcastTheme
+import app.forkcast.ui.theme.LightForkcastColors
+import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
+
+/**
+ * A widget's Settings (shown when adding it, and from the widget's long-press menu):
+ * background opacity and text color, with a live preview on a light and a dark wallpaper.
+ */
+class WidgetSettingsActivity : ComponentActivity() {
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        val appWidgetId = intent?.extras?.getInt(AppWidgetManager.EXTRA_APPWIDGET_ID, AppWidgetManager.INVALID_APPWIDGET_ID)
+            ?: AppWidgetManager.INVALID_APPWIDGET_ID
+        // Backing out keeps whatever the widget had.
+        setResult(RESULT_CANCELED, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+            finish()
+            return
+        }
+        val isWater = AppWidgetManager.getInstance(this).getAppWidgetInfo(appWidgetId)?.provider?.className == WaterWidgetReceiver::class.java.name
+        lifecycleScope.launch {
+            val manager = GlanceAppWidgetManager(this@WidgetSettingsActivity)
+            val glanceId = runCatching { manager.getGlanceIdBy(appWidgetId) }.getOrNull()
+            val initial = glanceId?.let {
+                WidgetStyle.from(getAppWidgetState(this@WidgetSettingsActivity, PreferencesGlanceStateDefinition, it))
+            } ?: WidgetStyle()
+            setContent {
+                ForkcastTheme {
+                    val scope = rememberCoroutineScope()
+                    WidgetSettingsScreen(initial, isWater, onBack = { finish() }) { style ->
+                        scope.launch {
+                            if (glanceId != null) {
+                                updateAppWidgetState(this@WidgetSettingsActivity, glanceId) { prefs ->
+                                    prefs[WidgetStyle.BACKGROUND] = style.background
+                                    prefs[WidgetStyle.TEXT] = style.text.name
+                                }
+                                if (isWater) WaterWidget().update(this@WidgetSettingsActivity, glanceId) else CaloriesWidget().update(this@WidgetSettingsActivity, glanceId)
+                            }
+                            setResult(RESULT_OK, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
+                            finish()
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun WidgetSettingsScreen(initial: WidgetStyle, isWater: Boolean, onBack: () -> Unit, onDone: (WidgetStyle) -> Unit) {
+    var background by remember { mutableFloatStateOf(initial.background) }
+    var text by remember { mutableStateOf(initial.text) }
+    val style = WidgetStyle(background, text)
+    SettingsScaffold(title = stringResource(R.string.widget_settings_title), onBack = onBack) {
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            // The same widget on a light and a dark wallpaper, so readability is easy to judge.
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                PreviewOn(style, isWater, wallpaperDark = false, Modifier.weight(1f))
+                PreviewOn(style, isWater, wallpaperDark = true, Modifier.weight(1f))
+            }
+            Text(stringResource(R.string.widget_settings_background), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+            val percent = (background * 100).roundToInt()
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Slider(
+                    value = background,
+                    onValueChange = { background = (it * 20).roundToInt() / 20f },
+                    modifier = Modifier.weight(1f).semantics { stateDescription = "$percent %" },
+                )
+                Text("$percent %", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 12.dp))
+            }
+            Text(stringResource(R.string.widget_settings_background_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(R.string.widget_settings_text), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+            val options = listOf(TextMode.AUTO to R.string.widget_text_auto, TextMode.LIGHT to R.string.widget_text_light, TextMode.DARK to R.string.widget_text_dark)
+            SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
+                options.forEachIndexed { i, (mode, label) ->
+                    SegmentedButton(
+                        selected = text == mode,
+                        onClick = { text = mode },
+                        shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                        icon = {},
+                    ) { Text(stringResource(label), maxLines = 2) }
+                }
+            }
+            Text(stringResource(R.string.widget_settings_text_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Button(onClick = { onDone(style) }, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                Text(stringResource(R.string.widget_settings_done))
+            }
+        }
+    }
+}
+
+/** A Compose stand-in for the widget, on a sample wallpaper. */
+@Composable
+private fun PreviewOn(style: WidgetStyle, isWater: Boolean, wallpaperDark: Boolean, modifier: Modifier) {
+    val systemDark = isSystemInDarkTheme()
+    val palette: ForkcastColors = when (style.text) {
+        TextMode.AUTO -> if (systemDark) DarkForkcastColors else LightForkcastColors
+        TextMode.LIGHT -> DarkForkcastColors
+        TextMode.DARK -> LightForkcastColors
+    }
+    val wallpaper = if (wallpaperDark) Brush.linearGradient(listOf(Color(0xFF1B2333), Color(0xFF3A2C4F)))
+    else Brush.linearGradient(listOf(Color(0xFFF4E9D8), Color(0xFFC9DCEB)))
+    val label = stringResource(if (wallpaperDark) R.string.widget_preview_dark else R.string.widget_preview_light)
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(RoundedCornerShape(16.dp))
+            .background(wallpaper)
+            .semantics { contentDescription = label },
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(108.dp)
+                .clip(RoundedCornerShape(26.dp))
+                .background(palette.surface.copy(alpha = style.background)),
+        ) {
+            val track = palette.ink.copy(alpha = 0.18f)
+            val fill = if (isWater) palette.protein else palette.pine
+            Canvas(Modifier.size(84.dp)) {
+                val stroke = size.minDimension * 0.085f
+                val arcSize = Size(size.width - stroke * 2, size.height - stroke * 2)
+                val topLeft = Offset(stroke, stroke)
+                val gap = if (isWater) 80f else 0f
+                val start = if (isWater) 90f + gap / 2 else -90f
+                val span = 360f - gap
+                drawArc(track, start, span, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+                drawArc(fill, start, span * 0.6f, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+            }
+            if (isWater) {
+                Icon(painterResource(R.drawable.ic_water_glass), contentDescription = null, tint = palette.protein, modifier = Modifier.size(28.dp))
+            } else {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text("860", style = MaterialTheme.typography.titleLarge, color = palette.ink)
+                    Text("kcal left", style = MaterialTheme.typography.labelSmall, color = palette.muted)
+                }
+            }
+        }
+    }
+}

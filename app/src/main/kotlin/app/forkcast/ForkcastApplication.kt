@@ -25,6 +25,7 @@ class ForkcastApplication : Application(), Configuration.Provider {
     @Inject lateinit var settings: app.forkcast.core.data.repository.SettingsRepository
     @Inject lateinit var missingKeys: app.forkcast.core.data.repository.MissingKeysRepository
     @Inject lateinit var driveBackup: app.forkcast.core.data.drive.DriveBackupScheduler
+    @Inject lateinit var widgets: app.forkcast.widget.WidgetUpdater
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -54,5 +55,6 @@ class ForkcastApplication : Application(), Configuration.Provider {
         health.start(appScope)
         missingKeys.start(appScope)
         driveBackup.start(appScope)
+        widgets.start(appScope)
     }
 }

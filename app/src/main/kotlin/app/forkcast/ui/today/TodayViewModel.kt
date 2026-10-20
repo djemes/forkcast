@@ -330,7 +330,7 @@ class TodayViewModel @Inject constructor(
                 fromDrinksMl = entries.sumOf { it.waterMl ?: 0.0 },
                 targetMl = x.settings.waterTargetMl
                     ?: if (profile?.sex == Sex.FEMALE) NutritionConstants.WATER_TARGET_FEMALE_ML else NutritionConstants.WATER_TARGET_MALE_ML,
-                glassMl = if (units.water == WaterUnit.FL_OZ) UnitConversions.flOzToMl(8.0) else 250.0,
+                glassMl = x.settings.waterGlassMl ?: if (units.water == WaterUnit.FL_OZ) UnitConversions.flOzToMl(8.0) else 250.0,
                 lastEntryId = water.maxByOrNull { it.timestamp }?.id,
             ),
             weight = weightSummary(weights),

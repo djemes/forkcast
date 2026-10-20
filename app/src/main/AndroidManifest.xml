@@ -52,7 +52,72 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Long-press shortcuts: Scan, Photo meal, Search, +1 glass of water (Phase 5). -->
+            <meta-data android:name="android.app.shortcuts" android:resource="@xml/shortcuts" />
         </activity>
+
+        <!-- "+1 glass of water" shortcut: logs it and closes, never shown. -->
+        <activity
+            android:name=".widget.AddWaterActivity"
+            android:exported="false"
+            android:excludeFromRecents="true"
+            android:noHistory="true"
+            android:taskAffinity=""
+            android:theme="@android:style/Theme.Translucent.NoTitleBar" />
+
+        <!-- Widget Settings: background opacity and text color (on add and from the widget's menu). -->
+        <activity
+            android:name=".widget.WidgetSettingsActivity"
+            android:exported="true"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Forkcast">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Home-screen widgets (Glance). -->
+        <receiver
+            android:name=".widget.CaloriesWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_calories_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_calories_info" />
+        </receiver>
+        <receiver
+            android:name=".widget.WaterWidgetReceiver"
+            android:exported="true"
+            android:label="@string/widget_water_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_water_info" />
+        </receiver>
+
+        <!-- Quick Settings tiles: barcode scan and AI photo meal. -->
+        <service
+            android:name=".widget.ScanTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_barcode"
+            android:label="@string/tile_scan"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
+        <service
+            android:name=".widget.PhotoTileService"
+            android:exported="true"
+            android:icon="@drawable/ic_photo_camera"
+            android:label="@string/tile_photo"
+            android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter>
+                <action android:name="android.service.quicksettings.action.QS_TILE" />
+            </intent-filter>
+        </service>
 
         <!-- Health Connect's privacy-policy link. Through Android 13: the rationale action. -->
         <activity

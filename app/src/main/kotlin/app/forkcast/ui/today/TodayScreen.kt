@@ -138,6 +138,9 @@ fun TodayRoute(
     /** A day to show, from Trends' "Open day" (ISO date). */
     openDate: String? = null,
     onOpenDateShown: () -> Unit = {},
+    /** The widget's Log button: open the Log sheet for today's current meal. */
+    openLogSheet: Boolean = false,
+    onLogSheetOpened: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -157,6 +160,8 @@ fun TodayRoute(
             addedToMeal = addedToMeal,
             onAddedShown = onAddedShown,
             editServings = editServings,
+            openLogSheet = openLogSheet,
+            onLogSheetOpened = onLogSheetOpened,
         )
     }
 }
@@ -172,9 +177,19 @@ fun TodayScreen(
     onAddedShown: () -> Unit = {},
     /** Servings loaded for the entry being edited (entry id → servings). */
     editServings: Pair<String, List<app.forkcast.core.model.ServingSize>>? = null,
+    openLogSheet: Boolean = false,
+    onLogSheetOpened: () -> Unit = {},
 ) {
     // Null = sheet closed; otherwise the meal the sheet logs to.
     var logSheetMealId by rememberSaveable { mutableStateOf<String?>(null) }
+    // The widget's Log button opens the sheet on today, for the meal that fits the time.
+    LaunchedEffect(openLogSheet) {
+        if (openLogSheet) {
+            if (!state.isToday) onEvent(TodayEvent.GoToToday)
+            logSheetMealId = state.defaultMealId ?: state.meals.firstOrNull()?.slot?.id
+            onLogSheetOpened()
+        }
+    }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showNutrients by rememberSaveable { mutableStateOf(false) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }

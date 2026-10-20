@@ -21,6 +21,10 @@ import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.navigation.ForkcastNavHost
 import app.forkcast.ui.theme.ForkcastTheme
+import app.forkcast.widget.OPEN_PHOTO
+import app.forkcast.widget.OPEN_SCAN
+import app.forkcast.widget.OPEN_SEARCH
+import app.forkcast.widget.WidgetData
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -44,7 +48,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         splash.setKeepOnScreenCondition { viewModel.start.value == null }
         enableEdgeToEdge()
-        if (savedInstanceState == null) openRequest.value = intent?.getStringExtra(Notifier.EXTRA_OPEN)
+        if (savedInstanceState == null) handleOpen(intent?.getStringExtra(Notifier.EXTRA_OPEN))
 
         setContent {
             val start by viewModel.start.collectAsStateWithLifecycle()
@@ -92,6 +96,20 @@ class MainActivity : ComponentActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        intent.getStringExtra(Notifier.EXTRA_OPEN)?.let { openRequest.value = it }
+        handleOpen(intent.getStringExtra(Notifier.EXTRA_OPEN))
+    }
+
+    /**
+     * Widget, shortcut and tile requests that log food ("scan", "photo", "search") go to the meal
+     * that fits the time of day, like the Log button; the rest pass through as they are.
+     */
+    private fun handleOpen(open: String?) {
+        when (open) {
+            null -> Unit
+            OPEN_SCAN, OPEN_PHOTO, OPEN_SEARCH -> lifecycleScope.launch {
+                WidgetData.mealNow(applicationContext)?.let { openRequest.value = "$open:$it" }
+            }
+            else -> openRequest.value = open
+        }
     }
 }

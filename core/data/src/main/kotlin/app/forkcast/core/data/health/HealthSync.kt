@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.WorkerParameters
@@ -69,8 +71,18 @@ class HealthSyncStarter @Inject constructor(
         }
     }
 
+    /**
+     * Sends pending writes within seconds even if the app process goes away right after, e.g. a
+     * glass added from the home-screen widget. A no-op sync when Health Connect isn't connected.
+     */
+    fun syncSoon() {
+        val request = OneTimeWorkRequestBuilder<HealthSyncWorker>().setInitialDelay(WRITE_DEBOUNCE_MS, TimeUnit.MILLISECONDS).build()
+        WorkManager.getInstance(context).enqueueUniqueWork(SOON, ExistingWorkPolicy.REPLACE, request)
+    }
+
     private companion object {
         const val PERIODIC = "health-sync"
+        const val SOON = "health-sync-soon"
         const val WRITE_DEBOUNCE_MS = 2_000L
     }
 }

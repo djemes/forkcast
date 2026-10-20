@@ -10,6 +10,8 @@ data class AppSettings(
     val units: UnitPrefs? = null,
     /** Daily water goal in ml; null = default by sex (SPEC §4.9). */
     val waterTargetMl: Double? = null,
+    /** One "+ glass" (Today, the water widget, the shortcut) in ml; null = 8 fl oz or 250 ml by units. */
+    val waterGlassMl: Double? = null,
     val ai: AiSettings = AiSettings(),
     val notifications: NotificationSettings = NotificationSettings(),
     val health: HealthSettings = HealthSettings(),

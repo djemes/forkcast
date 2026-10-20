@@ -30,6 +30,7 @@ camerax = "1.6.2"
 mlkitBarcode = "17.3.0"
 mlkitText = "16.0.1"
 vico = "3.3.1"
+glance = "1.2.0"
 # Phase 2, checked 2026-10-18
 work = "2.12.0"
 hiltWork = "1.4.0"
@@ -102,6 +103,9 @@ mlkit-text = { module = "com.google.mlkit:text-recognition", version.ref = "mlki
 kotlinx-coroutines-play-services = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-play-services", version.ref = "coroutines" }
 play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
 
+glance-appwidget = { module = "androidx.glance:glance-appwidget", version.ref = "glance" }
+glance-appwidget-testing = { module = "androidx.glance:glance-appwidget-testing", version.ref = "glance" }
+glance-material3 = { module = "androidx.glance:glance-material3", version.ref = "glance" }
 vico-compose = { module = "com.patrykandpatrick.vico:compose", version.ref = "vico" }
 vico-compose-m3 = { module = "com.patrykandpatrick.vico:compose-m3", version.ref = "vico" }
 
