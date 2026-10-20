@@ -4,7 +4,6 @@ import android.content.res.Resources
 import androidx.annotation.StringRes
 import app.forkcast.R
 import app.forkcast.core.model.ProviderId
-import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.AiError
 
 @StringRes
@@ -21,12 +20,6 @@ fun ProviderId.shortName(): String = when (this) {
     ProviderId.OPENAI_COMPAT -> "The AI server"
 }
 
-@StringRes
-fun TierLabel.label(): Int = when (this) {
-    TierLabel.FREE -> R.string.ai_tier_free
-    TierLabel.PAID -> R.string.ai_tier_paid
-    TierLabel.UNKNOWN -> R.string.ai_tier_unknown
-}
 
 /**
  * One specific, actionable message per error (SPEC §4.6 acceptance; DESIGN.md §6 tone). When the

@@ -36,9 +36,6 @@
     <string name="ai_deleted">Deleted %1$s</string>
     <string name="ai_used_today">Used today: %1$d</string>
     <string name="ai_cooling_down">Paused until %1$s (quota)</string>
-    <string name="ai_tier_free">free</string>
-    <string name="ai_tier_paid">paid</string>
-    <string name="ai_tier_unknown">tier not sure</string>
     <string name="ai_test">Test</string>
     <string name="ai_testing">Testing…</string>
     <string name="ai_test_ok">Connected to %1$s in %2$d ms</string>
@@ -72,12 +69,7 @@
     <string name="ai_provider_claude">Claude (Anthropic)</string>
     <string name="ai_provider_gemini">Gemini (Google)</string>
     <string name="ai_provider_openai">OpenAI-compatible</string>
-    <string name="ai_tier_question">Is billing enabled on this key\'s Google Cloud project?</string>
-    <string name="ai_tier_why">Only Gemini has a free tier, and Google doesn\'t tell apps which kind a key is. Free: usage counts as $0 and Google\'s privacy note applies. Paid: usage shows an estimated cost.</string>
-    <string name="ai_tier_free_option">Free</string>
-    <string name="ai_tier_paid_option">Paid</string>
-    <string name="ai_tier_unknown_option">Not sure</string>
-    <string name="ai_free_tier_note">On Gemini\'s free tier, Google may use your photos and descriptions to improve its products, and people may review them. Don\'t include faces, documents, or personal details. Users in the EEA, UK, or Switzerland need a paid key.</string>
+    <string name="ai_free_tier_note">If billing isn\'t turned on for this key\'s Google Cloud project (Gemini\'s free tier), Google may use your photos and descriptions to improve its products, and people may review them. Don\'t include faces, documents, or personal details. Users in the EEA, UK, or Switzerland need a paid key.</string>
     <string name="ai_base_url">Server URL</string>
     <string name="ai_base_url_hint">e.g. https://openrouter.ai/api or http://192.168.1.10:11434</string>
     <string name="ai_cleartext_warning">This address isn\'t encrypted (http). Only use it on your own network or VPN.</string>
@@ -103,7 +95,7 @@
     <string name="key_guide_gemini_cloud_1">Open the Gemini API page, check the project name at the top (create one if needed), and tap Enable.</string>
     <string name="key_guide_gemini_cloud_2">Open Credentials, then tap Create credentials › API key.</string>
     <string name="key_guide_gemini_cloud_3">Edit the new key. Under API restrictions, choose Restrict key, tick Gemini API, and save. Google rejects keys that have no restriction.</string>
-    <string name="key_guide_gemini_billing">Free or paid: a key is free unless billing is linked to its project. If you link billing, add a budget alert there too. Then pick the matching answer above.</string>
+    <string name="key_guide_gemini_billing">Free or paid: a key is free unless billing is linked to its project. If you link billing, add a budget alert there too.</string>
     <string name="key_guide_open_ai_studio">Open AI Studio</string>
     <string name="key_guide_open_gemini_api">Open the Gemini API page</string>
     <string name="key_guide_open_credentials">Open Credentials</string>

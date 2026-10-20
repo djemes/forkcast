@@ -136,7 +136,7 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithText("On Gemini's free tier", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Gemini's free tier", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Save and test").performScrollTo().performClick()
         assertThat(event).isEqualTo(AiProfileEditEvent.SaveAndTest)
     }
@@ -198,7 +198,7 @@ class AiSettingsTest {
             }
         }
         compose.onNodeWithText("Gemini 3.8 Flash").assertIsDisplayed()
-        compose.onNodeWithText("Gemini (Google) · gemini-3.8-flash · free").assertIsDisplayed()
+        compose.onNodeWithText("Gemini (Google) · gemini-3.8-flash").assertIsDisplayed()
         compose.onNodeWithText("Used first").assertIsDisplayed()
         compose.onNodeWithContentDescription("Number 1 in the order").assertIsDisplayed()
         compose.onNodeWithText("Used today: 3").assertIsDisplayed()

@@ -15,6 +15,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -47,7 +52,6 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
 import app.forkcast.core.model.ProviderId
-import app.forkcast.core.model.TierLabel
 import app.forkcast.ui.common.SavedKeyField
 import app.forkcast.ui.settings.SettingsScaffold
 import kotlinx.coroutines.launch
@@ -73,48 +77,17 @@ fun AiProfileEditScreen(
     SettingsScaffold(title = title, onBack = onBack) {
         if (!state.loaded) return@SettingsScaffold
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Heading(R.string.ai_provider)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                for (p in ProviderId.entries) {
-                    FilterChip(
-                        selected = state.provider == p,
-                        onClick = { onEvent(AiProfileEditEvent.SetProvider(p)) },
-                        label = { Text(stringResource(p.label())) },
-                        modifier = Modifier.heightIn(min = 48.dp),
-                    )
-                }
-            }
+            ProviderPicker(state.provider) { onEvent(AiProfileEditEvent.SetProvider(it)) }
 
-            if (state.provider == ProviderId.GEMINI) {
-                Text(stringResource(R.string.ai_tier_question), style = MaterialTheme.typography.bodyMedium)
-                Text(stringResource(R.string.ai_tier_why), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Column {
-                    for ((tier, label) in listOf(
-                        TierLabel.FREE to R.string.ai_tier_free_option,
-                        TierLabel.PAID to R.string.ai_tier_paid_option,
-                        TierLabel.UNKNOWN to R.string.ai_tier_unknown_option,
-                    )) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 48.dp)
-                                .selectable(selected = state.tier == tier, role = Role.RadioButton) { onEvent(AiProfileEditEvent.SetTier(tier)) },
-                        ) {
-                            RadioButton(selected = state.tier == tier, onClick = null)
-                            Text(stringResource(label), modifier = Modifier.padding(start = 12.dp))
-                        }
-                    }
-                }
-                // Shown before the key is saved (SPEC §4.7).
-                if (state.showFreeTierNote) {
-                    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-                        Text(
-                            stringResource(R.string.ai_free_tier_note),
-                            style = MaterialTheme.typography.bodyMedium,
-                            modifier = Modifier.padding(12.dp),
-                        )
-                    }
+            // Gemini keys may be free tier, which the app can't detect, so the privacy note always shows
+            // for Gemini (SPEC §4.7; the free/paid question was removed at the owner's request 2026-10-19).
+            if (state.showFreeTierNote) {
+                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
+                    Text(
+                        stringResource(R.string.ai_free_tier_note),
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(12.dp),
+                    )
                 }
             }
 
@@ -193,6 +166,33 @@ fun AiProfileEditScreen(
             onConfirm = { confirmDelete = false; onDelete() },
             onDismiss = { confirmDelete = false },
         )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ProviderPicker(selected: ProviderId, onPick: (ProviderId) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    ExposedDropdownMenuBox(expanded = open, onExpandedChange = { open = it }) {
+        OutlinedTextField(
+            value = stringResource(selected.label()),
+            onValueChange = {},
+            readOnly = true,
+            singleLine = true,
+            label = { Text(stringResource(R.string.ai_provider)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = open) },
+            modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable).fillMaxWidth(),
+        )
+        ExposedDropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            for (p in ProviderId.entries) {
+                DropdownMenuItem(
+                    text = { Text(stringResource(p.label())) },
+                    onClick = { onPick(p); open = false },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    modifier = Modifier.heightIn(min = 48.dp),
+                )
+            }
+        }
     }
 }
 

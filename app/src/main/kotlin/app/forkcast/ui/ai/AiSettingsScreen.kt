@@ -230,12 +230,11 @@ private fun SwitchRow(title: String, body: String?, checked: Boolean, onChange: 
     }
 }
 
-/** "Gemini (Google) · gemini-3.8-flash · free" */
+/** "Gemini (Google) · gemini-3.8-flash" */
 @Composable
 private fun profileLine(item: AiProfileStatus): String {
     val p = item.profile
-    val tier = if (p.provider == ProviderId.GEMINI) stringResource(p.tierLabel.label()) else null
-    return listOfNotNull(stringResource(p.provider.label()), p.model, tier).joinToString(" · ")
+    return listOf(stringResource(p.provider.label()), p.model).joinToString(" · ")
 }
 
 @Composable

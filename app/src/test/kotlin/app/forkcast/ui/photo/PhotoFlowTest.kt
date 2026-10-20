@@ -171,7 +171,7 @@ class PhotoFlowTest {
         }
         // Energy is formatted with a thin space before the unit ("640 kcal").
         compose.onNodeWithText("~640 kcal, likely 512–768 kcal").assertExists()
-        compose.onNodeWithText("Estimated by Gemini 3.8 Flash · free").assertExists()
+        compose.onNodeWithText("Estimated by Gemini 3.8 Flash").assertExists()
         compose.onNodeWithText("USDA: Rice, white, cooked").assertExists()
         compose.onNodeWithText("Likely added").assertExists()
         compose.onNodeWithContentDescription("More White rice").performClick()

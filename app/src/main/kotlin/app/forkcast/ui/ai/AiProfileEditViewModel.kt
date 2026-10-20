@@ -31,7 +31,8 @@ data class AiProfileEditUiState(
     val nameEdited: Boolean = false,
     val model: String = "",
     val baseUrl: String = "",
-    val tier: TierLabel = TierLabel.FREE,
+    /** Not asked any more (owner, 2026-10-19): new Gemini profiles are UNKNOWN unless made by the free setup. */
+    val tier: TierLabel = TierLabel.UNKNOWN,
     val keyInput: String = "",
     val hasSavedKey: Boolean = false,
     /** The saved key for the masked field with show/hide and copy (null while replacing or unknown). */
@@ -62,7 +63,6 @@ sealed interface AiProfileEditEvent {
     data class SetName(val name: String) : AiProfileEditEvent
     data class SetModel(val model: String) : AiProfileEditEvent
     data class SetBaseUrl(val url: String) : AiProfileEditEvent
-    data class SetTier(val tier: TierLabel) : AiProfileEditEvent
     data class SetKey(val key: String) : AiProfileEditEvent
     data class UseKeyFrom(val source: KeySource?) : AiProfileEditEvent
     data object LoadModels : AiProfileEditEvent
@@ -113,7 +113,7 @@ class AiProfileEditViewModel @Inject constructor(
                 ).withProviderInfo()
             } else {
                 val provider = ProviderId.GEMINI
-                _state.value = AiProfileEditUiState(loaded = true, provider = provider, tier = TierLabel.FREE)
+                _state.value = AiProfileEditUiState(loaded = true, provider = provider, tier = newTier(provider))
                     .withProviderInfo()
                     .let { s -> s.copy(model = s.recommendedModel.orEmpty(), name = ai.defaults.displayName(s.recommendedModel.orEmpty())) }
             }
@@ -124,7 +124,7 @@ class AiProfileEditViewModel @Inject constructor(
         when (event) {
             is AiProfileEditEvent.SetProvider -> _state.update { s ->
                 val next = s.copy(provider = event.provider, models = null, modelsError = null, copyKeyFrom = null,
-                    tier = if (event.provider == ProviderId.GEMINI) TierLabel.FREE else TierLabel.PAID).withProviderInfo()
+                    tier = if (s.isNew) newTier(event.provider) else s.tier).withProviderInfo()
                 val model = if (s.isNew) next.recommendedModel.orEmpty() else next.model
                 next.copy(model = model, name = if (s.nameEdited) s.name else ai.defaults.displayName(model))
             }
@@ -133,7 +133,6 @@ class AiProfileEditViewModel @Inject constructor(
                 it.copy(model = event.model.trim(), name = if (it.nameEdited) it.name else ai.defaults.displayName(event.model.trim()))
             }
             is AiProfileEditEvent.SetBaseUrl -> _state.update { it.copy(baseUrl = event.url.trim()) }
-            is AiProfileEditEvent.SetTier -> _state.update { it.copy(tier = event.tier) }
             is AiProfileEditEvent.SetKey -> _state.update { it.copy(keyInput = event.key.trim(), copyKeyFrom = null) }
             is AiProfileEditEvent.ReplaceKey -> _state.update { it.copy(replacingKey = event.replacing, keyInput = "") }
             is AiProfileEditEvent.UseKeyFrom -> _state.update { it.copy(copyKeyFrom = event.source, keyInput = "") }
@@ -141,6 +140,13 @@ class AiProfileEditViewModel @Inject constructor(
             AiProfileEditEvent.SaveAndTest -> saveAndTest()
             AiProfileEditEvent.TestAgain -> testAgain()
         }
+    }
+
+    /** The guided free setup is the only place that knows a key is free; Claude/OpenAI keys are paid. */
+    private fun newTier(provider: ProviderId): TierLabel = when {
+        provider != ProviderId.GEMINI -> TierLabel.PAID
+        preset == FREE_GEMINI -> TierLabel.FREE
+        else -> TierLabel.UNKNOWN
     }
 
     private fun AiProfileEditUiState.withProviderInfo(): AiProfileEditUiState {

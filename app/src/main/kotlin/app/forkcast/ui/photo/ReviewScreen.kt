@@ -70,7 +70,6 @@ import app.forkcast.core.data.db.AiComponentEntity
 import app.forkcast.core.data.db.ComponentSource
 import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.model.ProviderId
-import app.forkcast.core.model.TierLabel
 import app.forkcast.core.model.kcal
 import app.forkcast.ui.ai.aiErrorMessage
 import app.forkcast.ui.ai.label
@@ -141,8 +140,7 @@ fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: (
                         )
                     }
                     e.profileName?.let { name ->
-                        val tier = if (e.provider == ProviderId.GEMINI && e.tierLabel != null && e.tierLabel != TierLabel.UNKNOWN) " · " + stringResource(e.tierLabel!!.label()) else ""
-                        Text(stringResource(R.string.review_by, name + tier), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(stringResource(R.string.review_by, name), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     if (e.warnings.isNotEmpty()) {
                         Text(stringResource(R.string.review_warnings, e.warnings.joinToString("; ")), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
