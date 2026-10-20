@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -44,6 +45,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.ui.common.rememberReveal
+import app.forkcast.ui.common.rememberFill
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.TransformOrigin
+import androidx.compose.ui.graphics.graphicsLayer
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.TrendsData
 import app.forkcast.core.data.repository.TrendsRepository
@@ -376,7 +382,20 @@ private fun SplitBar(label: String, split: Trends.MacroSplit) {
         // Stacked rather than side by side, so neither squeezes the other at 200 % font.
         Text(label, style = MaterialTheme.typography.labelLarge)
         Text(text, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(Modifier.fillMaxWidth().padding(top = 4.dp).height(12.dp).clip(RoundedCornerShape(6.dp))) {
+        // Grows in from the left the first time it scrolls into view.
+        val reveal = rememberReveal("split-$label")
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(top = 4.dp)
+                .height(12.dp)
+                .then(reveal.modifier)
+                .graphicsLayer {
+                    scaleX = reveal.progress
+                    transformOrigin = TransformOrigin(0f, 0.5f)
+                }
+                .clip(RoundedCornerShape(6.dp)),
+        ) {
             listOf(split.proteinPct to c.protein, split.carbsPct to c.carbs, split.fatPct to c.fat).forEach { (pct, color) ->
                 if (pct > 0.5) Box(Modifier.weight(pct.toFloat()).fillMaxHeight().background(color))
             }
@@ -441,7 +460,14 @@ private fun NutrientRow(line: Trends.NutrientLine, f: UnitFormatter) {
         )
         // Progress toward the target, capped at twice it so one huge value doesn't flatten the rest.
         Box(Modifier.fillMaxWidth().padding(top = 4.dp).height(6.dp).clip(RoundedCornerShape(3.dp)).background(MaterialTheme.colorScheme.surfaceContainerHigh)) {
-            Box(Modifier.fillMaxWidth((line.ratio / 2).toFloat().coerceIn(0f, 1f)).fillMaxHeight().background(color))
+            // Fills in the first time it scrolls into view; a new period eases it to the new value.
+            val fill = rememberFill((line.ratio / 2).toFloat().coerceIn(0f, 1f), "nutrient-${line.key}")
+            Box(
+                Modifier
+                    .fillMaxSize()
+                    .then(fill.modifier)
+                    .drawBehind { drawRect(color, size = size.copy(width = size.width * fill.fraction)) },
+            )
             // Target mark at the middle.
             Box(Modifier.fillMaxWidth(0.5f).fillMaxHeight(), contentAlignment = Alignment.CenterEnd) {
                 Box(Modifier.width(2.dp).fillMaxHeight().background(MaterialTheme.colorScheme.onSurface))

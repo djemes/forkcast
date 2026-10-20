@@ -1,8 +1,13 @@
 package app.forkcast.navigation
 
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalDensity
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
@@ -39,6 +44,7 @@ import app.forkcast.ui.settings.WaterSettingsRoute
 import app.forkcast.ui.settings.SettingsScreen
 import app.forkcast.ui.today.TodayActions
 import app.forkcast.ui.today.TodayRoute
+import app.forkcast.ui.theme.Motion
 import app.forkcast.ui.trends.TrendsRoute
 import app.forkcast.ui.recipes.RecipeEditRoute
 import app.forkcast.ui.recipes.RecipesRoute
@@ -153,9 +159,17 @@ fun ForkcastNavHost(
         navController.popBackStack<TodayDestination>(inclusive = false)
     }
 
+    // Material shared axis X (DESIGN.md §8): the new screen slides in a little from the right while
+    // the old one slides a little left and fades; Back reverses it. With predictive back
+    // (enableOnBackInvokedCallback) the pop transition follows the swipe, previewing the screen below.
+    val axis = with(LocalDensity.current) { Motion.SHARED_AXIS.roundToPx() }
     NavHost(
         navController = navController,
         startDestination = if (startWithOnboarding) OnboardingDestination else TodayDestination,
+        enterTransition = { slideInHorizontally(Motion.enter(Motion.LONG)) { axis } + fadeIn(Motion.enter(Motion.LONG - Motion.SHARED_AXIS_FADE_OUT, delay = Motion.SHARED_AXIS_FADE_OUT)) },
+        exitTransition = { slideOutHorizontally(Motion.exit(Motion.LONG)) { -axis } + fadeOut(Motion.exit(Motion.SHARED_AXIS_FADE_OUT)) },
+        popEnterTransition = { slideInHorizontally(Motion.enter(Motion.LONG)) { -axis } + fadeIn(Motion.enter(Motion.LONG - Motion.SHARED_AXIS_FADE_OUT, delay = Motion.SHARED_AXIS_FADE_OUT)) },
+        popExitTransition = { slideOutHorizontally(Motion.exit(Motion.LONG)) { axis } + fadeOut(Motion.exit(Motion.SHARED_AXIS_FADE_OUT)) },
     ) {
         composable<OnboardingDestination> {
             OnboardingRoute(onFinished = {

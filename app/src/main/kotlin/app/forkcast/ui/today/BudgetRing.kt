@@ -1,8 +1,7 @@
 package app.forkcast.ui.today
 
-import androidx.compose.animation.core.CubicBezierEasing
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.AnimationVector1D
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -14,6 +13,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -34,7 +34,9 @@ import app.forkcast.R
 import app.forkcast.core.domain.BudgetState
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.Forecast
+import app.forkcast.ui.common.LocalEntrance
 import app.forkcast.ui.format.UnitFormatter
+import app.forkcast.ui.theme.Motion
 import app.forkcast.ui.theme.ForkcastTheme
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -49,9 +51,6 @@ import kotlin.math.sin
  * After 7+ logged days a dashed pale arc continues from "now" to where the day will likely
  * end (the forecast, SPEC §4.2), with a status line under the ring; tapping explains it.
  */
-/** Material 3 emphasized easing. */
-private val EmphasizedEasing = CubicBezierEasing(0.2f, 0f, 0f, 1f)
-
 @Composable
 fun BudgetRing(
     totals: DayTotals,
@@ -68,17 +67,14 @@ fun BudgetRing(
         BudgetState.OVER -> colors.plum
     }
     val track = MaterialTheme.colorScheme.surfaceContainerHigh
-    // Ring animates old → new total (400 ms, emphasized); system "remove animations" makes it instant.
-    val sweep by animateFloatAsState(
-        targetValue = totals.fraction.toFloat().coerceIn(0f, 1f),
-        animationSpec = tween(400, easing = EmphasizedEasing),
-        label = "ring",
-    )
-
-    val forecastSweep by animateFloatAsState(
-        targetValue = forecast?.let { (it.forecastTotalKcal / totals.allowanceKcal).toFloat().coerceIn(0f, 1f) } ?: 0f,
-        animationSpec = tween(400, easing = EmphasizedEasing),
-        label = "forecast",
+    // On app open and day change the ring fills from empty and the numbers count up (DESIGN.md §8);
+    // afterwards it moves old → new. "Remove animations" makes all of it instant.
+    val entrance = LocalEntrance.current
+    val fillIn = remember(entrance) { entrance.claim("ring") }
+    val sweepAnim = rememberRingValue(totals.fraction.toFloat().coerceIn(0f, 1f), fillIn)
+    val forecastAnim = rememberRingValue(
+        forecast?.let { (it.forecastTotalKcal / totals.allowanceKcal).toFloat().coerceIn(0f, 1f) } ?: 0f,
+        fillIn,
     )
     val forecastColor = arcColor.copy(alpha = 0.35f)
     val status = forecast?.let { forecastStatus(it, units) }
@@ -107,6 +103,8 @@ fun BudgetRing(
                 .clearAndSetSemantics { contentDescription = description },
         ) {
             Canvas(Modifier.matchParentSize().padding(12.dp)) {
+                val sweep = sweepAnim.value
+                val forecastSweep = forecastAnim.value
                 val stroke = size.minDimension * 0.075f
                 val inset = stroke / 2
                 val arcSize = Size(size.width - stroke, size.height - stroke)
@@ -134,8 +132,9 @@ fun BudgetRing(
                 )
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(
-                    bigNumber,
+                val shown = rememberRingValue((if (over) totals.overKcal else totals.remainingKcal).toFloat(), fillIn)
+                CountingText(
+                    { units.energyNumber(shown.value.toDouble()) },
                     style = MaterialTheme.typography.displayLarge,
                     color = if (over) colors.plum else MaterialTheme.colorScheme.onBackground,
                 )
@@ -153,16 +152,15 @@ fun BudgetRing(
         }
         // The extra from activity sits inside the ring; at large font sizes it moves to this line instead.
         val bigFont = androidx.compose.ui.platform.LocalDensity.current.fontScale > 1.3f
-        Text(
-            if (exercise && bigFont) {
-                stringResource(
-                    R.string.ring_eaten_budget_exercise,
-                    units.energyNumber(totals.eatenKcal),
-                    units.energyNumber(totals.budgetKcal.toDouble()),
-                    units.energyNumber(totals.exerciseKcal),
-                )
-            } else {
-                stringResource(R.string.ring_eaten_budget, units.energyNumber(totals.eatenKcal), units.energyNumber(totals.budgetKcal.toDouble()))
+        val eaten = rememberRingValue(totals.eatenKcal.toFloat(), fillIn)
+        val eatenBudgetExercise = stringResource(R.string.ring_eaten_budget_exercise)
+        val eatenBudget = stringResource(R.string.ring_eaten_budget)
+        val budget = units.energyNumber(totals.budgetKcal.toDouble())
+        val exerciseText = units.energyNumber(totals.exerciseKcal)
+        CountingText(
+            {
+                val e = units.energyNumber(eaten.value.toDouble())
+                if (exercise && bigFont) eatenBudgetExercise.format(e, budget, exerciseText) else eatenBudget.format(e, budget)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -200,3 +198,27 @@ private fun forecastStatus(f: Forecast.Outlook, units: UnitFormatter): String = 
 
 private fun timeLabel(minuteOfDay: Int): String =
     DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(LocalTime.of(minuteOfDay / 60, minuteOfDay % 60))
+
+/**
+ * A ring value (sweep or number) that starts at 0 and fills over [Motion.RING_FILL] when [fillIn],
+ * then follows later changes with [Motion.change].
+ */
+@Composable
+private fun rememberRingValue(target: Float, fillIn: Boolean): Animatable<Float, AnimationVector1D> {
+    val anim = remember { Animatable(if (fillIn) 0f else target) }
+    val first = remember { booleanArrayOf(fillIn) }
+    LaunchedEffect(target) {
+        anim.animateTo(target, if (first[0]) Motion.enter(Motion.RING_FILL) else Motion.change(RING_CHANGE_MS))
+        first[0] = false
+    }
+    return anim
+}
+
+/** Text that changes every frame while a number counts; only this small node recomposes. */
+@Composable
+private fun CountingText(text: () -> String, style: androidx.compose.ui.text.TextStyle, color: androidx.compose.ui.graphics.Color, textAlign: TextAlign? = null) {
+    Text(text(), style = style, color = color, textAlign = textAlign)
+}
+
+/** An edit moves the ring a little slower than other in-place changes, so the change reads. */
+private const val RING_CHANGE_MS = 400

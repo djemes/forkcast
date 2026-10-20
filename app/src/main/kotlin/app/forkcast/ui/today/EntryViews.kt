@@ -1,5 +1,12 @@
 package app.forkcast.ui.today
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import app.forkcast.core.domain.FoodLogging
@@ -54,6 +61,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.theme.Motion
 import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.model.LogEntry
@@ -224,16 +232,25 @@ fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit
                 tint = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
-            Text(
-                text,
-                style = MaterialTheme.typography.bodyLarge,
-                color = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+            // Status changes (waiting → estimating → ready) cross-fade instead of jumping.
+            AnimatedContent(
+                targetState = text,
+                transitionSpec = { fadeIn(Motion.enter(Motion.SHORT)) togetherWith fadeOut(Motion.exit()) },
+                label = "estimateStatus",
                 modifier = Modifier.weight(1f),
-            )
+            ) { t ->
+                Text(
+                    t,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                )
+            }
             // "AI·review" only when there's an estimate to review; a failed one has nothing yet.
             SourceBadge(FoodSource.AI, needsReview = p.status != EstimateStatus.FAILED)
         }
-        if (working) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp, start = 28.dp))
+        AnimatedVisibility(working, enter = fadeIn(Motion.enter()) + expandVertically(Motion.enter()), exit = fadeOut(Motion.exit()) + shrinkVertically(Motion.exit())) {
+            LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp, start = 28.dp))
+        }
     }
 }
 

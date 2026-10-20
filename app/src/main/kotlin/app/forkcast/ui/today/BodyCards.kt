@@ -43,6 +43,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.common.rememberFill
 import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.theme.ForkcastTheme
 import kotlin.math.abs
@@ -119,12 +120,14 @@ fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onR
         if (askAmount) {
             WaterAmountDialog(f, onDismiss = { askAmount = false }) { ml -> askAmount = false; onAddAmount(ml) }
         }
+        // Fills in on first sight; a glass added or removed eases the bar to its new length.
+        val fill = rememberFill(if (water.targetMl > 0) (water.ml / water.targetMl).toFloat().coerceIn(0f, 1f) else 0f, "water")
         LinearProgressIndicator(
-            progress = { if (water.targetMl > 0) (water.ml / water.targetMl).toFloat().coerceIn(0f, 1f) else 0f },
+            progress = { fill.fraction },
             color = ForkcastTheme.colors.protein,
             trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             drawStopIndicator = {},
-            modifier = Modifier.fillMaxWidth().padding(end = 8.dp, top = 4.dp),
+            modifier = Modifier.fillMaxWidth().padding(end = 8.dp, top = 4.dp).then(fill.modifier),
         )
     }
 }

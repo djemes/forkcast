@@ -27,6 +27,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.common.rememberFill
+import app.forkcast.ui.theme.Motion
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.TargetKind
@@ -92,16 +94,18 @@ fun MacroBars(totals: DayTotals, targets: DailyTargets, f: UnitFormatter, onOpen
             Triple(NutrientKey.PROTEIN_G, c.protein, R.string.macro_protein),
             Triple(NutrientKey.CARBS_G, c.carbs, R.string.macro_carbs),
             Triple(NutrientKey.FAT_G, c.fat, R.string.macro_fat),
-        ).forEach { (key, color, label) ->
+        ).forEachIndexed { i, (key, color, label) ->
             val eaten = totals[key]
             val target = targets.targets[key]?.amount ?: 0.0
-            NutrientBar(stringResource(label), eaten, target, color, stringResource(R.string.macro_progress, f.number(eaten), "${f.number(target)} g"))
+            NutrientBar(stringResource(label), eaten, target, color, stringResource(R.string.macro_progress, f.number(eaten), "${f.number(target)} g"), "macro-$key", i)
         }
     }
 }
 
 @Composable
-private fun NutrientBar(label: String, eaten: Double, target: Double, color: Color, valueText: String) {
+private fun NutrientBar(label: String, eaten: Double, target: Double, color: Color, valueText: String, key: String, index: Int) {
+    // Fills in on first sight (a few tens of ms after the bar above), eases to new totals after.
+    val fill = rememberFill(if (target > 0) (eaten / target).toFloat().coerceIn(0f, 1f) else 0f, key, delay = index * Motion.STAGGER)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics(mergeDescendants = true) {
         stateDescription = valueText
     }) {
@@ -110,13 +114,14 @@ private fun NutrientBar(label: String, eaten: Double, target: Double, color: Col
         val labelWidth = 72.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)
         Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.width(labelWidth))
         LinearProgressIndicator(
-            progress = { if (target > 0) (eaten / target).toFloat().coerceIn(0f, 1f) else 0f },
+            progress = { fill.fraction },
             color = color,
             trackColor = MaterialTheme.colorScheme.surfaceContainerHigh,
             drawStopIndicator = {},
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 12.dp),
+                .padding(horizontal = 12.dp)
+                .then(fill.modifier),
         )
         Text(valueText, style = MaterialTheme.typography.labelLarge)
     }

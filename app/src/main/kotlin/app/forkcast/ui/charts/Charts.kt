@@ -20,7 +20,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import app.forkcast.core.domain.TrendPoint
 import app.forkcast.core.domain.Trends
+import app.forkcast.ui.common.rememberReveal
 import app.forkcast.ui.format.UnitFormatter
+import app.forkcast.ui.theme.Motion
 import app.forkcast.ui.theme.ForkcastTheme
 import com.patrykandpatrick.vico.compose.cartesian.CartesianDrawingContext
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
@@ -125,7 +127,10 @@ fun CaloriesChart(
     val producer = remember { CartesianChartModelProducer() }
     val kcal = days.map { f.energyValue(it.kcal ?: 0.0) }
     val allowance = days.map { f.energyValue(it.allowanceKcal) }
-    LaunchedEffect(days, f.prefs) {
+    // The bars grow in when the chart first scrolls into view (data is held back until then).
+    val reveal = rememberReveal("chart-calories")
+    LaunchedEffect(days, f.prefs, reveal.ready) {
+        if (!reveal.ready) return@LaunchedEffect
         producer.runTransaction {
             columnSeries { series(days.indices.toList(), kcal) }
             lineSeries { series(days.indices.toList(), allowance) }
@@ -206,7 +211,9 @@ fun CaloriesChart(
         modelProducer = producer,
         scrollState = rememberVicoScrollState(scrollEnabled = false),
         zoomState = rememberVicoZoomState(zoomEnabled = false, initialZoom = Zoom.Content, minZoom = Zoom.Content, maxZoom = Zoom.Content),
-        modifier = modifier.fillMaxWidth().height(220.dp).semantics { contentDescription = description },
+        animationSpec = Motion.change(Motion.LONG),
+        initialAnimationSpec = if (reveal.animated) Motion.enter(Motion.FILL) else null,
+        modifier = modifier.fillMaxWidth().height(220.dp).then(reveal.modifier).semantics { contentDescription = description },
     )
 }
 
@@ -225,7 +232,10 @@ fun WeightTrendChart(
     val producer = remember { CartesianChartModelProducer() }
     val first = points.first().date
     val raw = points.filter { it.rawKg != null }
-    LaunchedEffect(points, f.prefs) {
+    // The line draws in when the chart first scrolls into view (data is held back until then).
+    val reveal = rememberReveal("chart-weight")
+    LaunchedEffect(points, f.prefs, reveal.ready) {
+        if (!reveal.ready) return@LaunchedEffect
         producer.runTransaction {
             lineSeries {
                 // Vico needs every series non-empty: with no weigh-ins in view, repeat the trend.
@@ -299,6 +309,8 @@ fun WeightTrendChart(
         modelProducer = producer,
         scrollState = rememberVicoScrollState(scrollEnabled = false),
         zoomState = rememberVicoZoomState(zoomEnabled = false, initialZoom = Zoom.Content, minZoom = Zoom.Content, maxZoom = Zoom.Content),
-        modifier = modifier.fillMaxWidth().height(220.dp).semantics { contentDescription = description },
+        animationSpec = Motion.change(Motion.LONG),
+        initialAnimationSpec = if (reveal.animated) Motion.enter(Motion.FILL) else null,
+        modifier = modifier.fillMaxWidth().height(220.dp).then(reveal.modifier).semantics { contentDescription = description },
     )
 }

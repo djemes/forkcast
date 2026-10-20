@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import app.forkcast.R
+import app.forkcast.ui.common.ScreenEntrance
 
 /** Shared top bar + scrolling column for settings screens. */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -51,7 +52,10 @@ fun SettingsScaffold(
                 .fillMaxSize()
                 .padding(padding)
                 .verticalScroll(rememberScrollState()),
-            content = content,
-        )
+        ) {
+            // Charts and bars fill in the first time this screen is opened, not when coming back (DESIGN.md §8).
+            val column = this
+            ScreenEntrance { column.content() }
+        }
     }
 }

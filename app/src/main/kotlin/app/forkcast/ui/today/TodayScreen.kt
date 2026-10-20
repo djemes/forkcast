@@ -3,14 +3,16 @@ package app.forkcast.ui.today
 import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.animation.core.animate
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
@@ -28,7 +30,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyItemScope
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -49,6 +52,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -89,7 +93,11 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
 import app.forkcast.core.domain.FoodLogging
 import app.forkcast.core.data.db.LoggedDay
+import app.forkcast.ui.common.Entrance
+import app.forkcast.ui.common.LocalEntrance
+import app.forkcast.ui.common.rememberRise
 import app.forkcast.ui.format.UnitFormatter
+import app.forkcast.ui.theme.Motion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.launch
@@ -215,6 +223,11 @@ fun TodayScreen(
     BackHandler(enabled = state.isSelecting) { onEvent(TodayEvent.ClearSelection) }
     BackHandler(enabled = !state.isSelecting && !state.isToday) { onEvent(TodayEvent.GoToToday) }
 
+    // Which day's entrance already played, and whether the app-open rise has (DESIGN.md §8). Saved,
+    // so coming back to Today from another screen doesn't replay them.
+    var playedDay by rememberSaveable { mutableStateOf<String?>(null) }
+    var openedOnce by rememberSaveable { mutableStateOf(false) }
+
     // Horizontal drag offset while swiping between days: the page follows the finger a little.
     var dragX by remember { mutableFloatStateOf(0f) }
     val dragScope = rememberCoroutineScope()
@@ -222,19 +235,31 @@ fun TodayScreen(
 
     Scaffold(
         topBar = {
-            if (state.isSelecting) {
-                SelectionBar(
-                    count = state.selection.size,
-                    onEvent = onEvent,
-                    onCopy = { copyRequest = CopyRequest(state.selection.toList(), allowSameMeal = true, from = state.date) },
-                    onSave = { saveRequest = SaveRequest(state.selection.toList(), "") },
-                )
+            // Selection mode swaps the top bar with a quick cross-fade instead of a jump.
+            AnimatedContent(
+                targetState = state.isSelecting,
+                transitionSpec = { fadeIn(Motion.enter(Motion.SHORT)) togetherWith fadeOut(Motion.exit()) },
+                label = "topBar",
+            ) { selecting ->
+                if (selecting) {
+                    SelectionBar(
+                        count = state.selection.size,
+                        onEvent = onEvent,
+                        onCopy = { copyRequest = CopyRequest(state.selection.toList(), allowSameMeal = true, from = state.date) },
+                        onSave = { saveRequest = SaveRequest(state.selection.toList(), "") },
+                    )
+                } else {
+                    DateHeader(state, onEvent, onPickDate = { showDatePicker = true }, onOpenSettings = actions.openSettings, onOpenTrends = actions.openTrends)
+                }
             }
-            else DateHeader(state, onEvent, onPickDate = { showDatePicker = true }, onOpenSettings = actions.openSettings, onOpenTrends = actions.openTrends)
         },
         snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
-            if (!state.isSelecting) {
+            AnimatedVisibility(
+                visible = !state.isSelecting,
+                enter = scaleIn(Motion.enter(), initialScale = 0.8f) + fadeIn(Motion.enter()),
+                exit = scaleOut(Motion.exit(), targetScale = 0.8f) + fadeOut(Motion.exit()),
+            ) {
                 val logLabel = stringResource(R.string.log)
                 ExtendedFloatingActionButton(
                     onClick = { logSheetMealId = state.defaultMealId ?: state.meals.firstOrNull()?.slot?.id },
@@ -256,9 +281,9 @@ fun TodayScreen(
             contentKey = { it.date },
             transitionSpec = {
                 val forward = targetState.date > initialState.date
-                val slide = tween<IntOffset>(DAY_SLIDE_MS, easing = FastOutSlowInEasing)
-                (slideInHorizontally(slide) { w -> if (forward) w else -w } + fadeIn(tween(DAY_SLIDE_MS))) togetherWith
-                    (slideOutHorizontally(slide) { w -> if (forward) -w else w } + fadeOut(tween(DAY_SLIDE_MS / 2)))
+                val slide = Motion.enter<IntOffset>(Motion.LONG)
+                (slideInHorizontally(slide) { w -> if (forward) w else -w } + fadeIn(Motion.enter(Motion.LONG))) togetherWith
+                    (slideOutHorizontally(slide) { w -> if (forward) -w else w } + fadeOut(Motion.exit()))
             },
             label = "day",
             modifier = Modifier
@@ -292,78 +317,109 @@ fun TodayScreen(
                     }
                 },
         ) { day ->
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .graphicsLayer { translationX = if (day.date == state.date) dragX else 0f },
-                contentPadding = PaddingValues(
-                    start = 16.dp,
-                    end = 16.dp,
-                    top = padding.calculateTopPadding() + 8.dp,
-                    // Room for the FAB so it never covers the last meal.
-                    bottom = padding.calculateBottomPadding() + 96.dp,
-                ),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                val totals = day.totals
-                val targets = day.targets
-                if (day.isToday && day.missingKeys.isNotEmpty()) {
-                    item(key = "missing-keys") {
-                        MissingKeysCard(
-                            day.missingKeys,
-                            onAdd = { actions.openKeys(day.missingKeys.any { it.isAi }) },
-                            onDismiss = { onEvent(TodayEvent.DismissMissingKeys) },
-                        )
+            // First sight of this day (app open or a day change): ring fills, numbers count, bars fill;
+            // on app open the cards also rise in. Coming back from another screen replays nothing.
+            val entrance = remember(day.date) {
+                  Entrance(active = playedDay != day.date.toString(), rise = !openedOnce)
+            }
+            LaunchedEffect(day.date) {
+                  playedDay = day.date.toString()
+                  openedOnce = true
+            }
+            CompositionLocalProvider(LocalEntrance provides entrance) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .graphicsLayer { translationX = if (day.date == state.date) dragX else 0f },
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        top = padding.calculateTopPadding() + 8.dp,
+                        // Room for the FAB so it never covers the last meal.
+                        bottom = padding.calculateBottomPadding() + 96.dp,
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    val totals = day.totals
+                    val targets = day.targets
+                    // Entrance order for the rise (DESIGN.md §8); later items share the last slot.
+                    var order = 0
+                    if (day.isToday && day.missingKeys.isNotEmpty()) {
+                        val i = order++
+                        item(key = "missing-keys") {
+                          TodayItem("missing-keys", i) {
+                            MissingKeysCard(
+                                day.missingKeys,
+                                onAdd = { actions.openKeys(day.missingKeys.any { it.isAi }) },
+                                onDismiss = { onEvent(TodayEvent.DismissMissingKeys) },
+                            )
+                          }
+                        }
                     }
-                }
-                if (totals != null && targets != null) {
-                    item(key = "ring") { BudgetRing(totals, f, Modifier.fillMaxWidth(), day.forecast, day.forecastFromMinute) }
-                    item(key = "macros") { MacroBars(totals, targets, f) { showNutrients = true } }
-                }
-                val last = day.lastLogged
-                if (day.isEmptyDay && last != null) {
-                    item(key = "last-logged") { LastLoggedRow(last, day.today) { onEvent(TodayEvent.PickDate(last.date)) } }
-                }
-                items(day.meals, key = { it.slot.id }) { meal ->
-                    MealSectionView(
-                        meal = meal,
-                        f = f,
-                        selection = day.selection,
-                        onAdd = { logSheetMealId = meal.slot.id },
-                        onEntryClick = { id ->
-                            val estimateId = meal.entries.firstOrNull { it.id == id }?.aiEstimateId
-                            when {
-                                day.isSelecting -> onEvent(TodayEvent.ToggleSelect(id))
-                                estimateId != null -> actions.openEstimate(estimateId)
-                                else -> editingId = id
+                    if (totals != null && targets != null) {
+                        val ringAt = order++
+                        val macrosAt = order++
+                        item(key = "ring") { TodayItem("ring", ringAt) { BudgetRing(totals, f, Modifier.fillMaxWidth(), day.forecast, day.forecastFromMinute) } }
+                        item(key = "macros") { TodayItem("macros", macrosAt) { MacroBars(totals, targets, f) { showNutrients = true } } }
+                    }
+                    val last = day.lastLogged
+                    if (day.isEmptyDay && last != null) {
+                        val i = order++
+                        item(key = "last-logged") { TodayItem("last-logged", i) { LastLoggedRow(last, day.today) { onEvent(TodayEvent.PickDate(last.date)) } } }
+                    }
+                    val mealsAt = order
+                    order += day.meals.size
+                    itemsIndexed(day.meals, key = { _, it -> it.slot.id }) { mi, meal ->
+                      TodayItem("meal-${meal.slot.id}", mealsAt + mi) {
+                        MealSectionView(
+                            meal = meal,
+                            f = f,
+                            selection = day.selection,
+                            onAdd = { logSheetMealId = meal.slot.id },
+                            onEntryClick = { id ->
+                                val estimateId = meal.entries.firstOrNull { it.id == id }?.aiEstimateId
+                                when {
+                                    day.isSelecting -> onEvent(TodayEvent.ToggleSelect(id))
+                                    estimateId != null -> actions.openEstimate(estimateId)
+                                    else -> editingId = id
+                                }
+                            },
+                            unreviewed = day.unreviewedEstimateIds,
+                            onPendingClick = actions.openEstimate,
+                            onEntryLongClick = { id -> onEvent(TodayEvent.ToggleSelect(id)) },
+                            onDelete = { id -> onEvent(TodayEvent.Delete(listOf(id))) },
+                            onCopyMeal = { copyRequest = CopyRequest(meal.entries.map { it.id }, allowSameMeal = true, from = day.date) },
+                            onSaveMeal = { saveRequest = SaveRequest(meal.entries.map { it.id }, meal.slot.name) },
+                            onCopyDay = { copyRequest = CopyRequest(day.allEntries.map { it.id }, allowSameMeal = true, from = day.date, wholeDay = true) },
+                            dayHasEntries = day.allEntries.isNotEmpty(),
+                            showSameAsYesterday = meal.slot.id in day.yesterdayMealIds,
+                            onSameAsYesterday = { onEvent(TodayEvent.SameAsYesterday(meal.slot.id)) },
+                        )
+                      }
+                    }
+                    val waterAt = order++
+                    val weightAt = order++
+                    val activityAt = order++
+                    item(key = "water") {
+                      TodayItem("water", waterAt) {
+                        WaterCard(
+                            water = day.water,
+                            f = f,
+                            onAddGlass = { onEvent(TodayEvent.AddWater(day.water.glassMl)) },
+                            onRemoveLast = { onEvent(TodayEvent.RemoveLastWater) },
+                            onAddAmount = { ml -> onEvent(TodayEvent.AddWater(ml)) },
+                        )
+                      }
+                    }
+                    item(key = "weight") { TodayItem("weight", weightAt) { WeightCard(day.weight, f, actions.openWeight) } }
+                    item(key = "activity") { TodayItem("activity", activityAt) { ActivityCard(day.activity, f, actions.openHealthConnect) { actions.openActivity(day.date) } } }
+                    if (!day.date.isAfter(day.today) && !day.isEmptyDay) {
+                        val i = order++
+                        item(key = "completeness") {
+                            TodayItem("completeness", i) {
+                                DayCompletenessRow(day.completeness, day.autoComplete) { onEvent(TodayEvent.SetCompleteness(it)) }
                             }
-                        },
-                        unreviewed = day.unreviewedEstimateIds,
-                        onPendingClick = actions.openEstimate,
-                        onEntryLongClick = { id -> onEvent(TodayEvent.ToggleSelect(id)) },
-                        onDelete = { id -> onEvent(TodayEvent.Delete(listOf(id))) },
-                        onCopyMeal = { copyRequest = CopyRequest(meal.entries.map { it.id }, allowSameMeal = true, from = day.date) },
-                        onSaveMeal = { saveRequest = SaveRequest(meal.entries.map { it.id }, meal.slot.name) },
-                        onCopyDay = { copyRequest = CopyRequest(day.allEntries.map { it.id }, allowSameMeal = true, from = day.date, wholeDay = true) },
-                        dayHasEntries = day.allEntries.isNotEmpty(),
-                        showSameAsYesterday = meal.slot.id in day.yesterdayMealIds,
-                        onSameAsYesterday = { onEvent(TodayEvent.SameAsYesterday(meal.slot.id)) },
-                    )
-                }
-                item(key = "water") {
-                    WaterCard(
-                        water = day.water,
-                        f = f,
-                        onAddGlass = { onEvent(TodayEvent.AddWater(day.water.glassMl)) },
-                        onRemoveLast = { onEvent(TodayEvent.RemoveLastWater) },
-                        onAddAmount = { ml -> onEvent(TodayEvent.AddWater(ml)) },
-                    )
-                }
-                item(key = "weight") { WeightCard(day.weight, f, actions.openWeight) }
-                item(key = "activity") { ActivityCard(day.activity, f, actions.openHealthConnect) { actions.openActivity(day.date) } }
-                if (!day.date.isAfter(day.today) && !day.isEmptyDay) {
-                    item(key = "completeness") {
-                        DayCompletenessRow(day.completeness, day.autoComplete) { onEvent(TodayEvent.SetCompleteness(it)) }
+                        }
                     }
                 }
             }
@@ -461,6 +517,19 @@ fun TodayScreen(
             },
         )
     }
+}
+
+/**
+ * One Today card: rises in on app open ([rememberRise]) and animates when it appears, goes or
+ * moves (a dismissed card, the "last logged" row), all with the shared [Motion] specs.
+ */
+@Composable
+private fun LazyItemScope.TodayItem(key: String, index: Int, content: @Composable () -> Unit) {
+    Box(
+        Modifier
+            .animateItem(fadeInSpec = Motion.enter(), placementSpec = Motion.change(), fadeOutSpec = Motion.exit())
+            .then(rememberRise(key, index)),
+    ) { content() }
 }
 
 private data class CopyRequest(val ids: List<String>, val allowSameMeal: Boolean, val from: LocalDate, val wholeDay: Boolean = false)
@@ -694,12 +763,25 @@ private fun MissingKeysCard(missing: List<app.forkcast.core.data.repository.Miss
     }
 }
 
-private const val DAY_SLIDE_MS = 280
 private val DAY_SWIPE_THRESHOLD = 96.dp
 /** Pixels per second; a quick flick changes the day even if it's short. */
 private const val DAY_FLING_VELOCITY = 1_200f
 /** How far the page follows the finger while swiping (fraction of the drag). */
 private const val DAY_DRAG_FOLLOW = 0.35f
+
+/** Fades and lifts a row in when [isNew]; otherwise it just shows. Drawing-only, never blocks taps. */
+@Composable
+private fun AppearIn(isNew: Boolean, content: @Composable () -> Unit) {
+    val animate = remember { isNew }
+    if (!animate) {
+        content()
+        return
+    }
+    val progress = remember { androidx.compose.animation.core.Animatable(0f) }
+    LaunchedEffect(Unit) { progress.animateTo(1f, Motion.enter()) }
+    val rise = with(LocalDensity.current) { (Motion.RISE / 2).toPx() }
+    Box(Modifier.graphicsLayer { alpha = progress.value; translationY = (1f - progress.value) * rise }) { content() }
+}
 
 @Composable
 private fun MealSectionView(
@@ -721,10 +803,14 @@ private fun MealSectionView(
 ) {
     val addDescription = stringResource(R.string.add_to_meal_description, meal.slot.name)
     var menuOpen by remember { mutableStateOf(false) }
+    // Rows already here when the section appeared just show; rows added later (a new entry, Undo,
+    // a photo estimate) fade in, and the section's height eases as rows come and go (DESIGN.md §8).
+    val shownAtStart = remember { (meal.entries.map { it.id } + meal.pending.map { it.id }).toSet() }
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .fillMaxWidth()
+            .animateContentSize(Motion.change())
             .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
             .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 8.dp),
     ) {
@@ -776,6 +862,7 @@ private fun MealSectionView(
         }
         meal.entries.forEach { e ->
             androidx.compose.runtime.key(e.id) {
+              AppearIn(e.id !in shownAtStart) {
                 EntryRow(
                     entry = e,
                     f = f,
@@ -786,10 +873,11 @@ private fun MealSectionView(
                     onDelete = { onDelete(e.id) },
                     needsReview = e.aiEstimateId != null && e.aiEstimateId in unreviewed,
                 )
+              }
             }
         }
         meal.pending.forEach { p ->
-            androidx.compose.runtime.key(p.id) { PendingEstimateRow(p, f) { onPendingClick(p.id) } }
+            androidx.compose.runtime.key(p.id) { AppearIn(p.id !in shownAtStart) { PendingEstimateRow(p, f) { onPendingClick(p.id) } } }
         }
     }
 }
