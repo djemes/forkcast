@@ -4,6 +4,8 @@
 
     <!-- Network is used only for services the user configured: USDA, Open Food Facts, their AI provider (and later Drive). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Retries wait for the network after a Wi-Fi/mobile switch (ConnectivityNetworkWaiter). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <!-- Barcode and nutrition-label scanning; asked for the first time the scanner opens. -->
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />

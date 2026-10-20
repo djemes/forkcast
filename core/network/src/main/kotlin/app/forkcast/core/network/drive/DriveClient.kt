@@ -169,6 +169,9 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
     private suspend fun call(allow404: Boolean = false, block: suspend () -> HttpResponse): HttpResponse {
         val r = try {
             block()
+        } catch (e: io.ktor.client.plugins.HttpRequestTimeoutException) {
+            // Slow Drive, not a lost connection (timeouts are IOExceptions in Ktor).
+            throw DriveError.RateLimited()
         } catch (e: java.io.IOException) {
             throw DriveError.Offline()
         }

@@ -1,5 +1,6 @@
 package app.forkcast.core.network.ai
 
+import app.forkcast.core.network.NetworkWaiter
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.okhttp.OkHttp
@@ -18,10 +19,15 @@ import kotlin.time.TimeSource
 /**
  * HTTP client for AI providers (SPEC §7): read timeout 60 s. A 429 is never retried here: the
  * fallback chain moves to the next profile instead, so a rate-limited key isn't hammered.
- * One quick retry on a 5xx/overload or a dropped connection. No logging of any kind.
+ * One quick retry on a 5xx/overload, two on a dropped connection, each after waiting (up to 10 s)
+ * for the phone to be online again ([NetworkWaiter]). No logging of any kind.
  */
 object AiHttpClientFactory {
-    fun create(userAgent: String, engine: HttpClientEngine = OkHttp.create()): HttpClient = HttpClient(engine) {
+    fun create(
+        userAgent: String,
+        engine: HttpClientEngine = OkHttp.create(),
+        network: NetworkWaiter = NetworkWaiter.None,
+    ): HttpClient = HttpClient(engine) {
         expectSuccess = false
         install(HttpTimeout) {
             connectTimeoutMillis = 10_000
@@ -29,11 +35,14 @@ object AiHttpClientFactory {
             socketTimeoutMillis = 60_000
         }
         install(HttpRequestRetry) {
-            maxRetries = 1
-            retryIf { _, response -> response.status.value >= 500 }
-            retryOnExceptionIf { _, cause -> cause is java.io.IOException && cause !is SocketTimeoutException }
+            maxRetries = 2
+            // Only one retry for a 5xx (retryCount is 1 on the first failure): the fallback chain is the
+            // better answer to a struggling provider.
+            retryIf { _, response -> response.status.value >= 500 && retryCount < 2 }
+            retryOnExceptionIf { _, cause -> cause is java.io.IOException && cause !is SocketTimeoutException && cause !is HttpRequestTimeoutException }
             // A 503's Retry-After can be long; the chain and the worker's backoff handle waiting.
             constantDelay(millis = 1_500, respectRetryAfterHeader = false)
+            delay { millis -> kotlinx.coroutines.delay(millis); network.awaitOnline(NetworkWaiter.WAIT_MS) }
         }
         defaultRequest { headers.append(HttpHeaders.UserAgent, userAgent) }
     }

@@ -11,7 +11,9 @@ import app.forkcast.core.data.repository.DefaultFoodRepository
 import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.secrets.SecretName
 import app.forkcast.core.data.secrets.SecretStore
+import app.forkcast.core.data.net.ConnectivityNetworkWaiter
 import app.forkcast.core.network.HttpClientFactory
+import app.forkcast.core.network.NetworkWaiter
 import app.forkcast.core.network.ai.AiDefaults
 import app.forkcast.core.network.ai.AiHttpClientFactory
 import app.forkcast.core.network.ai.MealEstimatorFactory
@@ -36,7 +38,13 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideHttpClient(@Named(USER_AGENT) userAgent: String): HttpClient = HttpClientFactory.create(userAgent)
+    fun provideHttpClient(@Named(USER_AGENT) userAgent: String, network: NetworkWaiter): HttpClient =
+        HttpClientFactory.create(userAgent, network = network)
+
+    /** Lets retries wait out a Wi-Fi ↔ mobile data switch instead of reporting "No connection". */
+    @Provides
+    @Singleton
+    fun provideNetworkWaiter(@ApplicationContext context: Context): NetworkWaiter = ConnectivityNetworkWaiter(context)
 
     @Provides
     @Singleton
@@ -50,7 +58,8 @@ object NetworkModule {
     @Provides
     @Singleton
     @Named(AI_HTTP)
-    fun provideAiHttpClient(@Named(USER_AGENT) userAgent: String): HttpClient = AiHttpClientFactory.create(userAgent)
+    fun provideAiHttpClient(@Named(USER_AGENT) userAgent: String, network: NetworkWaiter): HttpClient =
+        AiHttpClientFactory.create(userAgent, network = network)
 
     @Provides
     @Singleton

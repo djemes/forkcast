@@ -54,12 +54,26 @@ interface DriveAuth {
 }
 
 @Singleton
-class GoogleDriveAuth @Inject constructor(@ApplicationContext private val context: Context) : DriveAuth {
+class GoogleDriveAuth @Inject constructor(
+    @ApplicationContext private val context: Context,
+    private val network: app.forkcast.core.network.NetworkWaiter,
+) : DriveAuth {
 
     private val client get() = Identity.getAuthorizationClient(context)
     private val request = AuthorizationRequest.builder().setRequestedScopes(listOf(Scope(DRIVE_FILE))).build()
 
-    override suspend fun authorize(): DriveAccess = try {
+    override suspend fun authorize(): DriveAccess {
+        val first = authorizeOnce()
+        // A network switch mid-call fails here too: wait for the network and ask once more.
+        if (first is DriveAccess.Failed && first.reason == DriveAccess.OFFLINE &&
+            network.awaitOnline(app.forkcast.core.network.NetworkWaiter.WAIT_MS)
+        ) {
+            return authorizeOnce()
+        }
+        return first
+    }
+
+    private suspend fun authorizeOnce(): DriveAccess = try {
         handle(client.authorize(request).await())
     } catch (e: ApiException) {
         failed(e)
