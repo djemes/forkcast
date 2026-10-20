@@ -109,6 +109,12 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+
+    // Only the app's languages: library strings in 80 others made resources.arsc 1 MB and could
+    // show a system dialog in a language the app doesn't speak.
+    androidResources {
+        localeFilters += listOf("en", "pt-rBR")
+    }
 }
 
 // Baseline Profile (SPEC §9): generated on the emulator on demand and committed, so release

@@ -92,7 +92,8 @@ class WidgetPalette(private val style: WidgetStyle) {
     val button = pick({ it.ink }, BUTTON_ALPHA)
 
     private companion object {
-        const val TRACK_ALPHA = 0.18f
+        /** Same as the ring tracks (WidgetArt), so bars and rings match. */
+        const val TRACK_ALPHA = WidgetArt.TRACK_ALPHA
         const val BUTTON_ALPHA = 0.12f
         /** Below this background opacity the wallpaper shows through enough to need stronger labels. */
         const val SEE_THROUGH = 0.5f

@@ -59,6 +59,8 @@ class SecretStoreTest {
         val restored = store(file, key = 2)
         assertThat(restored.get(SecretName.USDA_API_KEY)).isNull()
         assertThat(file.exists()).isFalse()
+        // Kept aside, not deleted, in case the Keystore only failed for a moment.
+        assertThat(File(tmp.root, "store.bin.unreadable").exists()).isTrue()
     }
 
     @Test fun refreshPublishesPresence() = runTest {

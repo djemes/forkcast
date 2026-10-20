@@ -27,6 +27,7 @@ import app.forkcast.core.domain.Forecast
 import app.forkcast.core.domain.MealSlotPicker
 import app.forkcast.core.domain.NutritionConstants
 import app.forkcast.core.domain.UnitConversions
+import app.forkcast.core.domain.WaterMath
 import app.forkcast.core.domain.WeighIn
 import app.forkcast.core.domain.WeightTrend
 import app.forkcast.core.model.ActivityDay
@@ -327,11 +328,10 @@ class TodayViewModel @Inject constructor(
             yesterdayMealIds = dayData.yesterdayMeals,
             water = WaterSummary(
                 // Drinks that count toward water add to it (SPEC §4.9).
-                ml = water.sumOf { it.ml } + entries.sumOf { it.waterMl ?: 0.0 },
+                ml = WaterMath.dayTotalMl(water.map { it.ml }, entries.map { it.waterMl }),
                 fromDrinksMl = entries.sumOf { it.waterMl ?: 0.0 },
-                targetMl = x.settings.waterTargetMl
-                    ?: if (profile?.sex == Sex.FEMALE) NutritionConstants.WATER_TARGET_FEMALE_ML else NutritionConstants.WATER_TARGET_MALE_ML,
-                glassMl = x.settings.waterGlassMl ?: if (units.water == WaterUnit.FL_OZ) UnitConversions.flOzToMl(8.0) else 250.0,
+                targetMl = WaterMath.targetMl(x.settings.waterTargetMl, profile?.sex),
+                glassMl = WaterMath.glassMl(x.settings.waterGlassMl, units.water == WaterUnit.FL_OZ),
                 lastEntryId = water.maxByOrNull { it.timestamp }?.id,
             ),
             weight = weightSummary(weights),

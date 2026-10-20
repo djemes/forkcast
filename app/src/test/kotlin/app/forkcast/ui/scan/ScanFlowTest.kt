@@ -87,7 +87,7 @@ class ScanFlowTest {
         var label: String? = null
         compose.setContent {
             ForkcastTheme {
-                ScannerScreen(ScanState.NotFound("00012345678905"), 0f, analyzer = null, {}, { true }, {}, {}, { label = it }, {})
+                ScannerScreen(ScanState.NotFound("00012345678905"), { 0f }, analyzer = null, {}, { true }, {}, {}, { label = it }, {})
             }
         }
         compose.onNodeWithText("Not in the databases yet. Scan the nutrition label and we'll save it for next time.").assertIsDisplayed()

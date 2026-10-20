@@ -64,7 +64,10 @@ class HealthSyncStarter @Inject constructor(
             health.status.map { it.settings.connected }.distinctUntilChanged().collect { connected ->
                 val wm = WorkManager.getInstance(context)
                 if (connected) {
-                    val request = PeriodicWorkRequestBuilder<HealthSyncWorker>(1, TimeUnit.HOURS).build()
+                    val request = PeriodicWorkRequestBuilder<HealthSyncWorker>(1, TimeUnit.HOURS)
+                        // Skipped on a low battery; the app syncs on open anyway.
+                        .setConstraints(androidx.work.Constraints.Builder().setRequiresBatteryNotLow(true).build())
+                        .build()
                     wm.enqueueUniquePeriodicWork(PERIODIC, ExistingPeriodicWorkPolicy.KEEP, request)
                 } else {
                     wm.cancelUniqueWork(PERIODIC)

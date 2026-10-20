@@ -82,10 +82,11 @@ class GeminiEstimator(
         val t = post(requestBody(request))
         val r = NetworkJson.decodeFromString(Interaction.serializer(), t.body)
         if (r.status == "failed" || r.status == "cancelled") throw blockedOrBad(t.body)
+        // Before reading the text: an answer cut off before any text still says "cut off".
+        if (r.status == "incomplete") throw AiError.BadResponse(t.body, "the answer was cut off")
         // steps[].content[].text on the last model_output step (confirmed by live estimates, 2026-10-19).
         val text = r.steps.lastOrNull { it.type == "model_output" }?.content?.firstOrNull { it.type == "text" }?.text
             ?: throw blockedOrBad(t.body)
-        if (r.status == "incomplete") throw AiError.BadResponse(t.body, "the answer was cut off")
         val parsed = MealEstimateParser.parse(text)
         val output = (r.usage?.totalOutputTokens ?: 0) + (r.usage?.totalThoughtTokens ?: 0)
         MealEstimateResult(parsed.json, parsed.warnings, text, r.usage?.totalInputTokens, output.takeIf { r.usage != null }, t.latencyMs, r.model ?: model)

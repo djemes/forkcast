@@ -49,7 +49,7 @@ class WaterSettingsViewModel @Inject constructor(
         WaterSettingsState(
             units = units,
             targetMl = s.waterTargetMl,
-            defaultMl = if (p?.sex == Sex.FEMALE) NutritionConstants.WATER_TARGET_FEMALE_ML else NutritionConstants.WATER_TARGET_MALE_ML,
+            defaultMl = app.forkcast.core.domain.WaterMath.defaultTargetMl(p?.sex),
             glassMl = s.waterGlassMl,
             defaultGlassMl = app.forkcast.widget.WidgetData.glassMl(units),
         )

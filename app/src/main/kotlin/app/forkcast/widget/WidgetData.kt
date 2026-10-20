@@ -7,6 +7,7 @@ import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.ProfileRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WaterRepository
+import app.forkcast.core.domain.WaterMath
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.MealSlotPicker
@@ -120,10 +121,9 @@ object WidgetData {
             fatG = totals?.get(NutrientKey.FAT_G) ?: 0.0,
             fatTargetG = target(NutrientKey.FAT_G),
             // Drinks that count toward water add to it, as on Today (SPEC §4.9).
-            waterMl = water.sumOf { it.ml } + entries.sumOf { it.waterMl ?: 0.0 },
-            waterTargetMl = settings.waterTargetMl
-                ?: if (profile?.sex == Sex.FEMALE) NutritionConstants.WATER_TARGET_FEMALE_ML else NutritionConstants.WATER_TARGET_MALE_ML,
-            glassMl = settings.waterGlassMl ?: glassMl(units),
+            waterMl = WaterMath.dayTotalMl(water.map { it.ml }, entries.map { it.waterMl }),
+            waterTargetMl = WaterMath.targetMl(settings.waterTargetMl, profile?.sex),
+            glassMl = WaterMath.glassMl(settings.waterGlassMl, units.water == WaterUnit.FL_OZ),
             units = units,
         )
     }
@@ -131,7 +131,7 @@ object WidgetData {
     private const val DAY_CHECK_MS = 60_000L
 
     /** Default "+ glass" when none is set in Settings › Water: 8 fl oz for US units, 250 ml for metric. */
-    fun glassMl(units: UnitPrefs): Double = if (units.water == WaterUnit.FL_OZ) UnitConversions.flOzToMl(8.0) else 250.0
+    fun glassMl(units: UnitPrefs): Double = WaterMath.defaultGlassMl(units.water == WaterUnit.FL_OZ)
 
     /**
      * Adds one glass to today through the same repository as Today's "+ glass", so Today, Trends
@@ -141,7 +141,7 @@ object WidgetData {
         val g = context.widgetGraph()
         val settings = g.settings().settings.first()
         val units = settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
-        val id = g.water().add(LocalDate.now(g.clock()), settings.waterGlassMl ?: glassMl(units))
+        val id = g.water().add(LocalDate.now(g.clock()), WaterMath.glassMl(settings.waterGlassMl, units.water == WaterUnit.FL_OZ))
         g.health().syncSoon()
         return id
     }

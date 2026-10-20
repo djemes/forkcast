@@ -99,6 +99,9 @@ class BarcodeAnalyzer(private val onCode: (String) -> Unit) : ImageAnalysis.Anal
     @Volatile var paused = false
     private var last: String? = null
 
+    /** Frees ML Kit's native scanner when the screen goes away. */
+    fun close() = scanner.close()
+
     @OptIn(ExperimentalGetImage::class)
     override fun analyze(image: ImageProxy) {
         val media = image.image

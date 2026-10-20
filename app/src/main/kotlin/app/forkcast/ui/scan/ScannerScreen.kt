@@ -73,8 +73,13 @@ fun ScannerRoute(
     val view = LocalView.current
     val flash = remember { Animatable(0f) }
     val tone = remember { runCatching { ToneGenerator(AudioManager.STREAM_NOTIFICATION, 60) }.getOrNull() }
-    DisposableEffect(Unit) { onDispose { tone?.release() } }
     val analyzer = remember { BarcodeAnalyzer { viewModel.onScanned(it) } }
+    DisposableEffect(Unit) {
+        onDispose {
+            tone?.release()
+            analyzer.close()
+        }
+    }
     analyzer.paused = state !is ScanState.Scanning
 
     LaunchedEffect(viewModel) {
@@ -97,7 +102,7 @@ fun ScannerRoute(
     }
     ScannerScreen(
         state = state,
-        flash = flash.value,
+        flash = { flash.value },
         analyzer = analyzer,
         onBack = onBack,
         onTyped = viewModel::onTyped,
@@ -111,7 +116,8 @@ fun ScannerRoute(
 @Composable
 fun ScannerScreen(
     state: ScanState,
-    flash: Float,
+    /** Read only while drawing, so the flash animation never recomposes the screen. */
+    flash: () -> Float = { 0f },
     analyzer: BarcodeAnalyzer?,
     onBack: () -> Unit,
     onTyped: (String) -> Boolean,
@@ -173,7 +179,7 @@ fun ScannerScreen(
 
 /** Dimmed camera with a rounded window that flashes pine on a successful read (DESIGN.md §6). */
 @Composable
-private fun ScanWindow(flash: Float) {
+private fun ScanWindow(flash: () -> Float) {
     val pine = ForkcastTheme.colors.pine
     Canvas(Modifier.fillMaxSize().graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }) {
         val w = size.width * 0.8f
@@ -181,12 +187,13 @@ private fun ScanWindow(flash: Float) {
         val topLeft = Offset((size.width - w) / 2, (size.height - h) / 2.4f)
         drawRect(Color.Black.copy(alpha = 0.45f))
         drawRoundRect(Color.Transparent, topLeft, Size(w, h), CornerRadius(28.dp.toPx()), blendMode = BlendMode.Clear)
+        val f = flash()
         drawRoundRect(
-            color = if (flash > 0f) pine else Color.White,
+            color = if (f > 0f) pine else Color.White,
             topLeft = topLeft,
             size = Size(w, h),
             cornerRadius = CornerRadius(28.dp.toPx()),
-            style = Stroke(width = (3 + 5 * flash).dp.toPx()),
+            style = Stroke(width = (3 + 5 * f).dp.toPx()),
         )
     }
 }

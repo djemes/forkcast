@@ -174,7 +174,7 @@ class NotificationEngine @Inject constructor(
                 record(today, NotificationTypes.MEAL, slotId.hashCode())
                 val slot = mealSlots.firstOrNull { it.id == slotId } ?: continue
                 if (entries.none { it.mealSlotId == slotId } && !quiet(s)) {
-                    notifier.post(Channel.MEAL_REMINDER, ID_MEAL + slotId.hashCode() % 1000, slot.name, context.getString(R.string.notif_meal, slot.name), open = "today")
+                    notifier.post(Channel.MEAL_REMINDER, ID_MEAL + Math.floorMod(slotId.hashCode(), 1000), slot.name, context.getString(R.string.notif_meal, slot.name), open = "today")
                 }
             }
         }

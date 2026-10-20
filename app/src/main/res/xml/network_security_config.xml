@@ -4,6 +4,6 @@
      Android can't scope to arbitrary IPs. Every built-in endpoint (USDA, Open Food Facts,
      Claude, Gemini, Drive) is a hardcoded https URL, and the profile editor warns before an
      http URL is used (SPEC §8; DECISIONS.md 2026-10-18). -->
-<network-security-config>
-    <base-config cleartextTrafficPermitted="true" />
+<network-security-config xmlns:tools="http://schemas.android.com/tools">
+    <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration" />
 </network-security-config>

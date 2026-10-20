@@ -35,6 +35,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -117,8 +118,9 @@ class WidgetSettingsActivity : ComponentActivity() {
 
 @Composable
 private fun WidgetSettingsScreen(initial: WidgetStyle, isWater: Boolean, onBack: () -> Unit, onDone: (WidgetStyle) -> Unit) {
-    var background by remember { mutableFloatStateOf(initial.background) }
-    var theme by remember { mutableStateOf(initial.theme) }
+    // Saveable: unsaved edits survive a rotation or a dark-mode switch.
+    var background by rememberSaveable { mutableFloatStateOf(initial.background) }
+    var theme by rememberSaveable { mutableStateOf(initial.theme) }
     val style = WidgetStyle(background, theme)
     SettingsScaffold(title = stringResource(R.string.widget_settings_title), onBack = onBack) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {

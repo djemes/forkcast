@@ -99,8 +99,9 @@ class SecretStore(
         return try {
             json.decodeFromString(serializer, aead.decrypt(file.readBytes(), ASSOCIATED_DATA).decodeToString())
         } catch (e: java.security.GeneralSecurityException) {
-            // Keyset lost (e.g. restored onto a new phone): the old file can't be read. Start clean.
-            file.delete()
+            // Keyset lost (e.g. restored onto a new phone): the old file can't be read. Start clean,
+            // but keep the file aside rather than deleting it, in case the Keystore only hiccupped.
+            file.renameTo(File(file.parentFile, file.name + ".unreadable"))
             emptyMap()
         }
     }
