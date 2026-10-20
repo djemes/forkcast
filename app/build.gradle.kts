@@ -6,6 +6,7 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
+    alias(libs.plugins.baselineprofile)
 }
 
 // ---- Version: versionCode = commit count, so PC builds and CI releases share one rising counter.
@@ -99,13 +100,29 @@ android {
         unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
     }
 
+    // The Baseline Profile build types are copies of release; they run on the x86_64 emulator,
+    // so they keep every ABI (release itself ships arm64 only).
+    buildTypes.configureEach {
+        if (name == "nonMinifiedRelease" || name == "benchmarkRelease") ndk.abiFilters.clear()
+    }
+
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
 }
 
+// Baseline Profile (SPEC §9): generated on the emulator on demand and committed, so release
+// builds (CI included) use it without a device.
+baselineProfile {
+    automaticGenerationDuringBuild = false
+    saveInSrc = true
+    dexLayoutOptimization = true
+}
+
 dependencies {
     implementation(project(":core:model"))
+    implementation(libs.androidx.profileinstaller)
+    baselineProfile(project(":baselineprofile"))
     implementation(project(":core:domain"))
     implementation(project(":core:data"))
     implementation(project(":core:network"))

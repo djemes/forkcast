@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Onboarding shell -->
     <string name="onboarding_step_of">Step %1$d of %2$d</string>
     <string name="action_continue">Continue</string>
@@ -101,7 +101,7 @@
     <string name="activity_bonus_setting">Add extra activity to my budget</string>
     <string name="activity_bonus_setting_on">%1$d %% of your active calories above a usual day, up to %2$s, is added to that day\'s budget.</string>
     <string name="activity_bonus_setting_off">Activity shows on Today but doesn\'t change your budget.</string>
-    <string name="activity_advice">Your last %1$d days average %2$s active a day, which fits “%3$s”.</string>
+    <string name="activity_advice" tools:ignore="PluralsCandidate">Your last %1$d days average %2$s active a day, which fits “%3$s”.</string>
     <string name="activity_advice_high">Your activity level is set higher than that. Activity above a usual day already adds budget, so a level that counts your workouts can count them twice.</string>
     <string name="activity_advice_low">Your activity level is set lower than that, so your budget may be on the low side.</string>
     <string name="calc_adaptive_note">These are formula estimates. After a few weeks of logging and weighing in, Forkcast can learn your real maintenance from your own data.</string>

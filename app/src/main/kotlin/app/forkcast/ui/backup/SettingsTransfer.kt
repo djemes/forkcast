@@ -17,6 +17,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -204,7 +205,7 @@ fun SettingsTransferDialogs(
             AlertDialog(
                 onDismissRequest = onDismiss,
                 title = { Text(stringResource(R.string.settings_preview_title)) },
-                text = { Text(stringResource(R.string.settings_preview_body, made, profiles, p.keyCount)) },
+                text = { Text(pluralStringResource(R.plurals.settings_preview_body, p.keyCount, made, profiles, p.keyCount)) },
                 confirmButton = {
                     TextButton(onClick = onApply) { Text(stringResource(R.string.settings_replace), color = MaterialTheme.colorScheme.error) }
                 },

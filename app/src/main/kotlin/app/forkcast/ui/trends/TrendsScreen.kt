@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -190,12 +191,14 @@ private fun PeriodPicker(period: Trends.Period, onPeriod: (Trends.Period) -> Uni
         Trends.Period.QUARTER to R.string.trends_quarter,
     )
     val label = stringResource(R.string.trends_period_label)
-    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().semantics { contentDescription = label }) {
+    // Every segment as tall as the tallest, so "3 months" wrapping at 200 % keeps the pill whole.
+    SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth().height(IntrinsicSize.Min).semantics { contentDescription = label }) {
         options.forEachIndexed { i, (p, text) ->
             SegmentedButton(
                 selected = p == period,
                 onClick = { onPeriod(p) },
                 shape = SegmentedButtonDefaults.itemShape(i, options.size),
+                modifier = Modifier.fillMaxHeight(),
                 icon = {},
             ) { Text(stringResource(text), maxLines = 2, textAlign = TextAlign.Center) }
         }

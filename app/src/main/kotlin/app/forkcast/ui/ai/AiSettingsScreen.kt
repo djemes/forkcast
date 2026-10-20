@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
@@ -409,8 +410,9 @@ private fun UsageSection(usage: MonthUsage?, overrides: Map<String, ModelPrice>,
             Text(stringResource(R.string.ai_usage_none), style = MaterialTheme.typography.bodyMedium)
         } else {
             Text(
-                stringResource(
-                    R.string.ai_usage_summary,
+                pluralStringResource(
+                    R.plurals.ai_usage_summary,
+                    usage.estimates,
                     usage.estimates,
                     numbers.format(usage.inputTokens),
                     numbers.format(usage.outputTokens),
@@ -425,7 +427,7 @@ private fun UsageSection(usage: MonthUsage?, overrides: Map<String, ModelPrice>,
                     else -> money.format(m.costUsd)
                 }
                 Text(
-                    stringResource(R.string.ai_usage_model, m.model, m.requests, cost),
+                    pluralStringResource(R.plurals.ai_usage_model, m.requests, m.model, m.requests, cost),
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier
                         .fillMaxWidth()

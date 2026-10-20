@@ -27,6 +27,8 @@ include(":core:model")
 include(":core:domain")
 include(":core:data")
 include(":core:network")
+// Generates app/src/main/baseline-prof.txt on the emulator (./gradlew :app:generateBaselineProfile).
+include(":baselineprofile")
 
 // Development only: a stand-in for Samsung Health that writes test data into the emulator's
 // Health Connect (another app's data origin). Not part of CI; build with -PwithHcSeed.

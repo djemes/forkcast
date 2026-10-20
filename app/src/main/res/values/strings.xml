@@ -68,7 +68,7 @@
     <string name="settings_ai_summary">AI services and keys, their order, meal photos</string>
     <string name="settings_food_databases_summary">USDA key and Open Food Facts</string>
     <string name="settings_notifications_summary">Budget, reminders, quiet hours</string>
-    <string name="settings_backup_data_summary">Export, import and settings transfer</string>
+    <string name="settings_backup_data_summary">Google Drive backup, export, import and settings transfer</string>
     <string name="settings_appearance_summary">Light, dark and colors</string>
     <string name="settings_about_summary">Version, privacy and licenses</string>
     <string name="settings_daily_targets">Daily targets</string>

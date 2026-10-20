@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="backup_export_title">Export</string>
-    <string name="backup_export_body">Save everything (foods, food log, saved meals, weight, water, goals, and settings) as one file you can keep anywhere. API keys are never included.</string>
+    <string name="backup_export_body">Save everything (food log, foods, recipes, saved meals, weight, water, activity, photo estimates, goals and settings) as one file you can keep anywhere. API keys are never included.</string>
     <string name="backup_export_json">Export backup</string>
     <string name="backup_export_zip">Export with photos (.zip)</string>
     <string name="backup_saved_zip">Backup with photos saved</string>
@@ -72,7 +72,10 @@
     <string name="settings_strength_strong">Strong</string>
     <string name="settings_continue">Continue</string>
     <string name="settings_preview_title">Replace settings and keys?</string>
-    <string name="settings_preview_body">From a file made %1$s. This replaces this phone\'s settings, AI profiles (%2$s) and %3$d saved keys. Your food log isn\'t touched.</string>
+    <plurals name="settings_preview_body">
+        <item quantity="one">From a file made %1$s. This replaces this phone\'s settings, AI profiles (%2$s) and %3$d saved key. Your food log isn\'t touched.</item>
+        <item quantity="other">From a file made %1$s. This replaces this phone\'s settings, AI profiles (%2$s) and %3$d saved keys. Your food log isn\'t touched.</item>
+    </plurals>
     <string name="settings_preview_none">none</string>
     <string name="settings_replace">Replace</string>
     <string name="settings_saved">Settings file saved</string>

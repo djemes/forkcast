@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Settings › AI (SPEC §4.7) -->
     <string name="ai_enabled">Photo estimates</string>
     <string name="ai_enabled_body">Estimate a meal from a photo and a short description, using your own AI key.</string>
@@ -50,12 +50,18 @@
     <string name="ai_auto_accept_body">Estimates count toward today immediately, marked AI·review until you check them.</string>
     <string name="ai_photo_retention">Delete meal photos after</string>
     <string name="ai_photo_retention_body">Only the photo is deleted. The log entry and its nutrition stay.</string>
-    <string name="ai_retention_days">%1$d days</string>
+    <string name="ai_retention_days" tools:ignore="PluralsCandidate">%1$d days</string>
     <string name="ai_retention_forever">Never</string>
     <string name="ai_usage_title">Usage this month</string>
-    <string name="ai_usage_summary">%1$d estimates · %2$s tokens in · %3$s out · about %4$s</string>
+    <plurals name="ai_usage_summary">
+        <item quantity="one">%1$d estimate · %2$s tokens in · %3$s out · about %4$s</item>
+        <item quantity="other">%1$d estimates · %2$s tokens in · %3$s out · about %4$s</item>
+    </plurals>
     <string name="ai_usage_none">No estimates yet this month.</string>
-    <string name="ai_usage_model">%1$s: %2$d requests · %3$s</string>
+    <plurals name="ai_usage_model">
+        <item quantity="one">%1$s: %2$d request · %3$s</item>
+        <item quantity="other">%1$s: %2$d requests · %3$s</item>
+    </plurals>
     <string name="ai_usage_free">free</string>
     <string name="ai_usage_no_price">no price set</string>
     <string name="ai_edit_price">Edit price for %1$s</string>

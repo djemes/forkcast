@@ -864,15 +864,26 @@ private fun MealSectionView(
             }
         }
         if (meal.entries.isEmpty() && meal.pending.isEmpty()) {
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp)) {
+            val empty = @Composable { modifier: Modifier ->
                 Text(
                     text = stringResource(R.string.meal_empty),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.weight(1f),
+                    modifier = modifier,
                 )
-                if (showSameAsYesterday) {
+            }
+            // At large font sizes the button goes under the text instead of squeezing it into a column.
+            if (showSameAsYesterday && LocalDensity.current.fontScale > 1.3f) {
+                Column(modifier = Modifier.padding(start = 12.dp)) {
+                    empty(Modifier)
                     TextButton(onClick = onSameAsYesterday) { Text(stringResource(R.string.same_as_yesterday)) }
+                }
+            } else {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(start = 12.dp)) {
+                    empty(Modifier.weight(1f))
+                    if (showSameAsYesterday) {
+                        TextButton(onClick = onSameAsYesterday) { Text(stringResource(R.string.same_as_yesterday)) }
+                    }
                 }
             }
         }

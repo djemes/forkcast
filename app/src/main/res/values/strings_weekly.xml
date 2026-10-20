@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Weekly check-in (owner, 2026-10-19) -->
     <string name="weekly_title">Weekly check-in</string>
     <string name="weekly_range">%1$s – %2$s</string>
@@ -8,7 +8,7 @@
     <string name="weekly_nothing">Nothing was logged this week.</string>
     <string name="weekly_food">Food</string>
     <string name="weekly_days_logged">Days logged</string>
-    <string name="weekly_days_value">%1$d of 7 (%2$d complete)</string>
+    <string name="weekly_days_value" tools:ignore="PluralsCandidate">%1$d of 7 (%2$d complete)</string>
     <string name="weekly_avg_eaten">Average eaten</string>
     <string name="weekly_avg_eaten_complete">Average eaten, complete days</string>
     <string name="weekly_none_complete">No day this week was logged in full, so these averages include partly logged days and may look low. Mark a day complete on Today if you logged everything.</string>

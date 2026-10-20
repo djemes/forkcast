@@ -25,6 +25,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
 import app.forkcast.ui.common.rememberFill
@@ -94,16 +97,25 @@ fun MacroBars(totals: DayTotals, targets: DailyTargets, f: UnitFormatter, onOpen
             Triple(NutrientKey.PROTEIN_G, c.protein, R.string.macro_protein),
             Triple(NutrientKey.CARBS_G, c.carbs, R.string.macro_carbs),
             Triple(NutrientKey.FAT_G, c.fat, R.string.macro_fat),
-        ).forEachIndexed { i, (key, color, label) ->
+        ).map { (key, color, label) ->
             val eaten = totals[key]
             val target = targets.targets[key]?.amount ?: 0.0
-            NutrientBar(stringResource(label), eaten, target, color, stringResource(R.string.macro_progress, f.number(eaten), "${f.number(target)} g"), "macro-$key", i)
+            MacroRow(key, color, stringResource(label), eaten, target, stringResource(R.string.macro_progress, f.number(eaten), "${f.number(target)} g"))
+        }.let { rows ->
+            // One value column as wide as the widest value, so all three bars end at the same place.
+            val style = MaterialTheme.typography.labelLarge
+            val measurer = rememberTextMeasurer()
+            val density = LocalDensity.current
+            val valueWidth = rows.maxOf { with(density) { measurer.measure(it.valueText, style).size.width.toDp() } }
+            rows.forEachIndexed { i, r -> NutrientBar(r.label, r.eaten, r.target, r.color, r.valueText, "macro-${r.key}", i, valueWidth) }
         }
     }
 }
 
+private data class MacroRow(val key: NutrientKey, val color: Color, val label: String, val eaten: Double, val target: Double, val valueText: String)
+
 @Composable
-private fun NutrientBar(label: String, eaten: Double, target: Double, color: Color, valueText: String, key: String, index: Int) {
+private fun NutrientBar(label: String, eaten: Double, target: Double, color: Color, valueText: String, key: String, index: Int, valueWidth: Dp) {
     // Fills in on first sight (a few tens of ms after the bar above), eases to new totals after.
     val fill = rememberFill(if (target > 0) (eaten / target).toFloat().coerceIn(0f, 1f) else 0f, key, delay = index * Motion.STAGGER)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics(mergeDescendants = true) {
@@ -123,7 +135,7 @@ private fun NutrientBar(label: String, eaten: Double, target: Double, color: Col
                 .padding(horizontal = 12.dp)
                 .then(fill.modifier),
         )
-        Text(valueText, style = MaterialTheme.typography.labelLarge)
+        Text(valueText, style = MaterialTheme.typography.labelLarge, textAlign = TextAlign.End, modifier = Modifier.width(valueWidth))
     }
 }
 

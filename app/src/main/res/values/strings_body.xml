@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Water -->
     <string name="water_title">Water</string>
     <string name="water_progress">%1$s / %2$s</string>
@@ -36,8 +36,8 @@
     <string name="activity_connect">See steps and workouts from Health Connect</string>
     <string name="activity_connect_action">Connect Health Connect</string>
     <string name="activity_usual">Usual: %1$s active a day</string>
-    <string name="activity_usual_partial">Usual: %1$s active a day (from %2$d days so far)</string>
-    <string name="activity_usual_none">Forkcast learns your usual activity after %1$d days of data.</string>
+    <string name="activity_usual_partial" tools:ignore="PluralsCandidate">Usual: %1$s active a day (from %2$d days so far)</string>
+    <string name="activity_usual_none" tools:ignore="PluralsCandidate">Forkcast learns your usual activity after %1$d days of data.</string>
     <string name="activity_bonus">+%1$s toward this day\'s budget</string>
     <string name="activity_bonus_zero">Not above your usual day, so no extra budget.</string>
     <string name="activity_bonus_off">Shown only: the activity bonus is off.</string>
@@ -53,7 +53,7 @@
     <string name="activity_row_counted">Counted toward budget</string>
     <string name="activity_row_workouts">Workouts</string>
     <string name="activity_no_data_day">No data</string>
-    <string name="activity_usual_days">%1$s (from %2$d days)</string>
+    <string name="activity_usual_days" tools:ignore="PluralsCandidate">%1$s (from %2$d days)</string>
     <string name="activity_not_yet">Not yet</string>
     <string name="activity_workout">Workout</string>
     <string name="activity_running">Run</string>

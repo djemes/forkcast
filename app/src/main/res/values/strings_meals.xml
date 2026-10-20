@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="meal_more">More options for %1$s</string>
     <string name="meal_copy">Copy meal…</string>
     <string name="meal_save_as">Save as a meal…</string>
@@ -32,7 +32,7 @@
     <string name="meals_window">%1$s – %2$s</string>
     <string name="meals_no_window">No time window: used when no other meal fits</string>
     <string name="meals_add">Add meal</string>
-    <string name="meals_max">Up to %1$d meals.</string>
+    <string name="meals_max" tools:ignore="PluralsCandidate">Up to %1$d meals.</string>
     <string name="meals_edit_title">Edit meal</string>
     <string name="meals_new_title">New meal</string>
     <string name="meals_name">Name</string>
@@ -41,7 +41,7 @@
     <string name="meals_ends">Ends %1$s</string>
     <string name="meals_overlap">Overlaps %1$s. The meal higher in the list is picked first.</string>
     <string name="meals_err_blank">Give the meal a name.</string>
-    <string name="meals_err_long">Keep the name under %1$d characters.</string>
+    <string name="meals_err_long" tools:ignore="PluralsCandidate">Keep the name under %1$d characters.</string>
     <string name="meals_err_duplicate">Another meal already has this name.</string>
     <string name="meals_err_window">Start and end can\'t be the same time.</string>
     <string name="meals_delete">Delete meal</string>
