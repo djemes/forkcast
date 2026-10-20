@@ -100,12 +100,6 @@ android {
         unitTests.all { it.jvmArgs("--add-exports=java.base/jdk.internal.access=ALL-UNNAMED") }
     }
 
-    // The Baseline Profile build types are copies of release; they run on the x86_64 emulator,
-    // so they keep every ABI (release itself ships arm64 only).
-    buildTypes.configureEach {
-        if (name == "nonMinifiedRelease" || name == "benchmarkRelease") ndk.abiFilters.clear()
-    }
-
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
