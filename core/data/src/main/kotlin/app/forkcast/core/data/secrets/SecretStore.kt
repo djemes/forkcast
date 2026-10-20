@@ -18,7 +18,11 @@ import kotlinx.serialization.json.Json
 import java.io.File
 
 /** Names of stored secrets. Values are never logged, exported, or backed up. */
-enum class SecretName { USDA_API_KEY }
+enum class SecretName {
+    USDA_API_KEY,
+    /** Read-only GitHub token for "Check for updates" (the repository is private). */
+    GITHUB_TOKEN,
+}
 
 /**
  * API keys at rest (CLAUDE.md "Secrets"): one file, `files/secrets/store.bin`, encrypted with

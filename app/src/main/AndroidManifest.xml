@@ -9,6 +9,11 @@
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <!-- Asked in context: the first time a notification is turned on or a photo is estimated (SPEC §4.8). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- About › Check for updates: hands a release downloaded from GitHub to Android's installer,
+         which asks the user to confirm (owner request 2026-10-20). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 12+: once Forkcast installed itself, a later update it starts needs no second prompt. -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
 
     <!-- Health Connect (SPEC §4.9), requested in Settings › Health Connect after a rationale.
          Must match HealthPermissions.ALL (ManifestPrivacyTest). -->
@@ -76,6 +81,11 @@
                 <action android:name="android.appwidget.action.APPWIDGET_CONFIGURE" />
             </intent-filter>
         </activity>
+
+        <!-- PackageInstaller's answer for an update from About (AppInstaller). -->
+        <receiver
+            android:name=".update.InstallResultReceiver"
+            android:exported="false" />
 
         <!-- Home-screen widgets (Glance). -->
         <receiver

@@ -73,6 +73,19 @@ object NetworkModule {
 
 private const val AI_HTTP = "aiHttp"
 
+/** Qualifier for the GitHub repository releases come from ("owner/name"), provided by :app. */
+const val GITHUB_REPO = "githubRepo"
+
+@Module
+@InstallIn(SingletonComponent::class)
+object UpdateModule {
+    /** Its own client: no redirects followed (the token stays on api.github.com), long reads. */
+    @Provides
+    @Singleton
+    fun provideGitHubReleases(@Named(USER_AGENT) userAgent: String, @Named(GITHUB_REPO) repo: String): app.forkcast.core.network.update.GitHubReleases =
+        app.forkcast.core.network.update.GitHubReleases(app.forkcast.core.network.update.UpdateHttpClientFactory.create(userAgent), repo)
+}
+
 @Module
 @InstallIn(SingletonComponent::class)
 abstract class FoodModule {
@@ -87,4 +100,7 @@ abstract class FoodModule {
 
     @Binds
     abstract fun bindEstimateScheduler(impl: WorkManagerEstimateScheduler): EstimateScheduler
+
+    @Binds
+    abstract fun bindUpdateRepository(impl: app.forkcast.core.data.update.GitHubUpdateRepository): app.forkcast.core.data.update.UpdateRepository
 }

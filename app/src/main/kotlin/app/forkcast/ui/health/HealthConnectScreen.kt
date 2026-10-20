@@ -1,9 +1,9 @@
 package app.forkcast.ui.health
 
+import androidx.core.net.toUri
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.text.format.DateUtils
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
@@ -277,11 +277,11 @@ private fun openHealthConnect(context: Context) {
 
 /** Health Connect's Play Store page (Android 13 and older install it as an app). */
 private fun openStore(context: Context) {
-    val uri = Uri.parse("market://details?id=$HEALTH_CONNECT_PACKAGE&url=healthconnect%3A%2F%2Fonboarding")
+    val uri = "market://details?id=$HEALTH_CONNECT_PACKAGE&url=healthconnect%3A%2F%2Fonboarding".toUri()
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage("com.android.vending"))
     } catch (_: ActivityNotFoundException) {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE")))
+        context.startActivity(Intent(Intent.ACTION_VIEW, "https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE".toUri()))
     }
 }
 

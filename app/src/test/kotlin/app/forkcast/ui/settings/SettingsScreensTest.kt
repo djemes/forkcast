@@ -9,7 +9,11 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.model.AppearanceSettings
 import app.forkcast.core.model.ThemeMode
+import app.forkcast.core.data.update.UpdateCheck
+import app.forkcast.core.network.update.Release
+import app.forkcast.core.network.update.ReleaseAsset
 import app.forkcast.ui.theme.ForkcastTheme
+import app.forkcast.update.AppInstaller
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
@@ -79,5 +83,37 @@ class SettingsScreensTest {
     @Test fun aboutShowsVersion() {
         compose.setContent { ForkcastTheme { AboutScreen(versionName = "0.1.0", versionCode = 42, onBack = {}) } }
         compose.onNodeWithText("Version 0.1.0 (42)").assertIsDisplayed()
+        compose.onNodeWithText("Open on GitHub").performScrollTo().assertIsDisplayed()
+    }
+
+    private fun section(ui: UpdateUi, onCheck: () -> Unit = {}, onDownload: (Release) -> Unit = {}) =
+        UpdateSection(ui, AppInstaller.Status.Idle, token = null, onCheck = onCheck, onDownload = onDownload, onInstall = {}, onSaveToken = {}, onRemoveToken = {})
+
+    private val release = Release("v1.1.0", "Forkcast 1.1.0", "Portuguese (Brazil)", "https://github.com/djemes/forkcast/releases/tag/v1.1.0", ReleaseAsset("forkcast-1.1.0.apk", "u", 1))
+
+    @Test fun updateCheckWithoutTokenPointsToReleases() {
+        var checked = false
+        compose.setContent {
+            ForkcastTheme { AboutScreen("1.0.0", 126, onBack = {}, updates = section(UpdateUi.Result(UpdateCheck.NoToken), onCheck = { checked = true })) }
+        }
+        compose.onNodeWithText("Check for updates").performClick()
+        assertThat(checked).isTrue()
+        compose.onNodeWithText("Open Releases on GitHub").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("GitHub token").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test fun availableUpdateOffersInstall() {
+        var picked: Release? = null
+        compose.setContent {
+            ForkcastTheme { AboutScreen("1.0.0", 126, onBack = {}, updates = section(UpdateUi.Result(UpdateCheck.Available(release)), onDownload = { picked = it })) }
+        }
+        compose.onNodeWithText("Version 1.1.0 is available.").assertIsDisplayed()
+        compose.onNodeWithText("Download and install").performScrollTo().performClick()
+        assertThat(picked).isEqualTo(release)
+    }
+
+    @Test fun upToDate() {
+        compose.setContent { ForkcastTheme { AboutScreen("1.0.0", 126, onBack = {}, updates = section(UpdateUi.Result(UpdateCheck.UpToDate("v1.0.0")))) } }
+        compose.onNodeWithText("You have the newest version (1.0.0).").assertIsDisplayed()
     }
 }

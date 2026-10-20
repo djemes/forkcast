@@ -1,5 +1,6 @@
 package app.forkcast.widget
 
+import androidx.core.content.edit
 import android.content.Context
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.CoroutineScope
@@ -41,7 +42,7 @@ class WidgetUpdater @Inject constructor(
         val ok = listOf(CaloriesWidgetReceiver::class, WaterWidgetReceiver::class).all {
             manager.setWidgetPreviews(it) == androidx.glance.appwidget.GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS
         }
-        if (ok) prefs.edit().putInt(KEY_VERSION, version).apply()
+        if (ok) prefs.edit { putInt(KEY_VERSION, version) }
     }
 
     private companion object {

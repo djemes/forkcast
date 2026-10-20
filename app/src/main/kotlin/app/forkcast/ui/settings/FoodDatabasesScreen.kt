@@ -131,7 +131,7 @@ fun FoodDatabasesScreen(savedKey: SecretText?, onSave: (String) -> Unit, onRemov
 
 /** Masked key entry with show/hide and Paste. [onCancel] null hides the Cancel button. */
 @Composable
-private fun KeyEntry(label: String, onSave: (String) -> Unit, onCancel: (() -> Unit)?) {
+internal fun KeyEntry(label: String, onSave: (String) -> Unit, onCancel: (() -> Unit)?) {
     var key by rememberSaveable { mutableStateOf("") }
     var visible by remember { mutableStateOf(false) }
     val clipboard = LocalClipboard.current
@@ -164,5 +164,5 @@ private fun KeyEntry(label: String, onSave: (String) -> Unit, onCancel: (() -> U
     }
 }
 
-/** // VERIFY: signup page URL (fdc.nal.usda.gov links to the api.data.gov form). */
+/** FoodData Central's "Get an API Key" page (the api.data.gov form loads on it; checked 2026-10-20). */
 const val USDA_SIGNUP_URL = "https://fdc.nal.usda.gov/api-key-signup"

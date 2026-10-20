@@ -1,5 +1,6 @@
 package app.forkcast.widget
 
+import androidx.core.graphics.createBitmap
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -83,7 +84,7 @@ object WidgetArt {
         ?: (runCatching { ResourcesCompat.getFont(context.applicationContext, R.font.manrope) }.getOrNull() ?: Typeface.DEFAULT_BOLD)
             .also { font = it }
 
-    private fun mask(w: Int, h: Int) = Bitmap.createBitmap(w, h, Bitmap.Config.ALPHA_8)
+    private fun mask(w: Int, h: Int) = createBitmap(w, h, Bitmap.Config.ALPHA_8)
 
     /** How strong the empty part of a ring or gauge is, relative to the text color. */
     const val TRACK_ALPHA = 0.2f
