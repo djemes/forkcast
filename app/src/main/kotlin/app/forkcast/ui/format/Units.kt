@@ -54,6 +54,11 @@ class UnitFormatter(val prefs: UnitPrefs, private val locale: Locale = Locale.ge
         WaterUnit.ML -> "${format(ml / 1000.0, 1)} L"
         WaterUnit.FL_OZ -> "${format(UnitConversions.mlToFlOz(ml), 0)} fl oz"
     }
+    /** One glass or drink: whole ml (250 ml, not "0.3 L"), or fl oz. */
+    fun waterServing(ml: Double): String = when (prefs.water) {
+        WaterUnit.ML -> "${format(ml, 0)} ml"
+        WaterUnit.FL_OZ -> "${format(UnitConversions.mlToFlOz(ml), 0)} fl oz"
+    }
 
     // ---- grams
     fun grams(g: Double): String = "${format(g, if (g < 10) 1 else 0)} g"

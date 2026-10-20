@@ -23,6 +23,12 @@ class UnitFormatterTest {
         assertThat(kj.energy(1000.0)).isEqualTo("4,184 kJ")
     }
 
+    @Test fun `a glass reads in ml or fl oz, never as a fraction of a litre`() {
+        assertThat(metric.waterServing(250.0)).isEqualTo("250 ml")
+        assertThat(metric.waterServing(330.0)).isEqualTo("330 ml")
+        assertThat(us.waterServing(236.588)).isEqualTo("8 fl oz")
+    }
+
     @Test fun `height`() {
         assertThat(us.height(180.34)).isEqualTo("5′ 11″")
         assertThat(metric.height(180.34)).isEqualTo("180 cm")

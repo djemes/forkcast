@@ -98,7 +98,7 @@ fun WaterSettingsRoute(onBack: () -> Unit, viewModel: WaterSettingsViewModel = h
             )
             if (s.glassMl != null) {
                 OutlinedButton(onClick = { viewModel.setGlass(null) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.water_goal_reset, f.waterLiters(s.defaultGlassMl)))
+                    Text(stringResource(R.string.water_goal_reset, f.waterServing(s.defaultGlassMl)))
                 }
             }
         }

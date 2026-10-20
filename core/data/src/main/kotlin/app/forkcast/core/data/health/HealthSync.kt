@@ -35,9 +35,18 @@ class HealthSyncWorker @AssistedInject constructor(
     private val maintenance: MaintenanceRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        // syncSoon(): just push the pending writes (a glass from the widget), no reads.
+        if (inputData.getBoolean(KEY_WRITES_ONLY, false)) {
+            health.sync(SyncReason.WRITES)
+            return Result.success()
+        }
         health.sync(SyncReason.BACKGROUND)
         runCatching { maintenance.updateIfDue() }
         return Result.success()
+    }
+
+    companion object {
+        const val KEY_WRITES_ONLY = "writesOnly"
     }
 }
 
@@ -76,8 +85,12 @@ class HealthSyncStarter @Inject constructor(
      * glass added from the home-screen widget. A no-op sync when Health Connect isn't connected.
      */
     fun syncSoon() {
-        val request = OneTimeWorkRequestBuilder<HealthSyncWorker>().setInitialDelay(WRITE_DEBOUNCE_MS, TimeUnit.MILLISECONDS).build()
-        WorkManager.getInstance(context).enqueueUniqueWork(SOON, ExistingWorkPolicy.REPLACE, request)
+        val request = OneTimeWorkRequestBuilder<HealthSyncWorker>()
+            .setInitialDelay(WRITE_DEBOUNCE_MS, TimeUnit.MILLISECONDS)
+            .setInputData(androidx.work.workDataOf(HealthSyncWorker.KEY_WRITES_ONLY to true))
+            .build()
+        // Append, not replace: replacing could cancel a run in the middle of a Health Connect write.
+        WorkManager.getInstance(context).enqueueUniqueWork(SOON, ExistingWorkPolicy.APPEND_OR_REPLACE, request)
     }
 
     private companion object {

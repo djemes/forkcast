@@ -51,7 +51,7 @@ import kotlin.math.abs
 /** Water card (DESIGN.md §5): progress toward the daily goal, + glass, and undo of the last glass. */
 @Composable
 fun WaterCard(water: WaterSummary, f: UnitFormatter, onAddGlass: () -> Unit, onRemoveLast: () -> Unit, onAddAmount: (Double) -> Unit = {}) {
-    val glass = f.waterLiters(water.glassMl)
+    val glass = f.waterServing(water.glassMl)
     val addDescription = stringResource(R.string.water_add_glass_description, glass)
     val otherLabel = stringResource(R.string.water_other_amount)
     var askAmount by remember { mutableStateOf(false) }

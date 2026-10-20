@@ -401,7 +401,7 @@ internal fun WaterContent(s: TodaySnapshot, style: WidgetStyle, undoId: String?,
         R.string.widget_water_now,
         f.waterLiters(s.waterMl),
         f.waterLiters(s.waterTargetMl),
-        f.waterLiters(s.glassMl),
+        f.waterServing(s.glassMl),
     )
     val wide = size.width >= 150.dp && size.height < size.width * 0.75f
     val shortest = min(size.width, size.height)
@@ -478,6 +478,9 @@ private fun UndoChip(entryId: String, palette: WidgetPalette) {
 
 private const val GAP = 80f
 
+/** Extra time after the Undo window for a tap that was on its way. */
+private const val UNDO_GRACE_MS = 2_000L
+
 private val UNDO_ENTRY = ActionParameters.Key<String>("entry")
 
 /**
@@ -503,10 +506,19 @@ class AddGlassAction : ActionCallback {
 /** "Undo" on the water widget: removes that glass; Today and Health Connect follow. */
 class UndoGlassAction : ActionCallback {
     override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        parameters[UNDO_ENTRY]?.let { WidgetData.removeGlass(context, it) }
+        var shownUntil = 0L
+        var shownId: String? = null
         updateAppWidgetState(context, glanceId) { prefs ->
+            shownId = prefs[UNDO_ID]
+            shownUntil = prefs[UNDO_UNTIL] ?: 0L
             prefs.remove(UNDO_ID)
             prefs.remove(UNDO_UNTIL)
+        }
+        // Only inside the 8 s window (plus a little for a slow tap): the alarm that hides the chip
+        // is inexact, so a chip left on screen must not delete a glass minutes later.
+        val entry = parameters[UNDO_ENTRY]
+        if (entry != null && entry == shownId && System.currentTimeMillis() <= shownUntil + UNDO_GRACE_MS) {
+            WidgetData.removeGlass(context, entry)
         }
         WidgetPush.all(context)
     }
