@@ -1,5 +1,7 @@
 package app.forkcast.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -159,17 +161,20 @@ fun ForkcastNavHost(
         navController.popBackStack<TodayDestination>(inclusive = false)
     }
 
-    // Material shared axis X (DESIGN.md §8): the new screen slides in a little from the right while
-    // the old one slides a little left and fades; Back reverses it. With predictive back
-    // (enableOnBackInvokedCallback) the pop transition follows the swipe, previewing the screen below.
+    // Forward: Material shared axis X (DESIGN.md §8), the new screen slides 30 dp in from the right
+    // as the old one fades. Back (button, arrow or swipe): the page slides away to the right and the
+    // one underneath slides in from a little to the left. With predictive back the same slide follows
+    // the finger, so a swipe previews the page below (replaces Navigation's default 70 % zoom-out).
     val axis = with(LocalDensity.current) { Motion.SHARED_AXIS.roundToPx() }
     NavHost(
         navController = navController,
         startDestination = if (startWithOnboarding) OnboardingDestination else TodayDestination,
         enterTransition = { slideInHorizontally(Motion.enter(Motion.LONG)) { axis } + fadeIn(Motion.enter(Motion.LONG - Motion.SHARED_AXIS_FADE_OUT, delay = Motion.SHARED_AXIS_FADE_OUT)) },
         exitTransition = { slideOutHorizontally(Motion.exit(Motion.LONG)) { -axis } + fadeOut(Motion.exit(Motion.SHARED_AXIS_FADE_OUT)) },
-        popEnterTransition = { slideInHorizontally(Motion.enter(Motion.LONG)) { -axis } + fadeIn(Motion.enter(Motion.LONG - Motion.SHARED_AXIS_FADE_OUT, delay = Motion.SHARED_AXIS_FADE_OUT)) },
-        popExitTransition = { slideOutHorizontally(Motion.exit(Motion.LONG)) { axis } + fadeOut(Motion.exit(Motion.SHARED_AXIS_FADE_OUT)) },
+        popEnterTransition = { backUnder(follow = false) },
+        popExitTransition = { backAway(follow = false) },
+        predictivePopEnterTransition = { _ -> backUnder(follow = true) },
+        predictivePopExitTransition = { _ -> backAway(follow = true) },
     ) {
         composable<OnboardingDestination> {
             OnboardingRoute(onFinished = {
@@ -392,3 +397,12 @@ fun ForkcastNavHost(
 }
 
 private inline fun <reified T : Any> NavBackStackEntry.routeOrNull(): T? = runCatching { toRoute<T>() }.getOrNull()
+
+/** Back: the page underneath slides in from a quarter width to the left and brightens. [follow]: tracks a swipe. */
+private fun backUnder(follow: Boolean): EnterTransition =
+    slideInHorizontally(if (follow) Motion.follow() else Motion.change(Motion.LONG)) { -it / 4 } +
+        fadeIn(if (follow) Motion.follow() else Motion.change(Motion.LONG), initialAlpha = Motion.BACK_UNDER_ALPHA)
+
+/** Back: the current page slides all the way out to the right. [follow]: tracks a swipe. */
+private fun backAway(follow: Boolean): ExitTransition =
+    slideOutHorizontally(if (follow) Motion.follow() else Motion.change(Motion.LONG)) { it }

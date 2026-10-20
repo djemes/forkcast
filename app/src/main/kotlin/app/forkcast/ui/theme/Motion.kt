@@ -2,6 +2,7 @@ package app.forkcast.ui.theme
 
 import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.ui.unit.dp
 
@@ -57,6 +58,12 @@ object Motion {
 
     /** Something leaving: quicker than arriving. */
     fun <T> exit(duration: Int = SHORT): FiniteAnimationSpec<T> = tween(duration, 0, EmphasizedAccelerate)
+
+    /** Motion that tracks a finger (predictive back): linear, so the screen moves with the swipe. */
+    fun <T> follow(duration: Int = LONG): FiniteAnimationSpec<T> = tween(duration, 0, LinearEasing)
+
+    /** How bright the screen underneath starts when it slides back in (a light scrim effect). */
+    const val BACK_UNDER_ALPHA = 0.6f
 
     /** A value moving to a new value in place (ring, bars, numbers after an edit). */
     fun <T> change(duration: Int = MEDIUM): FiniteAnimationSpec<T> = tween(duration, 0, Standard)
