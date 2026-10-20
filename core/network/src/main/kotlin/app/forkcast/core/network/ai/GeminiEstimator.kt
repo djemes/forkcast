@@ -82,7 +82,7 @@ class GeminiEstimator(
         val t = post(requestBody(request))
         val r = NetworkJson.decodeFromString(Interaction.serializer(), t.body)
         if (r.status == "failed" || r.status == "cancelled") throw blockedOrBad(t.body)
-        // VERIFY: path of the output text against a live response (docs: steps[].content[].text on model_output).
+        // steps[].content[].text on the last model_output step (confirmed by live estimates, 2026-10-19).
         val text = r.steps.lastOrNull { it.type == "model_output" }?.content?.firstOrNull { it.type == "text" }?.text
             ?: throw blockedOrBad(t.body)
         if (r.status == "incomplete") throw AiError.BadResponse(t.body, "the answer was cut off")
