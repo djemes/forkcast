@@ -34,9 +34,10 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
-    @Inject lateinit var health: HealthRepository
-    @Inject lateinit var maintenance: MaintenanceRepository
-    @Inject lateinit var estimates: app.forkcast.core.data.ai.AiEstimateRepository
+    // Lazy and used off the main thread: the first frame shouldn't wait for Health Connect.
+    @Inject lateinit var health: dagger.Lazy<HealthRepository>
+    @Inject lateinit var maintenance: dagger.Lazy<MaintenanceRepository>
+    @Inject lateinit var estimates: dagger.Lazy<app.forkcast.core.data.ai.AiEstimateRepository>
     @Inject lateinit var clock: java.time.Clock
 
     /** What a tapped notification asked to open ("estimate:<id>", "settings_ai"), consumed once. */
@@ -84,12 +85,12 @@ class MainActivity : ComponentActivity() {
     /** Health Connect reads are allowed while the app is in the foreground (throttled in the repository). */
     override fun onStart() {
         super.onStart()
-        lifecycleScope.launch {
-            runCatching { health.sync(SyncReason.OPEN) }
+        lifecycleScope.launch(kotlinx.coroutines.Dispatchers.Default) {
+            runCatching { health.get().sync(SyncReason.OPEN) }
             // Weekly adaptive maintenance (SPEC §5.6), after the scale's weigh-ins are in.
-            runCatching { maintenance.updateIfDue() }
+            runCatching { maintenance.get().updateIfDue() }
             // Old meal photos go even when the app stays in memory for days.
-            runCatching { estimates.cleanUpPhotos() }
+            runCatching { estimates.get().cleanUpPhotos() }
         }
     }
 

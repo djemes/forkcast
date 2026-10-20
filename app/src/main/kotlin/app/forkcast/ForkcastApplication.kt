@@ -8,6 +8,7 @@ import app.forkcast.core.data.ai.AiEstimateRepository
 import app.forkcast.core.data.health.HealthSyncStarter
 import app.forkcast.core.data.notify.Channel
 import app.forkcast.core.data.notify.NotificationStarter
+import dagger.Lazy
 import dagger.hilt.android.HiltAndroidApp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -19,13 +20,15 @@ import javax.inject.Inject
 class ForkcastApplication : Application(), Configuration.Provider {
 
     @Inject lateinit var workerFactory: HiltWorkerFactory
-    @Inject lateinit var estimates: AiEstimateRepository
-    @Inject lateinit var notifications: NotificationStarter
-    @Inject lateinit var health: HealthSyncStarter
-    @Inject lateinit var settings: app.forkcast.core.data.repository.SettingsRepository
-    @Inject lateinit var missingKeys: app.forkcast.core.data.repository.MissingKeysRepository
-    @Inject lateinit var driveBackup: app.forkcast.core.data.drive.DriveBackupScheduler
-    @Inject lateinit var widgets: app.forkcast.widget.WidgetUpdater
+    // Lazy: building these pulls in the database, both HTTP clients, the AI defaults and the
+    // Health Connect client. They're created on a background thread below, not before the first frame.
+    @Inject lateinit var estimates: Lazy<AiEstimateRepository>
+    @Inject lateinit var notifications: Lazy<NotificationStarter>
+    @Inject lateinit var health: Lazy<HealthSyncStarter>
+    @Inject lateinit var settings: Lazy<app.forkcast.core.data.repository.SettingsRepository>
+    @Inject lateinit var missingKeys: Lazy<app.forkcast.core.data.repository.MissingKeysRepository>
+    @Inject lateinit var driveBackup: Lazy<app.forkcast.core.data.drive.DriveBackupScheduler>
+    @Inject lateinit var widgets: Lazy<app.forkcast.widget.WidgetUpdater>
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
@@ -41,20 +44,20 @@ class ForkcastApplication : Application(), Configuration.Provider {
         }
         Channel.createAll(this)
         appScope.launch {
+            notifications.get().start(appScope)
+            health.get().start(appScope)
+            missingKeys.get().start(appScope)
+            driveBackup.get().start(appScope)
+            widgets.get().start(appScope)
             // Settings saved with the old 90-day default move to the new 14 days, once (owner, 2026-10-19).
             runCatching {
-                settings.updateAi { ai ->
+                settings.get().updateAi { ai ->
                     if (ai.photoRetention14Applied) ai
                     else ai.copy(photoRetentionDays = if (ai.photoRetentionDays == 90) 14 else ai.photoRetentionDays, photoRetention14Applied = true)
                 }
             }
             // Meal photos older than the retention setting (default 14 days) are deleted; entries stay (SPEC §4.6).
-            runCatching { estimates.cleanUpPhotos() }
+            runCatching { estimates.get().cleanUpPhotos() }
         }
-        notifications.start(appScope)
-        health.start(appScope)
-        missingKeys.start(appScope)
-        driveBackup.start(appScope)
-        widgets.start(appScope)
     }
 }
