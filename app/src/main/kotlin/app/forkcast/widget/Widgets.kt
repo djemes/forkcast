@@ -168,13 +168,14 @@ private const val STROKE = 0.085f
  * small sizes = ring and number; 4×1 strip = ring, number and Log; wide = ring + protein, carbs
  * and fat; tall adds Log / Scan / Photo.
  */
-class CaloriesWidget : GlanceAppWidget() {
+/** [frameOf]: render this snapshot once (WidgetPush) instead of reading and watching the data. */
+class CaloriesWidget(private val frameOf: TodaySnapshot? = null) : GlanceAppWidget() {
     // Exact: layouts follow the real size and re-render on every resize.
     override val sizeMode = SizeMode.Exact
 
     override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val initial = WidgetData.today(context)
-        val updates = WidgetData.observeToday(context)
+        val initial = frameOf ?: WidgetData.today(context)
+        val updates = if (frameOf != null) kotlinx.coroutines.flow.flowOf(frameOf) else WidgetData.observeToday(context)
         provideContent {
             val snapshot by updates.collectAsState(initial)
             CaloriesContent(snapshot, WidgetStyle.from(currentState()))
@@ -497,8 +498,9 @@ class AddGlassAction : ActionCallback {
             prefs[UNDO_ID] = id
             prefs[UNDO_UNTIL] = System.currentTimeMillis() + UNDO_MS
         }
-        WidgetPush.fillWater(context, glanceId, from = before, after = WidgetData.today(context))
-        WidgetPush.all(context)
+        val after = WidgetData.today(context)
+        WidgetPush.fillWater(context, glanceId, from = before, after = after)
+        WidgetPush.all(context, after)
         WidgetPush.hideUndoLater(context, UNDO_MS)
     }
 }

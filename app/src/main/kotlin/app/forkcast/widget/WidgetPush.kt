@@ -17,6 +17,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.withLock
 
 /**
  * Renders widgets in this process and hands the result straight to the launcher.
@@ -28,10 +29,37 @@ import kotlinx.coroutines.launch
  */
 object WidgetPush {
 
-    /** Every Forkcast widget, current data. Falls back to Glance's own update if rendering fails. */
-    suspend fun all(context: Context) {
-        push(context, CaloriesWidget::class.java) { CaloriesWidget() }
-        push(context, WaterWidget::class.java) { WaterWidget() }
+    /**
+     * Every Forkcast widget, from [snapshot] (read once here when the caller doesn't have it).
+     * Falls back to Glance's own update if rendering fails. Also plans the refresh at midnight.
+     */
+    suspend fun all(context: Context, snapshot: TodaySnapshot? = null) {
+        val ids = GlanceAppWidgetManager(context)
+        val any = runCatching { ids.getGlanceIds(CaloriesWidget::class.java).isNotEmpty() || ids.getGlanceIds(WaterWidget::class.java).isNotEmpty() }.getOrDefault(true)
+        if (!any) return
+        val s = snapshot ?: WidgetData.today(context)
+        renderLock.withLock {
+            push(context, CaloriesWidget::class.java) { CaloriesWidget(frameOf = s) }
+            push(context, WaterWidget::class.java) { WaterWidget(frameOf = s) }
+        }
+        refreshAtMidnight(context)
+    }
+
+    /**
+     * The widgets show today, so they re-render when the day changes. A non-wakeup alarm: it
+     * fires when the phone next wakes after midnight, which is before anyone can see the widget.
+     * Replaces `updatePeriodMillis`, which woke the phone and started Forkcast every 30 minutes.
+     */
+    fun refreshAtMidnight(context: Context) {
+        val alarms = context.getSystemService(AlarmManager::class.java) ?: return
+        val intent = PendingIntent.getBroadcast(
+            context,
+            MIDNIGHT_REQUEST,
+            Intent(context, UndoExpiredReceiver::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
+        )
+        val next = java.time.LocalDate.now().plusDays(1).atTime(0, 1).atZone(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
+        alarms.set(AlarmManager.RTC, next, intent)
     }
 
     /**
@@ -46,7 +74,13 @@ object WidgetPush {
         val appWidgetId = runCatching { ids.getAppWidgetId(glanceId) }.getOrNull() ?: return
         val options = manager.getAppWidgetOptions(appWidgetId)
         // One frame at a time (Glance renders one composition per widget at once); a frame that
-        // takes longer than FILL_FRAME_MS to render just shows for that long.
+        // takes longer than FILL_FRAME_MS to render just shows for that long. The lock keeps a
+        // data-change render from landing between frames.
+        renderLock.withLock { fillFrames(context, glanceId, appWidgetId, options, from, to, after) }
+    }
+
+    private suspend fun fillFrames(context: Context, glanceId: GlanceId, appWidgetId: Int, options: android.os.Bundle, from: Float, to: Float, after: TodaySnapshot) {
+        val manager = AppWidgetManager.getInstance(context)
         for (i in 1..FILL_FRAMES) {
             val started = SystemClock.uptimeMillis()
             val t = i / FILL_FRAMES.toFloat()
@@ -95,12 +129,15 @@ object WidgetPush {
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
+    /** One render pass at a time, so a fill animation and a data-change render don't interleave. */
+    private val renderLock = kotlinx.coroutines.sync.Mutex()
+    private const val MIDNIGHT_REQUEST = 1
     private const val SOON_MS = 300L
     private const val FILL_FRAMES = 6
     private const val FILL_FRAME_MS = 55L
 }
 
-/** Re-renders the widgets when the water widget's "Undo" window closes. */
+/** Re-renders the widgets when the water widget's "Undo" window closes, and after midnight. */
 class UndoExpiredReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         val pending = goAsync()
