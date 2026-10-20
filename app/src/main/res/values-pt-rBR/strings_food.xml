@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Search -->
+    <string name="search_hint">Buscar alimentos</string>
+    <string name="search_clear">Limpar busca</string>
+    <string name="search_your_foods">Seus alimentos</string>
+    <string name="search_usda">USDA FoodData Central</string>
+    <string name="search_off">Open Food Facts</string>
+    <string name="search_recent">Recentes</string>
+    <string name="search_favorites">Favoritos</string>
+    <string name="search_my_foods">Meus alimentos</string>
+    <string name="search_loading">Buscando…</string>
+    <string name="search_no_results">Nada encontrado.</string>
+    <string name="search_offline">Sem conexão. Mostrando só os seus alimentos.</string>
+    <string name="search_rate_limited">%1$s está ocupado agora. Tente de novo em um minuto.</string>
+    <string name="search_invalid_key">O USDA recusou a chave de API. Confira em Configurações → Bancos de alimentos.</string>
+    <string name="search_failed">%1$s não respondeu. Tente de novo mais tarde.</string>
+    <string name="search_demo_key">Usando a chave de demonstração compartilhada do USDA (10 buscas por hora). Adicione sua chave grátis em Configurações → Bancos de alimentos.</string>
+    <string name="search_create_food">Criar um alimento</string>
+    <string name="search_empty_start">Busque por nome ou marca. Seus alimentos recentes e favoritos aparecem aqui.</string>
+    <string name="per_100g">por 100 g</string>
+
+    <!-- Food detail -->
+    <string name="food_serving">Porção</string>
+    <string name="food_quantity">Quantidade</string>
+    <string name="food_increase">Aumentar quantidade</string>
+    <string name="food_decrease">Diminuir quantidade</string>
+    <string name="food_add_to">Adicionar a %1$s</string>
+    <string name="food_add_to_day">Adicionar a %1$s · %2$s</string>
+    <string name="food_added_to">Adicionado a %1$s</string>
+    <string name="food_all_nutrients">Todos os nutrientes</string>
+    <string name="food_favorite_add">Adicionar aos favoritos</string>
+    <string name="food_favorite_remove">Remover dos favoritos</string>
+    <string name="food_edit">Editar alimento</string>
+    <string name="food_grams_total">= %1$s</string>
+    <string name="food_odbl">Dados do Open Food Facts, disponíveis sob a Open Database License.</string>
+
+    <!-- Quick add -->
+    <string name="quick_add_title">Adicionar rápido a %1$s</string>
+    <string name="quick_add_label">Nome</string>
+    <string name="quick_add_default_label">Adição rápida</string>
+    <string name="quick_add_energy">Calorias (%1$s)</string>
+    <string name="quick_add_protein">Proteína (g, opcional)</string>
+    <string name="quick_add_carbs">Carboidratos (g, opcional)</string>
+    <string name="quick_add_fat">Gordura (g, opcional)</string>
+
+    <!-- Custom food -->
+    <string name="custom_food_title">Criar um alimento</string>
+    <string name="custom_food_edit_title">Editar alimento</string>
+    <string name="custom_name">Nome</string>
+    <string name="custom_brand">Marca (opcional)</string>
+    <string name="custom_serving_label">Porção (ex.: 1 barra, 2 colheres de sopa)</string>
+    <string name="custom_serving_grams">Peso da porção (g)</string>
+    <string name="custom_barcode">Código de barras (opcional)</string>
+    <string name="custom_barcode_invalid">Isso não parece um código de barras válido</string>
+    <string name="custom_per_serving">Nutrição por porção</string>
+    <string name="custom_required">Obrigatório</string>
+    <string name="custom_delete">Apagar alimento</string>
+
+    <!-- Food databases settings -->
+    <string name="fdb_usda_title">USDA FoodData Central</string>
+    <string name="fdb_usda_body">Chave grátis do Departamento de Agricultura dos EUA. Sem uma, o Forkcast usa uma chave de demonstração compartilhada, limitada a 10 buscas por hora.</string>
+    <string name="fdb_usda_key">Chave de API</string>
+    <string name="fdb_paste">Colar</string>
+    <string name="fdb_get_key">Conseguir uma chave grátis</string>
+    <string name="fdb_status_own">Usando a sua chave.</string>
+    <string name="fdb_status_demo">Usando a chave de demonstração compartilhada.</string>
+    <string name="fdb_remove_key">Remover chave</string>
+    <string name="fdb_off_title">Open Food Facts</string>
+    <string name="fdb_off_body">Banco de dados grátis, feito pela comunidade, principalmente de alimentos embalados. Não precisa de chave. Dados sob a Open Database License.</string>
+    <string name="fdb_show_key">Mostrar chave</string>
+    <string name="fdb_hide_key">Ocultar chave</string>
+    <!-- Serving labels Forkcast stores itself: quick adds and recipes ("serving"), photo estimates ("meal"). -->
+    <string name="serving_label_serving">porção</string>
+    <string name="serving_label_meal">refeição</string>
+</resources>

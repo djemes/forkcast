@@ -107,7 +107,10 @@ fun MacroBars(totals: DayTotals, targets: DailyTargets, f: UnitFormatter, onOpen
             val measurer = rememberTextMeasurer()
             val density = LocalDensity.current
             val valueWidth = rows.maxOf { with(density) { measurer.measure(it.valueText, style).size.width.toDp() } }
-            rows.forEachIndexed { i, r -> NutrientBar(r.label, r.eaten, r.target, r.color, r.valueText, "macro-${r.key}", i, valueWidth) }
+            // Same for the labels, so "Carboidratos" (pt-BR) at 200 % isn't cut and the bars line up.
+            val labelStyle = MaterialTheme.typography.bodyMedium
+            val labelWidth = rows.maxOf { with(density) { measurer.measure(it.label, labelStyle).size.width.toDp() } }
+            rows.forEachIndexed { i, r -> NutrientBar(r.label, r.eaten, r.target, r.color, r.valueText, "macro-${r.key}", i, valueWidth, labelWidth) }
         }
     }
 }
@@ -115,15 +118,13 @@ fun MacroBars(totals: DayTotals, targets: DailyTargets, f: UnitFormatter, onOpen
 private data class MacroRow(val key: NutrientKey, val color: Color, val label: String, val eaten: Double, val target: Double, val valueText: String)
 
 @Composable
-private fun NutrientBar(label: String, eaten: Double, target: Double, color: Color, valueText: String, key: String, index: Int, valueWidth: Dp) {
+private fun NutrientBar(label: String, eaten: Double, target: Double, color: Color, valueText: String, key: String, index: Int, valueWidth: Dp, labelWidth: Dp) {
     // Fills in on first sight (a few tens of ms after the bar above), eases to new totals after.
     val fill = rememberFill(if (target > 0) (eaten / target).toFloat().coerceIn(0f, 1f) else 0f, key, delay = index * Motion.STAGGER)
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.semantics(mergeDescendants = true) {
         stateDescription = valueText
     }) {
-        // The label column grows with the font size (200% wrapped "Protein"), and stays one width
-        // for all three rows so the bars line up.
-        val labelWidth = 72.dp * LocalDensity.current.fontScale.coerceIn(1f, 2f)
+        // One label column as wide as the longest label (measured above), so the bars line up.
         Text(label, style = MaterialTheme.typography.bodyMedium, maxLines = 1, modifier = Modifier.width(labelWidth))
         LinearProgressIndicator(
             progress = { fill.fraction },

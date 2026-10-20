@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- About: source link and Check for updates (owner request 2026-10-20) -->
+    <string name="about_github_title">Código e versões</string>
+    <string name="about_github_body">O Forkcast fica em um repositório privado no GitHub. O link abre no seu navegador (entre no GitHub para ver).</string>
+    <string name="about_github_open">Abrir no GitHub</string>
+    <string name="about_releases_open">Abrir as versões no GitHub</string>
+
+    <string name="update_title">Atualizações</string>
+    <string name="update_check">Procurar atualizações</string>
+    <string name="update_checking">Consultando o GitHub…</string>
+    <string name="update_up_to_date">Você tem a versão mais nova (%1$s).</string>
+    <string name="update_available">A versão %1$s está disponível.</string>
+    <string name="update_install">Baixar e instalar</string>
+    <string name="update_downloading">Baixando… %1$s de %2$s</string>
+    <string name="update_downloading_unknown">Baixando…</string>
+    <string name="update_waiting">Esperando o Android instalar. Confirme quando ele pedir; seus dados ficam.</string>
+    <string name="update_allow_body">O Android precisa da sua permissão uma vez antes que o Forkcast possa instalar as próprias atualizações: ative \"Permitir desta fonte\", depois volte e toque em Instalar.</string>
+    <string name="update_allow">Permitir instalações do Forkcast</string>
+    <string name="update_install_again">Instalar</string>
+    <string name="update_no_token">O repositório é privado, então procurar pelo app precisa de um token do GitHub (abaixo). Você também pode abrir as versões no GitHub e baixar o APK por lá.</string>
+    <string name="update_offline">Sem conexão. Tente de novo quando estiver online.</string>
+    <string name="update_token_rejected">O GitHub recusou o token. Confira se ele não expirou e se pode ler o repositório forkcast (Contents: somente leitura).</string>
+    <string name="update_no_release">O GitHub ainda não tem nenhuma versão, ou o token não consegue ver o repositório.</string>
+    <string name="update_http">O GitHub respondeu com um erro (HTTP %1$d). Tente de novo mais tarde.</string>
+    <string name="update_no_apk">Essa versão não tem um APK anexado.</string>
+    <string name="update_not_apk">O download não é um APK válido. Tente de novo.</string>
+    <string name="update_other_app">O download não é o Forkcast.</string>
+    <string name="update_other_signer">O download foi assinado com outra chave, então o Android não conseguiria instalá-lo por cima deste app. Nada foi alterado.</string>
+    <string name="update_not_newer">Este celular já tem uma versão mais nova (%1$d) do que essa (%2$d). Nada foi alterado.</string>
+    <string name="update_failed">A instalação não terminou. Nada foi alterado.</string>
+    <string name="update_failed_detail">A instalação não terminou: %1$s. Nada foi alterado.</string>
+
+    <string name="update_token">Token do GitHub</string>
+    <string name="update_token_new">Novo token do GitHub</string>
+    <string name="update_token_remove">Remover token</string>
+    <string name="update_token_help_title">Como criar um token</string>
+    <string name="update_token_help">1. No github.com, abra Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.\n2. Repository access: Only select repositories › forkcast.\n3. Permissions › Repository permissions › Contents: Read-only.\n4. Escolha uma validade, gere o token, copie e cole aqui.\n\nEle fica criptografado neste celular e só é enviado ao GitHub quando você toca em Procurar atualizações.</string>
+    <string name="update_token_page">Abrir as configurações de token do GitHub</string>
+</resources>

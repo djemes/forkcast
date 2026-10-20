@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Home-screen widgets, app shortcuts and Quick Settings tiles (SPEC §3 Phase 5) -->
+    <string name="widget_calories_name">Calorias restantes</string>
+    <string name="widget_calories_description">As calorias que restam hoje no anel, com proteína, carboidratos e gordura, e botões para registrar, escanear ou tirar uma foto quando o widget é mais largo.</string>
+    <string name="widget_water_name">Água</string>
+    <string name="widget_water_description">A água de hoje comparada com a sua meta, com um botão para adicionar um copo.</string>
+    <string name="widget_set_up">Configurar o Forkcast</string>
+    <string name="shortcut_scan">Escanear</string>
+    <string name="shortcut_scan_long">Escanear um código de barras</string>
+    <string name="shortcut_photo">Refeição por foto</string>
+    <string name="shortcut_photo_long">Estimar uma refeição por foto</string>
+    <string name="shortcut_search">Buscar alimento</string>
+    <string name="shortcut_search_long">Buscar um alimento</string>
+    <string name="shortcut_water">+1 copo</string>
+    <string name="shortcut_water_long">Adicionar um copo de água</string>
+    <string name="shortcut_water_done">%1$s de água adicionados</string>
+    <string name="shortcut_water_failed">Não foi possível adicionar água. Abra o Forkcast e tente de novo.</string>
+    <string name="tile_scan">Escanear alimento</string>
+    <string name="tile_photo">Refeição por foto</string>
+    <string name="widget_undo">Desfazer</string>
+    <string name="widget_water_now">Água hoje: %1$s de %2$s. Toque para adicionar %3$s.</string>
+    <string name="widget_water_of_goal">de %1$s</string>
+    <string name="widget_settings_title">Estilo do widget</string>
+    <string name="widget_settings_background">Fundo de vidro</string>
+    <string name="widget_settings_background_hint" formatted="false">0 % é totalmente transparente, 100 % é sólido. No meio, o widget é um vidro fosco tingido com a paleta de cores do seu celular.</string>
+    <string name="widget_settings_text">Cor do widget</string>
+    <string name="widget_text_auto">Automático</string>
+    <string name="widget_text_light">Claro</string>
+    <string name="widget_text_dark">Escuro</string>
+    <string name="widget_settings_text_hint">Automático segue o modo claro ou escuro do celular. Claro tem texto escuro, Escuro tem texto claro. Com fundo transparente, escolha Escuro em um papel de parede escuro e Claro em um claro.</string>
+    <string name="widget_settings_done">Pronto</string>
+    <string name="widget_preview_light">Prévia em um papel de parede claro</string>
+    <string name="widget_preview_dark">Prévia em um papel de parede escuro</string>
+</resources>

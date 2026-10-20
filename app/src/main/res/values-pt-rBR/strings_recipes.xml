@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="log_recipes">Receitas</string>
+    <string name="recipes_title">Receitas</string>
+    <string name="recipes_new">Nova receita</string>
+    <string name="recipes_empty">Monte um prato que você cozinha com frequência a partir dos ingredientes e depois registre por porção. Editar uma receita depois só muda os próximos registros.</string>
+    <plurals name="recipes_row">
+        <item quantity="one">%1$s por porção · %2$s porção</item>
+        <item quantity="many">%1$s por porção · %2$s porções</item>
+        <item quantity="other">%1$s por porção · %2$s porções</item>
+    </plurals>
+    <string name="recipes_edit">Editar %1$s</string>
+    <string name="recipes_log_hint">Toque em uma receita para registrá-la em %1$s.</string>
+
+    <string name="recipe_new_title">Nova receita</string>
+    <string name="recipe_edit_title">Editar receita</string>
+    <string name="recipe_name">Nome</string>
+    <string name="recipe_servings">Porções</string>
+    <string name="recipe_servings_help">Quantas porções o prato inteiro rende.</string>
+    <string name="recipe_cooked_weight">Peso pronto (opcional)</string>
+    <string name="recipe_cooked_weight_help">Pese o prato pronto (sem a panela) para registrar por peso com precisão. Sem isso, vale o peso cru dos ingredientes: %1$s.</string>
+    <string name="recipe_cooked_weight_help_empty">Pese o prato pronto (sem a panela) para registrar por peso com precisão. Sem isso, vale o peso cru dos ingredientes.</string>
+    <string name="recipe_ingredients">Ingredientes</string>
+    <string name="recipe_no_ingredients">Nenhum ingrediente ainda. Adicione pela busca ou escaneie uma embalagem.</string>
+    <string name="recipe_add_search">Adicionar ingrediente</string>
+    <string name="recipe_add_scan">Escanear</string>
+    <string name="recipe_per_serving">Por porção</string>
+    <string name="recipe_per_serving_weight">Uma porção tem %1$s</string>
+    <string name="recipe_whole">Receita inteira: %1$s</string>
+    <string name="recipe_save">Salvar receita</string>
+    <string name="recipe_save_and_log">Salvar e registrar</string>
+    <string name="recipe_delete">Apagar receita</string>
+    <string name="recipe_more">Mais opções para esta receita</string>
+    <string name="recipe_delete_confirm_title">Apagar %1$s?</string>
+    <string name="recipe_delete_confirm_body">Os dias em que você já a registrou mantêm os itens.</string>
+    <string name="recipe_discard_title">Descartar as mudanças?</string>
+    <string name="recipe_discard_body">Suas mudanças nesta receita não estão salvas.</string>
+    <string name="recipe_discard">Descartar</string>
+    <string name="recipe_keep_editing">Continuar editando</string>
+    <string name="recipe_ingredient_amount">Quantidade</string>
+    <string name="recipe_ingredient_remove">Remover %1$s</string>
+    <string name="recipe_ingredient_edit">Mudar a quantidade de %1$s</string>
+    <string name="recipe_ingredient_added">%1$s adicionado</string>
+    <string name="recipe_not_itself">Uma receita não pode incluir a si mesma.</string>
+    <string name="recipe_need_name">Dê um nome</string>
+    <string name="recipe_need_ingredient">Adicione pelo menos um ingrediente</string>
+    <string name="search_create_recipe">Criar receita</string>
+    <string name="search_ingredient_hint">Buscar um ingrediente</string>
+    <string name="food_add_to_recipe">Adicionar à receita</string>
+    <string name="food_edit_recipe">Editar receita</string>
+</resources>

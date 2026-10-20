@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="trends_title">Tendências</string>
+    <string name="open_trends">Abrir tendências</string>
+    <string name="trends_week">Semana</string>
+    <string name="trends_month">Mês</string>
+    <string name="trends_quarter">3 meses</string>
+    <string name="trends_period_label">Período</string>
+    <string name="trends_nothing">Nada registrado neste período ainda. Os dias que você registrar aparecem aqui.</string>
+
+    <string name="trends_calories">Calorias</string>
+    <string name="trends_avg_eaten">Média comida</string>
+    <string name="trends_avg_allowance">Orçamento médio</string>
+    <string name="trends_under">%1$s por dia abaixo do orçamento, em média</string>
+    <string name="trends_over">%1$s por dia acima do orçamento, em média</string>
+    <string name="trends_on_budget">Dentro do orçamento, em média</string>
+    <plurals name="trends_days_over">
+        <item quantity="one">Acima do orçamento em %1$d de %2$d dias</item>
+        <item quantity="many">Acima do orçamento em %1$d de %2$d dias</item>
+        <item quantity="other">Acima do orçamento em %1$d de %2$d dias</item>
+    </plurals>
+    <plurals name="trends_averaged_complete">
+        <item quantity="one">As médias usam %d dia completo. Hoje só conta quando terminar.</item>
+        <item quantity="many">As médias usam %d dias completos. Hoje só conta quando terminar.</item>
+        <item quantity="other">As médias usam %d dias completos. Hoje só conta quando terminar.</item>
+    </plurals>
+    <plurals name="trends_averaged_logged">
+        <item quantity="one">Nenhum dia completo ainda, então as médias usam o %d dia registrado. Um dia completo tem 2 refeições e 1.000 kcal, ou você o marca em Hoje.</item>
+        <item quantity="many">Nenhum dia completo ainda, então as médias usam os %d dias registrados. Um dia completo tem 2 refeições e 1.000 kcal, ou você o marca em Hoje.</item>
+        <item quantity="other">Nenhum dia completo ainda, então as médias usam os %d dias registrados. Um dia completo tem 2 refeições e 1.000 kcal, ou você o marca em Hoje.</item>
+    </plurals>
+    <string name="trends_calories_chart">Calorias comidas a cada dia, em barras, com seu orçamento como linha tracejada. Média %1$s, orçamento %2$s.</string>
+    <string name="trends_tap_bar">Toque em uma barra para ver aquele dia.</string>
+    <string name="trends_day_value">%1$s de %2$s</string>
+    <string name="trends_day_empty">Nada registrado</string>
+    <string name="trends_open_day">Abrir dia</string>
+    <string name="trends_weekly">Médias semanais</string>
+    <string name="trends_week_of">Semana de %1$s</string>
+    <plurals name="trends_week_days">
+        <item quantity="one">%1$s · %2$d dia</item>
+        <item quantity="many">%1$s · %2$d dias</item>
+        <item quantity="other">%1$s · %2$d dias</item>
+    </plurals>
+
+    <string name="trends_weight">Peso</string>
+    <string name="trends_weight_none">Nenhuma pesagem ainda. Registre uma em Hoje ou conecte o Health Connect.</string>
+    <string name="trends_weight_none_in_period">Nenhuma pesagem neste período. A linha mostra a tendência mantida.</string>
+    <string name="trends_weight_trend">Tendência agora</string>
+    <string name="trends_weight_rate">Mudança por semana</string>
+    <string name="trends_weight_goal">Meta</string>
+    <string name="trends_goal_by">Neste ritmo você chega a %1$s por volta de %2$s.</string>
+    <string name="trends_goal_too_far">Neste ritmo sua meta está a mais de 2 anos.</string>
+    <string name="trends_goal_not_toward">Sua tendência não está indo em direção a %1$s agora.</string>
+    <string name="trends_goal_reached">Você está no seu peso-alvo.</string>
+    <string name="trends_goal_need_data">Uma data para a meta aparece depois de umas 2 semanas de pesagens.</string>
+    <string name="trends_weight_chart">Peso: pesagens como pontos e a tendência suavizada como linha. Tendência agora %1$s.</string>
+
+    <string name="trends_macros">Macros</string>
+    <string name="trends_macros_you">Você</string>
+    <string name="trends_macros_target">Meta</string>
+    <string name="trends_macro_avg">%1$s / %2$s por dia</string>
+    <string name="trends_split">Proteína %1$d %%, carboidratos %2$d %%, gordura %3$d %%</string>
+    <string name="trends_split_hint">Parte das calorias de cada macro, em média no período, comparada com suas metas.</string>
+
+    <string name="trends_nutrients">Nutrientes</string>
+    <string name="trends_nutrients_hint">Média diária comparada com suas metas, os mais distantes primeiro.</string>
+    <string name="trends_nutrient_under">Abaixo</string>
+    <string name="trends_nutrient_over">Acima</string>
+    <string name="trends_nutrient_ok">Na meta</string>
+    <string name="trends_nutrient_no_data">Sem dados</string>
+    <string name="trends_nutrient_no_data_hint">Meta %1$s. Nenhum dos alimentos que você registrou informa este nutriente.</string>
+    <string name="trends_nutrient_value">%1$s / %2$s · %3$d %%</string>
+    <string name="trends_nutrient_partial">Só %1$d %% das suas calorias vieram de alimentos que informam este nutriente, então o número real provavelmente é maior.</string>
+    <string name="trends_show_all">Mostrar todos os %d</string>
+    <string name="trends_show_fewer">Mostrar menos</string>
+
+    <string name="trends_logging">Registro</string>
+    <string name="trends_days_logged">Dias registrados</string>
+    <string name="trends_days_logged_value">%1$d de %2$d</string>
+    <string name="trends_streak">Sequência atual</string>
+    <string name="trends_longest">Maior sequência</string>
+    <plurals name="trends_days">
+        <item quantity="one">%d dia</item>
+        <item quantity="many">%d dias</item>
+        <item quantity="other">%d dias</item>
+    </plurals>
+</resources>

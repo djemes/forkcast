@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="scan_hint">Aponte para um código de barras</string>
+    <string name="scan_torch_on">Ligar a lanterna</string>
+    <string name="scan_torch_off">Desligar a lanterna</string>
+    <string name="scan_type_barcode">Digitar código</string>
+    <string name="scan_type_title">Digite o código de barras</string>
+    <string name="scan_type_field">Números do código de barras</string>
+    <string name="scan_type_invalid">Isso não parece um código de barras válido. Confira os números.</string>
+    <string name="scan_looking_up">Procurando %1$s…</string>
+    <string name="scan_not_found">Ainda não está nos bancos de dados. Escaneie a tabela nutricional e a gente salva para a próxima vez.</string>
+    <string name="scan_label">Escanear tabela</string>
+    <string name="scan_enter_manually">Digitar manualmente</string>
+    <string name="scan_offline">Sem conexão, e este código ainda não está salvo no seu celular. Tente de novo quando estiver online, ou digite manualmente.</string>
+    <string name="scan_failed">Os bancos de alimentos não responderam. Tente de novo em um minuto.</string>
+    <string name="scan_try_again">Tentar de novo</string>
+    <string name="scan_keep_scanning">Continuar escaneando</string>
+    <string name="camera_permission_title">Acesso à câmera</string>
+    <string name="camera_permission_body">O Forkcast usa a câmera só para ler códigos de barras e tabelas nutricionais. As imagens ficam no seu celular.</string>
+    <string name="camera_permission_allow">Permitir câmera</string>
+
+    <!-- Label scan -->
+    <string name="label_hint">Enquadre a tabela nutricional inteira, reta e com boa luz.</string>
+    <string name="label_capture">Capturar tabela</string>
+    <string name="label_reading">Lendo a tabela…</string>
+    <string name="label_unreadable">Não foi possível ler as calorias ou o tamanho da porção. Tente de novo mais perto e com a tabela mais reta, ou digite os valores.</string>
+    <string name="label_review_note">Confira os valores com a tabela antes de salvar.</string>
+</resources>

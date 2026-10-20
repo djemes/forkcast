@@ -87,7 +87,7 @@ class NotificationEngineTest {
         override suspend fun delete(id: String) = Unit
     }
     private val maintenance = RoomMaintenanceRepository(db.healthDao(), db.dayStatusDao(), log, weightRepo, db.profileDao(), db.goalDao(), settings, clock)
-    private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db, db.mealSlotDao(), clock), db.aiDao(),
+    private val engine = NotificationEngine(context, Notifier(context), settings, profiles, log, weightRepo, RoomMealSlotRepository(db, db.mealSlotDao(), clock, context), db.aiDao(),
         maintenance, app.forkcast.core.data.repository.RoomWeeklyCheckInRepository(log, db.dayStatusDao(), profiles, maintenance, weightRepo, db.healthDao(), clock), clock)
     private val nm = shadowOf(context.getSystemService(NotificationManager::class.java))
 

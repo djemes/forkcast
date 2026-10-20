@@ -99,15 +99,28 @@ fun SourceBadge(source: FoodSource, needsReview: Boolean = false) {
 }
 
 /** "1 cup", "1.5 × 1 cup", "180 g", "2 oz". One serving shows just its label. */
+@Composable
 fun servingText(quantity: Double, label: String): String {
     val qty = UnitFormatter.trimNumber(quantity, 2)
     return when {
         label == "g" || label == "oz" || label == "ml" || label == "fl oz" -> "$qty\u2009$label"
-        quantity == 1.0 -> label
-        else -> "$qty × $label"
+        quantity == 1.0 -> servingLabel(label)
+        else -> "$qty × ${servingLabel(label)}"
     }
 }
 
+/**
+ * The labels Forkcast itself stores ("serving" for quick adds and recipes, "meal" for photo
+ * estimates) read in the app's language; labels from food databases ("1 cup") stay as they are.
+ */
+@Composable
+fun servingLabel(label: String): String = when (label) {
+    "serving" -> stringResource(R.string.serving_label_serving)
+    "meal" -> stringResource(R.string.serving_label_meal)
+    else -> label
+}
+
+@Composable
 fun amountText(entry: LogEntry, f: UnitFormatter): String {
     val serving = servingText(entry.quantity, entry.servingLabel)
     // Grams add nothing to an amount already in g or in ml/fl oz.
@@ -314,7 +327,7 @@ fun EditEntrySheet(
                                 }
                                 servingLabel = s.label
                             },
-                            label = { Text(s.label) },
+                            label = { Text(servingLabel(s.label)) },
                         )
                     }
                 }
@@ -322,7 +335,7 @@ fun EditEntrySheet(
             NumberField(
                 initial = UnitFormatter.trimNumber(quantity ?: entry.quantity, 2),
                 label = stringResource(R.string.edit_quantity),
-                suffix = if (servingLabel in setOf("g", "oz", "ml", "fl oz")) servingLabel else "× $servingLabel",
+                suffix = if (servingLabel in setOf("g", "oz", "ml", "fl oz")) servingLabel else "× ${servingLabel(servingLabel)}",
                 onValue = { quantity = it },
                 // Re-seed when the serving changes the number.
                 key = "${entry.id}|$servingLabel",

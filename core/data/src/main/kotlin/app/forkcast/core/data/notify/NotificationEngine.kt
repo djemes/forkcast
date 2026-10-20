@@ -19,6 +19,8 @@ import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WeightRepository
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.Forecast
+import app.forkcast.core.domain.HealthRules
+import app.forkcast.core.domain.MealKind
 import app.forkcast.core.domain.NotificationRules
 import app.forkcast.core.model.NotificationSettings
 import app.forkcast.core.model.NutrientKey
@@ -124,7 +126,9 @@ class NotificationEngine @Inject constructor(
             }
             val usual = Forecast.expectedAfter(history, today, s.eveningMinute)
             val text = if (usual != null && usual > 0) {
-                val dinner = slots.observeMealSlots().first().firstOrNull { it.name.equals("Dinner", ignoreCase = true) }?.name?.lowercase()
+                // The dinner meal by name or time window, in any language ("Dinner", "Jantar").
+                val dinner = slots.observeMealSlots().first()
+                    .firstOrNull { HealthRules.mealKind(it.name, it.startMinute) == MealKind.DINNER }?.name?.lowercase()
                     ?: context.getString(R.string.notif_evening_rest)
                 context.getString(R.string.notif_evening, n.format(left.roundToInt()), dinner, n.format((usual / 10).roundToInt() * 10))
             } else {

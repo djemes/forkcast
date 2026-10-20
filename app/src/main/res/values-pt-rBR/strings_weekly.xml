@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Weekly check-in (owner, 2026-10-19) -->
+    <string name="weekly_title">Resumo semanal</string>
+    <string name="weekly_range">%1$s – %2$s</string>
+    <string name="weekly_previous">Semana anterior</string>
+    <string name="weekly_next">Próxima semana</string>
+    <string name="weekly_nothing">Nada foi registrado nesta semana.</string>
+    <string name="weekly_food">Comida</string>
+    <string name="weekly_days_logged">Dias registrados</string>
+    <string name="weekly_days_value" tools:ignore="PluralsCandidate">%1$d de 7 (%2$d completos)</string>
+    <string name="weekly_avg_eaten">Média comida</string>
+    <string name="weekly_avg_eaten_complete">Média comida, dias completos</string>
+    <string name="weekly_none_complete">Nenhum dia desta semana foi registrado por completo, então estas médias incluem dias registrados pela metade e podem parecer baixas. Marque um dia como completo em Hoje se você registrou tudo.</string>
+    <string name="weekly_avg_budget">Orçamento médio, com atividade</string>
+    <string name="weekly_under">Em média você ficou %1$s abaixo do orçamento.</string>
+    <string name="weekly_over">Em média você ficou %1$s acima do orçamento.</string>
+    <string name="weekly_on_budget">Em média você ficou bem no seu orçamento.</string>
+    <string name="weekly_weight">Peso</string>
+    <string name="weekly_weigh_ins">Dias com pesagem</string>
+    <string name="weekly_trend">Tendência nesta semana</string>
+    <string name="weekly_plan">Plano por semana</string>
+    <string name="weekly_pace_ahead">À frente do seu plano.</string>
+    <string name="weekly_pace_on">No ritmo do seu plano.</string>
+    <string name="weekly_pace_behind">Mais devagar que o seu plano nesta semana. Uma semana de tendência oscila; olhe algumas seguidas.</string>
+    <string name="weekly_pace_drift">Sua tendência de peso mudou nesta semana, e sua meta é manter.</string>
+    <string name="weekly_pace_no_data">Pesagens insuficientes nesta semana para dizer.</string>
+    <string name="weekly_maintenance">Manutenção</string>
+    <string name="weekly_maintenance_none">Ainda sem estimativa a partir dos seus dados.</string>
+    <string name="weekly_maintenance_now">Manutenção estimada</string>
+    <string name="weekly_maintenance_change">Mudança nesta semana</string>
+    <string name="weekly_activity">Atividade</string>
+    <string name="weekly_activity_none">Nenhuma atividade do Health Connect nesta semana.</string>
+    <string name="weekly_avg_steps">Média de passos</string>
+    <string name="weekly_avg_active">Média de calorias ativas</string>
+    <string name="weekly_bonus_total">Somado aos orçamentos</string>
+    <string name="weekly_open">Resumo semanal</string>
+    <string name="weekly_open_summary">Comida, peso, manutenção e atividade da semana passada</string>
+</resources>

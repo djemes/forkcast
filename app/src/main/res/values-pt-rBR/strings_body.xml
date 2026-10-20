@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Water -->
+    <string name="water_title">Água</string>
+    <string name="water_progress">%1$s / %2$s</string>
+    <string name="water_add_glass">+ copo</string>
+    <string name="water_add_glass_description">Adicionar um copo de água (%1$s)</string>
+    <string name="water_remove_last">Remover o último registro de água</string>
+    <string name="water_other_amount">Outra quantidade</string>
+    <string name="water_amount_field">Quantidade (%1$s)</string>
+    <string name="water_add">Adicionar</string>
+    <string name="water_from_drinks">Inclui %1$s das bebidas que você registrou</string>
+    <string name="water_counts">Conta como água</string>
+    <string name="water_goal_field">Meta diária (%1$s)</string>
+    <string name="water_goal_body">O padrão é %1$s, a partir do perfil. Bebidas como água e chá sem açúcar contam para ela quando você as registra.</string>
+    <string name="water_glass_field">Tamanho do copo (%1$s)</string>
+    <string name="water_glass_body">Um toque em "+ copo" em Hoje, no widget de água e no atalho "+1 copo".</string>
+    <string name="water_goal_reset">Usar o padrão (%1$s)</string>
+    <string name="water_counts_body">Água, água com gás e chá sem açúcar contam; bebidas açucaradas, álcool, bebidas com leite e shakes não.</string>
+    <string name="water_counts_amount">Soma %1$s à água do dia</string>
+
+    <!-- Weight card -->
+    <string name="weight_title">Peso</string>
+    <string name="weight_trend_down">tendência ↓ %1$s/sem</string>
+    <string name="weight_trend_up">tendência ↑ %1$s/sem</string>
+    <string name="weight_trend_flat">tendência estável</string>
+    <string name="weight_none">Nenhuma pesagem ainda. Toque para registrar uma.</string>
+    <string name="weight_open">Abrir registro de peso</string>
+
+    <!-- Activity card (SPEC §4.2 item 7) -->
+    <string name="activity_title">Atividade</string>
+    <string name="activity_steps">%1$s passos</string>
+    <string name="activity_active">%1$s ativas</string>
+    <string name="activity_minutes">%1$d min</string>
+    <string name="activity_none">Nenhuma atividade no Health Connect neste dia.</string>
+    <string name="activity_connect">Veja passos e treinos do Health Connect</string>
+    <string name="activity_connect_action">Conectar o Health Connect</string>
+    <string name="activity_usual">Habitual: %1$s ativas por dia</string>
+    <string name="activity_usual_partial" tools:ignore="PluralsCandidate">Habitual: %1$s ativas por dia (com base em %2$d dias até agora)</string>
+    <string name="activity_usual_none" tools:ignore="PluralsCandidate">O Forkcast aprende sua atividade habitual depois de %1$d dias de dados.</string>
+    <string name="activity_bonus">+%1$s no orçamento deste dia</string>
+    <string name="activity_bonus_zero">Não passou do seu dia habitual, então não há orçamento extra.</string>
+    <string name="activity_bonus_off">Só para ver: o bônus de atividade está desligado.</string>
+    <string name="activity_open">Abrir detalhes da atividade</string>
+    <string name="activity_explain">Seu orçamento já cobre um dia habitual. Só a atividade acima do habitual soma ao orçamento, e só %1$d %% dela (no máximo %2$s por dia), porque relógios costumam superestimar.</string>
+    <string name="activity_explain_off">O bônus de atividade está desligado, então a atividade não muda seu orçamento. Ligue em Configurações › Meta e orçamento.</string>
+    <string name="activity_source">Como informado pelos seus aparelhos por meio do Health Connect.</string>
+    <string name="activity_recent">Dias recentes</string>
+    <string name="activity_row_steps">Passos</string>
+    <string name="activity_row_active">Calorias ativas</string>
+    <string name="activity_row_usual">Dia habitual</string>
+    <string name="activity_row_extra">Acima do habitual</string>
+    <string name="activity_row_counted">Contado no orçamento</string>
+    <string name="activity_row_workouts">Treinos</string>
+    <string name="activity_no_data_day">Sem dados</string>
+    <string name="activity_usual_days" tools:ignore="PluralsCandidate">%1$s (com base em %2$d dias)</string>
+    <string name="activity_not_yet">Ainda não</string>
+    <string name="activity_workout">Treino</string>
+    <string name="activity_running">Corrida</string>
+    <string name="activity_walking">Caminhada</string>
+    <string name="activity_biking">Pedalada</string>
+    <string name="activity_swimming">Natação</string>
+    <string name="activity_strength">Musculação</string>
+    <string name="activity_yoga">Ioga</string>
+    <string name="activity_hiking">Trilha</string>
+    <string name="activity_hiit">HIIT</string>
+    <string name="activity_cardio_machine">Aparelho de cardio</string>
+
+    <!-- Day completeness (SPEC §5.6) -->
+    <string name="day_counts">Este dia conta para a sua estimativa de manutenção.</string>
+    <string name="day_not_counted">Este dia ainda não conta para a sua estimativa de manutenção (precisa de 2 refeições e 1.000 kcal).</string>
+    <string name="day_marked_complete">Marcado como registrado por completo.</string>
+    <string name="day_marked_incomplete">Fora da sua estimativa de manutenção.</string>
+    <string name="day_mark_incomplete">Nem tudo foi registrado</string>
+    <string name="day_mark_complete">Tudo foi registrado</string>
+    <string name="day_mark_auto">Desfazer</string>
+
+    <!-- Weight screen -->
+    <string name="weight_log_title">Peso</string>
+    <string name="weight_add_title">Registrar uma pesagem</string>
+    <string name="weight_field">Peso (%1$s)</string>
+    <string name="body_fat_field" formatted="false">Gordura corporal % (opcional)</string>
+    <string name="weight_date">Data</string>
+    <string name="weight_add">Salvar pesagem</string>
+    <string name="weight_history">Histórico</string>
+    <string name="weight_from_health_connect">%1$s · Health Connect</string>
+    <string name="weight_delete">Apagar a pesagem de %1$s</string>
+    <string name="weight_chart_description">Gráfico de peso: os pontos são pesagens, a linha é a tendência suavizada.</string>
+    <string name="weight_trend_now">Tendência %1$s</string>
+</resources>

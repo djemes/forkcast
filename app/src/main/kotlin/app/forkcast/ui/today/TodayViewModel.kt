@@ -140,7 +140,12 @@ data class TodayUiState(
     val allEntries: List<LogEntry> get() = meals.flatMap { it.entries }
     /** Nothing logged and nothing estimating on the day on screen. */
     val isEmptyDay: Boolean get() = meals.all { it.entries.isEmpty() && it.pending.isEmpty() }
+    /** Meals that can be logged to: not the "Other" section of a deleted meal's entries. */
+    val loggableSlots: List<MealSlot> get() = meals.map { it.slot }.filter { it.sortOrder != ORPHAN_ORDER }
 }
+
+/** Sort order of the section holding entries whose meal was deleted ("Other"). */
+const val ORPHAN_ORDER = Int.MAX_VALUE
 
 sealed interface TodayEvent {
     data object PreviousDay : TodayEvent
@@ -366,7 +371,8 @@ class TodayViewModel @Inject constructor(
     private fun orphans(slots: List<MealSlot>, entries: List<LogEntry>): List<MealSection> {
         val known = slots.map { it.id }.toSet()
         return entries.filter { it.mealSlotId !in known }.groupBy { it.mealSlotId }.map { (id, list) ->
-            MealSection(MealSlot(id, "Other", Int.MAX_VALUE, null, null), list, list.sumOf { it.nutrients.kcal })
+            // Blank name: the screen shows "Other" in the app's language.
+            MealSection(MealSlot(id, "", ORPHAN_ORDER, null, null), list, list.sumOf { it.nutrients.kcal })
         }
     }
 

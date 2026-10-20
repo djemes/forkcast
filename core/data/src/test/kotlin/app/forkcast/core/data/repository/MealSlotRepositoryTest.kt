@@ -17,10 +17,11 @@ import java.time.ZoneId
 
 @RunWith(AndroidJUnit4::class)
 class MealSlotRepositoryTest {
-    private val db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), ForkcastDatabase::class.java)
+    private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+    private val db = Room.inMemoryDatabaseBuilder(context, ForkcastDatabase::class.java)
         .allowMainThreadQueries().build()
     private val clock = Clock.fixed(Instant.parse("2026-10-19T14:00:00Z"), ZoneId.of("America/New_York"))
-    private val repo = RoomMealSlotRepository(db, db.mealSlotDao(), clock)
+    private val repo = RoomMealSlotRepository(db, db.mealSlotDao(), clock, context)
 
     @After fun tearDown() = db.close()
 

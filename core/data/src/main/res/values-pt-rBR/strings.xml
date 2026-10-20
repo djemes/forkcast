@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Default meal names, seeded once when the database is created. Users can rename them. -->
+    <string name="meal_breakfast">Café da manhã</string>
+    <string name="meal_lunch">Almoço</string>
+    <string name="meal_dinner">Jantar</string>
+    <string name="meal_snacks">Lanches</string>
+
+    <!-- Notification channels (SPEC §4.8). Users can tune each one in system settings too. -->
+    <string name="channel_budget">Limites do orçamento</string>
+    <string name="channel_evening">Panorama da noite</string>
+    <string name="channel_protein">Checagem de proteína</string>
+    <string name="channel_meal_reminder">Lembretes de refeição</string>
+    <string name="channel_weigh_in">Lembrete de pesagem</string>
+    <string name="channel_weekly">Resumo semanal</string>
+    <string name="channel_estimate_ready">Estimativa pronta</string>
+    <string name="channel_backup_failed">Problemas de backup</string>
+    <string name="channel_working">Trabalhando em segundo plano</string>
+    <string name="estimating_notification">Estimando sua refeição…</string>
+    <string name="photo_meal">Refeição por foto</string>
+    <!-- DESIGN.md §6: factual and kind. -->
+    <string name="estimate_ready_notification">%1$s estimada: ~%2$s kcal (%3$s–%4$s). Toque para revisar.</string>
+    <string name="estimate_question_notification">%1$s: a IA tem uma pergunta rápida antes de registrar. Toque para responder.</string>
+    <string name="estimate_failed_title">Estimativa por foto pausada</string>
+    <string name="estimate_key_problem">Uma chave de IA foi recusada. Confira em Configurações → IA.</string>
+
+    <!-- Notification copy (DESIGN.md §9): plain, specific, kind; no exclamation marks. -->
+    <string name="notif_budget_title">Orçamento de hoje</string>
+    <string name="notif_budget_threshold">%1$s de %2$s kcal até agora. Restam cerca de %3$s para hoje.</string>
+    <string name="notif_budget_reached">%1$s de %2$s kcal até agora. Esse é o orçamento de hoje.</string>
+    <string name="notif_budget_over">Você está %1$s kcal acima do orçamento de hoje.</string>
+    <string name="notif_evening_title">Panorama da noite</string>
+    <string name="notif_evening">Restam %1$s kcal. No %2$s você costuma comer cerca de %3$s.</string>
+    <string name="notif_evening_simple">Restam %1$s kcal para hoje.</string>
+    <string name="notif_evening_rest">resto do dia</string>
+    <string name="notif_protein_title">Checagem de proteína</string>
+    <string name="notif_protein">Faltam %1$s g de proteína hoje.</string>
+    <string name="notif_meal">Nada registrado em %1$s ainda.</string>
+    <string name="notif_weigh_in_title">Pesagem</string>
+    <string name="notif_weigh_in">Nenhuma pesagem hoje ainda.</string>
+    <string name="notif_weekly_title">Sua semana</string>
+    <plurals name="notif_weekly_food">
+        <item quantity="one">%1$s kcal em %2$d dia registrado, %3$s.</item>
+        <item quantity="many">%1$s kcal por dia em %2$d dias registrados, %3$s.</item>
+        <item quantity="other">%1$s kcal por dia em %2$d dias registrados, %3$s.</item>
+    </plurals>
+    <plurals name="notif_weekly_food_complete">
+        <item quantity="one">%1$s kcal em %2$d dia completo, %3$s.</item>
+        <item quantity="many">%1$s kcal por dia em %2$d dias completos, %3$s.</item>
+        <item quantity="other">%1$s kcal por dia em %2$d dias completos, %3$s.</item>
+    </plurals>
+    <string name="notif_weekly_under">%1$s abaixo do orçamento</string>
+    <string name="notif_weekly_over">%1$s acima do orçamento</string>
+    <string name="notif_weekly_on">bem no orçamento</string>
+    <string name="notif_weekly_down">Tendência de peso caiu %1$s.</string>
+    <string name="notif_weekly_up">Tendência de peso subiu %1$s.</string>
+    <string name="notif_weekly_steady">Tendência de peso estável.</string>
+
+    <!-- Drive backup problems (SPEC §4.11). -->
+    <string name="notif_backup_title">O backup não rodou</string>
+    <string name="notif_backup_reconnect">O Forkcast perdeu o acesso ao Google Drive. Abra Backup e dados e conecte de novo.</string>
+    <string name="notif_backup_not_set_up">O login no Google Drive ainda não está configurado nesta versão do Forkcast.</string>
+    <string name="notif_backup_quota">Seu Google Drive está cheio, então o backup não pôde ser salvo.</string>
+    <string name="notif_backup_offline">Sem conexão nos últimos backups. Ele tenta de novo hoje à noite.</string>
+    <string name="notif_backup_error">O Google Drive teve um problema com os últimos backups. Ele tenta de novo hoje à noite.</string>
+</resources>

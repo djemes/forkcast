@@ -70,4 +70,7 @@
     <string name="fdb_off_body">Free, community-built database, mostly packaged foods. No key needed. Data under the Open Database License.</string>
     <string name="fdb_show_key">Show key</string>
     <string name="fdb_hide_key">Hide key</string>
+    <!-- Serving labels Forkcast stores itself: quick adds and recipes ("serving"), photo estimates ("meal"). -->
+    <string name="serving_label_serving">serving</string>
+    <string name="serving_label_meal">meal</string>
 </resources>

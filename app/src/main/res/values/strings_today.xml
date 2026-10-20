@@ -79,4 +79,6 @@
     <string name="missing_keys_usda">USDA food database</string>
     <string name="missing_keys_add">Add keys</string>
     <string name="missing_keys_not_now">Not now</string>
+    <!-- Section for entries whose meal was deleted in Settings › Meals. -->
+    <string name="meal_other">Other</string>
 </resources>

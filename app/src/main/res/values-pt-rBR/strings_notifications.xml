@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › Notifications (SPEC §4.8) -->
+    <string name="nset_permission_off">As notificações do Forkcast estão desligadas nas configurações do Android.</string>
+    <string name="nset_open_system">Abrir configurações do Android</string>
+    <string name="nset_budget">Limites do orçamento</string>
+    <string name="nset_budget_body">Quando o dia chega a uma parte do seu orçamento. Cada um avisa uma vez por dia.</string>
+    <string name="nset_threshold">%1$d%%</string>
+    <string name="nset_evening">Panorama da noite</string>
+    <string name="nset_evening_body">O que falta, e o que você costuma comer daquele horário em diante.</string>
+    <string name="nset_protein">Checagem de proteína</string>
+    <string name="nset_protein_body">Se ainda falta mais de um quarto da sua meta de proteína.</string>
+    <string name="nset_meals">Lembretes de refeição</string>
+    <string name="nset_meals_body">Se uma refeição ainda está vazia no horário dela.</string>
+    <string name="nset_weigh_in">Lembrete de pesagem</string>
+    <string name="nset_weigh_in_body">De manhã, se não houver peso hoje.</string>
+    <string name="nset_weekly">Resumo semanal</string>
+    <string name="nset_weekly_body">Um olhar sobre os últimos 7 dias: comida, tendência de peso, manutenção, atividade.</string>
+    <string name="nset_weekly_day">Dia</string>
+    <string name="nset_estimate_ready">Estimativa pronta</string>
+    <string name="nset_estimate_ready_body">Quando uma estimativa por foto termina com o Forkcast fechado.</string>
+    <string name="nset_backup_failed">Problemas de backup</string>
+    <string name="nset_backup_failed_body">Quando um backup agendado falha duas vezes seguidas.</string>
+    <string name="nset_quiet_hours">Horário de silêncio</string>
+    <string name="nset_quiet_body">Nada é enviado das %1$s às %2$s.</string>
+    <string name="nset_quiet_start">Começa</string>
+    <string name="nset_quiet_end">Termina</string>
+    <string name="nset_change_time">Mudar o horário de %1$s</string>
+</resources>

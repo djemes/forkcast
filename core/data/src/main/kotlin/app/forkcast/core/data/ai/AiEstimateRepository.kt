@@ -1,6 +1,9 @@
 package app.forkcast.core.data.ai
 
+import android.content.Context
 import android.net.Uri
+import app.forkcast.core.data.R
+import dagger.hilt.android.qualifiers.ApplicationContext
 import app.forkcast.core.data.db.AiComponentEntity
 import app.forkcast.core.data.db.AiDao
 import app.forkcast.core.data.db.AiEstimateEntity
@@ -110,6 +113,7 @@ interface AiEstimateRepository {
 
 @Singleton
 class DefaultAiEstimateRepository @Inject constructor(
+    @ApplicationContext private val context: Context,
     private val dao: AiDao,
     private val ai: AiRepository,
     private val photos: PhotoStore,
@@ -270,7 +274,7 @@ class DefaultAiEstimateRepository @Inject constructor(
     private suspend fun writeLogEntry(e: AiEstimateEntity, components: List<AiComponentEntity>) {
         val nutrients: Nutrients = components.map { it.nutrientsUsed }.sumNutrients()
         val grams = components.sumOf { it.grams }
-        val name = e.mealName ?: e.result?.mealName?.ifBlank { null } ?: "Photo meal"
+        val name = e.mealName ?: e.result?.mealName?.ifBlank { null } ?: context.getString(R.string.photo_meal)
         val existing = e.logEntryId?.let { log.get(it) }
         if (existing != null) {
             log.update(existing.copy(displayName = name, grams = grams, nutrients = nutrients, mealSlotId = existing.mealSlotId))

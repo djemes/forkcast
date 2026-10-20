@@ -1,6 +1,10 @@
 package app.forkcast.core.data.repository
 
+import android.content.Context
 import androidx.room.withTransaction
+import app.forkcast.core.data.R
+import app.forkcast.core.data.db.DefaultMealSlots
+import dagger.hilt.android.qualifiers.ApplicationContext
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.MealSlotDao
 import app.forkcast.core.data.db.MealSlotEntity
@@ -32,9 +36,19 @@ class RoomMealSlotRepository @Inject constructor(
     private val db: ForkcastDatabase,
     private val dao: MealSlotDao,
     private val clock: Clock,
+    @ApplicationContext private val context: Context,
 ) : MealSlotRepository {
+    /** Default meal names read in the app's language (stored names are left as they are). */
     override fun observeMealSlots(): Flow<List<MealSlot>> =
-        dao.observeActive().map { list -> list.map { it.toModel() } }
+        dao.observeActive().map { list ->
+            val names = DefaultMealSlots.Names(
+                breakfast = context.getString(R.string.meal_breakfast),
+                lunch = context.getString(R.string.meal_lunch),
+                dinner = context.getString(R.string.meal_dinner),
+                snacks = context.getString(R.string.meal_snacks),
+            )
+            list.map { it.toModel().let { m -> m.copy(name = DefaultMealSlots.shown(m.name, names)) } }
+        }
 
     override suspend fun add(name: String, startMinute: Int?, endMinute: Int?): String {
         val now = clock.millis()

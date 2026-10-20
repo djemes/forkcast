@@ -444,7 +444,7 @@ fun TodayScreen(
 
     logSheetMealId?.let { mealId ->
         LogSheet(
-            meals = state.meals.map { it.slot },
+            meals = state.loggableSlots,
             selectedMealId = mealId,
             onSelectMeal = { logSheetMealId = it },
             onDismiss = { logSheetMealId = null },
@@ -490,7 +490,7 @@ fun TodayScreen(
     copyRequest?.let { req ->
         CopyDialog(
             initialDate = req.from.plusDays(1),
-            meals = state.meals.map { it.slot },
+            meals = state.loggableSlots,
             allowSameMeal = req.allowSameMeal,
             onCopy = { date, meal -> copyRequest = null; onEvent(TodayEvent.Copy(req.ids, date, meal)) },
             onDismiss = { copyRequest = null },
@@ -513,7 +513,7 @@ fun TodayScreen(
         } else {
             EditEntrySheet(
                 entry = entry,
-                meals = state.meals.map { it.slot },
+                meals = state.loggableSlots,
                 f = f,
                 onSave = { q, meal, water, serving -> onEvent(TodayEvent.UpdateEntry(entry, q, meal, water, serving)); editingId = null },
                 servings = editServings?.takeIf { it.first == entry.id }?.second ?: FoodLogging.editServings(entry, null),
@@ -817,7 +817,8 @@ private fun MealSectionView(
     unreviewed: Set<String> = emptySet(),
     onPendingClick: (String) -> Unit = {},
 ) {
-    val addDescription = stringResource(R.string.add_to_meal_description, meal.slot.name)
+    val name = meal.slot.name.ifEmpty { stringResource(R.string.meal_other) }
+    val addDescription = stringResource(R.string.add_to_meal_description, name)
     var menuOpen by remember { mutableStateOf(false) }
     // Rows already here when the section appeared just show; rows added later (a new entry, Undo,
     // a photo estimate) fade in, and the section's height eases as rows come and go (DESIGN.md §8).
@@ -832,7 +833,7 @@ private fun MealSectionView(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp).padding(start = 12.dp)) {
             Text(
-                text = meal.slot.name,
+                text = name,
                 style = MaterialTheme.typography.titleMedium,
                 modifier = Modifier
                     .weight(1f)
@@ -849,7 +850,7 @@ private fun MealSectionView(
             if (meal.entries.isNotEmpty() || dayHasEntries) {
                 Box {
                     IconButton(onClick = { menuOpen = true }) {
-                        Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.meal_more, meal.slot.name))
+                        Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.meal_more, name))
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
                         if (meal.entries.isNotEmpty()) {

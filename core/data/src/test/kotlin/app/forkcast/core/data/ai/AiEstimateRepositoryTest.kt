@@ -90,8 +90,8 @@ class AiEstimateRepositoryTest {
     }
     private val photos = PhotoStore(context)
     private val repo = DefaultAiEstimateRepository(
-        db.aiDao(), ai, photos, ComponentMatcher(usda, foods, db.aiDao(), clock), log,
-        RoomMealSlotRepository(db, db.mealSlotDao(), clock), settings, scheduler, clock,
+        context, db.aiDao(), ai, photos, ComponentMatcher(usda, foods, db.aiDao(), clock), log,
+        RoomMealSlotRepository(db, db.mealSlotDao(), clock, context), settings, scheduler, clock,
     )
 
     @After fun tearDown() {

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_export_title">Exportar</string>
+    <string name="backup_export_body">Salve tudo (registro de comida, alimentos, receitas, refeições salvas, peso, água, atividade, estimativas por foto, metas e configurações) em um arquivo que você pode guardar onde quiser. As chaves de API nunca vão junto.</string>
+    <string name="backup_export_json">Exportar backup</string>
+    <string name="backup_export_zip">Exportar com fotos (.zip)</string>
+    <string name="backup_saved_zip">Backup com fotos salvo</string>
+    <string name="backup_csv_title">Para planilhas</string>
+    <string name="backup_csv_food_log">Registro de comida (CSV)</string>
+    <string name="backup_csv_weights">Pesos (CSV)</string>
+    <string name="backup_import_title">Importar</string>
+    <string name="backup_import_body">Abra um arquivo de backup do Forkcast. Você vê o que tem nele antes de qualquer mudança.</string>
+    <string name="backup_import">Importar backup</string>
+    <string name="backup_restore_safety">Desfazer a última substituição</string>
+    <string name="backup_restore_safety_body">O Forkcast salvou uma cópia dos seus dados antes da última substituição. Abri-la mostra as mesmas opções de importação.</string>
+    <string name="backup_working">Trabalhando…</string>
+
+    <string name="backup_saved_json">Backup salvo</string>
+    <string name="backup_saved_food_log">Registro de comida salvo</string>
+    <string name="backup_saved_weights">Pesos salvos</string>
+    <string name="backup_save_failed">Não foi possível salvar o arquivo. Tente outro local.</string>
+
+    <string name="backup_preview_title">Importar este backup?</string>
+    <string name="backup_preview_safety_title">Restaurar a cópia de segurança?</string>
+    <string name="backup_preview_made">Feito em %1$s pelo Forkcast %2$s</string>
+    <string name="backup_preview_log">Itens do registro de comida: %1$d</string>
+    <string name="backup_preview_foods">Alimentos: %1$d</string>
+    <string name="backup_preview_saved_meals">Refeições salvas: %1$d</string>
+    <string name="backup_preview_weights">Pesagens: %1$d</string>
+    <string name="backup_preview_water">Registros de água: %1$d</string>
+    <string name="backup_preview_ai_estimates">Estimativas por foto: %1$d</string>
+    <string name="backup_preview_ai_profiles">Perfis de IA (sem chaves): %1$d</string>
+    <string name="backup_preview_recipes">Receitas: %1$d</string>
+    <string name="backup_preview_dates">Datas: %1$s a %2$s</string>
+    <string name="backup_preview_no_profile">Nenhum perfil neste arquivo.</string>
+    <string name="backup_preview_choices">Mesclar adiciona o que é novo e mantém a cópia editada por último. Substituir apaga tudo neste celular primeiro.</string>
+    <string name="backup_merge">Mesclar</string>
+    <string name="backup_replace_ellipsis">Substituir…</string>
+
+    <string name="backup_replace_title">Substituir tudo?</string>
+    <string name="backup_replace_body">Tudo neste celular será apagado e trocado pelo backup, incluindo as configurações. Uma cópia de segurança dos seus dados atuais é salva antes, então dá para desfazer em Backup e dados.</string>
+    <string name="backup_replace">Substituir</string>
+
+    <string name="backup_done_title">Importação concluída</string>
+    <string name="backup_done_merge">Adicionados %1$d, atualizados %2$d, já em dia %3$d.</string>
+    <plurals name="backup_done_replace">
+        <item quantity="one">%1$d registro restaurado. Uma cópia de segurança dos dados anteriores foi salva.</item>
+        <item quantity="many">%1$d registros restaurados. Uma cópia de segurança dos dados anteriores foi salva.</item>
+        <item quantity="other">%1$d registros restaurados. Uma cópia de segurança dos dados anteriores foi salva.</item>
+    </plurals>
+
+    <string name="backup_rejected_title">Não dá para importar este arquivo</string>
+    <string name="backup_rejected_newer">Este backup foi feito por uma versão mais nova do Forkcast. Atualize o app e tente de novo.</string>
+    <string name="backup_rejected_other">Este arquivo não é um backup do Forkcast.</string>
+    <string name="backup_rejected_unreadable">Não foi possível ler este arquivo. Ele pode estar danificado ou não ser um backup do Forkcast.</string>
+    <string name="backup_read_failed">Não foi possível abrir o arquivo.</string>
+    <string name="backup_import_failed">A importação não terminou, então nada foi alterado.</string>
+
+    <!-- Settings export with API keys (SPEC §4.11) -->
+    <string name="settings_transfer_title">Configurações e chaves</string>
+    <string name="settings_transfer_body">Um arquivo separado com todas as configurações, seus perfis de IA com as chaves de API e a chave do banco de alimentos. Ele fica protegido por uma senha que você escolhe. Use para configurar outro celular.</string>
+    <string name="settings_export">Exportar configurações…</string>
+    <string name="settings_import">Importar configurações…</string>
+    <string name="settings_passphrase_title_export">Proteger com uma senha</string>
+    <string name="settings_passphrase_body_export">Quem tiver este arquivo e a senha pode usar suas chaves de API. Não há como recuperar uma senha esquecida.</string>
+    <string name="settings_passphrase_title_import">Senha deste arquivo</string>
+    <string name="settings_passphrase">Senha</string>
+    <string name="settings_passphrase_again">Senha de novo</string>
+    <string name="settings_passphrase_short">Pelo menos 8 caracteres</string>
+    <string name="settings_passphrase_mismatch">As duas não são iguais</string>
+    <string name="settings_strength_weak">Fraca. Algumas palavras sem relação entre si são mais fortes.</string>
+    <string name="settings_strength_fair">Razoável</string>
+    <string name="settings_strength_strong">Forte</string>
+    <string name="settings_continue">Continuar</string>
+    <string name="settings_preview_title">Substituir configurações e chaves?</string>
+    <plurals name="settings_preview_body">
+        <item quantity="one">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os perfis de IA (%2$s) e %3$d chave salva. Seu registro de comida não é alterado.</item>
+        <item quantity="many">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os perfis de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
+        <item quantity="other">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os perfis de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
+    </plurals>
+    <string name="settings_preview_none">nenhum</string>
+    <string name="settings_replace">Substituir</string>
+    <string name="settings_saved">Arquivo de configurações salvo</string>
+    <string name="settings_imported">Configurações e chaves importadas</string>
+    <string name="settings_wrong_passphrase">Senha errada, ou o arquivo foi alterado.</string>
+    <string name="settings_not_forkcast">Este não é um arquivo de configurações do Forkcast.</string>
+    <string name="settings_newer">Este arquivo foi feito por uma versão mais nova do Forkcast. Atualize o app e tente de novo.</string>
+    <string name="settings_unreadable">Não foi possível ler este arquivo.</string>
+    <string name="settings_failed">Não foi possível salvar o arquivo. Tente outro local.</string>
+
+    <!-- Google Drive backup (SPEC §4.11). -->
+    <string name="drive_title">Backup no Google Drive</string>
+    <string name="drive_intro">Faça backup automático toda noite em uma pasta \"Forkcast Backups\" no seu Google Drive. O Forkcast só vê os arquivos que ele mesmo cria. Os backups guardam seus dados, não fotos nem chaves de API.</string>
+    <string name="drive_connect">Conectar o Google Drive</string>
+    <string name="drive_connected_as">Fazendo backup em %1$s</string>
+    <string name="drive_connected">Fazendo backup no Google Drive</string>
+    <string name="drive_last_backup">Último backup: %1$s</string>
+    <string name="drive_no_backup_yet">Nenhum backup ainda. O primeiro roda hoje à noite, ou toque em Fazer backup agora.</string>
+    <string name="drive_auto">Fazer backup automático</string>
+    <string name="drive_auto_detail">À noite, por volta das 3h. Mantém os últimos 14 backups e um de cada um dos últimos 12 meses.</string>
+    <string name="drive_daily">Todo dia</string>
+    <string name="drive_weekly">Toda semana</string>
+    <string name="drive_wifi_only">Só no Wi-Fi</string>
+    <string name="drive_charging_only">Só carregando</string>
+    <string name="drive_backup_now">Fazer backup agora</string>
+    <string name="drive_backed_up">Backup feito no Google Drive.</string>
+    <string name="drive_restore">Restaurar do Drive</string>
+    <string name="drive_restore_title">Restaurar do Google Drive</string>
+    <string name="drive_restore_hint">Escolha um backup. Você vê o que tem nele e escolhe Mesclar ou Substituir antes de qualquer mudança.</string>
+    <string name="drive_restore_empty">Nenhum backup no seu Drive ainda.</string>
+    <string name="drive_restore_failed">Não foi possível abrir o backup</string>
+    <string name="drive_disconnect">Desconectar</string>
+    <string name="drive_disconnect_title">Desconectar o Google Drive?</string>
+    <string name="drive_disconnect_body">Os backups param e o Forkcast perde o acesso ao seu Drive. Os backups que já estão lá continuam; você pode apagá-los no Drive.</string>
+    <string name="drive_problem_not_connected">Conecte o Google Drive primeiro.</string>
+    <string name="drive_problem_reconnect">O Forkcast perdeu o acesso ao seu Drive. Desconecte e conecte de novo.</string>
+    <string name="drive_problem_not_set_up">O login no Google Drive ainda não está configurado nesta versão do Forkcast.</string>
+    <string name="drive_problem_offline">Sem conexão. Tente de novo quando estiver online.</string>
+    <string name="drive_problem_quota">Seu Google Drive está cheio. Libere espaço e faça o backup de novo.</string>
+    <string name="drive_problem_busy">O Google Drive está ocupado. Tente de novo em alguns minutos.</string>
+    <string name="drive_problem_error">O Google Drive teve um problema. Tente de novo mais tarde.</string>
+</resources>

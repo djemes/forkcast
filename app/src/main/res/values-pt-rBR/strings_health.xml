@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › Health Connect (SPEC §4.9) -->
+    <string name="hc_intro">O Health Connect é onde os apps de saúde deste celular compartilham dados. O Forkcast pode receber as pesagens da sua balança, passos e treinos, e enviar o que você come e bebe.</string>
+    <string name="hc_reads_title">O Forkcast lê</string>
+    <string name="hc_read_weight">Peso, gordura corporal e altura</string>
+    <string name="hc_read_weight_body">Preenche seu registro e tendência de peso. Uma leitura da balança substitui uma pesagem digitada até 10 minutos antes ou depois.</string>
+    <string name="hc_read_activity">Passos, calorias gastas e treinos</string>
+    <string name="hc_read_activity_body">Aparece em Hoje. A atividade acima do seu dia habitual soma parte dela ao orçamento do dia.</string>
+    <string name="hc_writes_title">O Forkcast grava</string>
+    <string name="hc_write_nutrition">Comida</string>
+    <string name="hc_write_nutrition_body">Cada item como um registro de nutrição com a refeição. Edições e exclusões acompanham.</string>
+    <string name="hc_write_hydration">Água</string>
+    <string name="hc_write_hydration_body">Cada registro como hidratação.</string>
+    <string name="hc_privacy_note">Os dados de saúde ficam neste celular. O Forkcast nunca os envia ao seu provedor de IA nem a nenhum outro lugar.</string>
+    <string name="hc_extra_note">O Forkcast também pede para ler seus dados antigos, para trazer pesagens anteriores, e para ler em segundo plano, para sincronizar com o app fechado. Você pode desligar qualquer um deles na próxima tela.</string>
+    <string name="hc_connect">Conectar</string>
+    <string name="hc_unavailable">O Health Connect não está disponível neste celular.</string>
+    <string name="hc_update_required">O Health Connect precisa de uma atualização antes que o Forkcast possa usá-lo.</string>
+    <string name="hc_get">Instalar o Health Connect</string>
+    <string name="hc_update">Atualizar o Health Connect</string>
+
+    <string name="hc_status_title">Status</string>
+    <string name="hc_status_synced">Última sincronização %1$s</string>
+    <string name="hc_status_never">Ainda não sincronizado</string>
+    <string name="hc_error_permission">O Health Connect impediu o Forkcast de ler ou gravar. Confira as permissões.</string>
+    <string name="hc_error_rate_limited">O Health Connect pediu para o Forkcast ir mais devagar. Ele tenta de novo mais tarde.</string>
+    <string name="hc_error_unavailable">O Health Connect não está disponível agora.</string>
+    <string name="hc_error_failed">A última sincronização não terminou. O Forkcast vai tentar de novo.</string>
+    <string name="hc_sync_now">Sincronizar agora</string>
+    <string name="hc_syncing">Sincronizando…</string>
+    <string name="hc_background_on">Sincroniza mais ou menos a cada hora, mesmo com o Forkcast fechado.</string>
+    <string name="hc_background_off">Sincroniza quando você abre o Forkcast. Permita leituras em segundo plano no Health Connect para sincronizar com ele fechado.</string>
+    <string name="hc_history_on">Lê todo o seu histórico.</string>
+    <string name="hc_history_off">Lê os últimos 30 dias. Permita dados antigos no Health Connect para pesagens mais antigas.</string>
+    <string name="hc_missing">Ainda não permitido: %1$s</string>
+    <string name="hc_allow">Permitir no Health Connect</string>
+    <string name="hc_allow_hint">Se nada abrir, o Health Connect parou de perguntar. Abra o Health Connect e depois Permissões de apps › Forkcast.</string>
+    <string name="hc_open">Abrir o Health Connect</string>
+    <string name="hc_height_title">Altura no Health Connect: %1$s</string>
+    <string name="hc_height_body">Seu perfil diz %1$s.</string>
+    <string name="hc_height_use">Usar %1$s</string>
+    <string name="hc_disconnect">Desconectar</string>
+    <string name="hc_disconnect_title">Desconectar o Health Connect?</string>
+    <string name="hc_disconnect_body">O Forkcast para de ler e gravar, e o Health Connect remove as permissões dele. A comida e a água já gravadas continuam no Health Connect, onde você pode apagá-las. As pesagens que já estão no seu registro continuam no Forkcast.</string>
+
+    <string name="hc_perm_weight">peso</string>
+    <string name="hc_perm_body_fat">gordura corporal</string>
+    <string name="hc_perm_height">altura</string>
+    <string name="hc_perm_steps">passos</string>
+    <string name="hc_perm_active_calories">calorias ativas</string>
+    <string name="hc_perm_total_calories">calorias totais</string>
+    <string name="hc_perm_exercise">treinos</string>
+    <string name="hc_perm_nutrition">comida</string>
+    <string name="hc_perm_hydration">água</string>
+    <string name="hc_perm_history">dados antigos</string>
+    <string name="hc_perm_background">leituras em segundo plano</string>
+
+    <!-- Opened from Health Connect's "privacy policy" link -->
+    <string name="hc_privacy_title">O Forkcast e seus dados de saúde</string>
+    <string name="hc_privacy_body">O Forkcast lê peso, gordura corporal, altura, passos, calorias gastas e treinos do Health Connect para preencher seu registro de peso, mostrar sua atividade e ajustar seu orçamento de calorias. Ele grava sua comida e água para que outros apps possam vê-las.\n\nEsses dados ficam no seu celular. O Forkcast não tem servidor, contas, análises nem anúncios, e nunca envia dados de saúde a provedores de IA, bancos de alimentos ou qualquer outra pessoa. Seus próprios backups (um arquivo que você exporta, ou o seu Google Drive depois de configurado) podem incluir seu registro de peso e de atividade.\n\nVocê pode mudar o que o Forkcast pode ler ou gravar a qualquer momento no Health Connect, ou desconectar em Configurações › Health Connect do Forkcast.</string>
+    <string name="hc_privacy_close">Fechar</string>
+</resources>

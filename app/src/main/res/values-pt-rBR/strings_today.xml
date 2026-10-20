@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Budget ring -->
+    <string name="ring_left">%1$s restantes</string>
+    <string name="ring_over">%1$s acima</string>
+    <string name="ring_eaten_budget">Comido %1$s · Orçamento %2$s</string>
+    <string name="ring_eaten_budget_exercise">Comido %1$s · Orçamento %2$s · +%3$s da atividade</string>
+    <string name="ring_exercise_included">+%1$s da atividade</string>
+    <string name="ring_description_exercise">%1$s comidas de %2$s, incluindo %3$s da atividade. %4$s.</string>
+    <string name="ring_description">%1$s comidas de %2$s. %3$s.</string>
+    <!-- Forecast status line (DESIGN.md §5) -->
+    <string name="forecast_on_course">No caminho</string>
+    <string name="forecast_tight">Apertado</string>
+    <string name="forecast_likely_over">Deve passar uns ~%1$s</string>
+    <string name="forecast_over">%1$s acima</string>
+    <string name="forecast_explain">Pelo que você costuma comer depois das %1$s, deve terminar perto de %2$s.</string>
+
+    <!-- Macros / nutrient panel -->
+    <string name="macro_progress">%1$s / %2$s</string>
+    <string name="nutrients_open">Mostrar todos os nutrientes</string>
+    <string name="nutrients_title">Nutrientes de hoje</string>
+    <string name="nutrient_no_target">sem meta</string>
+    <string name="nutrient_limit">limite</string>
+
+    <!-- Entries -->
+    <string name="deleted_one">%1$s apagado</string>
+    <plurals name="deleted_many">
+        <item quantity="one">%1$d item apagado</item>
+        <item quantity="many">%1$d itens apagados</item>
+        <item quantity="other">%1$d itens apagados</item>
+    </plurals>
+    <string name="undo">Desfazer</string>
+    <plurals name="selected_count">
+        <item quantity="one">%1$d selecionado</item>
+        <item quantity="many">%1$d selecionados</item>
+        <item quantity="other">%1$d selecionados</item>
+    </plurals>
+    <string name="action_delete">Apagar</string>
+    <string name="action_clear_selection">Limpar seleção</string>
+    <string name="select_entry">Selecionar</string>
+    <string name="edit_entry_title">Editar item</string>
+    <string name="edit_quantity">Quantidade</string>
+    <string name="edit_meal">Refeição</string>
+
+    <!-- Source badges (DESIGN.md §5) -->
+    <string name="badge_usda">USDA</string>
+    <string name="badge_off">OFF</string>
+    <string name="badge_label">Tabela</string>
+    <string name="badge_custom">Próprio</string>
+    <string name="badge_quick">Rápido</string>
+    <string name="badge_recipe">Receita</string>
+    <string name="badge_ai">IA</string>
+
+    <!-- Nutrient names -->
+    <string name="n_energy">Energia</string>
+    <string name="n_protein">Proteína</string>
+    <string name="n_carbs">Carboidratos</string>
+    <string name="n_fat">Gordura</string>
+    <string name="n_sat_fat">Gordura saturada</string>
+    <string name="n_trans_fat">Gordura trans</string>
+    <string name="n_mono_fat">Gordura monoinsaturada</string>
+    <string name="n_poly_fat">Gordura poli-insaturada</string>
+    <string name="n_cholesterol">Colesterol</string>
+    <string name="n_fiber">Fibras</string>
+    <string name="n_sugars">Açúcares</string>
+    <string name="n_added_sugars">Açúcares adicionados</string>
+    <string name="n_sodium">Sódio</string>
+    <string name="n_potassium">Potássio</string>
+    <string name="n_calcium">Cálcio</string>
+    <string name="n_iron">Ferro</string>
+    <string name="n_magnesium">Magnésio</string>
+    <string name="n_vitamin_a">Vitamina A</string>
+    <string name="n_vitamin_c">Vitamina C</string>
+    <string name="n_vitamin_d">Vitamina D</string>
+    <string name="n_vitamin_b12">Vitamina B12</string>
+    <string name="n_caffeine">Cafeína</string>
+    <string name="n_alcohol">Álcool</string>
+    <string name="n_water">Água</string>
+    <string name="missing_keys_title">Adicione suas chaves de API de novo</string>
+    <string name="missing_keys_body">Os backups nunca incluem chaves de API, então este celular ainda não tem: %1$s.</string>
+    <string name="missing_keys_usda">Banco de alimentos do USDA</string>
+    <string name="missing_keys_add">Adicionar chaves</string>
+    <string name="missing_keys_not_now">Agora não</string>
+    <!-- Section for entries whose meal was deleted in Settings › Meals. -->
+    <string name="meal_other">Outros</string>
+</resources>

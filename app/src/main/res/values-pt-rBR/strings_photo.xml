@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Photo meal (SPEC §4.6, DESIGN.md §4) -->
+    <string name="photo_meal_title">Refeição por foto</string>
+    <string name="photo_framing_hint">Enquadre o prato inteiro. Um garfo ou a mão ajudam com o tamanho.</string>
+    <string name="photo_free_tier_hint">O Google pode revisar fotos do nível gratuito. Deixe rostos e documentos fora do quadro.</string>
+    <string name="photo_shutter">Tirar foto</string>
+    <string name="photo_gallery">Escolher da galeria</string>
+    <string name="photo_remove">Remover a foto %1$d</string>
+    <string name="photo_count">%1$d de 3 fotos</string>
+    <string name="photo_next">Próximo</string>
+    <string name="photo_camera_needed">O Forkcast precisa da câmera para fotografar sua refeição. Você também pode escolher fotos da galeria.</string>
+    <string name="photo_allow_camera">Permitir câmera</string>
+    <string name="photo_description">O que tem no prato? (opcional)</string>
+    <string name="photo_description_hint">sobrecoxa de frango, ~1 xícara e meia de arroz branco, feito no azeite</string>
+    <string name="photo_meal_label">Refeição</string>
+    <string name="photo_estimate">Estimar</string>
+    <string name="photo_no_ai">Configure um perfil de IA primeiro; depois as fotos podem ser estimadas.</string>
+    <string name="photo_open_ai_settings">Abrir configurações de IA</string>
+    <string name="photo_ai_off">As estimativas por foto estão desligadas em Configurações → IA.</string>
+
+    <!-- Pending rows on Today -->
+    <string name="estimate_running">Estimando…</string>
+    <string name="estimate_waiting_network">Esperando uma conexão</string>
+    <string name="estimate_waiting_quota">Esperando cota da IA (renova %1$s)</string>
+    <string name="estimate_needs_answer">A IA tem uma pergunta. Toque para responder.</string>
+    <string name="estimate_ready_review">Pronta para revisar: ~%1$s</string>
+    <string name="estimate_failed">Não foi possível estimar. Toque para ver detalhes.</string>
+    <string name="badge_ai_review">IA·revisar</string>
+
+    <!-- Review screen -->
+    <string name="review_title">Revisar estimativa</string>
+    <string name="review_total">~%1$s, provavelmente %2$s–%3$s</string>
+    <string name="review_by">Estimado por %1$s</string>
+    <string name="review_likely_added">Provavelmente adicionado</string>
+    <string name="review_remove_added">Remover tudo</string>
+    <string name="review_matched">USDA: %1$s</string>
+    <string name="review_ai_values">Valores da IA</string>
+    <string name="review_use_usda">Usar valores do USDA</string>
+    <string name="review_use_ai">Usar valores da IA</string>
+    <string name="review_change_match">Trocar correspondência</string>
+    <string name="review_match_title">O que é “%1$s”?</string>
+    <string name="review_match_body">Escolha o alimento que ele realmente é. O Forkcast usa a nutrição dele neste item e, na próxima vez, para o mesmo alimento.</string>
+    <string name="review_match_per_100g">%1$s / 100 g</string>
+    <string name="review_match_usda_down">O USDA não respondeu, então estes são só os seus alimentos. Tente de novo mais tarde para ver mais.</string>
+    <string name="review_less">Menos %1$s</string>
+    <string name="review_more">Mais %1$s</string>
+    <string name="review_grams_slider">Quantidade de %1$s</string>
+    <string name="review_remove_item">Remover %1$s</string>
+    <string name="review_assumptions">Suposições</string>
+    <string name="review_question">A IA pergunta: %1$s</string>
+    <string name="review_accept_as_is">Registrar assim</string>
+    <string name="review_correct">Corrigir</string>
+    <string name="review_correct_hint">ex.: foi frito na manteiga, ou comi só a metade</string>
+    <string name="review_answer_hint">Sua resposta</string>
+    <string name="review_send">Enviar</string>
+    <string name="review_save">Salvar</string>
+    <string name="review_delete">Apagar estimativa</string>
+    <string name="review_delete_title">Apagar esta estimativa?</string>
+    <string name="review_delete_body">As fotos dela e o item no registro são removidos.</string>
+    <string name="review_photo_open">Abrir foto</string>
+    <string name="review_photo_close">Fechar foto</string>
+    <string name="review_retry">Tentar de novo</string>
+    <string name="review_warnings">Ajustado: %1$s</string>
+    <string name="review_photo">Foto da refeição %1$d</string>
+    <string name="review_running">A IA está trabalhando nisso. Você pode sair desta tela.</string>
+    <string name="review_no_profile">Nenhum perfil de IA pôde ser usado. Confira Configurações → IA.</string>
+    <string name="review_disabled">As estimativas por foto estão desligadas em Configurações → IA.</string>
+</resources>

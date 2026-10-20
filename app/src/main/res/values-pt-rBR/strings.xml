@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Forkcast</string>
+
+    <!-- Common -->
+    <string name="action_back">Voltar</string>
+
+    <!-- Today -->
+    <string name="today">Hoje</string>
+    <string name="yesterday">Ontem</string>
+    <string name="tomorrow">Amanhã</string>
+    <string name="previous_day">Dia anterior</string>
+    <string name="next_day">Próximo dia</string>
+    <string name="pick_date">Escolher uma data</string>
+    <string name="go_to_today">Ir para hoje</string>
+    <string name="open_settings">Configurações</string>
+    <string name="meal_empty">Nada registrado ainda.</string>
+    <string name="log_sheet_day">Registrando no dia da tela: %1$s</string>
+    <string name="day_empty">Nada registrado neste dia ainda.</string>
+    <string name="last_logged_show">Mostrar</string>
+    <plurals name="last_logged">
+        <item quantity="one">Último registro: %1$s · %2$d item</item>
+        <item quantity="many">Último registro: %1$s · %2$d itens</item>
+        <item quantity="other">Último registro: %1$s · %2$d itens</item>
+    </plurals>
+    <plurals name="days_ago">
+        <item quantity="one">%1$d dia atrás</item>
+        <item quantity="many">%1$d dias atrás</item>
+        <item quantity="other">%1$d dias atrás</item>
+    </plurals>
+    <plurals name="days_ahead">
+        <item quantity="one">Em %1$d dia</item>
+        <item quantity="many">Em %1$d dias</item>
+        <item quantity="other">Em %1$d dias</item>
+    </plurals>
+    <string name="add_to_meal">Adicionar</string>
+    <string name="add_to_meal_description">Adicionar a %1$s</string>
+    <string name="log">Registrar</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancelar</string>
+
+    <!-- Log sheet -->
+    <string name="log_sheet_title">Registrar em %1$s</string>
+    <string name="log_scan">Escanear</string>
+    <string name="log_photo">Foto</string>
+    <string name="log_search">Buscar</string>
+    <string name="log_quick_add">Adicionar calorias rápido</string>
+    <string name="log_saved_meals">Refeições salvas</string>
+    <string name="log_recent">Recentes</string>
+    <string name="log_favorites">Favoritos</string>
+
+    <!-- Settings -->
+    <string name="settings">Configurações</string>
+    <string name="settings_group_you">Você e sua meta</string>
+    <string name="settings_group_logging">Registro</string>
+    <string name="settings_group_connections">Serviços conectados</string>
+    <string name="settings_group_app">App</string>
+    <string name="settings_goal_budget">Meta e orçamento</string>
+    <string name="settings_goal_budget_summary">Peso-alvo, ritmo, orçamento de calorias, manutenção, atividade</string>
+    <string name="settings_profile">Perfil</string>
+    <string name="settings_profile_summary">Sexo, idade, altura e nível de atividade para a fórmula</string>
+    <string name="settings_daily_targets_summary">Proteína, carboidratos, gordura, fibras e outros nutrientes</string>
+    <string name="settings_meals_summary">Nomes, ordem e horários</string>
+    <string name="settings_water">Água</string>
+    <string name="settings_water_summary">Meta diária de água</string>
+    <string name="settings_units">Unidades</string>
+    <string name="settings_units_summary">Peso, altura, energia e água</string>
+    <string name="settings_health_connect_summary">Entram peso, passos e treinos; saem comida e água</string>
+    <string name="settings_ai_summary">Serviços de IA e chaves, a ordem deles, fotos das refeições</string>
+    <string name="settings_food_databases_summary">Chave do USDA e Open Food Facts</string>
+    <string name="settings_notifications_summary">Orçamento, lembretes, horário de silêncio</string>
+    <string name="settings_backup_data_summary">Backup no Google Drive, exportar, importar e transferir configurações</string>
+    <string name="settings_appearance_summary">Claro, escuro e cores</string>
+    <string name="settings_about_summary">Versão, atualizações, privacidade e licenças</string>
+    <string name="settings_daily_targets">Metas diárias</string>
+    <string name="settings_meals">Refeições</string>
+    <string name="settings_notifications">Notificações</string>
+    <string name="settings_ai">Estimativas por foto com IA</string>
+    <string name="settings_food_databases">Bancos de alimentos</string>
+    <string name="settings_health_connect">Health Connect</string>
+    <string name="settings_backup_data">Backup e dados</string>
+    <string name="settings_appearance">Aparência</string>
+    <string name="settings_about">Sobre</string>
+
+    <!-- Appearance -->
+    <string name="appearance_theme">Tema</string>
+    <string name="theme_system">Padrão do sistema</string>
+    <string name="theme_light">Claro</string>
+    <string name="theme_dark">Escuro</string>
+    <string name="appearance_wallpaper_colors">Usar as cores do papel de parede</string>
+    <string name="appearance_wallpaper_colors_summary">Combina com as cores do seu celular em vez da paleta do Forkcast.</string>
+
+    <!-- About -->
+    <string name="about_version">Versão %1$s (%2$d)</string>
+    <string name="about_privacy_title">Privacidade</string>
+    <string name="about_privacy_body">O Forkcast não tem contas, análises, anúncios nem servidor próprio. Seu registro fica neste celular. Ele só se conecta a serviços que você mesmo configurou: bancos de alimentos (USDA, Open Food Facts) para buscas, seu provedor de IA para as fotos das refeições e suas descrições, e o seu próprio Google Drive para backups. Só quando você toca em Procurar atualizações, ele pergunta ao GitHub qual é a versão mais nova, com o token que você informou. Os dados do Health Connect (peso, atividade) ficam no celular e nunca são enviados aos provedores de IA.</string>
+    <string name="about_medical_title">Não é orientação médica</string>
+    <string name="about_medical_body">O Forkcast faz estimativas, principalmente a partir de fotos. Pese a comida quando a precisão importar, e converse com um médico ou nutricionista antes de grandes mudanças.</string>
+    <string name="about_licenses_title">Licenças</string>
+    <string name="about_license_manrope">Fonte Manrope, SIL Open Font License 1.1</string>
+
+    <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
+    <string name="key_saved_encrypted">Guardada com criptografia. Só a exportação de configurações protegida por senha a inclui.</string>
+    <string name="key_copy">Copiar chave</string>
+    <string name="key_copied">Copiada</string>
+    <string name="key_state_shown">Chave visível</string>
+    <string name="key_state_hidden">Chave oculta</string>
+    <string name="key_replace">Trocar chave</string>
+    <string name="key_new">Nova chave</string>
+</resources>

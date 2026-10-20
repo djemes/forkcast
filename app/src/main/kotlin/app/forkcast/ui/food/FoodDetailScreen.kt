@@ -175,7 +175,7 @@ fun FoodDetailScreen(
             Text(stringResource(R.string.food_serving), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 state.servings.forEach { s ->
-                    FilterChip(selected = s.label == state.serving.label, onClick = { onServing(s) }, label = { Text(s.label) })
+                    FilterChip(selected = s.label == state.serving.label, onClick = { onServing(s) }, label = { Text(app.forkcast.ui.today.servingLabel(s.label)) })
                 }
             }
 
@@ -186,7 +186,7 @@ fun FoodDetailScreen(
                 NumberField(
                     initial = state.quantity?.let { UnitFormatter.trimNumber(it, 2) }.orEmpty(),
                     label = stringResource(R.string.food_quantity),
-                    suffix = state.serving.label.takeIf { it == "g" || it == "oz" || it == "ml" || it == "fl oz" } ?: "× ${state.serving.label}",
+                    suffix = state.serving.label.takeIf { it == "g" || it == "oz" || it == "ml" || it == "fl oz" } ?: "× ${app.forkcast.ui.today.servingLabel(state.serving.label)}",
                     onValue = onQuantity,
                     // Re-seed the field when the serving or stepper changes the value.
                     key = "${state.serving.label}|${state.quantity}",

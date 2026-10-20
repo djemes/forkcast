@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Settings › AI (SPEC §4.7) -->
+    <string name="ai_enabled">Estimativas por foto</string>
+    <string name="ai_enabled_body">Estime uma refeição a partir de uma foto e uma descrição curta, usando a sua própria chave de IA.</string>
+    <string name="ai_profiles_title">Seus perfis de IA</string>
+    <string name="ai_order_explain">Um perfil é um serviço de IA e um modelo, com a chave dele. A foto vai primeiro para o número 1. Se ele não conseguir responder (sem cota, ocupado, um erro), o número 2 tenta, e assim por diante. Desligue um perfil para pulá-lo.</string>
+    <string name="ai_section_photos">Estimativas por foto</string>
+    <string name="ai_move_up_named">Subir %1$s</string>
+    <string name="ai_move_down_named">Descer %1$s</string>
+    <string name="ai_check_never">Ainda não testado. Toque em Testar.</string>
+    <string name="ai_check_ok">Funcionando: último teste ok %1$s</string>
+    <string name="ai_check_failed">Último teste falhou %1$s: %2$s</string>
+    <string name="ai_check_why_key">a chave foi recusada</string>
+    <string name="ai_check_why_quota">sem cota por enquanto</string>
+    <string name="ai_check_why_model">o modelo não foi encontrado</string>
+    <string name="ai_check_why_network">sem conexão</string>
+    <string name="ai_check_why_other">o serviço respondeu com um erro</string>
+    <string name="ai_no_profiles">Nenhum perfil de IA ainda. Adicione um para começar a estimar refeições por foto.</string>
+    <string name="ai_setup_free">Configurar Gemini grátis</string>
+    <string name="ai_add_profile">Adicionar perfil</string>
+    <string name="ai_edit">Editar</string>
+    <string name="ai_position">Número %1$d na ordem</string>
+    <string name="ai_role_first">Usado primeiro</string>
+    <string name="ai_role_backup">Reserva: usado quando os de cima não conseguem responder</string>
+    <string name="ai_role_off">Desligado: pulado</string>
+    <string name="ai_role_no_key">Sem chave salva: pulado. Toque em Editar para adicionar uma.</string>
+    <string name="ai_role_key_rejected">Chave recusada na última tentativa: pulado. Corrija a chave e toque em Testar.</string>
+    <string name="ai_delete_title">Excluir %1$s?</string>
+    <string name="ai_delete_body">A chave de API dele sai deste celular. Você pode desfazer logo em seguida.</string>
+    <string name="ai_delete_body_moves_up">A chave de API dele sai deste celular, e %1$s sobe uma posição. Você pode desfazer logo em seguida.</string>
+    <string name="ai_deleted">%1$s excluído</string>
+    <string name="ai_used_today">Usado hoje: %1$d</string>
+    <string name="ai_cooling_down">Pausado até %1$s (cota)</string>
+    <string name="ai_test">Testar</string>
+    <string name="ai_testing">Testando…</string>
+    <string name="ai_test_ok">Conectado a %1$s em %2$d ms</string>
+    <string name="ai_profile_enabled">Usar %1$s</string>
+    <string name="ai_personal_context">Contexto pessoal</string>
+    <string name="ai_personal_context_hint">ex.: costumo cozinhar com azeite; meus pratos de jantar têm 27 cm</string>
+    <string name="ai_personal_context_note">Enviado com cada foto. Não inclua dados pessoais.</string>
+    <string name="ai_auto_accept">Registrar estimativas na hora</string>
+    <string name="ai_auto_accept_body">As estimativas contam no dia imediatamente, marcadas como IA·revisar até você conferir.</string>
+    <string name="ai_photo_retention">Apagar fotos das refeições depois de</string>
+    <string name="ai_photo_retention_body">Só a foto é apagada. O registro e a nutrição dele ficam.</string>
+    <string name="ai_retention_days" tools:ignore="PluralsCandidate">%1$d dias</string>
+    <string name="ai_retention_forever">Nunca</string>
+    <string name="ai_usage_title">Uso neste mês</string>
+    <plurals name="ai_usage_summary">
+        <item quantity="one">%1$d estimativa · %2$s tokens de entrada · %3$s de saída · cerca de %4$s</item>
+        <item quantity="many">%1$d estimativas · %2$s tokens de entrada · %3$s de saída · cerca de %4$s</item>
+        <item quantity="other">%1$d estimativas · %2$s tokens de entrada · %3$s de saída · cerca de %4$s</item>
+    </plurals>
+    <string name="ai_usage_none">Nenhuma estimativa neste mês ainda.</string>
+    <plurals name="ai_usage_model">
+        <item quantity="one">%1$s: %2$d requisição · %3$s</item>
+        <item quantity="many">%1$s: %2$d requisições · %3$s</item>
+        <item quantity="other">%1$s: %2$d requisições · %3$s</item>
+    </plurals>
+    <string name="ai_usage_free">grátis</string>
+    <string name="ai_usage_no_price">sem preço definido</string>
+    <string name="ai_edit_price">Editar preço de %1$s</string>
+    <string name="ai_price_input">Entrada: US$ por 1M de tokens</string>
+    <string name="ai_price_output">Saída: US$ por 1M de tokens</string>
+
+    <!-- Profile editor -->
+    <string name="ai_profile_new">Novo perfil de IA</string>
+    <string name="ai_profile_edit">Editar perfil de IA</string>
+    <string name="ai_provider">Provedor</string>
+    <string name="ai_provider_claude">Claude (Anthropic)</string>
+    <string name="ai_provider_gemini">Gemini (Google)</string>
+    <string name="ai_provider_openai">Compatível com OpenAI</string>
+    <string name="ai_free_tier_note">Se o faturamento não estiver ativado no projeto do Google Cloud desta chave (o nível gratuito do Gemini), o Google pode usar suas fotos e descrições para melhorar os produtos dele, e pessoas podem revisá-las. Não inclua rostos, documentos nem dados pessoais. Quem está no EEE, no Reino Unido ou na Suíça precisa de uma chave paga.</string>
+    <string name="ai_base_url">URL do servidor</string>
+    <string name="ai_base_url_hint">ex.: https://openrouter.ai/api ou http://192.168.1.10:11434</string>
+    <string name="ai_cleartext_warning">Este endereço não é criptografado (http). Use só na sua própria rede ou VPN.</string>
+    <string name="ai_api_key">Chave de API</string>
+    <string name="ai_api_key_optional">Opcional para servidores locais</string>
+    <string name="ai_get_key">Como conseguir uma chave de API</string>
+
+    <!-- "How to get an API key" guide (links checked 2026-10-19) -->
+    <string name="key_guide_done">Pronto</string>
+    <string name="key_guide_copy_paste">Copie a chave, volte aqui e toque em Colar.</string>
+    <string name="key_guide_open_billing">Abrir Faturamento</string>
+    <string name="key_guide_open_api_keys">Abrir chaves de API</string>
+    <string name="key_guide_use_url">Usar %1$s como URL do servidor</string>
+    <string name="key_guide_pick_vision_model">Volte aqui, toque em Colar, depois em Escolher da lista e escolha um modelo que leia imagens.</string>
+
+    <string name="key_guide_gemini_title">Conseguir uma chave de API do Gemini</string>
+    <string name="key_guide_gemini_intro">As chaves do Gemini são grátis para começar. Uma chave grátis tem limites diários, e o Google pode usar o que você envia para melhorar os produtos dele. Ativar o faturamento no projeto do Google Cloud da chave a torna uma chave paga.</string>
+    <string name="key_guide_gemini_studio">Opção 1: Google AI Studio (mais rápida)</string>
+    <string name="key_guide_gemini_studio_1">Abra o Google AI Studio e entre com sua conta Google.</string>
+    <string name="key_guide_gemini_studio_2">Toque em Create API key. Escolha um projeto ou deixe o AI Studio criar um.</string>
+    <string name="key_guide_gemini_studio_note">Se Salvar e testar disser que o Google não aceitou esse tipo de chave, use a opção 2.</string>
+    <string name="key_guide_gemini_cloud">Opção 2: console do Google Cloud</string>
+    <string name="key_guide_gemini_cloud_1">Abra a página da Gemini API, confira o nome do projeto no topo (crie um se precisar) e toque em Enable.</string>
+    <string name="key_guide_gemini_cloud_2">Abra Credentials e toque em Create credentials › API key.</string>
+    <string name="key_guide_gemini_cloud_3">Edite a nova chave. Em API restrictions, escolha Restrict key, marque Gemini API e salve. O Google recusa chaves sem restrição.</string>
+    <string name="key_guide_gemini_billing">Grátis ou paga: a chave é grátis a menos que o faturamento esteja vinculado ao projeto dela. Se vincular, crie também um alerta de orçamento lá.</string>
+    <string name="key_guide_open_ai_studio">Abrir AI Studio</string>
+    <string name="key_guide_open_gemini_api">Abrir a página da Gemini API</string>
+    <string name="key_guide_open_credentials">Abrir Credentials</string>
+
+    <string name="key_guide_claude_title">Conseguir uma chave de API do Claude</string>
+    <string name="key_guide_claude_intro">O Claude não tem nível gratuito. Você paga por estimativa com crédito pré-pago: cerca de um centavo de dólar por foto com o Sonnet, menos com o Haiku. Os planos Pro ou Max do Claude.ai não incluem uso da API.</string>
+    <string name="key_guide_claude_1">Entre no Claude Console ou crie uma conta.</string>
+    <string name="key_guide_claude_2">Adicione crédito em Settings › Billing. As requisições falham até a conta ter crédito.</string>
+    <string name="key_guide_claude_3">Opcional: defina um limite mensal de gasto em Settings › Limits.</string>
+    <string name="key_guide_claude_4">Abra API keys e toque em Create key. Dê o nome Forkcast.</string>
+    <string name="key_guide_claude_5">Copie a chave (começa com sk-ant-). Ela só aparece uma vez. Volte aqui e toque em Colar.</string>
+    <string name="key_guide_open_claude_console">Abrir Claude Console</string>
+    <string name="key_guide_open_limits">Abrir Limits</string>
+
+    <string name="key_guide_openai_title">Conseguir uma chave para um serviço compatível com OpenAI</string>
+    <string name="key_guide_openai_intro">Funciona com a OpenAI, com o OpenRouter (uma chave para vários modelos de IA) ou com um servidor de IA seu. Siga o que você usa.</string>
+    <string name="key_guide_openai_openai">OpenAI</string>
+    <string name="key_guide_openai_1">Entre na plataforma de API da OpenAI. Ela é separada do ChatGPT, e um plano do ChatGPT não inclui uso da API.</string>
+    <string name="key_guide_openai_2">Adicione crédito em Settings › Billing (pré-pago, mínimo de US$ 5). A recarga automática vem ligada; desligue se não quiser.</string>
+    <string name="key_guide_openai_3">Abra API keys e toque em Create new secret key. Copie; ela só aparece uma vez.</string>
+    <string name="key_guide_open_openai">Abrir plataforma da OpenAI</string>
+    <string name="key_guide_openai_openrouter">OpenRouter</string>
+    <string name="key_guide_openrouter_1">Entre no OpenRouter, abra Keys e crie uma chave. Copie.</string>
+    <string name="key_guide_openrouter_2">Adicione crédito para modelos pagos. Modelos com nome terminado em :free não precisam de crédito, mas têm limites diários baixos.</string>
+    <string name="key_guide_open_openrouter">Abrir chaves do OpenRouter</string>
+    <string name="key_guide_open_credits">Abrir Credits</string>
+    <string name="key_guide_openai_local">Seu próprio servidor (Ollama)</string>
+    <string name="key_guide_local_1">Instale o Ollama em um computador da sua rede e baixe um modelo que leia imagens (um modelo de visão).</string>
+    <string name="key_guide_local_2">Deixe o celular alcançá-lo: defina OLLAMA_HOST como 0.0.0.0:11434 nesse computador e reinicie o Ollama.</string>
+    <string name="key_guide_local_3">URL do servidor: http://&lt;o endereço IP do computador&gt;:11434. Deixe a chave de API vazia.</string>
+    <string name="key_guide_local_note">Só funciona na sua rede de casa ou VPN. Modelos locais pequenos avaliam porções com menos precisão.</string>
+    <string name="key_guide_open_ollama">Abrir download do Ollama</string>
+    <string name="key_guide_open_ollama_faq">Como definir OLLAMA_HOST</string>
+    <string name="ai_use_key_from">Usar a chave de %1$s</string>
+    <string name="ai_model">Modelo</string>
+    <string name="ai_choose_model">Escolher da lista</string>
+    <string name="ai_loading_models">Carregando modelos…</string>
+    <string name="ai_recommended">Recomendado</string>
+    <string name="ai_display_name">Nome na lista</string>
+    <string name="ai_delete_profile">Excluir perfil</string>
+    <string name="ai_save_and_test">Salvar e testar</string>
+    <string name="ai_test_again">Testar de novo</string>
+    <string name="ai_api_key_replacing">A chave salva continua até você salvar uma nova.</string>
+
+    <!-- Error messages (DESIGN.md §6 tone) -->
+    <string name="ai_err_invalid_key">%1$s recusou a chave de API. Confira em Configurações → IA.</string>
+    <string name="ai_err_no_key">Nenhuma chave de API salva para este perfil.</string>
+    <string name="ai_err_provider_said">%1$s disse: %2$s</string>
+    <string name="ai_err_key_status">%1$s recusou a chave de API (%2$s).</string>
+    <string name="ai_err_request_status">%1$s recusou a requisição (%2$s).</string>
+    <string name="ai_err_hint_token_type">O Google não aceitou esse tipo de chave para esta requisição. Se a chave é nova, espere alguns minutos e teste de novo. Se continuar falhando, crie a chave no console do Google Cloud (Como conseguir uma chave de API, opção 2).</string>
+    <string name="ai_err_hint_service_disabled">A Gemini API ainda não está ativada no projeto do Google Cloud desta chave. Se você acabou de criar a chave, espere alguns minutos e teste de novo.</string>
+    <string name="ai_err_hint_key_invalid">A chave não é válida. Confira se a chave inteira foi colada, sem nada a mais.</string>
+    <string name="ai_err_hint_key_restricted">Esta chave tem restrições de API que bloqueiam a Gemini API. Confira as restrições da chave no Google Cloud Console.</string>
+    <string name="ai_err_hint_permission">Esta chave não tem permissão para usar este modelo ou API.</string>
+    <string name="ai_err_hint_check_key">Confira a chave deste perfil e teste de novo.</string>
+    <string name="ai_err_rate_limited">%1$s está ocupado ou no limite. Tente de novo em um minuto.</string>
+    <string name="ai_err_quota">A cota de %1$s acabou. Ela renova mais tarde.</string>
+    <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro no perfil.</string>
+    <string name="ai_err_refused">%1$s preferiu não estimar esta foto.</string>
+    <string name="ai_err_bad_response">%1$s mandou uma resposta que o Forkcast não conseguiu ler. Tente de novo.</string>
+    <string name="ai_err_request">%1$s recusou a requisição: %2$s</string>
+    <string name="ai_err_network_test">Sem conexão. Conecte-se à internet e teste de novo.</string>
+    <string name="ai_err_network">Sem conexão. A estimativa vai rodar quando você voltar a ficar online.</string>
+    <string name="ai_err_timeout">%1$s demorou demais para responder. Tente de novo.</string>
+    <string name="ai_err_server">%1$s teve um problema (erro %2$d). Tente de novo mais tarde.</string>
+</resources>

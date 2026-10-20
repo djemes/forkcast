@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Onboarding shell -->
+    <string name="onboarding_step_of">Passo %1$d de %2$d</string>
+    <string name="action_continue">Continuar</string>
+    <string name="action_start">Começar a registrar</string>
+    <string name="action_save">Salvar</string>
+
+    <!-- Units -->
+    <string name="onb_units_title">Bem-vindo ao Forkcast</string>
+    <string name="onb_units_body">Algumas perguntas transformam sua meta em um orçamento diário. Primeiro, as unidades que você usa.</string>
+    <string name="units_weight">Peso</string>
+    <string name="units_height">Altura</string>
+    <string name="units_energy">Energia</string>
+    <string name="units_water">Água</string>
+    <string name="unit_fl_oz">fl oz</string>
+    <string name="unit_ml">ml</string>
+    <string name="unit_lb">lb</string>
+    <string name="unit_kg">kg</string>
+    <string name="unit_ft_in">pés / pol</string>
+    <string name="unit_cm">cm</string>
+    <string name="unit_kcal">kcal</string>
+    <string name="unit_kj">kJ</string>
+
+    <!-- Sex -->
+    <string name="onb_sex_title">Sexo para a fórmula de calorias</string>
+    <string name="onb_sex_body">A equação padrão de energia em repouso usa esse dado. Ele fica neste celular.</string>
+    <string name="sex_male">Masculino</string>
+    <string name="sex_female">Feminino</string>
+
+    <!-- Birth date -->
+    <string name="onb_birth_title">Data de nascimento</string>
+    <string name="onb_birth_body">Sua idade muda um pouco a sua energia em repouso a cada ano.</string>
+    <string name="onb_birth_pick">Escolher uma data</string>
+
+    <!-- Height / weight -->
+    <string name="onb_height_title">Altura</string>
+    <string name="onb_weight_title">Peso atual</string>
+    <string name="onb_weight_body">O peso de hoje serve. Se você tem uma balança inteligente, ela pode sincronizar depois.</string>
+    <string name="field_feet">Pés</string>
+    <string name="field_inches">Polegadas</string>
+    <string name="field_cm">Centímetros</string>
+    <string name="field_weight">Peso (%1$s)</string>
+
+    <!-- Activity -->
+    <string name="onb_activity_title">Atividade diária</string>
+    <string name="onb_activity_body">Escolha como é uma semana normal, incluindo exercícios.</string>
+    <string name="activity_sedentary">Sedentário</string>
+    <string name="activity_sedentary_desc">Trabalho sentado, pouca caminhada, sem exercício regular</string>
+    <string name="activity_light">Levemente ativo</string>
+    <string name="activity_light_desc">Algumas caminhadas; exercício leve 1–3 dias por semana</string>
+    <string name="activity_moderate">Moderadamente ativo</string>
+    <string name="activity_moderate_desc">Muito tempo em pé, ou exercício 3–5 dias por semana</string>
+    <string name="activity_very">Muito ativo</string>
+    <string name="activity_very_desc">Trabalho físico, ou exercício intenso 6–7 dias por semana</string>
+    <string name="activity_extra">Extremamente ativo</string>
+    <string name="activity_extra_desc">Trabalho físico mais treino pesado, ou treino duas vezes por dia</string>
+
+    <!-- Goal -->
+    <string name="onb_goal_title">Sua meta</string>
+    <string name="goal_lose">Perder peso</string>
+    <string name="goal_maintain">Manter o peso</string>
+    <string name="goal_gain">Ganhar peso</string>
+    <string name="onb_target_title">Peso-alvo</string>
+    <string name="onb_target_lose_hint">Abaixo dos seus %1$s atuais</string>
+    <string name="onb_target_gain_hint">Acima dos seus %1$s atuais</string>
+
+    <!-- Pace -->
+    <string name="onb_pace_title">Em que ritmo?</string>
+    <string name="onb_pace_body">Escolha um ritmo semanal ou uma data. O outro se ajusta enquanto você escolhe.</string>
+    <string name="pace_by_rate">Ritmo semanal</string>
+    <string name="pace_by_date">Data-alvo</string>
+    <string name="pace_per_week">%1$s por semana</string>
+    <string name="pace_reach_on">Você chegaria a %1$s por volta de %2$s.</string>
+    <string name="pace_rate_needed">Isso leva cerca de %1$s por semana.</string>
+    <string name="pace_custom_rate">Personalizado (%1$s por semana)</string>
+
+    <!-- Result -->
+    <string name="onb_result_title">Seu orçamento diário</string>
+    <string name="budget_kcal_per_day">%1$s por dia</string>
+    <string name="macro_protein">Proteína</string>
+    <string name="macro_carbs">Carboidratos</string>
+    <string name="macro_fat">Gordura</string>
+    <string name="macro_fiber">Fibras</string>
+    <string name="how_calculated">Como calculamos isso</string>
+    <string name="calc_bmr">Energia em repouso (Mifflin-St Jeor): 10 × %1$s kg + 6,25 × %2$s cm − 5 × %3$d (idade) %4$s = %5$s</string>
+    <string name="calc_bmr_male">+ 5</string>
+    <string name="calc_bmr_female">− 161</string>
+    <string name="calc_tdee">× %1$s pela sua atividade = %2$s de manutenção</string>
+    <string name="calc_deficit">− %1$s por dia para perder %2$s por semana (cerca de 7.700 kcal por kg de peso corporal, ou 3.500 por lb)</string>
+    <string name="calc_surplus">+ %1$s por dia para ganhar %2$s por semana (cerca de 7.700 kcal por kg, ou 3.500 por lb)</string>
+    <string name="calc_maintain">Sem déficit nem superávit: seu orçamento é a sua manutenção.</string>
+    <string name="calc_budget">Arredondado para a dezena mais próxima: %1$s</string>
+    <string name="calc_macros">Proteína: 1,6 g por kg do peso atual (no máximo 2,2 g por kg do peso-alvo). Gordura: 30%% das calorias. Carboidratos completam o resto. Fibras: 14 g a cada 1.000 kcal.</string>
+    <string name="calc_adaptive">Seu registro e sua tendência de peso nas últimas 4 semanas colocam sua manutenção em %1$s (a fórmula dizia %2$s).</string>
+    <string name="calc_adaptive_added_back">− %1$s por dia, seu bônus médio de atividade (o bônus de cada dia entra naquele dia) = %2$s</string>
+    <string name="calc_activity_note">Além disso, %1$d %% das calorias ativas de cada dia acima do habitual (até %2$s) entram naquele dia.</string>
+    <string name="activity_bonus_setting">Somar atividade extra ao meu orçamento</string>
+    <string name="activity_bonus_setting_on">%1$d %% das suas calorias ativas acima de um dia habitual, até %2$s, entram no orçamento daquele dia.</string>
+    <string name="activity_bonus_setting_off">A atividade aparece em Hoje, mas não muda seu orçamento.</string>
+    <string name="activity_advice" tools:ignore="PluralsCandidate">Seus últimos %1$d dias têm média de %2$s ativas por dia, o que combina com “%3$s”.</string>
+    <string name="activity_advice_high">Seu nível de atividade está acima disso. A atividade acima de um dia habitual já soma ao orçamento, então um nível que conta seus treinos pode contá-los duas vezes.</string>
+    <string name="activity_advice_low">Seu nível de atividade está abaixo disso, então seu orçamento pode estar baixo.</string>
+    <string name="calc_adaptive_note">Estas são estimativas pela fórmula. Depois de algumas semanas registrando e se pesando, o Forkcast consegue aprender sua manutenção real com os seus próprios dados.</string>
+    <string name="not_medical_advice">O Forkcast faz estimativas, não dá orientação médica.</string>
+
+    <!-- Guardrails (warnings, never blocks) -->
+    <string name="guard_fast_loss">Este ritmo é mais rápido que 1%% do seu peso por semana (cerca de %1$s). Nesse ritmo você chegaria à meta por volta de %2$s.</string>
+    <string name="guard_low_budget">Este orçamento está abaixo de %1$s ou abaixo da sua energia em repouso (%2$s). Converse com um médico ou nutricionista antes de baixar mais.</string>
+
+    <!-- Profile & goals (settings) -->
+    <string name="profile_custom_budget">Orçamento personalizado</string>
+    <string name="profile_custom_budget_summary">Substituir os %1$s calculados</string>
+    <string name="profile_custom_budget_field">Orçamento (%1$s)</string>
+    <string name="profile_use_calculated">Usar o calculado</string>
+    <string name="custom_chip">personalizado</string>
+    <string name="profile_section_goal">Meta</string>
+    <string name="profile_section_maintenance_activity">Manutenção e atividade</string>
+    <string name="maintenance_estimate">Manutenção estimada</string>
+    <string name="maintenance_estimate_value">%1$s, com base nas suas últimas 4 semanas · confiança %2$s</string>
+    <string name="maintenance_confidence_low">baixa</string>
+    <string name="maintenance_confidence_medium">média</string>
+    <string name="maintenance_confidence_high">alta</string>
+    <string name="maintenance_progress">Aprende com seus dados quando as últimas 4 semanas tiverem 14 dias registrados por completo e 6 pesagens. Até agora: %1$d de 14 dias, %2$d de 6 pesagens.</string>
+    <string name="maintenance_use">Usar minha manutenção estimada</string>
+    <string name="maintenance_use_on">Seu orçamento acompanha a estimativa e se atualiza toda semana. Desligado, usa a fórmula.</string>
+    <string name="maintenance_use_off">Seu orçamento usa a fórmula. Ligue para seguir os seus próprios dados.</string>
+    <string name="profile_units">Unidades</string>
+    <string name="profile_sex">Sexo para a fórmula</string>
+    <string name="profile_birth">Data de nascimento</string>
+    <string name="profile_height">Altura</string>
+    <string name="profile_activity">Atividade</string>
+    <string name="profile_goal_type">Meta</string>
+    <string name="profile_target">Peso-alvo</string>
+    <string name="profile_pace">Ritmo</string>
+    <string name="profile_current_weight">Peso atual</string>
+    <string name="profile_current_weight_summary">%1$s · registre uma nova pesagem para mudar</string>
+
+    <!-- Settings › Daily targets (SPEC §4.12, §5.7) -->
+    <string name="targets_body">As metas vêm do seu orçamento e da sua meta de peso. Mude qualquer uma; as personalizadas ficam até você restaurar. Mudar proteína, carboidratos ou gordura não reequilibra os outros.</string>
+    <string name="targets_goal">Meta</string>
+    <string name="targets_limit">Limite</string>
+    <string name="targets_custom">personalizada</string>
+    <string name="targets_default">Padrão %1$s</string>
+    <string name="targets_section_main">Calorias e macros</string>
+    <string name="targets_section_limits">Fibras e limites</string>
+    <string name="targets_section_micros">Vitaminas e minerais (valores diários dos EUA)</string>
+    <string name="targets_edit">Meta de %1$s</string>
+    <string name="targets_amount">Quantidade</string>
+    <string name="targets_reset">Restaurar o padrão</string>
+    <string name="targets_invalid">Digite um número maior que 0.</string>
+    <string name="targets_kind_goal">uma meta a alcançar</string>
+    <string name="targets_kind_limit">um limite a não passar</string>
+    <string name="targets_kind_line">%1$s é %2$s.</string>
+</resources>

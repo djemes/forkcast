@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <string name="meal_more">Mais opções para %1$s</string>
+    <string name="meal_copy">Copiar refeição…</string>
+    <string name="meal_save_as">Salvar como refeição…</string>
+    <string name="day_copy">Copiar o dia todo…</string>
+    <string name="same_as_yesterday">Igual a ontem</string>
+    <string name="action_copy">Copiar</string>
+    <string name="action_save_as_meal">Salvar como refeição</string>
+    <string name="copy_title">Copiar para</string>
+    <string name="copy_same_meal">Mesma refeição</string>
+    <string name="copy_day">Dia</string>
+    <plurals name="copied">
+        <item quantity="one">%1$d item copiado para %2$s</item>
+        <item quantity="many">%1$d itens copiados para %2$s</item>
+        <item quantity="other">%1$d itens copiados para %2$s</item>
+    </plurals>
+    <string name="save_meal_title">Salvar como refeição</string>
+    <string name="save_meal_name">Nome</string>
+    <string name="save_meal_hint">ex.: Café da manhã de sempre</string>
+    <string name="saved_meal_done">\"%1$s\" salva</string>
+    <string name="saved_meals_title">Refeições salvas</string>
+    <string name="saved_meals_empty">Nenhuma refeição salva ainda. Toque e segure itens em Hoje, ou use o menu de uma refeição, para salvar uma.</string>
+    <plurals name="saved_meal_items">
+        <item quantity="one">%1$d item</item>
+        <item quantity="many">%1$d itens</item>
+        <item quantity="other">%1$d itens</item>
+    </plurals>
+    <string name="saved_meal_delete">Apagar %1$s</string>
+    <string name="saved_meal_log">Registrar %1$s</string>
+
+    <!-- Settings › Meals (SPEC §4.12) -->
+    <string name="meals_body">As seções de refeição em Hoje, nesta ordem. Quando você registra, o Forkcast escolhe a refeição cujo horário inclui a hora atual; uma refeição sem horário é usada quando nenhuma se encaixa.</string>
+    <string name="meals_window">%1$s – %2$s</string>
+    <string name="meals_no_window">Sem horário: usada quando nenhuma outra refeição se encaixa</string>
+    <string name="meals_add">Adicionar refeição</string>
+    <string name="meals_max" tools:ignore="PluralsCandidate">Até %1$d refeições.</string>
+    <string name="meals_edit_title">Editar refeição</string>
+    <string name="meals_new_title">Nova refeição</string>
+    <string name="meals_name">Nome</string>
+    <string name="meals_has_window">Horário</string>
+    <string name="meals_starts">Começa %1$s</string>
+    <string name="meals_ends">Termina %1$s</string>
+    <string name="meals_overlap">Se sobrepõe a %1$s. A refeição mais acima na lista é escolhida primeiro.</string>
+    <string name="meals_err_blank">Dê um nome à refeição.</string>
+    <string name="meals_err_long" tools:ignore="PluralsCandidate">Use menos de %1$d caracteres no nome.</string>
+    <string name="meals_err_duplicate">Outra refeição já tem esse nome.</string>
+    <string name="meals_err_window">O início e o fim não podem ser no mesmo horário.</string>
+    <string name="meals_delete">Apagar refeição</string>
+    <string name="meals_delete_body">Os itens antigos de %1$s ficam nos dias deles, em Outros. Você pode desfazer logo em seguida.</string>
+    <string name="meals_deleted">%1$s apagada</string>
+    <string name="meals_last_one">Mantenha pelo menos uma refeição.</string>
+    <string name="meals_more">Mais opções para %1$s</string>
+    <string name="meals_move_up">Subir</string>
+    <string name="meals_move_down">Descer</string>
+</resources>
