@@ -196,7 +196,10 @@ private fun PreviewOn(style: WidgetStyle, isWater: Boolean, wallpaperDark: Boole
                 .background(Brush.verticalGradient(0f to sheen, 0.5f to Color.Transparent))
                 .border(1.dp, rim, shape),
         ) {
-            val track = palette.ink.copy(alpha = 0.18f)
+            val track = palette.ink.copy(alpha = WidgetArt.TRACK_ALPHA)
+            // The same sample afternoon as the widget picker's preview, in the phone's units.
+            val sample = remember { sampleSnapshot() }
+            val f = sample.format
             val fill = if (isWater) palette.protein else palette.pine
             Canvas(Modifier.size(84.dp)) {
                 val stroke = size.minDimension * 0.085f
@@ -211,12 +214,13 @@ private fun PreviewOn(style: WidgetStyle, isWater: Boolean, wallpaperDark: Boole
             if (isWater) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(painterResource(R.drawable.ic_water_glass), contentDescription = null, tint = palette.protein, modifier = Modifier.size(28.dp))
-                    Text("1250 ml", style = MaterialTheme.typography.labelLarge, color = palette.ink)
+                    val unit = if (f.waterUnitLabel == "fl oz") "oz" else f.waterUnitLabel
+                    Text("${f.number(f.waterValue(sample.waterMl))} $unit", style = MaterialTheme.typography.labelLarge, color = palette.ink)
                 }
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("860", style = MaterialTheme.typography.titleLarge, color = palette.ink)
-                    Text("kcal left", style = MaterialTheme.typography.labelSmall, color = palette.muted)
+                    Text(f.energyNumber(sample.totals?.remainingKcal ?: 0.0), style = MaterialTheme.typography.titleLarge, color = palette.ink)
+                    Text(stringResource(R.string.ring_left, f.energyUnitLabel), style = MaterialTheme.typography.labelSmall, color = palette.muted)
                 }
             }
         }

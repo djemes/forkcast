@@ -45,4 +45,15 @@ class BackupRetentionTest {
         assertThat(BackupRetention.overdue(now.minus(Duration.ofDays(3)), now.minus(Duration.ofDays(30)), 1, now)).isTrue()
         assertThat(BackupRetention.overdue(null, now.minus(Duration.ofDays(1)), 7, now)).isFalse()
     }
+
+    /** Clocks change at 2 am in the US; the 3 am backup still lands at 3 am local, an hour sooner or later. */
+    @Test fun nightRunAcrossDaylightSavingChanges() {
+        val ny = java.time.ZoneId.of("America/New_York")
+        // Spring forward (2026-03-08): 1:00 → 3:00 is one real hour (2:00–3:00 doesn't exist).
+        val spring = java.time.ZonedDateTime.of(2026, 3, 8, 1, 0, 0, 0, ny)
+        assertThat(BackupRetention.delayUntil(spring)).isEqualTo(Duration.ofHours(1))
+        // Fall back (2026-11-01): 0:30 → 3:00 is three and a half real hours (1:00–2:00 happens twice).
+        val fall = java.time.ZonedDateTime.of(2026, 11, 1, 0, 30, 0, 0, ny)
+        assertThat(BackupRetention.delayUntil(fall)).isEqualTo(Duration.ofMinutes(3 * 60 + 30))
+    }
 }
