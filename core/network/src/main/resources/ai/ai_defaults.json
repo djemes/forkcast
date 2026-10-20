@@ -8,19 +8,16 @@
     "CLAUDE": {
       "recommendedModel": "claude-sonnet-5-5",
       "budgetModel": "claude-haiku-5-5",
-      "keyUrl": "https://platform.claude.com/",
       "quotaReset": "rolling"
     },
     "GEMINI": {
       "recommendedModel": "gemini-3.8-flash",
       "budgetModel": "gemini-3.5-flash-lite",
-      "keyUrl": "https://aistudio.google.com/apikey",
       "quotaReset": "midnight:America/Los_Angeles"
     },
     "OPENAI_COMPAT": {
       "recommendedModel": null,
       "budgetModel": null,
-      "keyUrl": "https://platform.openai.com/api-keys",
       "defaultBaseUrl": "https://api.openai.com",
       "quotaReset": "rolling"
     }

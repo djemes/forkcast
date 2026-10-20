@@ -46,7 +46,6 @@ data class AiDefaults(
 data class ProviderDefaults(
     val recommendedModel: String? = null,
     val budgetModel: String? = null,
-    val keyUrl: String? = null,
     val defaultBaseUrl: String? = null,
     /** "rolling" or "midnight:<zone id>". */
     val quotaReset: String = "rolling",

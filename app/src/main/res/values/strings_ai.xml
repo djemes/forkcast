@@ -73,6 +73,7 @@
     <string name="ai_provider_gemini">Gemini (Google)</string>
     <string name="ai_provider_openai">OpenAI-compatible</string>
     <string name="ai_tier_question">Is billing enabled on this key\'s Google Cloud project?</string>
+    <string name="ai_tier_why">Only Gemini has a free tier, and Google doesn\'t tell apps which kind a key is. Free: usage counts as $0 and Google\'s privacy note applies. Paid: usage shows an estimated cost.</string>
     <string name="ai_tier_free_option">Free</string>
     <string name="ai_tier_paid_option">Paid</string>
     <string name="ai_tier_unknown_option">Not sure</string>
@@ -82,7 +83,60 @@
     <string name="ai_cleartext_warning">This address isn\'t encrypted (http). Only use it on your own network or VPN.</string>
     <string name="ai_api_key">API key</string>
     <string name="ai_api_key_optional">Optional for local servers</string>
-    <string name="ai_get_key">Where to get a key</string>
+    <string name="ai_get_key">How to get an API key</string>
+
+    <!-- "How to get an API key" guide (links checked 2026-10-19) -->
+    <string name="key_guide_done">Done</string>
+    <string name="key_guide_copy_paste">Copy the key, come back here, and tap Paste.</string>
+    <string name="key_guide_open_billing">Open Billing</string>
+    <string name="key_guide_open_api_keys">Open API keys</string>
+    <string name="key_guide_use_url">Use %1$s as the server URL</string>
+    <string name="key_guide_pick_vision_model">Come back here, tap Paste, then Choose from list and pick a model that can read images.</string>
+
+    <string name="key_guide_gemini_title">Get a Gemini API key</string>
+    <string name="key_guide_gemini_intro">Gemini keys are free to start. A free key has daily limits, and Google may use what you send to improve its products. Turning on billing for the key\'s Google Cloud project makes it a paid key.</string>
+    <string name="key_guide_gemini_studio">Option 1: Google AI Studio (quickest)</string>
+    <string name="key_guide_gemini_studio_1">Open Google AI Studio and sign in with your Google account.</string>
+    <string name="key_guide_gemini_studio_2">Tap Create API key. Pick a project, or let AI Studio create one.</string>
+    <string name="key_guide_gemini_studio_note">If Save and test says Google didn\'t accept this type of key, use option 2.</string>
+    <string name="key_guide_gemini_cloud">Option 2: Google Cloud console</string>
+    <string name="key_guide_gemini_cloud_1">Open the Gemini API page, check the project name at the top (create one if needed), and tap Enable.</string>
+    <string name="key_guide_gemini_cloud_2">Open Credentials, then tap Create credentials › API key.</string>
+    <string name="key_guide_gemini_cloud_3">Edit the new key. Under API restrictions, choose Restrict key, tick Gemini API, and save. Google rejects keys that have no restriction.</string>
+    <string name="key_guide_gemini_billing">Free or paid: a key is free unless billing is linked to its project. If you link billing, add a budget alert there too. Then pick the matching answer above.</string>
+    <string name="key_guide_open_ai_studio">Open AI Studio</string>
+    <string name="key_guide_open_gemini_api">Open the Gemini API page</string>
+    <string name="key_guide_open_credentials">Open Credentials</string>
+
+    <string name="key_guide_claude_title">Get a Claude API key</string>
+    <string name="key_guide_claude_intro">Claude has no free tier. You pay per estimate from prepaid credit: about a cent per photo with Sonnet, less with Haiku. A Claude.ai Pro or Max plan doesn\'t include API use.</string>
+    <string name="key_guide_claude_1">Sign in to the Claude Console, or create an account.</string>
+    <string name="key_guide_claude_2">Add credit under Settings › Billing. Requests fail until the account has credit.</string>
+    <string name="key_guide_claude_3">Optional: set a monthly spend limit under Settings › Limits.</string>
+    <string name="key_guide_claude_4">Open API keys and tap Create key. Name it Forkcast.</string>
+    <string name="key_guide_claude_5">Copy the key (it starts with sk-ant-). It\'s shown only once. Come back here and tap Paste.</string>
+    <string name="key_guide_open_claude_console">Open Claude Console</string>
+    <string name="key_guide_open_limits">Open Limits</string>
+
+    <string name="key_guide_openai_title">Get a key for an OpenAI-compatible service</string>
+    <string name="key_guide_openai_intro">This works with OpenAI, with OpenRouter (one key for many AI models), or with an AI server you run yourself. Follow the one you use.</string>
+    <string name="key_guide_openai_openai">OpenAI</string>
+    <string name="key_guide_openai_1">Sign in to the OpenAI API platform. It\'s separate from ChatGPT, and a ChatGPT plan doesn\'t include API use.</string>
+    <string name="key_guide_openai_2">Add credit under Settings › Billing (prepaid, $5 minimum). Auto-recharge is on by default; switch it off if you don\'t want it.</string>
+    <string name="key_guide_openai_3">Open API keys and tap Create new secret key. Copy it; it\'s shown only once.</string>
+    <string name="key_guide_open_openai">Open OpenAI platform</string>
+    <string name="key_guide_openai_openrouter">OpenRouter</string>
+    <string name="key_guide_openrouter_1">Sign in to OpenRouter, open Keys, and create a key. Copy it.</string>
+    <string name="key_guide_openrouter_2">Add credit for paid models. Models whose names end in :free need no credit but have low daily limits.</string>
+    <string name="key_guide_open_openrouter">Open OpenRouter keys</string>
+    <string name="key_guide_open_credits">Open Credits</string>
+    <string name="key_guide_openai_local">Your own server (Ollama)</string>
+    <string name="key_guide_local_1">Install Ollama on a computer on your network, then download a model that can read images (a vision model).</string>
+    <string name="key_guide_local_2">Let your phone reach it: set OLLAMA_HOST to 0.0.0.0:11434 on that computer and restart Ollama.</string>
+    <string name="key_guide_local_3">Server URL: http://&lt;the computer\'s IP address&gt;:11434. Leave the API key empty.</string>
+    <string name="key_guide_local_note">Works only on your home network or VPN. Small local models judge portions less accurately.</string>
+    <string name="key_guide_open_ollama">Open Ollama download</string>
+    <string name="key_guide_open_ollama_faq">How to set OLLAMA_HOST</string>
     <string name="ai_use_key_from">Use the key from %1$s</string>
     <string name="ai_model">Model</string>
     <string name="ai_choose_model">Choose from list</string>
@@ -100,7 +154,7 @@
     <string name="ai_err_provider_said">%1$s said: %2$s</string>
     <string name="ai_err_key_status">%1$s rejected the API key (%2$s).</string>
     <string name="ai_err_request_status">%1$s rejected the request (%2$s).</string>
-    <string name="ai_err_hint_token_type">Google didn\'t accept this type of key for this request. If the key is new, wait a few minutes and test again. If it keeps failing, create a new key in AI Studio.</string>
+    <string name="ai_err_hint_token_type">Google didn\'t accept this type of key for this request. If the key is new, wait a few minutes and test again. If it keeps failing, create the key in the Google Cloud console instead (How to get an API key, option 2).</string>
     <string name="ai_err_hint_service_disabled">The Gemini API isn\'t turned on for this key\'s Google Cloud project yet. If you just created the key, wait a few minutes and test again.</string>
     <string name="ai_err_hint_key_invalid">The key isn\'t valid. Check that the whole key was pasted, with nothing extra.</string>
     <string name="ai_err_hint_key_restricted">This key has API restrictions that block the Gemini API. Check the key\'s restrictions in Google Cloud Console.</string>

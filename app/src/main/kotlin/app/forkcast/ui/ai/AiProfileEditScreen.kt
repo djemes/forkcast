@@ -34,7 +34,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
@@ -88,6 +87,7 @@ fun AiProfileEditScreen(
 
             if (state.provider == ProviderId.GEMINI) {
                 Text(stringResource(R.string.ai_tier_question), style = MaterialTheme.typography.bodyMedium)
+                Text(stringResource(R.string.ai_tier_why), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Column {
                     for ((tier, label) in listOf(
                         TierLabel.FREE to R.string.ai_tier_free_option,
@@ -205,9 +205,21 @@ private fun Heading(res: Int) {
 private fun KeyField(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) -> Unit) {
     var visible by remember { mutableStateOf(false) }
     val clipboard = LocalClipboard.current
-    val uri = LocalUriHandler.current
     val scope = rememberCoroutineScope()
+    var guide by remember { mutableStateOf(false) }
     Heading(R.string.ai_api_key)
+    // Steps and links for the selected provider (owner request 2026-10-19).
+    TextButton(onClick = { guide = true }, modifier = Modifier.heightIn(min = 48.dp)) {
+        Icon(painterResource(R.drawable.ic_help), contentDescription = null)
+        Text(stringResource(R.string.ai_get_key), modifier = Modifier.padding(start = 8.dp))
+    }
+    if (guide) {
+        KeyGuideDialog(
+            provider = state.provider,
+            onUseServerUrl = { onEvent(AiProfileEditEvent.SetBaseUrl(it)); guide = false },
+            onDismiss = { guide = false },
+        )
+    }
     if (state.keySources.isNotEmpty()) {
         for (src in state.keySources) {
             FilterChip(
@@ -224,7 +236,6 @@ private fun KeyField(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) 
         SavedKeyField(stringResource(R.string.ai_api_key), saved)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = { onEvent(AiProfileEditEvent.ReplaceKey(true)) }) { Text(stringResource(R.string.key_replace)) }
-            state.keyUrl?.let { url -> TextButton(onClick = { uri.openUri(url) }) { Text(stringResource(R.string.ai_get_key)) } }
         }
     } else if (state.copyKeyFrom == null) {
         OutlinedTextField(
@@ -260,7 +271,6 @@ private fun KeyField(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) 
             if (state.replacingKey) {
                 TextButton(onClick = { onEvent(AiProfileEditEvent.ReplaceKey(false)) }) { Text(stringResource(R.string.cancel)) }
             }
-            state.keyUrl?.let { url -> TextButton(onClick = { uri.openUri(url) }) { Text(stringResource(R.string.ai_get_key)) } }
         }
     }
 }

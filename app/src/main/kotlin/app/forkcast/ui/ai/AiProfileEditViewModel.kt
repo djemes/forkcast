@@ -44,7 +44,6 @@ data class AiProfileEditUiState(
     val loadingModels: Boolean = false,
     val modelsError: Throwable? = null,
     val recommendedModel: String? = null,
-    val keyUrl: String? = null,
     val saving: Boolean = false,
     val test: TestState? = null,
     /** Set when the profile is saved and its test passed: the screen closes. */
@@ -151,7 +150,6 @@ class AiProfileEditViewModel @Inject constructor(
             .map { KeySource(it.id, it.name) }
         return copy(
             recommendedModel = d.recommendedModel,
-            keyUrl = d.keyUrl,
             keySources = sources,
             baseUrl = if (provider == ProviderId.OPENAI_COMPAT && baseUrl.isBlank()) d.defaultBaseUrl.orEmpty() else baseUrl,
         )

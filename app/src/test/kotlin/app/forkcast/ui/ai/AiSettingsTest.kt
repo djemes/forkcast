@@ -1,5 +1,8 @@
 package app.forkcast.ui.ai
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -136,6 +139,46 @@ class AiSettingsTest {
         compose.onNodeWithText("On Gemini's free tier", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Save and test").performScrollTo().performClick()
         assertThat(event).isEqualTo(AiProfileEditEvent.SaveAndTest)
+    }
+
+    @Test fun keyGuideFollowsTheProvider() {
+        var provider by mutableStateOf(ProviderId.CLAUDE)
+        compose.setContent {
+            ForkcastTheme {
+                AiProfileEditScreen(state = AiProfileEditUiState(loaded = true, provider = provider, model = "m"), onEvent = {}, onBack = {})
+            }
+        }
+        compose.onNodeWithText("How to get an API key").performScrollTo().performClick()
+        compose.onNodeWithText("Get a Claude API key").assertIsDisplayed()
+        compose.onNodeWithText("Open API keys").assertExists()
+        compose.onNodeWithText("Done").performClick()
+
+        provider = ProviderId.GEMINI
+        compose.onNodeWithText("How to get an API key").performScrollTo().performClick()
+        compose.onNodeWithText("Get a Gemini API key").assertIsDisplayed()
+        compose.onNodeWithText("Option 2: Google Cloud console").assertExists()
+    }
+
+    @Test fun keyGuideFillsTheServerUrl() {
+        var event: AiProfileEditEvent? = null
+        compose.setContent {
+            ForkcastTheme {
+                AiProfileEditScreen(state = AiProfileEditUiState(loaded = true, provider = ProviderId.OPENAI_COMPAT, model = "m"), onEvent = { event = it }, onBack = {})
+            }
+        }
+        compose.onNodeWithText("How to get an API key").performScrollTo().performClick()
+        compose.onNodeWithText("Use https://openrouter.ai/api as the server URL").performScrollTo().performClick()
+        assertThat(event).isEqualTo(AiProfileEditEvent.SetBaseUrl("https://openrouter.ai/api"))
+        compose.onNodeWithText("Get a key for an OpenAI-compatible service").assertDoesNotExist()
+    }
+
+    @Test fun everyGuideLinkIsHttps() {
+        val links = ProviderId.entries.flatMap { p ->
+            val g = keyGuide(p)
+            g.options.flatMap { o -> o.steps.mapNotNull { it.link } } + listOfNotNull(g.footerLink)
+        }
+        assertThat(links).isNotEmpty()
+        assertThat(links.filterNot { it.url.startsWith("https://") }).isEmpty()
     }
 
     @Test fun settingsScreenListsProfilesWithUsage() = runTest(dispatcher) {
