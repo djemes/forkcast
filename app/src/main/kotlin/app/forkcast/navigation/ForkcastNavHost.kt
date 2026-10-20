@@ -47,10 +47,10 @@ import app.forkcast.ui.settings.SettingsScreen
 import app.forkcast.ui.today.TodayActions
 import app.forkcast.ui.today.TodayRoute
 import app.forkcast.ui.theme.Motion
+import app.forkcast.widget.FoodOpen
 import app.forkcast.widget.OPEN_LOG
 import app.forkcast.widget.OPEN_PHOTO
 import app.forkcast.widget.OPEN_SCAN
-import app.forkcast.widget.OPEN_SEARCH
 import app.forkcast.ui.trends.TrendsRoute
 import app.forkcast.ui.recipes.RecipeEditRoute
 import app.forkcast.ui.recipes.RecipesRoute
@@ -149,30 +149,27 @@ fun ForkcastNavHost(
     val back: () -> Unit = { navController.popBackStack() }
 
     // A tapped notification: open the estimate's review screen or Settings › AI.
-    LaunchedEffect(openRequest, startWithOnboarding) {
+    LaunchedEffect(openRequest) {
         val request = openRequest ?: return@LaunchedEffect
-        if (!startWithOnboarding) {
+        // Only once Today exists: not during onboarding, but right after it (startWithOnboarding
+        // stays true for the whole launch, so it can't be the test).
+        val ready = runCatching { navController.getBackStackEntry<TodayDestination>() }.isSuccess
+        if (ready) {
             when {
                 request.startsWith("estimate:") -> navController.navigate(ReviewDestination(request.removePrefix("estimate:")))
                 request == "settings_ai" -> navController.navigate(AiSettingsDestination)
                 request.startsWith("weekly:") -> navController.navigate(WeeklyDestination(request.removePrefix("weekly:")))
                 request == "backup" -> navController.navigate(BackupDestination)
                 // Widget, shortcut and Quick Settings tile (Phase 5): over Today, logging into the meal now.
-                request == OPEN_LOG -> {
+                else -> FoodOpen.parse(request)?.let { r ->
+                    val day = (r.date ?: java.time.LocalDate.now()).toString()
                     navController.popBackStack<TodayDestination>(inclusive = false)
-                    runCatching { navController.getBackStackEntry<TodayDestination>().savedStateHandle[OPEN_LOG_SHEET] = true }
-                }
-                request.contains(':') && request.substringBefore(':') in setOf(OPEN_SCAN, OPEN_PHOTO, OPEN_SEARCH) -> {
-                    val meal = request.substringAfter(':')
-                    val today = java.time.LocalDate.now().toString()
-                    navController.popBackStack<TodayDestination>(inclusive = false)
-                    navController.navigate(
-                        when (request.substringBefore(':')) {
-                            OPEN_SCAN -> ScannerDestination(meal, today)
-                            OPEN_PHOTO -> PhotoMealDestination(meal, today)
-                            else -> SearchDestination(meal, today)
-                        },
-                    )
+                    when (r.kind) {
+                        OPEN_LOG -> runCatching { navController.getBackStackEntry<TodayDestination>().savedStateHandle[OPEN_LOG_SHEET] = r.mealId.orEmpty() }
+                        OPEN_SCAN -> navController.navigate(ScannerDestination(r.mealId!!, day))
+                        OPEN_PHOTO -> navController.navigate(PhotoMealDestination(r.mealId!!, day))
+                        else -> navController.navigate(SearchDestination(r.mealId!!, day))
+                    }
                 }
             }
         }
@@ -210,7 +207,7 @@ fun ForkcastNavHost(
         composable<TodayDestination> { entry ->
             val added by entry.savedStateHandle.getStateFlow<String?>(ADDED_TO, null).collectAsStateWithLifecycle()
             val openDate by entry.savedStateHandle.getStateFlow<String?>(OPEN_DATE, null).collectAsStateWithLifecycle()
-            val openLog by entry.savedStateHandle.getStateFlow(OPEN_LOG_SHEET, false).collectAsStateWithLifecycle()
+            val openLog by entry.savedStateHandle.getStateFlow<String?>(OPEN_LOG_SHEET, null).collectAsStateWithLifecycle()
             TodayRoute(
                 actions = TodayActions(
                     openSettings = { navController.navigate(SettingsDestination) },
@@ -230,7 +227,7 @@ fun ForkcastNavHost(
                 openDate = openDate,
                 onOpenDateShown = { entry.savedStateHandle[OPEN_DATE] = null },
                 openLogSheet = openLog,
-                onLogSheetOpened = { entry.savedStateHandle[OPEN_LOG_SHEET] = false },
+                onLogSheetOpened = { entry.savedStateHandle[OPEN_LOG_SHEET] = null },
             )
         }
         composable<SearchDestination> { entry ->

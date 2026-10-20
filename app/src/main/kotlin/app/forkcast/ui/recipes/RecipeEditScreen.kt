@@ -194,9 +194,11 @@ fun RecipeEditScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
+            // Held here so fast typing never waits for the ViewModel's combined flow.
+            var name by rememberSaveable(d.id) { mutableStateOf(d.name) }
             OutlinedTextField(
-                value = d.name,
-                onValueChange = onName,
+                value = name,
+                onValueChange = { name = it; onName(it) },
                 label = { Text(stringResource(R.string.recipe_name)) },
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Sentences),

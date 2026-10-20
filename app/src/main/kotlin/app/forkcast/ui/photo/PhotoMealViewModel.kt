@@ -49,6 +49,7 @@ data class PhotoMealUiState(
 
     companion object {
         const val MAX_PHOTOS = 3
+        const val MAX_DESCRIPTION = 500
     }
 }
 
@@ -103,7 +104,7 @@ class PhotoMealViewModel @Inject constructor(
             is PhotoMealEvent.RemovePhoto -> draft.update { s -> s.copy(photos = s.photos.filterIndexed { i, _ -> i != event.index }) }
             PhotoMealEvent.Next -> draft.update { if (it.photos.isNotEmpty()) it.copy(step = PhotoStep.DETAILS) else it }
             PhotoMealEvent.BackToCamera -> draft.update { it.copy(step = PhotoStep.CAPTURE) }
-            is PhotoMealEvent.SetDescription -> draft.update { it.copy(description = event.text.take(500)) }
+            is PhotoMealEvent.SetDescription -> draft.update { it.copy(description = event.text.take(PhotoMealUiState.MAX_DESCRIPTION)) }
             is PhotoMealEvent.SetMeal -> draft.update { it.copy(mealSlotId = event.id) }
             PhotoMealEvent.NotificationPermissionAsked -> viewModelScope.launch {
                 settings.updateNotifications { it.copy(permissionAsked = true) }

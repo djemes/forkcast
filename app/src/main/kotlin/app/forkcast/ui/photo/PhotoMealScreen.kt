@@ -50,6 +50,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -324,9 +325,14 @@ private fun DetailsStep(
                 .padding(16.dp),
         ) {
             Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = 88.dp)
+            // Held here so fast typing never waits for the ViewModel's combined flow.
+            var description by rememberSaveable { mutableStateOf(state.description) }
             OutlinedTextField(
-                value = state.description,
-                onValueChange = { onEvent(PhotoMealEvent.SetDescription(it)) },
+                value = description,
+                onValueChange = {
+                    description = it.take(PhotoMealUiState.MAX_DESCRIPTION)
+                    onEvent(PhotoMealEvent.SetDescription(description))
+                },
                 label = { Text(stringResource(R.string.photo_description)) },
                 placeholder = { Text(stringResource(R.string.photo_description_hint)) },
                 minLines = 3,

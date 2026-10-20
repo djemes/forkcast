@@ -21,9 +21,7 @@ import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.navigation.ForkcastNavHost
 import app.forkcast.ui.theme.ForkcastTheme
-import app.forkcast.widget.OPEN_PHOTO
-import app.forkcast.widget.OPEN_SCAN
-import app.forkcast.widget.OPEN_SEARCH
+import app.forkcast.widget.FoodOpen
 import app.forkcast.widget.WidgetData
 import dagger.hilt.android.AndroidEntryPoint
 import androidx.lifecycle.lifecycleScope
@@ -39,6 +37,7 @@ class MainActivity : ComponentActivity() {
     @Inject lateinit var health: HealthRepository
     @Inject lateinit var maintenance: MaintenanceRepository
     @Inject lateinit var estimates: app.forkcast.core.data.ai.AiEstimateRepository
+    @Inject lateinit var clock: java.time.Clock
 
     /** What a tapped notification asked to open ("estimate:<id>", "settings_ai"), consumed once. */
     private val openRequest = MutableStateFlow<String?>(null)
@@ -100,14 +99,15 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Widget, shortcut and tile requests that log food ("scan", "photo", "search") go to the meal
-     * that fits the time of day, like the Log button; the rest pass through as they are.
+     * Widget, shortcut and tile requests that log food (Log, Scan, Photo, Search) go to today and
+     * the meal that fits the time of the tap; the rest pass through as they are.
      */
     private fun handleOpen(open: String?) {
         when (open) {
             null -> Unit
-            OPEN_SCAN, OPEN_PHOTO, OPEN_SEARCH -> lifecycleScope.launch {
-                WidgetData.mealNow(applicationContext)?.let { openRequest.value = "$open:$it" }
+            in FoodOpen.KINDS -> lifecycleScope.launch {
+                val meal = runCatching { WidgetData.mealNow(applicationContext) }.getOrNull()
+                openRequest.value = FoodOpen.of(open, meal, java.time.LocalDate.now(clock)).encode()
             }
             else -> openRequest.value = open
         }

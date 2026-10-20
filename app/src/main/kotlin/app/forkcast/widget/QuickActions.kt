@@ -50,7 +50,7 @@ abstract class OpenTile(private val open: String) : TileService() {
     @android.annotation.SuppressLint("StartActivityAndCollapseDeprecated")
     private fun launch() {
         val intent = Intent(this, MainActivity::class.java)
-            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+            .addFlags(OPEN_FLAGS)
             .putExtra(Notifier.EXTRA_OPEN, open)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             startActivityAndCollapse(PendingIntent.getActivity(this, open.hashCode(), intent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT))

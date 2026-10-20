@@ -26,7 +26,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -79,6 +82,10 @@ fun SearchScreen(
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
+    // The typed text lives here, not in the ViewModel's combined flow: that one arrives a frame
+    // late, and fast typing then lost or reordered letters ("chicken" became "chinc").
+    var query by rememberSaveable { mutableStateOf(state.query) }
+    val setQuery: (String) -> Unit = { query = it; onQueryChange(it) }
 
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         Column(Modifier.statusBarsPadding().imePadding()) {
@@ -87,13 +94,13 @@ fun SearchScreen(
                     Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back))
                 }
                 OutlinedTextField(
-                    value = state.query,
-                    onValueChange = onQueryChange,
+                    value = query,
+                    onValueChange = setQuery,
                     placeholder = { Text(stringResource(if (forRecipe) R.string.search_ingredient_hint else R.string.search_hint)) },
                     leadingIcon = { Icon(painterResource(R.drawable.ic_search), contentDescription = null) },
                     trailingIcon = {
-                        if (state.query.isNotEmpty()) {
-                            IconButton(onClick = { onQueryChange("") }) {
+                        if (query.isNotEmpty()) {
+                            IconButton(onClick = { setQuery("") }) {
                                 Icon(painterResource(R.drawable.ic_close), stringResource(R.string.search_clear))
                             }
                         }

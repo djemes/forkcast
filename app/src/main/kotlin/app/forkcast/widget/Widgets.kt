@@ -69,7 +69,7 @@ import app.forkcast.ui.format.UnitFormatter
 /** Opens Forkcast at [open] (a route hint, see ForkcastNavHost), or on Today when null. */
 internal fun openApp(context: Context, open: String? = null): Action = actionStartActivity(
     Intent(context, MainActivity::class.java)
-        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        .setFlags(OPEN_FLAGS)
         .apply { if (open != null) putExtra(Notifier.EXTRA_OPEN, open) },
 )
 
@@ -531,3 +531,35 @@ const val OPEN_LOG = "log"
 const val OPEN_SCAN = "scan"
 const val OPEN_PHOTO = "photo"
 const val OPEN_SEARCH = "search"
+
+/**
+ * Launch flags for widget and tile taps. SINGLE_TOP matters: with CLEAR_TOP alone a running
+ * MainActivity is finished and recreated (splash again, back stack and typed input lost)
+ * instead of getting onNewIntent. Notifications use the same flags.
+ */
+const val OPEN_FLAGS = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+
+/**
+ * A food-logging request from a widget, shortcut or tile, resolved in MainActivity as
+ * "<kind>:<meal id>:<date>": the meal for the time of the tap, and that day.
+ */
+data class FoodOpen(val kind: String, val mealId: String?, val date: java.time.LocalDate?) {
+    fun encode(): String = "$kind:${mealId.orEmpty()}:${date ?: ""}"
+
+    companion object {
+        val KINDS = setOf(OPEN_LOG, OPEN_SCAN, OPEN_PHOTO, OPEN_SEARCH)
+
+        /** Without a meal, Scan, Photo and Search open the Log sheet instead, so the tap is never lost. */
+        fun of(kind: String, mealId: String?, date: java.time.LocalDate): FoodOpen =
+            if (mealId == null) FoodOpen(OPEN_LOG, null, date) else FoodOpen(kind, mealId, date)
+
+        fun parse(request: String): FoodOpen? {
+            val parts = request.split(':')
+            if (parts.size != 3 || parts[0] !in KINDS) return null
+            val meal = parts[1].ifEmpty { null }
+            if (meal == null && parts[0] != OPEN_LOG) return null
+            val date = parts[2].ifEmpty { null }?.let { runCatching { java.time.LocalDate.parse(it) }.getOrNull() }
+            return FoodOpen(parts[0], meal, date)
+        }
+    }
+}

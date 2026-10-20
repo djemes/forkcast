@@ -139,7 +139,7 @@ fun TodayRoute(
     openDate: String? = null,
     onOpenDateShown: () -> Unit = {},
     /** The widget's Log button: open the Log sheet for today's current meal. */
-    openLogSheet: Boolean = false,
+    openLogSheet: String? = null,
     onLogSheetOpened: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
 ) {
@@ -177,18 +177,19 @@ fun TodayScreen(
     onAddedShown: () -> Unit = {},
     /** Servings loaded for the entry being edited (entry id → servings). */
     editServings: Pair<String, List<app.forkcast.core.model.ServingSize>>? = null,
-    openLogSheet: Boolean = false,
+    openLogSheet: String? = null,
     onLogSheetOpened: () -> Unit = {},
 ) {
     // Null = sheet closed; otherwise the meal the sheet logs to.
     var logSheetMealId by rememberSaveable { mutableStateOf<String?>(null) }
     // The widget's Log button opens the sheet on today, for the meal that fits the time.
     LaunchedEffect(openLogSheet) {
-        if (openLogSheet) {
-            if (!state.isToday) onEvent(TodayEvent.GoToToday)
-            logSheetMealId = state.defaultMealId ?: state.meals.firstOrNull()?.slot?.id
-            onLogSheetOpened()
-        }
+        val meal = openLogSheet ?: return@LaunchedEffect
+        if (!state.isToday) onEvent(TodayEvent.GoToToday)
+        // The meal picked when the widget was tapped; state.defaultMealId can be hours old.
+        logSheetMealId = meal.takeIf { id -> state.meals.any { it.slot.id == id } }
+            ?: state.defaultMealId ?: state.meals.firstOrNull()?.slot?.id
+        onLogSheetOpened()
     }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showNutrients by rememberSaveable { mutableStateOf(false) }
