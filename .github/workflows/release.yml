@@ -1,7 +1,7 @@
 name: Release
 
 # Push a tag like v0.1.0 to build a signed APK and publish it as a GitHub Release.
-# Obtainium on the phone picks it up from there (SETUP.md Stage 6).
+# Install it on the phone from there, or over adb (SETUP.md Stage 6).
 on:
   push:
     tags: ['v*']
