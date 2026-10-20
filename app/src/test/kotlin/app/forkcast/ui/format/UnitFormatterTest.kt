@@ -44,6 +44,6 @@ class UnitFormatterTest {
 
     @Test fun `locale defaults`() {
         assertThat(UnitFormatter.defaultsFor(Locale.US)).isEqualTo(UnitPrefs.US)
-        assertThat(UnitFormatter.defaultsFor(Locale("pt", "BR"))).isEqualTo(UnitPrefs.METRIC)
+        assertThat(UnitFormatter.defaultsFor(Locale.forLanguageTag("pt-BR"))).isEqualTo(UnitPrefs.METRIC)
     }
 }

@@ -1,7 +1,7 @@
 package app.forkcast.ui.settings
 
 import androidx.compose.ui.test.assertIsNotEnabled
-import androidx.compose.ui.test.junit4.createComposeRule
+import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -85,7 +85,7 @@ class MealsAndTargetsTest {
         compose.onNodeWithText("Name").performTextInput("Midday")
         compose.onNodeWithText("Save").performClick()
         assertThat(saved!!.name).isEqualTo("Midday")
-        assertThat(saved!!.start).isEqualTo(660)
+        assertThat(saved.start).isEqualTo(660)
     }
 
     @Test fun lastMealCantBeDeleted() {

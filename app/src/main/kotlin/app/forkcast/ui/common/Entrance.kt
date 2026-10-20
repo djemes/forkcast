@@ -16,7 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.onFirstVisible
+import androidx.compose.ui.layout.onVisibilityChanged
 import androidx.compose.ui.platform.LocalDensity
 import app.forkcast.ui.theme.Motion
 
@@ -106,7 +106,7 @@ fun rememberReveal(key: String, duration: Int = Motion.FILL, delay: Int = 0): Re
     val anim = remember { Animatable(if (play) 0f else 1f) }
     val reveal = remember {
         lateinit var r: Reveal
-        val mod = if (play) Modifier.onFirstVisible(minFractionVisible = 0.25f) { r.ready = true } else Modifier
+        val mod = if (play) Modifier.onVisibilityChanged(minFractionVisible = 0.25f) { visible -> if (visible) r.ready = true } else Modifier
         r = Reveal(anim, mod, play)
         r
     }

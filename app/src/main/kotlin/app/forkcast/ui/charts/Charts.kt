@@ -33,8 +33,8 @@ import com.patrykandpatrick.vico.compose.cartesian.data.CartesianChartModelProdu
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianLayerRangeProvider
 import com.patrykandpatrick.vico.compose.cartesian.data.CartesianValueFormatter
 import com.patrykandpatrick.vico.compose.cartesian.data.ColumnCartesianLayerModel
-import com.patrykandpatrick.vico.compose.cartesian.data.columnSeries
-import com.patrykandpatrick.vico.compose.cartesian.data.lineSeries
+import com.patrykandpatrick.vico.compose.cartesian.data.columnModel
+import com.patrykandpatrick.vico.compose.cartesian.data.lineModel
 import com.patrykandpatrick.vico.compose.cartesian.layer.ColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
@@ -132,8 +132,8 @@ fun CaloriesChart(
     LaunchedEffect(days, f.prefs, reveal.ready) {
         if (!reveal.ready) return@LaunchedEffect
         producer.runTransaction {
-            columnSeries { series(days.indices.toList(), kcal) }
-            lineSeries { series(days.indices.toList(), allowance) }
+            columnModel { series(days.indices.toList(), kcal) }
+            lineModel { series(days.indices.toList(), allowance) }
         }
     }
     val c = ForkcastTheme.colors
@@ -143,7 +143,7 @@ fun CaloriesChart(
     val dates = days.map { it.date }
     val provider = remember(days, today, under, over, inProgress) {
         object : ColumnCartesianLayer.ColumnProvider {
-            override fun getColumn(entry: ColumnCartesianLayerModel.Entry, seriesIndex: Int, extraStore: ExtraStore): LineComponent {
+            override fun getColumn(entry: ColumnCartesianLayerModel.Entry, extraStore: ExtraStore): LineComponent {
                 val d = days.getOrNull(entry.x.roundToInt()) ?: return under
                 return when {
                     (d.kcal ?: 0.0) > d.allowanceKcal -> over
@@ -151,7 +151,7 @@ fun CaloriesChart(
                     else -> under
                 }
             }
-            override fun getWidestSeriesColumn(seriesIndex: Int, extraStore: ExtraStore): LineComponent = under
+            override fun getWidestSeriesColumn(seriesKey: Any, seriesIndex: Int, extraStore: ExtraStore): LineComponent = under
         }
     }
     val top = max(kcal.maxOrNull() ?: 0.0, allowance.maxOrNull() ?: 0.0).coerceAtLeast(1.0) * 1.08
@@ -237,7 +237,7 @@ fun WeightTrendChart(
     LaunchedEffect(points, f.prefs, reveal.ready) {
         if (!reveal.ready) return@LaunchedEffect
         producer.runTransaction {
-            lineSeries {
+            lineModel {
                 // Vico needs every series non-empty: with no weigh-ins in view, repeat the trend.
                 if (raw.isNotEmpty()) {
                     series(x = raw.map { it.date.toEpochDay() - first.toEpochDay() }, y = raw.map { f.weightValue(it.rawKg!!) })

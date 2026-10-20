@@ -90,7 +90,7 @@ class TodayViewModelTest {
         val s = vm().uiState.filterNotNull().first()
         assertThat(s.defaultMealId).isEqualTo("l")
         assertThat(s.totals!!.eatenKcal).isEqualTo(351.0)
-        assertThat(s.totals!!.budgetKcal).isEqualTo(2290)
+        assertThat(s.totals.budgetKcal).isEqualTo(2290)
         assertThat(s.meals.first { it.slot.id == "b" }.entries.single().displayName).isEqualTo("Yogurt")
         assertThat(s.meals.first { it.slot.id == "l" }.kcal).isEqualTo(205.0)
     }
@@ -122,8 +122,8 @@ class TodayViewModelTest {
         log.add(listOf(dinner(7)))
         val s = vm().uiState.filterNotNull().first()
         assertThat(s.forecast!!.expectedRemainingKcal).isEqualTo(700.0)
-        assertThat(s.forecast!!.forecastTotalKcal).isEqualTo(1300.0)
-        assertThat(s.forecast!!.status).isEqualTo(app.forkcast.core.domain.Forecast.Status.ON_COURSE)
+        assertThat(s.forecast.forecastTotalKcal).isEqualTo(1300.0)
+        assertThat(s.forecast.status).isEqualTo(app.forkcast.core.domain.Forecast.Status.ON_COURSE)
         assertThat(s.forecastFromMinute).isEqualTo(12 * 60 + 40)
     }
 
@@ -168,7 +168,7 @@ class TodayViewModelTest {
         log.add(listOf(TestData.entry("Feast", "d", 2400.0)))
         val s = vm().uiState.filterNotNull().first()
         assertThat(s.totals!!.state).isEqualTo(BudgetState.OVER)
-        assertThat(s.totals!!.overKcal).isEqualTo(110.0)
+        assertThat(s.totals.overKcal).isEqualTo(110.0)
     }
 
     @Test fun quickAddLogsToTheDayOnScreen() = runTest {
