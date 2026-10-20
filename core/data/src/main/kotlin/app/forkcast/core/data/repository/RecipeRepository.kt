@@ -111,7 +111,6 @@ class RoomRecipeRepository @Inject constructor(
         dao.upsert(row.copy(deletedAt = now, updatedAt = now))
         dao.softDeleteIngredientsExcept(id, emptyList(), now)
         row.foodId?.let { foodDao.softDelete(it, now) }
-        Unit
     }
 }
 

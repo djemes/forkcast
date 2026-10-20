@@ -43,7 +43,6 @@
     <string name="recipe_not_itself">A recipe can\'t include itself.</string>
     <string name="recipe_need_name">Give it a name</string>
     <string name="recipe_need_ingredient">Add at least one ingredient</string>
-    <string name="recipe_saved">Saved %1$s</string>
     <string name="search_create_recipe">Create recipe</string>
     <string name="search_ingredient_hint">Search for an ingredient</string>
     <string name="food_add_to_recipe">Add to recipe</string>

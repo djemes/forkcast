@@ -171,9 +171,6 @@ private fun LogTile(@DrawableRes icon: Int, @StringRes label: Int, onClick: (() 
             Icon(painterResource(icon), contentDescription = null, modifier = Modifier.size(28.dp))
             Spacer(Modifier.size(8.dp))
             Text(stringResource(label), style = MaterialTheme.typography.titleSmall, textAlign = TextAlign.Center)
-            if (onClick == null) {
-                Text(stringResource(R.string.coming_soon), style = MaterialTheme.typography.bodySmall, textAlign = TextAlign.Center)
-            }
         }
     }
 }
@@ -183,7 +180,6 @@ private fun LogRow(@DrawableRes icon: Int, @StringRes label: Int, onClick: (() -
     val base = Modifier.heightIn(min = 56.dp)
     ListItem(
         headlineContent = { Text(stringResource(label)) },
-        supportingContent = if (onClick == null) ({ Text(stringResource(R.string.coming_soon)) }) else null,
         leadingContent = { Icon(painterResource(icon), contentDescription = null) },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = if (onClick != null) base.clickable(onClick = onClick) else base.alpha(0.6f).semantics { disabled() },

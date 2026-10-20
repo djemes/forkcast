@@ -23,7 +23,6 @@
     <string name="nutrient_limit">limit</string>
 
     <!-- Entries -->
-    <string name="entry_amount">%1$s %2$s</string>
     <string name="deleted_one">Deleted %1$s</string>
     <plurals name="deleted_many">
         <item quantity="one">Deleted %1$d item</item>
@@ -40,7 +39,6 @@
     <string name="edit_entry_title">Edit entry</string>
     <string name="edit_quantity">Quantity</string>
     <string name="edit_meal">Meal</string>
-    <string name="entry_selected">Selected</string>
 
     <!-- Source badges (DESIGN.md §5) -->
     <string name="badge_usda">USDA</string>

@@ -4,7 +4,6 @@
 
     <!-- Common -->
     <string name="action_back">Back</string>
-    <string name="coming_soon">Coming soon</string>
 
     <!-- Today -->
     <string name="today">Today</string>
@@ -49,7 +48,6 @@
 
     <!-- Settings -->
     <string name="settings">Settings</string>
-    <string name="settings_profile_goals">Profile &amp; goals</string>
     <string name="settings_group_you">You and your goal</string>
     <string name="settings_group_logging">Logging</string>
     <string name="settings_group_connections">Connected services</string>

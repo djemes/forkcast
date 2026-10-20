@@ -18,7 +18,6 @@
     <string name="photo_no_ai">Set up an AI profile first, then photos can be estimated.</string>
     <string name="photo_open_ai_settings">Open AI settings</string>
     <string name="photo_ai_off">Photo estimates are turned off in Settings → AI.</string>
-    <string name="photo_estimating_in">Estimating in %1$s…</string>
 
     <!-- Pending rows on Today -->
     <string name="estimate_running">Estimating…</string>
@@ -44,7 +43,6 @@
     <string name="review_match_body">Pick the food it really is. Forkcast uses its nutrition for this item, and next time for the same food.</string>
     <string name="review_match_per_100g">%1$s / 100 g</string>
     <string name="review_match_usda_down">USDA didn\'t answer, so these are your own foods only. Try again later for more.</string>
-    <string name="review_grams">%1$s g</string>
     <string name="review_less">Less %1$s</string>
     <string name="review_more">More %1$s</string>
     <string name="review_grams_slider">Amount of %1$s</string>

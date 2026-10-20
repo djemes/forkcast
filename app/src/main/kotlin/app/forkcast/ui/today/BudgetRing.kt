@@ -170,7 +170,7 @@ fun BudgetRing(
             Text(
                 status,
                 style = MaterialTheme.typography.titleSmall,
-                color = when (forecast?.status) {
+                color = when (forecast.status) {
                     Forecast.Status.OVER, Forecast.Status.LIKELY_OVER -> colors.plum
                     else -> MaterialTheme.colorScheme.onSurface
                 },

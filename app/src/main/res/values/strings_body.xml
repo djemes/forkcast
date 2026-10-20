@@ -87,5 +87,4 @@
     <string name="weight_delete">Delete weigh-in from %1$s</string>
     <string name="weight_chart_description">Weight chart: dots are weigh-ins, the line is the smoothed trend.</string>
     <string name="weight_trend_now">Trend %1$s</string>
-    <string name="weight_saved">Weigh-in saved</string>
 </resources>

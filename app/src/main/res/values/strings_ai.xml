@@ -3,8 +3,6 @@
     <!-- Settings › AI (SPEC §4.7) -->
     <string name="ai_enabled">Photo estimates</string>
     <string name="ai_enabled_body">Estimate a meal from a photo and a short description, using your own AI key.</string>
-    <string name="ai_chain_title">Use in this order</string>
-    <string name="ai_chain_body">A photo estimate goes to the first ready profile. If it\'s out of quota, busy or down, the next one takes over. Drag a card or use its menu to change the order.</string>
     <string name="ai_profiles_title">Your AI profiles</string>
     <string name="ai_order_explain">A profile is one AI service and model with its key. A photo goes to number 1 first. If it can\'t answer (no quota, busy, an error), number 2 tries, and so on. Switch a profile off to skip it.</string>
     <string name="ai_section_photos">Photo estimates</string>
@@ -21,9 +19,7 @@
     <string name="ai_no_profiles">No AI profiles yet. Add one to start estimating photo meals.</string>
     <string name="ai_setup_free">Set up free Gemini</string>
     <string name="ai_add_profile">Add profile</string>
-    <string name="ai_add_other">Add another provider</string>
     <string name="ai_edit">Edit</string>
-    <string name="ai_more">More options for %1$s</string>
     <string name="ai_position">Number %1$d in the order</string>
     <string name="ai_role_first">Used first</string>
     <string name="ai_role_backup">Backup: used when the ones above can\'t answer</string>
@@ -39,9 +35,6 @@
     <string name="ai_test">Test</string>
     <string name="ai_testing">Testing…</string>
     <string name="ai_test_ok">Connected to %1$s in %2$d ms</string>
-    <string name="ai_drag_handle">Drag to reorder %1$s</string>
-    <string name="ai_move_up">Move up</string>
-    <string name="ai_move_down">Move down</string>
     <string name="ai_profile_enabled">Use %1$s</string>
     <string name="ai_personal_context">Personal context</string>
     <string name="ai_personal_context_hint">e.g. I usually cook with olive oil; my dinner plates are 27 cm</string>

@@ -358,9 +358,10 @@ class HealthConnectRepository @Inject constructor(
         val withFat = HealthPermissions.READ_BODY_FAT in perms
         val history = HealthPermissions.READ_HISTORY in perms
         val state = stateStore.data.first()
-        val full = state.bodyToken == null || state.bodyTokenHasBodyFat != withFat || (history && !state.weightsFullHistory)
+        val saved = state.bodyToken
+        val full = saved == null || state.bodyTokenHasBodyFat != withFat || (history && !state.weightsFullHistory)
         if (!full) {
-            var token = state.bodyToken!!
+            var token: String = saved
             repeat(MAX_BATCHES) {
                 val changes = source.bodyChanges(token)
                 if (changes.expired) {
@@ -382,8 +383,8 @@ class HealthConnectRepository @Inject constructor(
         // Token first, so nothing written during the read is missed.
         val token = source.bodyChangesToken(withFat)
         val now = clock.instant()
-        // VERIFY: without the history permission Health Connect only serves the 30 days before the
-        // first grant; asking for a shorter window keeps the read inside it.
+        // Without the history permission Health Connect serves 30 days before the first grant and
+        // rejects older reads (developer.android.com, Read data, checked 2026-10-20); 29 days stays inside.
         val from = if (history) HISTORY_START else now.minus(NO_HISTORY_WINDOW)
         val weights = source.readWeights(from, now.plus(Duration.ofDays(1)))
         val fat = if (withFat) source.readBodyFat(from, now.plus(Duration.ofDays(1))) else emptyList()

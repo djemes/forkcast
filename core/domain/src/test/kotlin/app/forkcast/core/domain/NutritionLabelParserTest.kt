@@ -6,8 +6,8 @@ import org.junit.Test
 
 /**
  * Fixture strings follow the FDA 2016 Nutrition Facts layout, written the way ML Kit returns
- * text (one block per line, %DV columns, typical misreads). // VERIFY: add OCR output from real
- * labels photographed on the phone once the scanner runs there.
+ * text (one block per line, %DV columns, typical misreads). Worth extending with OCR output
+ * from real labels photographed on the phone.
  */
 class NutritionLabelParserTest {
 
@@ -55,6 +55,20 @@ class NutritionLabelParserTest {
         assertThat(n[NutrientKey.CALCIUM_MG]).isEqualTo(260.0)
         assertThat(n[NutrientKey.IRON_MG]).isEqualTo(8.0)
         assertThat(n[NutrientKey.POTASSIUM_MG]).isEqualTo(240.0)
+    }
+
+    @Test fun `added sugars with the amount on the next line`() {
+        val p = NutritionLabelParser.parse(
+            """
+            Serving size 1 bar (40g)
+            Calories 190
+            Total Sugars 12g
+            Includes Added Sugars
+            9g 18%
+            Protein 3g
+            """.trimIndent(),
+        )
+        assertThat(p.perServing[NutrientKey.ADDED_SUGARS_G]).isEqualTo(9.0)
     }
 
     @Test fun `noisy ocr - O for zero, l for one, split lines, missing spaces`() {

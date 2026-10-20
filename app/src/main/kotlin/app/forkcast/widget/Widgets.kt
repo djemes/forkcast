@@ -392,7 +392,8 @@ internal fun WaterContent(s: TodaySnapshot, style: WidgetStyle, undoId: String?,
     val size = LocalSize.current
     val f = s.format
     val shown = fill ?: s.waterFraction
-    val canUndo = undoId != null && System.currentTimeMillis() < undoUntil
+    // The entry Undo removes, while its window is open.
+    val undo = undoId?.takeIf { System.currentTimeMillis() < undoUntil }
 
     // In the unit you log water in, with "oz" for fl oz so 3–4 digits of ml still fit the 1×1 button.
     val unit = if (f.waterUnitLabel == "fl oz") "oz" else f.waterUnitLabel
@@ -419,8 +420,8 @@ internal fun WaterContent(s: TodaySnapshot, style: WidgetStyle, undoId: String?,
                     WaterGlass(gauge * 0.34f, palette)
                     if (gauge >= 60.dp) {
                         Spacer(GlanceModifier.height(2.dp))
-                        if (canUndo && undoId != null) {
-                            UndoChip(undoId, palette)
+                        if (undo != null) {
+                            UndoChip(undo, palette)
                         } else {
                             Text(
                                 amount,
@@ -445,7 +446,7 @@ internal fun WaterContent(s: TodaySnapshot, style: WidgetStyle, undoId: String?,
                     BigNumber(amount, 24.dp, palette.text)
                     Text(context.getString(R.string.widget_water_of_goal, goal), style = TextStyle(fontSize = 11.sp, color = palette.muted), maxLines = 1)
                 }
-                if (canUndo && undoId != null) UndoChip(undoId, palette)
+                if (undo != null) UndoChip(undo, palette)
             }
         }
     }

@@ -18,7 +18,7 @@ class GoalPlannerTest {
         )
         // 10 kg at 0.5 kg/week = 140 days; 10 * 7700 / 140 = 550 kcal/day
         assertThat(plan.pace!!.days).isEqualTo(140)
-        assertThat(plan.pace!!.targetDate).isEqualTo(today.plusDays(140))
+        assertThat(plan.pace.targetDate).isEqualTo(today.plusDays(140))
         assertThat(plan.dailyDeltaKcal).isWithin(1e-9).of(550.0)
         assertThat(plan.budgetKcal).isEqualTo(2290)
         assertThat(plan.guardrails).isEmpty()

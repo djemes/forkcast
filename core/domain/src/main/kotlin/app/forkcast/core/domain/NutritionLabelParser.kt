@@ -81,7 +81,7 @@ object NutritionLabelParser {
                 val after = line.substring(m.range.last + 1)
                 val amount = firstAmount(after, rule.units)
                     // "Includes 10g Added Sugars": amount before the label.
-                    ?: if (rule.key == NutrientKey.ADDED_SUGARS_G) firstAmount(line.substring(0, m.range.first), rule.units) else null
+                    ?: (if (rule.key == NutrientKey.ADDED_SUGARS_G) firstAmount(line.substring(0, m.range.first), rule.units) else null)
                     // Label and value split across lines.
                     ?: lines.getOrNull(i + 1)?.let { next -> if (rules.none { it.label.containsMatchIn(next) }) firstAmount(next, rule.units) else null }
                 if (amount != null) {

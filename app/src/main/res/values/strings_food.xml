@@ -18,7 +18,6 @@
     <string name="search_demo_key">Using USDA\'s shared demo key (10 searches an hour). Add your free key in Settings → Food databases.</string>
     <string name="search_create_food">Create a food</string>
     <string name="search_empty_start">Search by name or brand. Your recent and favorite foods appear here.</string>
-    <string name="per_serving">%1$s · %2$s</string>
     <string name="per_100g">per 100 g</string>
 
     <!-- Food detail -->
@@ -34,7 +33,6 @@
     <string name="food_favorite_remove">Remove from favorites</string>
     <string name="food_edit">Edit food</string>
     <string name="food_grams_total">= %1$s</string>
-    <string name="food_not_found">This food is no longer available.</string>
     <string name="food_odbl">Data from Open Food Facts, available under the Open Database License.</string>
 
     <!-- Quick add -->
@@ -45,7 +43,6 @@
     <string name="quick_add_protein">Protein (g, optional)</string>
     <string name="quick_add_carbs">Carbs (g, optional)</string>
     <string name="quick_add_fat">Fat (g, optional)</string>
-    <string name="action_add">Add</string>
 
     <!-- Custom food -->
     <string name="custom_food_title">Create a food</string>
@@ -69,7 +66,6 @@
     <string name="fdb_status_own">Using your key.</string>
     <string name="fdb_status_demo">Using the shared demo key.</string>
     <string name="fdb_remove_key">Remove key</string>
-    <string name="fdb_saved">Key saved</string>
     <string name="fdb_off_title">Open Food Facts</string>
     <string name="fdb_off_body">Free, community-built database, mostly packaged foods. No key needed. Data under the Open Database License.</string>
     <string name="fdb_show_key">Show key</string>

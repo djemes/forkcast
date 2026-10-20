@@ -32,7 +32,6 @@
     <string name="onb_birth_title">Date of birth</string>
     <string name="onb_birth_body">Your age changes your resting energy a little each year.</string>
     <string name="onb_birth_pick">Choose a date</string>
-    <string name="onb_birth_too_young">Forkcast is for people 13 and older.</string>
 
     <!-- Height / weight -->
     <string name="onb_height_title">Height</string>
@@ -42,8 +41,6 @@
     <string name="field_inches">Inches</string>
     <string name="field_cm">Centimeters</string>
     <string name="field_weight">Weight (%1$s)</string>
-    <string name="field_invalid_number">Enter a number</string>
-    <string name="field_out_of_range">That looks out of range</string>
 
     <!-- Activity -->
     <string name="onb_activity_title">Daily activity</string>
@@ -112,15 +109,12 @@
     <string name="guard_low_budget">This budget is below %1$s or below your resting energy (%2$s). Talk to a doctor or dietitian before going lower.</string>
 
     <!-- Profile & goals (settings) -->
-    <string name="profile_goals_budget">Daily budget</string>
     <string name="profile_custom_budget">Custom budget</string>
     <string name="profile_custom_budget_summary">Override the calculated %1$s</string>
     <string name="profile_custom_budget_field">Budget (%1$s)</string>
     <string name="profile_use_calculated">Use calculated</string>
     <string name="custom_chip">custom</string>
-    <string name="profile_section_body">You</string>
     <string name="profile_section_goal">Goal</string>
-    <string name="profile_section_maintenance">Maintenance</string>
     <string name="profile_section_maintenance_activity">Maintenance and activity</string>
     <string name="maintenance_estimate">Estimated maintenance</string>
     <string name="maintenance_estimate_value">%1$s, based on your last 4 weeks · %2$s confidence</string>
@@ -141,7 +135,6 @@
     <string name="profile_pace">Pace</string>
     <string name="profile_current_weight">Current weight</string>
     <string name="profile_current_weight_summary">%1$s · log a new weigh-in to change it</string>
-    <string name="edit_title">Edit %1$s</string>
 
     <!-- Settings › Daily targets (SPEC §4.12, §5.7) -->
     <string name="targets_body">Targets come from your budget and goal. Change any of them; custom ones stay until you reset them. Changing protein, carbs or fat doesn\'t rebalance the others.</string>
