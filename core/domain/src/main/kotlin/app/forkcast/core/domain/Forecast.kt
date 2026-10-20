@@ -1,6 +1,8 @@
 package app.forkcast.core.domain
 
+import java.time.Instant
 import java.time.LocalDate
+import java.time.ZoneId
 import kotlin.math.roundToInt
 
 /**
@@ -45,6 +47,16 @@ object Forecast {
             total <= budgetKcal * (1 + TIGHT_MARGIN) -> Outlook(Status.TIGHT, eatenKcal, expectedRemainingKcal, total, total - budgetKcal)
             else -> Outlook(Status.LIKELY_OVER, eatenKcal, expectedRemainingKcal, total, ((total - budgetKcal) / 10.0).roundToInt() * 10.0)
         }
+    }
+
+    /**
+     * The minute of day an entry was eaten, for [Logged]: when it was logged if that was on the
+     * entry's own day, else the start of its meal's window (else noon). Yesterday's dinner typed
+     * in this morning, or a "Same as yesterday" copy at 7 pm, would otherwise count at that hour.
+     */
+    fun minuteEaten(date: LocalDate, loggedAt: Instant, zone: ZoneId, slotStartMinute: Int?): Int {
+        val t = HealthRules.nutritionStart(date, loggedAt, zone, slotStartMinute).atZone(zone).toLocalTime()
+        return t.hour * 60 + t.minute
     }
 
     fun median(values: List<Double>): Double {

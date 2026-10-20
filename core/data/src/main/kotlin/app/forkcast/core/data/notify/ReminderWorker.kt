@@ -34,9 +34,14 @@ class ReminderWorker @AssistedInject constructor(
     override suspend fun doWork(): Result {
         // A scale reading that reached Health Connect skips the weigh-in reminder (SPEC §4.8).
         runCatching { health.sync(SyncReason.BACKGROUND) }
-        engine.runReminders()
-        scheduler.scheduleNext()
-        return Result.success()
+        // The chain is only this worker rescheduling itself: plan the next run even if this one
+        // failed, or no reminder would fire until the app was opened again.
+        val ran = try {
+            runCatching { engine.runReminders() }.onFailure { if (it is kotlinx.coroutines.CancellationException) throw it }
+        } finally {
+            runCatching { scheduler.scheduleNext() }
+        }
+        return if (ran.isSuccess) Result.success() else Result.failure()
     }
 }
 

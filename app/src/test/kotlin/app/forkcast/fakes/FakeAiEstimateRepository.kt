@@ -41,6 +41,7 @@ class FakeAiEstimateRepository : AiEstimateRepository {
     }
     override suspend fun cleanUpPhotos() = Unit
     override suspend fun markNotified(id: String) = Unit
+    override suspend fun stopRetrying(id: String) = Unit
 
     companion object {
         fun row(id: String, date: LocalDate, mealSlotId: String, status: EstimateStatus, logEntryId: String? = null, kcal: Double? = null) =

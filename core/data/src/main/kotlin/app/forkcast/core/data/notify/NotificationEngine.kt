@@ -118,9 +118,9 @@ class NotificationEngine @Inject constructor(
         if (s.eveningEnabled && due(s.eveningMinute) && (NotificationTypes.EVENING to 0) !in fired && targets != null) {
             record(today, NotificationTypes.EVENING, 0)
             val left = targets.budgetKcal + maintenance.bonusKcal(today) - entries.sumOf { it.nutrients.kcal }
+            val starts = slots.observeMealSlots().first().associate { it.id to it.startMinute }
             val history = log.range(today.minusDays(60), today.minusDays(1)).map {
-                val t = it.loggedAt.atZone(clock.zone).toLocalTime()
-                Forecast.Logged(it.date, t.hour * 60 + t.minute, it.nutrients.kcal)
+                Forecast.Logged(it.date, Forecast.minuteEaten(it.date, it.loggedAt, clock.zone, starts[it.mealSlotId]), it.nutrients.kcal)
             }
             val usual = Forecast.expectedAfter(history, today, s.eveningMinute)
             val text = if (usual != null && usual > 0) {

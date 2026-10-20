@@ -48,6 +48,8 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import java.time.Clock
+import java.time.Instant
+import java.time.ZoneId
 import javax.inject.Singleton
 
 @Module
@@ -56,7 +58,24 @@ object DataModule {
 
     /** Injected so tests can pin "now". Uses the device zone at the time of each call. */
     @Provides
-    fun provideClock(): Clock = Clock.systemDefaultZone()
+    fun provideClock(): Clock = SystemZoneClock
+}
+
+/**
+ * The system clock in the phone's zone as it is now. `Clock.systemDefaultZone()` keeps the zone
+ * it was made with, so singletons kept using the old zone after a trip until the app was killed
+ * (Android updates the default zone in a running process).
+ */
+object SystemZoneClock : Clock() {
+    override fun getZone(): ZoneId = ZoneId.systemDefault()
+    override fun withZone(zone: ZoneId): Clock = system(zone)
+    override fun instant(): Instant = Instant.now()
+    override fun millis(): Long = System.currentTimeMillis()
+}
+
+@Module
+@InstallIn(SingletonComponent::class)
+object DatabaseModule {
 
     @Provides
     @Singleton

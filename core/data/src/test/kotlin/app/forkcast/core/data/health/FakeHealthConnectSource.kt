@@ -29,6 +29,8 @@ class FakeHealthConnectSource : HealthConnectSource {
     val nutrition = mutableMapOf<String, NutritionWrite>()
     val hydration = mutableMapOf<String, HydrationWrite>()
     val deleteCalls = mutableListOf<List<String>>()
+    /** Thrown by the next delete calls (e.g. Health Connect unreachable), then cleared by the test. */
+    var deleteFailure: Exception? = null
     var revoked = false
 
     override fun availability() = availability
@@ -83,6 +85,7 @@ class FakeHealthConnectSource : HealthConnectSource {
     }
 
     override suspend fun deleteHydration(clientIds: List<String>) {
+        deleteFailure?.let { throw it }
         deleteCalls += clientIds
         clientIds.forEach { hydration.remove(it) }
     }

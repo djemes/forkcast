@@ -56,7 +56,10 @@ class EstimateWorker @AssistedInject constructor(
                 scheduler.enqueue(id, delayMs = (outcome.atMs - System.currentTimeMillis()).coerceAtLeast(60_000))
                 Result.success()
             }
-            RunOutcome.RetryWithBackoff -> if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else Result.success()
+            RunOutcome.RetryWithBackoff -> if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else {
+                estimates.stopRetrying(id)
+                Result.success()
+            }
             is RunOutcome.Failed -> {
                 if (outcome.notifyKeyProblem) notifyKeyProblem()
                 Result.success()

@@ -299,10 +299,23 @@ class HealthConnectRepository @Inject constructor(
         } catch (e: SecurityException) {
             throw e
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (e is kotlinx.coroutines.CancellationException || e.isPassing()) throw e
             // One unknown id fails the whole call; delete one at a time and skip the ones already gone.
-            clientIds.forEach { id -> runCatching { delete(listOf(id)) }.exceptionOrNull()?.let { if (it is SecurityException) throw it } }
+            // A passing failure (Health Connect busy or unreachable) propagates, so the rows stay
+            // pending and the next sync deletes them; otherwise the record would stay in Health
+            // Connect (and Samsung Health) for good.
+            clientIds.forEach { id ->
+                runCatching { delete(listOf(id)) }.exceptionOrNull()?.let { if (it is SecurityException || it.isPassing()) throw it }
+            }
         }
+    }
+
+    /** Errors worth trying again later, as opposed to a record that no longer exists. */
+    private fun Throwable.isPassing(): Boolean = when (this) {
+        is RemoteException, is IOException -> true
+        // Health Connect unavailable or rate limited.
+        is IllegalStateException -> true
+        else -> false
     }
 
     private fun LogEntryEntity.toWrite(slot: app.forkcast.core.data.db.MealSlotEntity?): NutritionWrite {

@@ -301,7 +301,8 @@ class TodayViewModel @Inject constructor(
         val nowMinute = now.hour * 60 + now.minute
         val isToday = date == LocalDate.now(clock)
         val forecast = if (isToday && targets != null) {
-            Forecast.expectedAfter(dayData.history.map { it.toLogged() }, date, nowMinute)?.let { expected ->
+            val starts = slots.associate { it.id to it.startMinute }
+            Forecast.expectedAfter(dayData.history.map { it.toLogged(starts[it.mealSlotId]) }, date, nowMinute)?.let { expected ->
                 val t = DayMath.totals(entries, targets.budgetKcal, dayData.exerciseBonus)
                 Forecast.outlook(t.eatenKcal, t.allowanceKcal, expected)
             }
@@ -352,10 +353,8 @@ class TodayViewModel @Inject constructor(
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
-    private fun LogEntry.toLogged(): Forecast.Logged {
-        val t = loggedAt.atZone(clock.zone).toLocalTime()
-        return Forecast.Logged(date, t.hour * 60 + t.minute, nutrients.kcal)
-    }
+    private fun LogEntry.toLogged(slotStartMinute: Int?): Forecast.Logged =
+        Forecast.Logged(date, Forecast.minuteEaten(date, loggedAt, clock.zone, slotStartMinute), nutrients.kcal)
 
     private fun weightSummary(weights: List<WeightEntry>): WeightSummary? {
         val latest = weights.maxByOrNull { it.timestamp } ?: return null

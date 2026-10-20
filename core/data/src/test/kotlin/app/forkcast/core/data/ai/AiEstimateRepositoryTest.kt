@@ -174,6 +174,10 @@ class AiEstimateRepositoryTest {
         assertThat(e.status).isEqualTo(EstimateStatus.PENDING)
         assertThat(e.errorCode).isEqualTo("Network")
         assertThat(log.observeDay(day).first()).isEmpty()
+        // The worker ran out of retries: the row shows the network message with Try again.
+        repo.stopRetrying(id)
+        assertThat(db.aiDao().estimate(id)!!.status).isEqualTo(EstimateStatus.FAILED)
+        assertThat(db.aiDao().estimate(id)!!.errorCode).isEqualTo("Network")
     }
 
     @Test fun everyProfileOutOfQuotaWaitsForReset() = runTest {

@@ -31,6 +31,19 @@ class ForecastTest {
         assertThat(Forecast.expectedAfter(h + Logged(today, 20 * 60, 9999.0), today, 16 * 60)).isEqualTo(750.0)
     }
 
+    @Test fun lateLoggedFoodCountsAtItsMealNotWhenItWasTyped() {
+        val zone = java.time.ZoneId.of("America/New_York")
+        val yesterday = today.minusDays(1)
+        val typedThisMorning = today.atTime(8, 15).atZone(zone).toInstant()
+        // Yesterday's dinner (window from 17:00) entered today at 8:15 counts at 17:00 yesterday.
+        assertThat(Forecast.minuteEaten(yesterday, typedThisMorning, zone, 17 * 60)).isEqualTo(17 * 60)
+        // A meal without a window (Snacks) falls back to noon.
+        assertThat(Forecast.minuteEaten(yesterday, typedThisMorning, zone, null)).isEqualTo(12 * 60)
+        // Logged on its own day: the time it was logged.
+        val onTime = yesterday.atTime(19, 40).atZone(zone).toInstant()
+        assertThat(Forecast.minuteEaten(yesterday, onTime, zone, 17 * 60)).isEqualTo(19 * 60 + 40)
+    }
+
     @Test fun daysWithNothingAfterNowCountAsZero() {
         val h = history(4) + (5..8).map { Logged(today.minusDays(it.toLong()), 8 * 60, 500.0) }
         // 4 days with a 700 dinner, 4 days with nothing after 16:00 → median 350.

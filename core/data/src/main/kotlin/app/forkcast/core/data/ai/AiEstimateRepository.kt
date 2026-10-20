@@ -104,6 +104,8 @@ interface AiEstimateRepository {
     /** Deletes photos older than the retention setting (SPEC §4.6). */
     suspend fun cleanUpPhotos()
     suspend fun markNotified(id: String)
+    /** Retries ran out while offline: show the network message with Try again instead of "Estimating…" forever. */
+    suspend fun stopRetrying(id: String)
 }
 
 @Singleton
@@ -372,6 +374,12 @@ class DefaultAiEstimateRepository @Inject constructor(
 
     override suspend fun markNotified(id: String) {
         dao.estimate(id)?.let { update(it.copy(notified = true)) }
+    }
+
+    override suspend fun stopRetrying(id: String) {
+        val e = dao.estimate(id) ?: return
+        if (e.deletedAt != null || e.status != EstimateStatus.PENDING) return
+        update(e.copy(status = EstimateStatus.FAILED, errorCode = e.errorCode ?: AiErrorCodes.of(AiError.Network()), retryAfter = null))
     }
 
     private suspend fun update(e: AiEstimateEntity) = dao.upsertEstimate(e.copy(updatedAt = clock.millis()))

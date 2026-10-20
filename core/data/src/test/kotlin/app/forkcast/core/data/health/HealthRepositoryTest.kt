@@ -112,6 +112,20 @@ class HealthRepositoryTest {
         assertThat(source.hydration).isEmpty()
     }
 
+    /** Health Connect unreachable while deleting: the row stays pending, and the next sync removes the record. */
+    @Test fun aPassingDeleteFailureIsRetried() = runTest {
+        val id = water.add(today, 250.0)
+        repo.sync(SyncReason.WRITES)
+        clock.advance(Duration.ofMinutes(1))
+        water.delete(id)
+        source.deleteFailure = java.io.IOException("Health Connect unavailable")
+        repo.sync(SyncReason.WRITES)
+        assertThat(source.hydration).containsKey(id)
+        source.deleteFailure = null
+        repo.sync(SyncReason.WRITES)
+        assertThat(source.hydration).isEmpty()
+    }
+
     /** A tea that counts toward water is Nutrition and Hydration; un-counting it removes the Hydration. */
     @Test fun countedDrinksAreAlsoHydration() = runTest {
         seedSlots()
