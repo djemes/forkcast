@@ -43,10 +43,24 @@ object DrinkWater {
 
     fun countsAsWater(food: Food): Boolean = food.countsAsWater ?: looksLikeWater(listOfNotNull(food.name, food.brand).joinToString(" "), food.nutrientsPer100g)
 
+    /**
+     * An item with no food behind it, only a name and a nutrient snapshot: a photo or text
+     * estimate's component, or a saved-meal item from before drinks counted (bug, owner
+     * 2026-10-23: sparkling water from a photo estimate didn't add to the day's water).
+     * [altName] is a second name to try (the model's USDA-style query, e.g. "Water, carbonated"
+     * for "Perrier"); it can't override an exclusion in [name].
+     */
+    fun snapshotCountsAsWater(name: String, altName: String?, nutrients: Nutrients, grams: Double?): Boolean {
+        if (grams == null || grams <= 0) return false
+        val per100g = nutrients.mapValues { (_, v) -> v * 100.0 / grams }
+        if (looksLikeWater(name, per100g)) return true
+        if (altName.isNullOrBlank() || excluded.any { it.containsMatchIn(normalize(name)) }) return false
+        return looksLikeWater(altName, per100g)
+    }
+
     /** The automatic rule, from the name and nutrients per 100 g. */
     fun looksLikeWater(name: String, per100g: Nutrients): Boolean {
-        // Whole words ("tea", not "steak"); "unsweetened" mustn't trip the "sweet" exclusion.
-        val n = name.lowercase().replace("unsweetened", "plain").replace("no sugar", "plain").replace("sugar-free", "plain")
+        val n = normalize(name)
         if (drinks.none { it.containsMatchIn(n) }) return false
         if (excluded.any { it.containsMatchIn(n) }) return false
         if ((per100g[NutrientKey.ALCOHOL_G] ?: 0.0) > 0.0) return false
@@ -55,6 +69,14 @@ object DrinkWater {
         if ((per100g[NutrientKey.PROTEIN_G] ?: 0.0) > MAX_PROTEIN_PER_100G) return false
         return true
     }
+
+    /**
+     * Whole words ("tea", not "steak"); "unsweetened" mustn't trip the "sweet" exclusion; "brewed
+     * with water" (USDA's coffee and cocoa names) says how it was made, not that it's water.
+     */
+    private fun normalize(name: String): String = name.lowercase()
+        .replace("unsweetened", "plain").replace("no sugar", "plain").replace("sugar-free", "plain")
+        .replace(Regex("""(prepared|made|brewed|reconstituted)\s+with\s+(tap\s+)?water"""), "")
 
     /** Water a logged amount adds: 1 g of drink ≈ 1 ml. Null when the drink doesn't count or grams are unknown. */
     fun waterMl(counts: Boolean, grams: Double?): Double? = if (counts) grams?.takeIf { it > 0 } else null

@@ -48,8 +48,11 @@ class FoodFlowViewModelTest {
 
     private fun search() = SearchViewModel(
         SavedStateHandle(route = SearchDestination("l", "2026-10-18")),
-        foods, testSecretStore(tmp.root), FakeSettingsRepository(),
+        foods, testSecretStore(tmp.root), FakeSettingsRepository(), savedMeals, log, app.forkcast.fakes.FakeMealSlotRepository(),
+        app.forkcast.fakes.FakeAiRepository(), app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()),
     )
+    private val savedMeals = app.forkcast.fakes.FakeSavedMealRepository()
+    private val log = app.forkcast.fakes.FakeLogRepository()
 
     /** stateIn(WhileSubscribed) only runs while someone collects. */
     private fun TestScope.collect(vm: SearchViewModel) = backgroundScope.launch { vm.state.collect {} }

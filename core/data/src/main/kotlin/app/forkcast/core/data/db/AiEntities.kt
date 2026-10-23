@@ -2,6 +2,7 @@
 
 package app.forkcast.core.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -28,6 +29,43 @@ enum class EstimateStatus {
 }
 
 enum class ComponentSource { USDA, AI }
+
+/** What the estimate was made from (v7): a photo, or a description alone ("Describe", SPEC §4.6.2). */
+enum class EstimateKind { PHOTO, TEXT }
+
+/** Where a RUNNING estimate is (v7), for the status line: owner, 2026-10-23. */
+enum class EstimatePhase {
+    /** Building and sending the request to [AiEstimateEntity.activeProfileName]. */
+    SENDING,
+    /** Sent; waiting for the model's answer. */
+    WAITING,
+    /** Answered; matching its foods to USDA. */
+    MATCHING,
+}
+
+/**
+ * One request to one profile (v7), kept on the estimate for the review screen's Details:
+ * when, how long, and what came back. Never the request itself or the key.
+ */
+@Serializable
+data class AttemptRecord(
+    val atMs: Long,
+    val profileId: String,
+    val profileName: String,
+    val model: String,
+    val durationMs: Long,
+    /** "OK" or an [app.forkcast.core.data.ai.AiErrorCodes] code (Timeout, RateLimited, …). */
+    val result: String,
+    val httpStatus: Int? = null,
+    /** The provider's own code: Google's ErrorInfo reason or status, Claude's error type. */
+    val providerCode: String? = null,
+    /** Which quota a 429 hit (Gemini's quota id), when the provider said. */
+    val quota: String? = null,
+    /** The provider's message, shortened, with the key removed (estimators do that). */
+    val message: String? = null,
+    /** How long the provider asked us to wait, when it said. */
+    val retryAfterMs: Long? = null,
+)
 
 /** One photo-meal estimate (SPEC §4.6, §6.1). Never contains body data. */
 @Serializable
@@ -77,6 +115,27 @@ data class AiEstimateEntity(
     val createdAt: Long,
     val updatedAt: Long,
     val deletedAt: Long? = null,
+    // v7 (owner's feedback, 2026-10-23) -------------------------------------------------------
+    @ColumnInfo(defaultValue = "PHOTO") val kind: EstimateKind = EstimateKind.PHOTO,
+    /** "How much did you eat?": the share of the estimated plate that was eaten (1 = all). */
+    @ColumnInfo(defaultValue = "1.0") val portion: Double = 1.0,
+    /** Every request this estimate made, oldest first (for Details). */
+    @ColumnInfo(defaultValue = "[]") val attemptLog: List<AttemptRecord> = emptyList(),
+    /** Passes through the chain since the last user action (create, Retry, Correct). */
+    @ColumnInfo(defaultValue = "0") val tries: Int = 0,
+    /** When the current run began (the overall cap counts from here); null = [createdAt]. */
+    val runStartedAt: Long? = null,
+    /** When the meal was eaten, minutes after midnight on [date]; the log entry gets it. */
+    val eatenMinute: Int? = null,
+    val phase: EstimatePhase? = null,
+    /** The profile being asked right now ([phase] SENDING or WAITING). */
+    val activeProfileName: String? = null,
+    /** When [phase] began, epoch ms (for "Waiting for Gemini · 0:12"). */
+    val phaseSince: Long? = null,
+    /** "Try with another profile": the next run asks only this profile, even if it's paused. */
+    val onlyProfileId: String? = null,
+    /** "Retry now": the next run ignores profile pauses once. */
+    @ColumnInfo(defaultValue = "0") val ignoreCooldown: Boolean = false,
 )
 
 /** One food in an estimate. Keeps both the model's numbers and the USDA match (SPEC §4.6.1). */

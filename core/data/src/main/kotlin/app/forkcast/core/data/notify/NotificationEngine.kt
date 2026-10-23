@@ -122,7 +122,7 @@ class NotificationEngine @Inject constructor(
             val left = targets.budgetKcal + maintenance.bonusKcal(today) - entries.sumOf { it.nutrients.kcal }
             val starts = slots.observeMealSlots().first().associate { it.id to it.startMinute }
             val history = log.range(today.minusDays(60), today.minusDays(1)).map {
-                Forecast.Logged(it.date, Forecast.minuteEaten(it.date, it.loggedAt, clock.zone, starts[it.mealSlotId]), it.nutrients.kcal)
+                Forecast.Logged(it.date, it.eatenMinute ?: Forecast.minuteEaten(it.date, it.loggedAt, clock.zone, starts[it.mealSlotId]), it.nutrients.kcal)
             }
             val usual = Forecast.expectedAfter(history, today, s.eveningMinute)
             val text = if (usual != null && usual > 0) {

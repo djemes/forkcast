@@ -44,6 +44,25 @@ class DrinkWaterTest {
         assertThat(counts("Coffee, brewed")).isFalse()
     }
 
+    @Test fun brewedWithWaterIsNotWater() {
+        assertThat(counts("Coffee, brewed from grounds, prepared with tap water", mapOf(NutrientKey.ENERGY_KCAL to 1.0))).isFalse()
+        assertThat(counts("Tea, black, brewed, prepared with tap water", mapOf(NutrientKey.ENERGY_KCAL to 1.0))).isTrue()
+    }
+
+    @Test fun estimateComponentsAndSavedItemsCount() {
+        // A photo estimate's "Sparkling water", 355 g with the model's own zero-calorie nutrients.
+        assertThat(DrinkWater.snapshotCountsAsWater("Sparkling water", "Water, carbonated", mapOf(NutrientKey.ENERGY_KCAL to 0.0), 355.0)).isTrue()
+        // A brand name only: the USDA-style query decides.
+        assertThat(DrinkWater.snapshotCountsAsWater("Perrier", "Water, bottled, carbonated", zero, 330.0)).isTrue()
+        assertThat(DrinkWater.snapshotCountsAsWater("Large unsweetened iced tea", "Tea, black, brewed", mapOf(NutrientKey.ENERGY_KCAL to 4.0), 900.0)).isTrue()
+        // The name's exclusion wins over the query; nutrients still rule out sugary drinks.
+        assertThat(DrinkWater.snapshotCountsAsWater("Sweet tea", "Tea, black, brewed", zero, 400.0)).isFalse()
+        assertThat(DrinkWater.snapshotCountsAsWater("Lemon water", null, mapOf(NutrientKey.ENERGY_KCAL to 60.0, NutrientKey.SUGARS_G to 14.0), 300.0)).isFalse()
+        assertThat(DrinkWater.snapshotCountsAsWater("Rice, white, cooked", "Rice, white, cooked", mapOf(NutrientKey.ENERGY_KCAL to 200.0), 150.0)).isFalse()
+        // Quick adds have no grams.
+        assertThat(DrinkWater.snapshotCountsAsWater("Water", null, zero, null)).isFalse()
+    }
+
     @Test fun userChoiceWinsAndEntriesSnapshotTheWater() {
         val tea = Food("f", "Tea, black, brewed", null, FoodSource.USDA, null, null, listOf(ServingSize("1 cup", 237.0)),
             mapOf(NutrientKey.ENERGY_KCAL to 1.0), false, null, null, null)

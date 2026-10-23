@@ -123,8 +123,10 @@ class PhotoFlowTest {
             }
         }
         compose.onNodeWithText("What's on the plate? (optional)").performTextInput("toast")
-        compose.onNodeWithText("Dinner").performClick()
-        compose.onNodeWithText("Estimate").assertIsEnabled().performClick()
+        // Meal time (1.2): defaults to the state's minute, shown under the description.
+        compose.onNodeWithText("Time").assertExists()
+        compose.onNodeWithText("Dinner").performScrollTo().performClick()
+        compose.onNodeWithText("Estimate").performScrollTo().assertIsEnabled().performClick()
         assertThat(events).contains(PhotoMealEvent.SetDescription("toast"))
         assertThat(events).contains(PhotoMealEvent.SetMeal("d"))
         assertThat(events.last()).isEqualTo(PhotoMealEvent.Estimate)
@@ -170,27 +172,34 @@ class PhotoFlowTest {
             ForkcastTheme { ReviewScreen(ReviewUiState(loaded = true, detail = detail, units = UnitPrefs.METRIC), { events += it }, {}) }
         }
         // Energy is formatted with a thin space before the unit ("640 kcal").
-        compose.onNodeWithText("~640 kcal, likely 512–768 kcal").assertExists()
+        compose.onNodeWithText("~322 kcal, likely 258–386 kcal").assertExists()
         compose.onNodeWithText("Estimated by Gemini 3.8 Flash").assertExists()
         compose.onNodeWithText("USDA: Rice, white, cooked").assertExists()
         compose.onNodeWithText("Likely added").assertExists()
-        compose.onNodeWithContentDescription("More White rice").performClick()
+        compose.onNodeWithContentDescription("More White rice").performScrollTo().performClick()
         assertThat(events.last()).isEqualTo(ReviewEvent.SetGrams("c1", 205.0))
-        compose.onNodeWithText("Use AI values").performClick()
+        compose.onNodeWithText("Use AI values").performScrollTo().performClick()
         assertThat(events.last()).isEqualTo(ReviewEvent.SetSource("c1", ComponentSource.AI))
+        // Portion: one tap, no AI request (owner, 2026-10-23).
+        compose.onNodeWithText("½").performScrollTo().performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.SetPortion(0.5))
         compose.onNodeWithText("Save").performScrollTo().performClick()
-        assertThat(events.last()).isEqualTo(ReviewEvent.Save)
+        assertThat(events.last()).isEqualTo(ReviewEvent.Save())
     }
 
     @Test fun reviewViewModelSavesAndCloses() = runTest {
         val estimates = FakeAiEstimateRepository()
-        val vm = ReviewViewModel(SavedStateHandle(mapOf("estimateId" to "a1")), estimates, app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()), FakeSettingsRepository(), app.forkcast.fakes.FakeFoodRepository())
+        val vm = ReviewViewModel(
+            SavedStateHandle(mapOf("estimateId" to "a1")), estimates,
+            app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()),
+            FakeSettingsRepository(), app.forkcast.fakes.FakeFoodRepository(), app.forkcast.fakes.FakeAiRepository(),
+        )
         vm.effect.test {
-            vm.onEvent(ReviewEvent.Correct("only ate half"))
-            vm.onEvent(ReviewEvent.Save)
+            vm.onEvent(ReviewEvent.Correct("it was fried in butter"))
+            vm.onEvent(ReviewEvent.Save())
             assertThat(awaitItem()).isEqualTo(ReviewEffect.Close)
         }
-        assertThat(estimates.calls).containsExactly("correct:only ate half", "save").inOrder()
+        assertThat(estimates.calls).containsExactly("correct:it was fried in butter", "save:0:1.0").inOrder()
         assertThat(vm.state.first { it.loaded }.detail).isNull()
     }
 
@@ -206,7 +215,7 @@ class PhotoFlowTest {
             }
         }
         // The kcal and the controls stay reachable; long names wrap instead of pushing them out.
-        compose.onNodeWithText("260", substring = true).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("~260 kcal, likely 208–312 kcal").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("More White rice, long-grain, steamed").performScrollTo().performClick()
         assertThat(events.last()).isEqualTo(ReviewEvent.SetGrams("c1", 205.0))
         compose.onNodeWithText("Save").performScrollTo().assertIsDisplayed()

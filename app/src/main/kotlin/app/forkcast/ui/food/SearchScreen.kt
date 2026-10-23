@@ -1,6 +1,15 @@
 package app.forkcast.ui.food
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
+import app.forkcast.core.model.SavedMeal
+import app.forkcast.core.model.sumNutrients
+import coil3.compose.AsyncImage
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -59,14 +68,26 @@ fun SearchRoute(
     onCreateFood: () -> Unit,
     /** Null while picking a recipe ingredient (no recipes inside recipes from here). */
     onCreateRecipe: ((query: String) -> Unit)? = null,
+    /** "Describe it to AI" with the search text (SPEC §4.6.2); null while picking an ingredient. */
+    onDescribe: ((query: String) -> Unit)? = null,
+    /** A saved meal was logged whole: back to Today saying where. */
+    onLoggedMeal: (mealName: String) -> Unit = {},
     forRecipe: Boolean = false,
     viewModel: SearchViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
-        viewModel.effects.collect { if (it is SearchEffect.OpenFood) onOpenFood(it.foodId) }
+        viewModel.effects.collect {
+            when (it) {
+                is SearchEffect.OpenFood -> onOpenFood(it.foodId)
+                is SearchEffect.LoggedMeal -> onLoggedMeal(it.mealName)
+            }
+        }
     }
-    SearchScreen(state, viewModel::onQueryChange, viewModel::open, onBack, onCreateFood, onCreateRecipe, forRecipe)
+    SearchScreen(
+        state, viewModel::onQueryChange, viewModel::open, onBack, onCreateFood, onCreateRecipe, forRecipe,
+        onDescribe = onDescribe.takeIf { state.canDescribe }, onLogSavedMeal = viewModel::logSavedMeal,
+    )
 }
 
 @Composable
@@ -78,6 +99,8 @@ fun SearchScreen(
     onCreateFood: () -> Unit,
     onCreateRecipe: ((query: String) -> Unit)? = null,
     forRecipe: Boolean = false,
+    onDescribe: ((query: String) -> Unit)? = null,
+    onLogSavedMeal: (SavedMeal) -> Unit = {},
 ) {
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val focus = remember { FocusRequester() }
@@ -119,15 +142,41 @@ fun SearchScreen(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.fillMaxSize(),
             ) {
+                state.photo?.let { photo ->
+                    item(key = "photo") {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(vertical = 8.dp)) {
+                            AsyncImage(
+                                model = photo,
+                                contentDescription = stringResource(R.string.search_manual_photo),
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.size(72.dp).clip(RoundedCornerShape(12.dp)),
+                            )
+                            Text(stringResource(R.string.search_manual_photo), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(start = 12.dp))
+                        }
+                    }
+                }
                 if (!state.isSearching) {
                     item { Hint(stringResource(R.string.search_empty_start)) }
                     foodSection(R.string.search_favorites, state.favorites, f, onOpen)
                     foodSection(R.string.search_recent, state.recents.take(15), f, onOpen)
                     foodSection(R.string.search_my_foods, state.custom, f, onOpen)
                 } else {
+                    // Nothing good found: describing it to the AI is the next step (owner, 2026-10-23).
+                    if (onDescribe != null && state.fewResults) {
+                        item(key = "describe-top") { DescribeCard(state.query.trim()) { onDescribe(state.query.trim()) } }
+                    }
+                    savedMealSection(state.savedMeals, f, onLogSavedMeal)
                     foodSection(R.string.search_your_foods, state.local, f, onOpen)
                     remoteSection(R.string.search_usda, state.usda, f, onOpen, showDemoNote = state.usingDemoKey)
                     remoteSection(R.string.search_off, state.off, f, onOpen, showDemoNote = false)
+                    if (onDescribe != null && !state.fewResults) {
+                        item(key = "describe-bottom") {
+                            TextButton(onClick = { onDescribe(state.query.trim()) }, modifier = Modifier.padding(top = 8.dp)) {
+                                Icon(painterResource(R.drawable.ic_edit), contentDescription = null)
+                                Text(stringResource(R.string.describe_from_search), modifier = Modifier.padding(start = 6.dp))
+                            }
+                        }
+                    }
                 }
                 item {
                     TextButton(onClick = onCreateFood, modifier = Modifier.padding(top = 8.dp)) {
@@ -146,6 +195,84 @@ fun SearchScreen(
             }
         }
     }
+}
+
+/** "Not finding it? The AI can estimate “…”." with the Describe button. */
+@Composable
+private fun DescribeCard(query: String, onDescribe: () -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp)
+            .background(MaterialTheme.colorScheme.secondaryContainer, RoundedCornerShape(20.dp))
+            .padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 4.dp),
+    ) {
+        Text(
+            stringResource(R.string.describe_from_search_body, query),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSecondaryContainer,
+        )
+        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            TextButton(onClick = onDescribe) {
+                Icon(painterResource(R.drawable.ic_edit), contentDescription = null)
+                Text(stringResource(R.string.describe_from_search), modifier = Modifier.padding(start = 6.dp))
+            }
+        }
+    }
+}
+
+/** Saved meals that match, marked as meals, logged whole with one tap (owner, 2026-10-23). */
+private fun LazyListScope.savedMealSection(meals: List<SavedMeal>, f: UnitFormatter, onLog: (SavedMeal) -> Unit) {
+    if (meals.isEmpty()) return
+    item(key = "h-saved") { SectionTitle(R.string.saved_meals_title) }
+    items(meals, key = { "saved-${it.id}" }) { meal ->
+        val kcal = meal.items.map { it.nutrients }.sumNutrients().kcal
+        val logLabel = stringResource(R.string.saved_meal_log, meal.name)
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClickLabel = logLabel, onClick = { onLog(meal) })
+                .heightIn(min = 56.dp)
+                .padding(vertical = 6.dp),
+        ) {
+            Icon(
+                painterResource(R.drawable.ic_bookmark),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(end = 12.dp).size(20.dp),
+            )
+            Column(Modifier.weight(1f)) {
+                Text(meal.name, style = MaterialTheme.typography.bodyLarge, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        pluralStringResource(R.plurals.saved_meal_items, meal.items.size, meal.items.size),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    MealBadge()
+                }
+            }
+            Text(f.energy(kcal), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 12.dp))
+        }
+    }
+}
+
+/** "Saved meal" in the same tiny outlined style as the source badges. */
+@Composable
+private fun MealBadge() {
+    Text(
+        stringResource(R.string.badge_saved_meal),
+        style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier
+            .border(1.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(50))
+            .padding(horizontal = 6.dp, vertical = 1.dp),
+    )
 }
 
 @Composable

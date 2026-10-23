@@ -93,13 +93,22 @@ class HealthRepositoryTest {
         assertThat(db.healthDao().pendingLogEntries(10)).isEmpty()
     }
 
-    @Test fun pastDayEntryIsDatedOnItsDayAtTheMealStart() = runTest {
+    /** Logged for yesterday: a typical time for breakfast (the middle of 4:00–11:00), since 1.2's meal times. */
+    @Test fun pastDayEntryIsDatedOnItsDayAtTheMealsTypicalTime() = runTest {
         seedSlots()
         val (id) = log.add(listOf(entry("Eggs", "breakfast", 150.0, date = today.minusDays(1))))
         repo.sync(SyncReason.WRITES)
         val write = source.nutrition.getValue(id)
-        assertThat(write.start).isEqualTo(today.minusDays(1).atTime(4, 0).atZone(zone).toInstant())
+        assertThat(write.start).isEqualTo(today.minusDays(1).atTime(7, 30).atZone(zone).toInstant())
         assertThat(write.offset).isEqualTo(ZoneOffset.ofHours(-4))
+    }
+
+    /** The meal time the user set is the record's time (owner, 2026-10-23). */
+    @Test fun mealTimeIsTheRecordsTime() = runTest {
+        seedSlots()
+        val (id) = log.add(listOf(entry("Eggs", "breakfast", 150.0).copy(eatenMinute = 6 * 60 + 45)))
+        repo.sync(SyncReason.WRITES)
+        assertThat(source.nutrition.getValue(id).start).isEqualTo(today.atTime(6, 45).atZone(zone).toInstant())
     }
 
     @Test fun waterBecomesHydrationAndDeletionRemovesIt() = runTest {

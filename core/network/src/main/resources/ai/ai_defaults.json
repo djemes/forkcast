@@ -4,6 +4,10 @@
   "jpegQuality": 85,
   "maxImages": 3,
   "maxOutputTokens": 4096,
+  "_timeouts": "Seconds per estimate request. Gemini free tier with thinking can take over a minute on a photo at busy times (2026-10-23).",
+  "photoTimeoutSec": 120,
+  "textTimeoutSec": 75,
+  "correctionImageEdgePx": 1024,
   "providers": {
     "CLAUDE": {
       "recommendedModel": "claude-sonnet-5-5",

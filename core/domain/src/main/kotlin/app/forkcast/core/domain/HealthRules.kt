@@ -51,6 +51,14 @@ object HealthRules {
         return date.atTime(time).atZone(zone).toInstant()
     }
 
+    /**
+     * When an entry was eaten, for its Nutrition and Hydration records: its meal time when it has
+     * one (since 1.2), else [nutritionStart]'s rule.
+     */
+    fun entryStart(date: LocalDate, eatenMinute: Int?, loggedAt: Instant, zone: ZoneId, slotStartMinute: Int?): Instant =
+        if (eatenMinute != null) date.atTime(LocalTime.of(eatenMinute / 60 % 24, eatenMinute % 60)).atZone(zone).toInstant()
+        else nutritionStart(date, loggedAt, zone, slotStartMinute)
+
     /** The manual weigh-in a Health Connect reading at [time] replaces, if any (nearest wins). */
     fun <T> duplicateOf(time: Instant, manual: List<T>, timeOf: (T) -> Instant): T? =
         manual.filter { Duration.between(timeOf(it), time).abs() <= WEIGHT_DEDUPE_WINDOW }

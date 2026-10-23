@@ -31,6 +31,9 @@ import javax.inject.Singleton
 /** A profile as Settings › AI shows it. */
 data class AiProfileStatus(val profile: AiProfile, val hasKey: Boolean, val usedToday: Int)
 
+/** "Add backup model": [model] on the key of [fromProfileName] (Gemini's separate free quota per model). */
+data class BackupOffer(val fromProfileId: String, val fromProfileName: String, val model: String, val name: String)
+
 /** What the user enters when adding or editing a profile. */
 data class AiProfileDraft(
     val id: String?,
@@ -91,7 +94,15 @@ interface AiRepository {
     suspend fun test(id: String): Result<ConnectionReport>
     /** Lists models with a saved profile's key, or with a key typed but not saved yet. */
     suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?): Result<List<ModelInfo>>
-    fun estimatorFor(profile: AiProfile): MealEstimator
+    /** [textOnly]: for a described meal (shorter timeout, nothing to upload). */
+    fun estimatorFor(profile: AiProfile, textOnly: Boolean = false): MealEstimator
+    /**
+     * The one-tap backup (owner, 2026-10-23): with exactly one Gemini profile and no budget-model
+     * profile, the Gemini budget model on the same key, second in the order. Null when not offered.
+     */
+    suspend fun backupOffer(): BackupOffer?
+    /** Creates the [backupOffer] profile; returns its id, or null if it isn't offered any more. */
+    suspend fun addBackupModel(): String?
     /** Persists what a chain run learned: cooldowns, rejected keys, usage. */
     suspend fun recordAttempts(attempts: List<AiChain.Attempt>)
     fun monthUsage(month: YearMonth): Flow<MonthUsage>
@@ -227,7 +238,28 @@ class DefaultAiRepository @Inject constructor(
         return estimator.listModels().map { list -> list.filter { it.supportsImages != false }.sortedBy { it.displayName } }
     }
 
-    override fun estimatorFor(profile: AiProfile): MealEstimator = factory.create(profile)
+    override fun estimatorFor(profile: AiProfile, textOnly: Boolean): MealEstimator = factory.create(profile, textOnly = textOnly)
+
+    override suspend fun backupOffer(): BackupOffer? {
+        val all = dao.profiles()
+        val gemini = all.filter { it.provider == ProviderId.GEMINI }
+        val budget = defaults.provider(ProviderId.GEMINI).budgetModel ?: return null
+        val source = gemini.singleOrNull()?.takeIf { it.model != budget } ?: return null
+        if (secrets.aiKey(source.id).isNullOrBlank()) return null
+        return BackupOffer(source.id, source.name, budget, defaults.displayName(budget))
+    }
+
+    override suspend fun addBackupModel(): String? {
+        val offer = backupOffer() ?: return null
+        val source = dao.profile(offer.fromProfileId) ?: return null
+        val id = saveProfile(AiProfileDraft(null, offer.name, ProviderId.GEMINI, offer.model, null, source.tierLabel), key = null)
+        copyKey(source.id, id)
+        // Second in the order: right after the profile it backs up.
+        val order = dao.profiles().map { it.id }.filterNot { it == id }.toMutableList()
+        order.add((order.indexOf(source.id) + 1).coerceIn(0, order.size), id)
+        reorder(order)
+        return id
+    }
 
     override suspend fun recordAttempts(attempts: List<AiChain.Attempt>) {
         val now = clock.millis()

@@ -76,13 +76,16 @@ interface FoodDao {
     )
     suspend fun search(q: String, limit: Int = 50): List<FoodEntity>
 
+    @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source = :source")
+    suspend fun bySource(source: app.forkcast.core.model.FoodSource): List<FoodEntity>
+
     @Query("SELECT * FROM food WHERE deletedAt IS NULL AND lastUsedAt IS NOT NULL AND source != 'QUICK_ADD' ORDER BY lastUsedAt DESC LIMIT :limit")
     fun observeRecents(limit: Int = 50): Flow<List<FoodEntity>>
 
     @Query("SELECT * FROM food WHERE deletedAt IS NULL AND isFavorite = 1 ORDER BY name")
     fun observeFavorites(): Flow<List<FoodEntity>>
 
-    @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source IN ('CUSTOM', 'LABEL', 'RECIPE') ORDER BY name")
+    @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source IN ('CUSTOM', 'LABEL', 'RECIPE', 'AI_TEXT') ORDER BY name")
     fun observeCustom(): Flow<List<FoodEntity>>
 
     @Upsert suspend fun upsert(food: FoodEntity)

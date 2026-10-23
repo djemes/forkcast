@@ -320,7 +320,7 @@ class HealthConnectRepository @Inject constructor(
 
     private fun LogEntryEntity.toWrite(slot: app.forkcast.core.data.db.MealSlotEntity?): NutritionWrite {
         val zone = zoneOf(zoneId)
-        val start = HealthRules.nutritionStart(date, Instant.ofEpochMilli(loggedAt), zone, slot?.startMinute)
+        val start = HealthRules.entryStart(date, eatenMinute, Instant.ofEpochMilli(loggedAt), zone, slot?.startMinute)
         return NutritionWrite(
             clientId = id,
             version = updatedAt,
@@ -336,7 +336,7 @@ class HealthConnectRepository @Inject constructor(
 
     private fun LogEntryEntity.toDrinkWrite(): HydrationWrite {
         val zone = zoneOf(zoneId)
-        val start = HealthRules.nutritionStart(date, Instant.ofEpochMilli(loggedAt), zone, null)
+        val start = HealthRules.entryStart(date, eatenMinute, Instant.ofEpochMilli(loggedAt), zone, null)
         return HydrationWrite(drinkId(id), updatedAt, start, zone.rules.getOffset(start), waterMl ?: 0.0)
     }
 

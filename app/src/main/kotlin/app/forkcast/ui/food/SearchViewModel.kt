@@ -4,8 +4,15 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import app.forkcast.core.data.ai.PhotoStore
+import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.FoodRepository
+import app.forkcast.core.data.repository.LogRepository
+import app.forkcast.core.data.repository.MealSlotRepository
+import app.forkcast.core.data.repository.SavedMealRepository
 import app.forkcast.core.data.repository.SettingsRepository
+import app.forkcast.core.domain.DescribedMatch
+import app.forkcast.core.model.SavedMeal
 import app.forkcast.core.data.secrets.SecretName
 import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.model.Food
@@ -24,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -49,12 +57,32 @@ data class SearchUiState(
     val custom: List<Food> = emptyList(),
     val usingDemoKey: Boolean = false,
     val units: UnitPrefs = UnitPrefs.US,
+    /** Saved meals matching the search: logged whole in one tap (owner, 2026-10-23). */
+    val savedMeals: List<SavedMeal> = emptyList(),
+    /** AI is on with a profile, so "Describe it to AI" can be offered. */
+    val canDescribe: Boolean = false,
+    /** "Log manually instead" from a photo estimate: the photo, to look at while searching. */
+    val photo: java.io.File? = null,
 ) {
     val isSearching: Boolean get() = query.isNotBlank()
+
+    /**
+     * No good results: nothing of your own, and the databases are done with fewer than three
+     * (or failed). Then "Describe it to AI" moves to the top.
+     */
+    val fewResults: Boolean
+        get() {
+            if (!isSearching || local.isNotEmpty() || savedMeals.isNotEmpty()) return false
+            fun count(r: RemoteResults) = (r as? RemoteResults.Done)?.foods?.size ?: 0
+            val loading = usda is RemoteResults.Loading || off is RemoteResults.Loading || usda is RemoteResults.Idle
+            return !loading && count(usda) + count(off) < 3
+        }
 }
 
 sealed interface SearchEffect {
     data class OpenFood(val foodId: String) : SearchEffect
+    /** A saved meal was logged: back to Today with "Added to Lunch". */
+    data class LoggedMeal(val mealName: String) : SearchEffect
 }
 
 @HiltViewModel
@@ -63,11 +91,18 @@ class SearchViewModel @Inject constructor(
     private val foods: FoodRepository,
     secrets: SecretStore,
     settings: SettingsRepository,
+    private val savedMeals: SavedMealRepository,
+    private val log: LogRepository,
+    private val slots: MealSlotRepository,
+    ai: AiRepository,
+    photos: PhotoStore,
 ) : ViewModel() {
 
     val args: SearchDestination = savedState.toRoute()
 
-    private val search = MutableStateFlow(SearchUiState())
+    private val search = MutableStateFlow(
+        SearchUiState(query = args.query.orEmpty(), photo = args.photo?.let(photos::file)?.takeIf { it.exists() }),
+    )
     private var job: Job? = null
     private val effectChannel = Channel<SearchEffect>(Channel.BUFFERED)
     val effects: Flow<SearchEffect> = effectChannel.receiveAsFlow()
@@ -77,18 +112,44 @@ class SearchViewModel @Inject constructor(
         combine(foods.observeRecents(), foods.observeFavorites(), foods.observeCustom()) { r, f, c -> Triple(r, f, c) },
         secrets.present,
         settings.settings,
-    ) { s, (recents, favorites, custom), present, appSettings ->
+        combine(savedMeals.meals, ai.profiles) { m, p -> m to p.any { it.profile.enabled } },
+    ) { s, (recents, favorites, custom), present, appSettings, (meals, hasProfile) ->
         s.copy(
             recents = recents,
             favorites = favorites,
             custom = custom,
             usingDemoKey = SecretName.USDA_API_KEY !in present,
             units = appSettings.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
+            savedMeals = if (args.forRecipe) emptyList() else matchingMeals(meals, s.query),
+            canDescribe = !args.forRecipe && appSettings.ai.enabled && hasProfile,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchUiState())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), search.value)
 
     init {
         viewModelScope.launch { secrets.refresh() }
+        // "Log manually instead" arrives with the meal's description: search it right away.
+        args.query?.takeIf { it.isNotBlank() }?.let(::onQueryChange)
+    }
+
+    /** Saved meals whose name or items match most words of the search. */
+    private fun matchingMeals(meals: List<SavedMeal>, query: String): List<SavedMeal> {
+        if (query.isBlank()) return emptyList()
+        return meals.map { m -> m to DescribedMatch.score(query, listOf(m.name) + m.items.map { it.displayName }) }
+            .filter { it.second >= DescribedMatch.THRESHOLD }
+            .sortedByDescending { it.second }
+            .map { it.first }
+    }
+
+    /** One tap logs the whole saved meal into the meal and day being logged (owner, 2026-10-23). */
+    fun logSavedMeal(meal: SavedMeal) {
+        viewModelScope.launch {
+            val date = java.time.LocalDate.parse(args.date)
+            val entries = savedMeals.toEntries(meal.id, date, args.mealSlotId)
+            if (entries.isEmpty()) return@launch
+            log.add(entries)
+            val mealName = slots.observeMealSlots().first().firstOrNull { it.id == args.mealSlotId }?.name.orEmpty()
+            effectChannel.send(SearchEffect.LoggedMeal(mealName))
+        }
     }
 
     fun onQueryChange(query: String) {

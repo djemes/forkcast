@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Meal times (1.2, owner 2026-10-23). -->
+<resources>
+    <string name="meal_time_label">Time</string>
+    <string name="meal_time_future">That\'s later than now.</string>
+    <string name="meal_time_set">Change %1$s\'s time, now %2$s</string>
+    <string name="meal_time_title">%1$s time</string>
+    <string name="meal_time_body">Every item in %1$s moves to this time.</string>
+    <string name="entry_day">Day</string>
+</resources>

@@ -51,7 +51,7 @@
     <string name="review_question">The AI asks: %1$s</string>
     <string name="review_accept_as_is">Log as is</string>
     <string name="review_correct">Correct it</string>
-    <string name="review_correct_hint">e.g. it was fried in butter, or I only ate half</string>
+    <string name="review_correct_hint">e.g. it was fried in butter, or the rice was brown</string>
     <string name="review_answer_hint">Your answer</string>
     <string name="review_send">Send</string>
     <string name="review_save">Save</string>

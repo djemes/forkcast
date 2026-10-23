@@ -2,6 +2,7 @@
 
 package app.forkcast.core.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
@@ -99,6 +100,8 @@ data class FoodEntity(
     val deletedAt: Long? = null,
     /** v5: true/false = the user's choice, null = the drink rule decides (DrinkWater). */
     val countsAsWater: Boolean? = null,
+    /** v7: what the user typed when this food came from "Describe" (AI · text), so a similar search finds it. */
+    val describedAs: String? = null,
 )
 
 @Serializable
@@ -129,6 +132,10 @@ data class LogEntryEntity(
     val waterMl: Double? = null,
     /** v5: the Hydration record written for that water (per phone, never exported). */
     @Transient val hcWaterRecordId: String? = null,
+    /** v7: when it was eaten, minutes after local midnight on [date] (owner, 2026-10-23). */
+    val eatenMinute: Int? = null,
+    /** v7: [eatenMinute] is a typical time for its meal, filled in for entries from before meal times. */
+    @ColumnInfo(defaultValue = "0") val timeEstimated: Boolean = false,
 )
 
 @Serializable

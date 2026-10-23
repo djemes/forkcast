@@ -7,16 +7,18 @@ import kotlinx.serialization.SerializationException
 /** System prompt and user text (AI_PROVIDERS.md §4). Same words for every provider. */
 object MealPrompt {
     /** Recorded on each estimate, so accuracy can be compared across prompt versions. */
-    const val VERSION = "meal-v1"
+    const val VERSION = "meal-v2"
 
+    /** v2 (2026-10-23): described meals, chain-restaurant and packaged items, drinks as items. */
     val system: String by lazy {
-        requireNotNull(MealPrompt::class.java.getResourceAsStream("/ai/meal_system_prompt_v1.txt")) { "prompt resource missing" }
+        requireNotNull(MealPrompt::class.java.getResourceAsStream("/ai/meal_system_prompt_v2.txt")) { "prompt resource missing" }
             .bufferedReader().use { it.readText().trim() }
     }
 
     /** The text that follows the images in the user turn. */
     fun userText(r: MealEstimateRequest): String = buildString {
         append("Meal: ${r.mealSlot} at ${r.localTime}. Units the user thinks in: ${r.unitsHint}.\n")
+        if (r.isTextOnly) append("No photo: estimate from the description alone.\n")
         append("Description: ${r.description?.takeIf { it.isNotBlank() }?.trim() ?: "none"}\n")
         append("Personal context: ${r.personalContext?.takeIf { it.isNotBlank() }?.trim() ?: "none"}")
         if (r.previous != null && !r.correction.isNullOrBlank()) {

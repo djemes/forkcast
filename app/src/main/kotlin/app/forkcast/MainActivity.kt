@@ -91,6 +91,8 @@ class MainActivity : ComponentActivity() {
             runCatching { maintenance.get().updateIfDue() }
             // Old meal photos go even when the app stays in memory for days.
             runCatching { estimates.get().cleanUpPhotos() }
+            // A retry Doze held back runs now that the app is open.
+            runCatching { estimates.get().recover() }
         }
     }
 

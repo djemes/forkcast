@@ -51,7 +51,7 @@
     <string name="review_question">A IA pergunta: %1$s</string>
     <string name="review_accept_as_is">Registrar assim</string>
     <string name="review_correct">Corrigir</string>
-    <string name="review_correct_hint">ex.: foi frito na manteiga, ou comi só a metade</string>
+    <string name="review_correct_hint">ex.: foi frito na manteiga, ou o arroz era integral</string>
     <string name="review_answer_hint">Sua resposta</string>
     <string name="review_send">Enviar</string>
     <string name="review_save">Salvar</string>

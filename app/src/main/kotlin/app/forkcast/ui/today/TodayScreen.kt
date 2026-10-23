@@ -118,6 +118,8 @@ data class TodayActions(
     val openWeight: () -> Unit = {},
     /** Opens the photo-meal camera for [mealSlotId] on [date]. */
     val openPhoto: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
+    /** Opens "Describe a meal" for [mealSlotId] on [date]. */
+    val openDescribe: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
     /** Opens the review screen of a photo estimate. */
     val openEstimate: (estimateId: String) -> Unit = {},
     val openHealthConnect: () -> Unit = {},
@@ -452,6 +454,7 @@ fun TodayScreen(
                 search = actions.openSearch?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 scan = actions.openScanner?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 photo = actions.openPhoto?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
+                describe = actions.openDescribe?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
                 savedMeals = { logSheetMealId = null; savedMealsFor = mealId },
                 recipes = actions.openRecipes?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },

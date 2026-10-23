@@ -169,6 +169,53 @@ class MigrationTest {
         }
     }
 
+    private fun SQLiteConnection.insertV6Entries() {
+        // Lunch has a 11:00-15:00 window; the snack's meal has none.
+        execSQL("INSERT INTO meal_slot (id, name, sortOrder, startMinute, endMinute, createdAt, updatedAt, deletedAt) VALUES ('s', 'Snacks', 3, NULL, NULL, 1, 1, NULL)")
+        val cols = "id, date, zoneId, mealSlotId, foodId, displayName, brand, quantity, servingLabel, grams, nutrients, source, aiEstimateId, " +
+            "healthConnectRecordId, note, loggedAt, createdAt, updatedAt, deletedAt, hcSyncedAt, waterMl, hcWaterRecordId"
+        execSQL("INSERT INTO log_entry ($cols) VALUES ('e1', '2026-10-18', 'America/New_York', 'a', NULL, 'Soup', NULL, 1.0, 'cup', 240.0, '{\"ENERGY_KCAL\":90.0}', 'USDA', NULL, NULL, NULL, 1, 1, 5, NULL, NULL, NULL, NULL)")
+        // 2026-10-18T20:15:00Z = 16:15 in New York, on the entry's own day.
+        execSQL("INSERT INTO log_entry ($cols) VALUES ('e2', '2026-10-18', 'America/New_York', 's', NULL, 'Apple', NULL, 1.0, 'medium', 182.0, '{\"ENERGY_KCAL\":95.0}', 'USDA', NULL, NULL, NULL, 1792354500000, 1, 5, NULL, NULL, NULL, NULL)")
+    }
+
+    /** v7: meal times. Old entries get a typical time for their meal, marked estimated. */
+    @Test fun migrate6To7GivesOldEntriesTypicalMealTimes() {
+        helper.createDatabase(6).apply {
+            insertV1MealSlot()
+            insertV6Entries()
+            close()
+        }
+        helper.runMigrationsAndValidate(7, emptyList()).apply {
+            prepare("SELECT id, eatenMinute, timeEstimated FROM log_entry ORDER BY id").use { s ->
+                assertThat(s.step()).isTrue()
+                assertThat(s.getInt(1)).isEqualTo(13 * 60) // middle of 11:00-15:00
+                assertThat(s.getInt(2)).isEqualTo(1)
+                assertThat(s.step()).isTrue()
+                assertThat(s.getInt(1)).isEqualTo(16 * 60 + 15) // when it was logged that day
+                assertThat(s.getInt(2)).isEqualTo(1)
+            }
+            close()
+        }
+    }
+
+    /** The app opens the database through SupportSQLite: the same backfill runs there. */
+    @Test fun version6FileOpensWithCurrentCodeAndGetsMealTimes() {
+        helper.createDatabase(6).apply {
+            insertV1MealSlot()
+            insertV6Entries()
+            close()
+        }
+        val db = Room.databaseBuilder(context, ForkcastDatabase::class.java, TEST_DB).allowMainThreadQueries().build()
+        db.openHelper.writableDatabase.query("SELECT eatenMinute, timeEstimated FROM log_entry WHERE id = 'e1'").use { c ->
+            assertThat(c.moveToFirst()).isTrue()
+            assertThat(c.getInt(0)).isEqualTo(13 * 60)
+            assertThat(c.getInt(1)).isEqualTo(1)
+        }
+        db.openHelper.writableDatabase.query("SELECT count(*) FROM ai_estimate").use { c -> assertThat(c.moveToFirst()).isTrue() }
+        db.close()
+    }
+
     /** A v1 file from Phase 0 opens with today's code, upgraded in place with its data. */
     @Test fun version1FileOpensWithCurrentCode() {
         helper.createDatabase(1).apply {
@@ -182,7 +229,7 @@ class MigrationTest {
             assertThat(c.moveToFirst()).isTrue()
             assertThat(c.getString(0)).isEqualTo("Lunch")
         }
-        assertThat(db.openHelper.writableDatabase.version).isEqualTo(6)
+        assertThat(db.openHelper.writableDatabase.version).isEqualTo(7)
         db.close()
     }
 

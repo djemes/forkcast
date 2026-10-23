@@ -1,5 +1,6 @@
 package app.forkcast.core.data.backup
 
+import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.data.db.ActivityDayEntity
 import app.forkcast.core.data.db.AiComponentEntity
 import app.forkcast.core.data.db.AiEstimateEntity
@@ -35,7 +36,10 @@ import kotlinx.serialization.Serializable
  * Health Connect activity days, water's Health Connect record id. Older files read as v3 with
  * the newer arrays empty. v4: drinks count toward water (food.countsAsWater, waterMl on log
  * entries and saved-meal items); older files read with those null. v5 (Phase 4): recipes and
- * their ingredients (older files wrote `recipes` as an always-empty array).
+ * their ingredients (older files wrote `recipes` as an always-empty array). v6 (1.2): meal times
+ * on log entries (`eatenMinute`, `timeEstimated`; older files get a typical time per meal on
+ * import, [withMealTimes]), `food.describedAs`, the `AI_TEXT` source, and the estimate status
+ * fields (kind, portion, attemptLog, tries, …; older files read with their defaults).
  */
 @Serializable
 data class ForkcastExport(
@@ -70,6 +74,23 @@ data class ForkcastExport(
     val settings: AppSettings? = null,
 ) {
     companion object {
-        const val SCHEMA_VERSION = 5
+        const val SCHEMA_VERSION = 6
     }
+}
+
+/**
+ * Import of a file older than v6: its log entries get the typical time of their meal, marked
+ * estimated, exactly as the database migration did on the phone (MealTimeBackfill).
+ */
+fun ForkcastExport.withMealTimes(): ForkcastExport {
+    val slots = mealSlots.associateBy { it.id }
+    return copy(
+        logEntries = logEntries.map { e ->
+            if (e.eatenMinute != null) return@map e
+            val slot = slots[e.mealSlotId]
+            val zone = runCatching { java.time.ZoneId.of(e.zoneId) }.getOrDefault(java.time.ZoneId.systemDefault())
+            val minute = MealTimes.typicalMinute(slot?.startMinute, slot?.endMinute, e.date, java.time.Instant.ofEpochMilli(e.loggedAt), zone)
+            e.copy(eatenMinute = minute, timeEstimated = true)
+        },
+    )
 }

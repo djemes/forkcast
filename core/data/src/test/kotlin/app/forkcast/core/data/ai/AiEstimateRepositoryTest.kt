@@ -84,14 +84,17 @@ class AiEstimateRepositoryTest {
     private val foods = DefaultFoodRepository(db.foodDao(), usda, OffClient(HttpClientFactory.create("t", MockEngine { respond("{}") })), clock)
     private val ai = ScriptedAi()
     private val scheduled = mutableListOf<Pair<String, Long>>()
+    /** Estimates WorkManager would report as queued or running. */
+    private val live = mutableSetOf<String>()
     private val scheduler = object : EstimateScheduler {
-        override fun enqueue(estimateId: String, delayMs: Long) { scheduled += estimateId to delayMs }
-        override fun cancel(estimateId: String) {}
+        override fun enqueue(estimateId: String, delayMs: Long) { scheduled += estimateId to delayMs; live += estimateId }
+        override fun cancel(estimateId: String) { live -= estimateId }
+        override suspend fun isScheduled(estimateId: String) = estimateId in live
     }
     private val photos = PhotoStore(context)
     private val repo = DefaultAiEstimateRepository(
         context, db.aiDao(), ai, photos, ComponentMatcher(usda, foods, db.aiDao(), clock), log,
-        RoomMealSlotRepository(db, db.mealSlotDao(), clock, context), settings, scheduler, clock,
+        RoomMealSlotRepository(db, db.mealSlotDao(), clock, context), settings, scheduler, clock, foods,
     )
 
     @After fun tearDown() {
@@ -169,15 +172,11 @@ class AiEstimateRepositoryTest {
         val slot = lunch()
         ai.add("g", ProviderId.GEMINI, Result.failure<MealEstimateResult>(AiError.Network()))
         val id = repo.create(day, slot, listOf(jpeg()), null)
-        assertThat(repo.run(id)).isEqualTo(RunOutcome.RetryWithBackoff)
+        assertThat(repo.run(id)).isEqualTo(RunOutcome.RetryWhenOnline)
         val e = db.aiDao().estimate(id)!!
         assertThat(e.status).isEqualTo(EstimateStatus.PENDING)
         assertThat(e.errorCode).isEqualTo("Network")
         assertThat(log.observeDay(day).first()).isEmpty()
-        // The worker ran out of retries: the row shows the network message with Try again.
-        repo.stopRetrying(id)
-        assertThat(db.aiDao().estimate(id)!!.status).isEqualTo(EstimateStatus.FAILED)
-        assertThat(db.aiDao().estimate(id)!!.errorCode).isEqualTo("Network")
     }
 
     @Test fun everyProfileOutOfQuotaWaitsForReset() = runTest {
@@ -244,13 +243,16 @@ class AiEstimateRepositoryTest {
         // USDA rice is 130 kcal/100 g.
         assertThat(rice.nutrientsUsed.kcal).isWithin(1.0).of(260.0)
 
-        repo.setGrams(rice.id, 100.0)
-        assertThat(db.aiDao().components(id).first { it.id == rice.id }.nutrientsUsed.kcal).isWithin(1.0).of(130.0)
-        repo.setSource(rice.id, ComponentSource.AI)
-        assertThat(db.aiDao().components(id).first { it.id == rice.id }.nutrientsUsed.kcal).isWithin(1.0).of(130.0)
-        assertThat(db.aiDao().components(id).first { it.id == rice.id }.nutrientsUsed[NutrientKey.CARBS_G]).isWithin(0.5).of(28.0)
+        // Edits are a draft until Save: nothing stored changes on the way.
+        var draft = db.aiDao().components(id).map { if (it.id == rice.id) ComponentEdits.withGrams(it, 100.0) else it }
+        assertThat(draft.first { it.id == rice.id }.nutrientsUsed.kcal).isWithin(1.0).of(130.0)
+        draft = draft.map { if (it.id == rice.id) ComponentEdits.withSource(it, ComponentSource.AI) else it }
+        assertThat(draft.first { it.id == rice.id }.nutrientsUsed.kcal).isWithin(1.0).of(130.0)
+        assertThat(draft.first { it.id == rice.id }.nutrientsUsed[NutrientKey.CARBS_G]).isWithin(0.5).of(28.0)
+        assertThat(db.aiDao().components(id).first { it.id == rice.id }.grams).isEqualTo(200.0)
 
-        repo.save(id)
+        repo.saveReview(id, draft, 1.0)
+        assertThat(db.aiDao().components(id).first { it.id == rice.id }.grams).isEqualTo(100.0)
         val e = db.aiDao().estimate(id)!!
         assertThat(e.reviewedAt).isNotNull()
         assertThat(log.observeDay(day).first().single().nutrients.kcal).isWithin(1.0).of(e.kcalExpected!!)
@@ -269,7 +271,9 @@ class AiEstimateRepositoryTest {
 
         val picked = Food("", "Chicken, thigh, skinless, grilled", null, FoodSource.USDA, "999", null, emptyList(),
             mapOf(NutrientKey.ENERGY_KCAL to 180.0, NutrientKey.PROTEIN_G to 26.0), false, null, null, null)
-        repo.setMatch(chicken.id, picked)
+        val local = repo.localFood(picked)
+        val draft = db.aiDao().components(id).map { if (it.id == chicken.id) ComponentEdits.withMatch(it, local) else it }
+        repo.saveReview(id, draft, 1.0)
 
         val after = db.aiDao().components(id).first { it.id == chicken.id }
         assertThat(after.useSource).isEqualTo(ComponentSource.USDA)
@@ -288,7 +292,7 @@ class AiEstimateRepositoryTest {
         val id = repo.create(day, slot, listOf(jpeg()), null)
         repo.run(id)
         assertThat(log.observeDay(day).first()).isEmpty()
-        repo.save(id)
+        repo.saveReview(id, db.aiDao().components(id), 1.0)
         assertThat(log.observeDay(day).first()).hasSize(1)
     }
 
@@ -304,12 +308,137 @@ class AiEstimateRepositoryTest {
         assertThat(repo.observeDetail(id).first()).isNull()
     }
 
+
+    /** Bug (owner, 2026-10-23): sparkling water from a photo meal didn't count toward the day's water. */
+    @Test fun drinksInAnEstimateCountTowardWater() = runTest {
+        val slot = lunch()
+        val withWater = meal.copy(items = meal.items + EstimatedItem("Sparkling water", "Water, carbonated", "unknown", 355.0, 330.0, 500.0, 0.9, false, EstimatedNutrients(0.0, 0.0, 0.0, 0.0)))
+        ai.add("g", ProviderId.GEMINI, result(withWater))
+        val id = repo.create(day, slot, listOf(jpeg()), "chicken, rice and a sparkling water")
+        repo.run(id)
+        assertThat(log.observeDay(day).first().single().waterMl).isWithin(0.1).of(355.0)
+    }
+
+    /** "How much did you eat?": the entry is the plate × the portion, without asking the AI. */
+    @Test fun portionScalesTheEntryLocally() = runTest {
+        val slot = lunch()
+        ai.add("g", ProviderId.GEMINI, result())
+        val id = repo.create(day, slot, listOf(jpeg()), null)
+        repo.run(id)
+        repo.saveReview(id, db.aiDao().components(id), 0.5)
+        val entry = log.observeDay(day).first().single()
+        assertThat(entry.nutrients.kcal).isWithin(0.5).of(286.0)
+        assertThat(entry.quantity).isEqualTo(0.5)
+        assertThat(db.aiDao().estimate(id)!!.kcalExpected!!).isWithin(0.5).of(286.0)
+        // The plate itself is unchanged, so "All" brings it back.
+        assertThat(db.aiDao().components(id).sumOf { it.grams }).isEqualTo(327.0)
+        assertThat(ai.requests).hasSize(1)
+    }
+
+    /** One profile that times out: tried again with backoff, then Failed with every try in Details. */
+    @Test fun timeoutsRetryWithBackoffThenFail() = runTest {
+        val slot = lunch()
+        val timeout = Result.failure<MealEstimateResult>(AiError.Timeout())
+        ai.add("g", ProviderId.GEMINI, timeout, timeout, timeout)
+        val id = repo.create(day, slot, listOf(jpeg()), null)
+        val first = repo.run(id) as RunOutcome.RetryAt
+        assertThat(first.atMs - clock.millis()).isEqualTo(30_000L)
+        var e = db.aiDao().estimate(id)!!
+        assertThat(e.status).isEqualTo(EstimateStatus.PENDING)
+        assertThat(e.errorCode).isEqualTo("Timeout")
+        assertThat(e.retryAfter).isEqualTo(first.atMs)
+        assertThat((repo.run(id) as RunOutcome.RetryAt).atMs - clock.millis()).isEqualTo(120_000L)
+        assertThat(repo.run(id)).isInstanceOf(RunOutcome.Failed::class.java)
+        e = db.aiDao().estimate(id)!!
+        assertThat(e.status).isEqualTo(EstimateStatus.FAILED)
+        assertThat(e.attemptLog.map { it.result }).containsExactly("Timeout", "Timeout", "Timeout")
+        assertThat(e.attemptLog.first().profileName).isEqualTo("g")
+    }
+
+    /** A per-minute 429 waits Google's delay, never until midnight. */
+    @Test fun perMinuteLimitWaitsShort() = runTest {
+        val slot = lunch()
+        ai.add("g", ProviderId.GEMINI, Result.failure<MealEstimateResult>(AiError.RateLimited(37_000, quota = "GenerateRequestsPerMinutePerProjectPerModel-FreeTier")))
+        val id = repo.create(day, slot, listOf(jpeg()), null)
+        val out = repo.run(id) as RunOutcome.RetryAt
+        assertThat(out.atMs - clock.millis()).isEqualTo(37_000L)
+        val e = db.aiDao().estimate(id)!!
+        assertThat(e.attemptLog.single().quota).isEqualTo("GenerateRequestsPerMinutePerProjectPerModel-FreeTier")
+        assertThat(ai.recorded.single().cooldownUntil!! - clock.millis()).isEqualTo(37_000L)
+    }
+
+    @Test fun retryWithAnotherProfileAsksOnlyThatOne() = runTest {
+        val slot = lunch()
+        ai.add("a", ProviderId.GEMINI, Result.failure<MealEstimateResult>(AiError.ContentRefused()))
+        ai.add("b", ProviderId.GEMINI, result())
+        val id = repo.create(day, slot, listOf(jpeg()), null)
+        assertThat(repo.run(id)).isInstanceOf(RunOutcome.Failed::class.java)
+        repo.retryWith(id, "b")
+        assertThat(db.aiDao().estimate(id)!!.status).isEqualTo(EstimateStatus.PENDING)
+        repo.run(id)
+        assertThat(ai.requests).containsExactly("a", "b").inOrder()
+        assertThat(db.aiDao().estimate(id)!!.profileName).isEqualTo("b")
+    }
+
+    /** An estimate stuck by an older version (no run start, retry hours away) becomes Failed with Retry. */
+    @Test fun recoverStopsEstimatesStuckInOldVersions() = runTest {
+        val slot = lunch()
+        val id = repo.create(day, slot, listOf(jpeg()), null)
+        val stuck = db.aiDao().estimate(id)!!.copy(runStartedAt = null, createdAt = clock.millis() - 3 * 60 * 60_000L, errorCode = "Timeout")
+        db.aiDao().upsertEstimate(stuck)
+        repo.recover()
+        val e = db.aiDao().estimate(id)!!
+        assertThat(e.status).isEqualTo(EstimateStatus.FAILED)
+        assertThat(e.errorCode).isEqualTo("Timeout")
+        assertThat(id in live).isFalse()
+        // Retry works on it like on any other.
+        ai.add("g", ProviderId.GEMINI, result())
+        repo.retry(id)
+        repo.run(id)
+        assertThat(db.aiDao().estimate(id)!!.status).isEqualTo(EstimateStatus.DONE)
+    }
+
+    /** Killed mid-run: RUNNING with no job → queued again. */
+    @Test fun recoverRequeuesKilledRuns() = runTest {
+        val slot = lunch()
+        val id = repo.create(day, slot, listOf(jpeg()), null)
+        db.aiDao().upsertEstimate(db.aiDao().estimate(id)!!.copy(status = EstimateStatus.RUNNING))
+        live.clear()
+        scheduled.clear()
+        repo.recover()
+        assertThat(db.aiDao().estimate(id)!!.status).isEqualTo(EstimateStatus.PENDING)
+        assertThat(scheduled.single()).isEqualTo(id to 0L)
+    }
+
+    @Test fun describedMealIsTextOnlyAndSavesAsFood() = runTest {
+        val slot = lunch()
+        val pizza = MealEstimateJson("Costco cheese pizza", listOf(
+            EstimatedItem("Cheese pizza slice", "Pizza, cheese, regular crust", "baked", 400.0, 360.0, 440.0, 0.8, false, EstimatedNutrients(1140.0, 56.0, 120.0, 46.0)),
+        ), 0.8, listOf("Costco's published nutrition: 570 kcal per slice"))
+        ai.add("g", ProviderId.GEMINI, result(pizza))
+        val id = repo.createDescribed(day, slot, "2 slices of Costco cheese pizza")
+        repo.run(id)
+        assertThat(ai.lastRequest!!.images).isEmpty()
+        assertThat(ai.lastRequest!!.isTextOnly).isTrue()
+        val entry = log.observeDay(day).first().single()
+        assertThat(entry.source).isEqualTo(FoodSource.AI_TEXT)
+        val foodId = repo.saveAsFood(id, "Costco cheese pizza")!!
+        val food = foods.get(foodId)!!
+        assertThat(food.source).isEqualTo(FoodSource.AI_TEXT)
+        assertThat(food.nutrientsPer100g.kcal).isWithin(0.1).of(285.0)
+        assertThat(food.describedAs).isEqualTo("2 slices of Costco cheese pizza")
+        // Found again offline by something close to what was described.
+        assertThat(foods.searchLocal("costco pizza slices").first().id).isEqualTo(foodId)
+        assertThat(log.observeDay(day).first().single().foodId).isEqualTo(foodId)
+    }
+
     /** Profiles with scripted answers, in order. */
     private class ScriptedAi : AiRepository {
         private val list = mutableListOf<AiProfile>()
         private val answers = mutableMapOf<String, ArrayDeque<Result<MealEstimateResult>>>()
         val recorded = mutableListOf<AiChain.Attempt>()
         var lastRequest: MealEstimateRequest? = null
+        val requests = mutableListOf<String>()
 
         fun add(name: String, provider: ProviderId, vararg results: Any) {
             list += AiProfile(name, name, provider, "m-$name", null, TierLabel.FREE, list.size, true, false, null)
@@ -330,12 +459,15 @@ class AiEstimateRepositoryTest {
         override suspend fun copyKey(fromId: String, toId: String) = Unit
         override suspend fun test(id: String) = Result.success(ConnectionReport("m", 1))
         override suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?) = Result.success(emptyList<ModelInfo>())
-        override fun estimatorFor(profile: AiProfile): MealEstimator = object : MealEstimator {
+        override suspend fun backupOffer() = null
+        override suspend fun addBackupModel(): String? = null
+        override fun estimatorFor(profile: AiProfile, textOnly: Boolean): MealEstimator = object : MealEstimator {
             override val providerId = profile.provider
             override suspend fun listModels() = Result.success(emptyList<ModelInfo>())
             override suspend fun testConnection() = Result.success(ConnectionReport("m", 1))
             override suspend fun estimate(request: MealEstimateRequest): Result<MealEstimateResult> {
                 lastRequest = request
+                requests += profile.id
                 return answers.getValue(profile.id).removeFirst()
             }
         }

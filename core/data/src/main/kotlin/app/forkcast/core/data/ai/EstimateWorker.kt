@@ -2,7 +2,6 @@ package app.forkcast.core.data.ai
 
 import android.content.Context
 import androidx.hilt.work.HiltWorker
-import androidx.work.BackoffPolicy
 import androidx.work.Constraints
 import androidx.work.CoroutineWorker
 import androidx.work.ExistingWorkPolicy
@@ -43,30 +42,43 @@ class EstimateWorker @AssistedInject constructor(
     private val notifier: Notifier,
     private val dao: AiDao,
     private val settings: SettingsRepository,
+    private val slots: app.forkcast.core.data.repository.MealSlotRepository,
 ) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
         val id = inputData.getString(KEY_ID) ?: return Result.failure()
-        return when (val outcome = estimates.run(id)) {
-            is RunOutcome.Finished -> {
-                notifyReady(outcome.estimateId)
-                Result.success()
-            }
-            is RunOutcome.RetryAt -> {
-                scheduler.enqueue(id, delayMs = (outcome.atMs - System.currentTimeMillis()).coerceAtLeast(60_000))
-                Result.success()
-            }
-            RunOutcome.RetryWithBackoff -> if (runAttemptCount < MAX_ATTEMPTS) Result.retry() else {
-                estimates.stopRetrying(id)
-                Result.success()
-            }
+        // Each outcome schedules its own next run, so the screen can say when (no hidden WorkManager backoff).
+        when (val outcome = estimates.run(id)) {
+            is RunOutcome.Finished -> notifyReady(outcome.estimateId)
+            is RunOutcome.RetryAt -> scheduler.enqueue(id, delayMs = (outcome.atMs - System.currentTimeMillis()).coerceAtLeast(MIN_DELAY_MS))
+            // The job only runs when connected; a short pause so a flaky network doesn't spin.
+            RunOutcome.RetryWhenOnline -> scheduler.enqueue(id, delayMs = MIN_DELAY_MS)
             is RunOutcome.Failed -> {
-                if (outcome.notifyKeyProblem) notifyKeyProblem()
-                Result.success()
+                if (outcome.notifyKeyProblem) notifyKeyProblem() else notifyGaveUp(outcome.estimateId)
             }
-            RunOutcome.Nothing -> Result.success()
+            RunOutcome.Nothing -> Unit
         }
+        return Result.success()
     }
+
+    /** "Lunch wasn't estimated. Tap to see what was tried…", when the user isn't looking (owner, 2026-10-23). */
+    private suspend fun notifyGaveUp(id: String) {
+        val e = dao.estimate(id) ?: return
+        val prefs = settings.settings.first().notifications
+        val now = java.time.LocalTime.now().let { it.hour * 60 + it.minute }
+        val quiet = NotificationRules.inQuietHours(now, prefs.quietStartMinute, prefs.quietEndMinute)
+        if (notifier.appInForeground() || !prefs.estimateReadyEnabled || quiet) return
+        val ctx = applicationContext
+        val meal = mealNameOf(e)
+        notifier.post(
+            Channel.ESTIMATE_READY, id.hashCode(), ctx.getString(R.string.estimate_gave_up_title, meal),
+            ctx.getString(R.string.estimate_gave_up_notification), open = "estimate:$id",
+        )
+    }
+
+    private suspend fun mealNameOf(e: app.forkcast.core.data.db.AiEstimateEntity): String =
+        e.mealName ?: slots.observeMealSlots().first().firstOrNull { it.id == e.mealSlotId }?.name
+            ?: applicationContext.getString(if (e.kind == app.forkcast.core.data.db.EstimateKind.TEXT) R.string.described_meal else R.string.photo_meal)
 
     /** "Lunch estimated: ~640 kcal (520–760). Tap to review." Only when the app isn't on screen. */
     private suspend fun notifyReady(id: String) {
@@ -80,7 +92,7 @@ class EstimateWorker @AssistedInject constructor(
         }
         val ctx = applicationContext
         val n = NumberFormat.getIntegerInstance()
-        val meal = e.mealName ?: ctx.getString(R.string.photo_meal)
+        val meal = mealNameOf(e)
         val text = if (e.status == EstimateStatus.NEEDS_INPUT) {
             ctx.getString(R.string.estimate_question_notification, meal)
         } else {
@@ -108,7 +120,7 @@ class EstimateWorker @AssistedInject constructor(
 
     companion object {
         const val KEY_ID = "estimateId"
-        private const val MAX_ATTEMPTS = 20
+        private const val MIN_DELAY_MS = 30_000L
         private const val KEY_PROBLEM_ID = 1002
     }
 }
@@ -120,7 +132,6 @@ class WorkManagerEstimateScheduler @Inject constructor(@ApplicationContext priva
         val request = OneTimeWorkRequestBuilder<EstimateWorker>()
             .setInputData(workDataOf(EstimateWorker.KEY_ID to estimateId))
             .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
-            .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
             .addTag(TAG)
             .apply {
                 // Expedited work can't be delayed; a delayed run is a quota wait anyway.
@@ -133,6 +144,9 @@ class WorkManagerEstimateScheduler @Inject constructor(@ApplicationContext priva
     override fun cancel(estimateId: String) {
         WorkManager.getInstance(context).cancelUniqueWork(name(estimateId))
     }
+
+    override suspend fun isScheduled(estimateId: String): Boolean =
+        WorkManager.getInstance(context).getWorkInfosForUniqueWorkFlow(name(estimateId)).first().any { !it.state.isFinished }
 
     private fun name(id: String) = "estimate-$id"
 

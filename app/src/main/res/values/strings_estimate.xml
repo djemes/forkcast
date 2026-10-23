@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- AI estimate status, review actions, portion, Describe (1.2, owner feedback 2026-10-23). -->
+<resources>
+    <!-- Describe (text-only AI logging) -->
+    <string name="describe_title">Describe a meal</string>
+    <string name="describe_action">Describe</string>
+    <string name="describe_field">What did you eat?</string>
+    <string name="describe_hint">e.g. 2 slices of Costco cheese pizza, or a Chipotle bowl with brown rice, chicken and guacamole</string>
+    <string name="describe_estimate">Estimate</string>
+    <string name="describe_you_said">You described</string>
+    <string name="describe_knowledge_note">From the AI\'s own knowledge, not a web search: check the range and the assumptions.</string>
+    <string name="describe_save_as_food">Save as food</string>
+    <string name="describe_save_as_food_body">Next time it\'s in search, offline, with no AI.</string>
+    <string name="describe_food_name">Food name</string>
+    <string name="describe_from_search">Describe it to AI</string>
+    <string name="describe_from_search_body">Not finding it? The AI can estimate “%1$s”.</string>
+    <string name="describe_needs_ai">Set up an AI profile in Settings → AI to describe meals.</string>
+    <string name="badge_ai_text">AI · text</string>
+    <string name="badge_ai_text_review">AI · text · review</string>
+
+    <!-- Unsaved changes -->
+    <string name="discard_title">Discard changes?</string>
+    <string name="discard_body">Your changes haven\'t been saved.</string>
+    <string name="discard_confirm">Discard</string>
+    <string name="discard_keep">Keep editing</string>
+
+    <!-- How much did you eat? -->
+    <string name="portion_title">How much did you eat?</string>
+    <string name="portion_all">All</string>
+    <string name="portion_custom">Custom</string>
+    <string name="portion_custom_value">%1$d%%</string>
+    <string name="portion_percent">Share of the plate</string>
+    <string name="portion_summary">You ate %1$s: %2$s of the %3$s estimated.</string>
+
+    <!-- Status: one at a time -->
+    <string name="stage_step_send">Send</string>
+    <string name="stage_step_answer">Answer</string>
+    <string name="stage_step_match">Match foods</string>
+    <string name="stage_leave_hint">You can leave this screen. A notification tells you when it\'s done.</string>
+    <string name="stage_the_ai">the AI</string>
+    <string name="stage_starting">Starting</string>
+    <string name="stage_starting_body">It runs as soon as the phone is online.</string>
+    <string name="stage_sending">Sending to %1$s</string>
+    <string name="stage_waiting">Waiting for %1$s · %2$s</string>
+    <string name="stage_trying_next">Trying %1$s</string>
+    <string name="stage_matching">Matching the foods to USDA</string>
+    <string name="stage_retry_waiting">Waiting to retry</string>
+    <string name="stage_retry_when">Try %1$d of %2$d done. Next try at %3$s.</string>
+    <string name="stage_quota">Out of AI quota</string>
+    <string name="stage_quota_when">Every profile is out of quota. Next try at %1$s, when it resets.</string>
+    <string name="stage_offline">Waiting for a connection</string>
+    <string name="stage_failed">Couldn\'t estimate</string>
+    <string name="stage_stopped">This estimate got stuck in an older version of Forkcast and was stopped. Retry now starts it again.</string>
+    <string name="stage_tried">What was tried</string>
+    <string name="stage_tried_line">%1$s · %2$s</string>
+    <string name="estimate_waiting_retry">Waiting to retry (%1$s)</string>
+    <string name="estimate_trying">Asking %1$s…</string>
+
+    <!-- One request, in plain words -->
+    <string name="attempt_ok">%1$s answered in %2$s</string>
+    <string name="attempt_timeout">%1$s took too long (no answer in %2$s)</string>
+    <string name="attempt_rate_limited">%1$s: too many requests for now (per-minute limit or busy)</string>
+    <string name="attempt_quota">%1$s: daily quota used up</string>
+    <string name="attempt_server">%1$s had a problem (error %2$d)</string>
+    <string name="attempt_network">No connection</string>
+    <string name="attempt_key">%1$s rejected the API key</string>
+    <string name="attempt_model">%1$s doesn\'t have the model %2$s</string>
+    <string name="attempt_refused">%1$s declined</string>
+    <string name="attempt_bad">%1$s sent an answer Forkcast couldn\'t read</string>
+    <string name="attempt_rejected">%1$s rejected the request (HTTP %2$d)</string>
+
+    <!-- Actions -->
+    <string name="action_retry_now">Retry now</string>
+    <string name="action_try_other_profile">Try with another profile</string>
+    <string name="action_edit_description">Edit description and retry</string>
+    <string name="action_log_manually">Log manually instead</string>
+
+    <!-- Backup model -->
+    <string name="backup_model_title">Add a backup model</string>
+    <string name="backup_model_body">%1$s on the same key as %2$s has its own free quota, so it can answer when the first is busy or out of quota. It goes second in the order.</string>
+    <string name="backup_model_add">Add backup model</string>
+    <string name="backup_model_added">Added %1$s as profile 2</string>
+
+    <!-- Details -->
+    <string name="details_title">Details</string>
+    <string name="details_show">Show details</string>
+    <string name="details_hide">Hide details</string>
+    <string name="details_provider">Provider: %1$s</string>
+    <string name="details_model">Model: %1$s</string>
+    <string name="details_prompt">Prompt: %1$s</string>
+    <string name="details_latency">Answer took %1$s</string>
+    <string name="details_tokens">Tokens: %1$d in, %2$d out</string>
+    <string name="details_requests">Requests, newest first</string>
+    <string name="details_request_line">%1$s · %2$s (%3$s) · %4$s · %5$s</string>
+    <string name="details_retry_after">asked to wait %1$s</string>
+    <string name="search_manual_photo">Your photo</string>
+    <string name="badge_saved_meal">Saved meal</string>
+</resources>

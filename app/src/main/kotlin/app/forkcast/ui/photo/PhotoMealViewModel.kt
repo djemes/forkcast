@@ -8,6 +8,7 @@ import app.forkcast.core.data.ai.AiEstimateRepository
 import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
+import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.network.ai.AiChain
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -43,9 +44,19 @@ data class PhotoMealUiState(
     val firstIsFreeTier: Boolean = false,
     val notificationPermissionAsked: Boolean = true,
     val submitting: Boolean = false,
+    /** "Describe" (SPEC §4.6.2): no photo, the description is required. */
+    val describe: Boolean = false,
+    /** When it was eaten, minutes after midnight; null until the user picks one (then the default below). */
+    val eatenMinute: Int? = null,
+    /** Now on today, else the selected meal's typical time. */
+    val defaultMinute: Int = 12 * 60,
+    /** Now, on today: no later time can be picked. */
+    val latestMinute: Int? = null,
 ) {
     val canAddPhoto: Boolean get() = photos.size < MAX_PHOTOS
-    val canEstimate: Boolean get() = photos.isNotEmpty() && aiEnabled && hasProfile && mealSlotId.isNotBlank() && !submitting
+    val canEstimate: Boolean
+        get() = (if (describe) description.isNotBlank() else photos.isNotEmpty()) && aiEnabled && hasProfile && mealSlotId.isNotBlank() && !submitting
+    val minute: Int get() = eatenMinute ?: defaultMinute
 
     companion object {
         const val MAX_PHOTOS = 3
@@ -60,6 +71,7 @@ sealed interface PhotoMealEvent {
     data object BackToCamera : PhotoMealEvent
     data class SetDescription(val text: String) : PhotoMealEvent
     data class SetMeal(val id: String) : PhotoMealEvent
+    data class SetTime(val minute: Int) : PhotoMealEvent
     data object Estimate : PhotoMealEvent
     data object NotificationPermissionAsked : PhotoMealEvent
 }
@@ -79,18 +91,29 @@ class PhotoMealViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val date: LocalDate = savedState.get<String>("date")?.let(LocalDate::parse) ?: LocalDate.now(clock)
+    private val describe: Boolean = savedState.get<Boolean>("describe") == true
     private val draft = MutableStateFlow(
-        PhotoMealUiState(mealSlotId = savedState.get<String>("mealSlotId").orEmpty()),
+        PhotoMealUiState(
+            mealSlotId = savedState.get<String>("mealSlotId").orEmpty(),
+            describe = describe,
+            step = if (describe) PhotoStep.DETAILS else PhotoStep.CAPTURE,
+            description = savedState.get<String>("text").orEmpty().take(PhotoMealUiState.MAX_DESCRIPTION),
+        ),
     )
     private val effects = Channel<PhotoMealEffect>(Channel.BUFFERED)
     val effect: Flow<PhotoMealEffect> = effects.receiveAsFlow()
 
     val state: StateFlow<PhotoMealUiState> = combine(draft, slots.observeMealSlots(), ai.profiles, settings.settings) { d, s, profiles, app ->
         val usable = AiChain.usable(profiles.map { it.profile }, clock.instant()).ifEmpty { profiles.map { it.profile }.filter { it.enabled } }
+        val mealId = d.mealSlotId.ifBlank { s.firstOrNull()?.id.orEmpty() }
+        val slot = s.firstOrNull { it.id == mealId }
+        val nowMinute = MealTimes.minuteOn(date, clock.instant(), clock.zone)
         d.copy(
             loaded = true,
             slots = s,
-            mealSlotId = d.mealSlotId.ifBlank { s.firstOrNull()?.id.orEmpty() },
+            mealSlotId = mealId,
+            defaultMinute = nowMinute ?: MealTimes.typicalMinute(slot?.startMinute, slot?.endMinute, date, clock.instant(), clock.zone),
+            latestMinute = nowMinute,
             aiEnabled = app.ai.enabled,
             hasProfile = profiles.any { it.profile.enabled },
             firstIsFreeTier = usable.firstOrNull()?.showsFreeTierNote == true,
@@ -106,6 +129,7 @@ class PhotoMealViewModel @Inject constructor(
             PhotoMealEvent.BackToCamera -> draft.update { it.copy(step = PhotoStep.CAPTURE) }
             is PhotoMealEvent.SetDescription -> draft.update { it.copy(description = event.text.take(PhotoMealUiState.MAX_DESCRIPTION)) }
             is PhotoMealEvent.SetMeal -> draft.update { it.copy(mealSlotId = event.id) }
+            is PhotoMealEvent.SetTime -> draft.update { it.copy(eatenMinute = event.minute) }
             PhotoMealEvent.NotificationPermissionAsked -> viewModelScope.launch {
                 settings.updateNotifications { it.copy(permissionAsked = true) }
             }
@@ -118,7 +142,11 @@ class PhotoMealViewModel @Inject constructor(
         if (!s.canEstimate) return
         draft.update { it.copy(submitting = true) }
         viewModelScope.launch {
-            estimates.create(date, s.mealSlotId, s.photos, s.description)
+            if (s.describe) {
+                estimates.createDescribed(date, s.mealSlotId, s.description, s.minute)
+            } else {
+                estimates.create(date, s.mealSlotId, s.photos, s.description, s.minute)
+            }
             // Camera shots were copied (downscaled, EXIF-free) into app storage; drop the originals.
             withContext(Dispatchers.IO) { s.photos.filter { it.scheme == "file" }.forEach { uri -> uri.path?.let { java.io.File(it).delete() } } }
             val meal = s.slots.firstOrNull { it.id == s.mealSlotId }?.name.orEmpty()

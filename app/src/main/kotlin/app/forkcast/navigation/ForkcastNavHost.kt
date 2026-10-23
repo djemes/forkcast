@@ -84,7 +84,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class ActivityDestination(val date: String)
 
 /** Photo-meal camera, logging into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
-@Serializable data class PhotoMealDestination(val mealSlotId: String, val date: String)
+/** [describe]: "Describe" (no photo, SPEC §4.6.2), with [text] prefilled from a search. */
+@Serializable data class PhotoMealDestination(val mealSlotId: String, val date: String, val describe: Boolean = false, val text: String? = null)
 
 @Serializable data class ReviewDestination(val estimateId: String)
 
@@ -92,7 +93,14 @@ import kotlinx.serialization.Serializable
 @Serializable data class AiProfileEditDestination(val profileId: String? = null, val preset: String? = null)
 
 /** Log into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
-@Serializable data class SearchDestination(val mealSlotId: String, val date: String, val forRecipe: Boolean = false)
+/** [query]: start with this search ("Log manually instead"); [photo]: that estimate's photo, shown while searching. */
+@Serializable data class SearchDestination(
+    val mealSlotId: String,
+    val date: String,
+    val forRecipe: Boolean = false,
+    val query: String? = null,
+    val photo: String? = null,
+)
 
 /** [forRecipe]: picking an ingredient ("Add to recipe"); [mealSlotId] and [date] are then empty. */
 @Serializable data class FoodDetailDestination(val foodId: String, val mealSlotId: String, val date: String, val forRecipe: Boolean = false)
@@ -215,6 +223,7 @@ fun ForkcastNavHost(
                     openScanner = { meal, date -> navController.navigate(ScannerDestination(meal, date.toString())) },
                     openWeight = { navController.navigate(WeightDestination) },
                     openPhoto = { meal, date -> navController.navigate(PhotoMealDestination(meal, date.toString())) },
+                    openDescribe = { meal, date -> navController.navigate(PhotoMealDestination(meal, date.toString(), describe = true)) },
                     openEstimate = { id -> navController.navigate(ReviewDestination(id)) },
                     openHealthConnect = { navController.navigate(HealthConnectDestination) },
                     openActivity = { date -> navController.navigate(ActivityDestination(date.toString())) },
@@ -242,6 +251,10 @@ fun ForkcastNavHost(
                 onCreateRecipe = if (forRecipe) null else { query ->
                     navController.navigate(RecipeEditDestination(mealSlotId = args?.mealSlotId, date = args?.date, name = query.ifBlank { null }))
                 },
+                onDescribe = if (forRecipe) null else { query ->
+                    navController.navigate(PhotoMealDestination(args?.mealSlotId.orEmpty(), args?.date.orEmpty(), describe = true, text = query))
+                },
+                onLoggedMeal = ::addedTo,
                 forRecipe = forRecipe,
             )
         }
@@ -358,7 +371,16 @@ fun ForkcastNavHost(
                 onOpenAiSettings = { navController.navigate(AiSettingsDestination) },
             )
         }
-        composable<ReviewDestination> { ReviewRoute(onBack = back) }
+        composable<ReviewDestination> {
+            ReviewRoute(
+                onBack = back,
+                onLogManually = { meal, date, query, photo ->
+                    navController.navigate(SearchDestination(meal, date, query = query.ifBlank { null }, photo = photo)) {
+                        popUpTo<ReviewDestination> { inclusive = true }
+                    }
+                },
+            )
+        }
         composable<BackupDestination> { BackupRoute(onBack = back) }
         composable<WeightDestination> { WeightRoute(onBack = back) }
         composable<RecipesDestination> { entry ->

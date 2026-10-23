@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Horários das refeições (1.2). -->
+<resources>
+    <string name="meal_time_label">Horário</string>
+    <string name="meal_time_future">Esse horário é depois de agora.</string>
+    <string name="meal_time_set">Mudar o horário de %1$s, agora %2$s</string>
+    <string name="meal_time_title">Horário de %1$s</string>
+    <string name="meal_time_body">Todos os itens de %1$s passam para este horário.</string>
+    <string name="entry_day">Dia</string>
+</resources>

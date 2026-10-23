@@ -119,7 +119,29 @@ class AiChainTest {
         val fields = MealEstimateRequest::class.java.declaredFields.filterNot { java.lang.reflect.Modifier.isStatic(it.modifiers) }.map { it.name }.toSet()
         assertThat(fields).containsExactly(
             "images", "description", "mealSlot", "localTime", "unitsHint", "personalContext", "previous", "correction", "model",
+            // A progress callback (1.2), never serialized: serializedRequestsHaveOnlyExpectedFields checks the bodies.
+            "onSent",
         )
+    }
+
+    // ---- Gemini 429s (owner, 2026-10-22): a per-minute limit must never wait until midnight.
+
+    @Test fun onlyPerMinuteProfileGetsShortCooldown() = runTest {
+        val a = Scripted(ArrayDeque(listOf(Result.failure(AiError.RateLimited(20_000, quota = "GenerateRequestsPerMinutePerProjectPerModel-FreeTier")))))
+        val out = AiChain.run(listOf(profile("a", 0)), now, { a }, ::req) as AiChain.Outcome.Failure
+        assertThat(out.retryAtMs).isEqualTo(now.toEpochMilli() + 20_000)
+    }
+
+    @Test fun retryNowIgnoresPauseAndOnlyAsksChosenProfile() = runTest {
+        val a = Scripted(ArrayDeque(listOf(Result.success(ok("a")))))
+        val b = Scripted(ArrayDeque(listOf(Result.success(ok("b")))))
+        val paused = profile("a", 0).copy(cooldownUntil = now.toEpochMilli() + 60_000)
+        val scripts = mapOf("a" to a, "b" to b)
+        val retried = AiChain.run(listOf(paused, profile("b", 1)), now, { scripts.getValue(it.id) }, ::req, ignoreCooldown = true)
+        assertThat((retried as AiChain.Outcome.Success).profile.id).isEqualTo("a")
+        val only = AiChain.run(listOf(paused, profile("b", 1)), now, { scripts.getValue(it.id) }, ::req, only = "b")
+        assertThat((only as AiChain.Outcome.Success).profile.id).isEqualTo("b")
+        assertThat(only.attempts.single().durationMs).isAtLeast(0)
     }
 
     @Test fun serializedRequestsHaveOnlyExpectedFields() {

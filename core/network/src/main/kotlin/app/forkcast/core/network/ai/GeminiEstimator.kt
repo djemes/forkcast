@@ -38,6 +38,8 @@ class GeminiEstimator(
     private val maxOutputTokens: Int = 4096,
     private val clock: Clock = Clock.systemUTC(),
     private val baseUrl: String = BASE,
+    /** Per-request timeout for estimates (null = the client's); see [estimateOptions]. */
+    private val estimateTimeoutMs: Long? = null,
 ) : MealEstimator {
     override val providerId = ProviderId.GEMINI
 
@@ -79,7 +81,7 @@ class GeminiEstimator(
     }
 
     override suspend fun estimate(request: MealEstimateRequest): Result<MealEstimateResult> = aiResult {
-        val t = post(requestBody(request))
+        val t = post(requestBody(request), estimateTimeoutMs, request.onSent)
         val r = NetworkJson.decodeFromString(Interaction.serializer(), t.body)
         if (r.status == "failed" || r.status == "cancelled") throw blockedOrBad(t.body)
         // Before reading the text: an answer cut off before any text still says "cut off".
@@ -116,11 +118,12 @@ class GeminiEstimator(
         put("store", false)
     }
 
-    private suspend fun post(body: JsonObject): Timed {
+    private suspend fun post(body: JsonObject, timeoutMs: Long? = null, onSent: (() -> Unit)? = null): Timed {
         val key = key()
         val t = timedCall {
             http.post("$baseUrl/v1beta/interactions") {
                 auth(key)
+                estimateOptions(timeoutMs, onSent)
                 contentType(ContentType.Application.Json)
                 setBody(NetworkJson.encodeToString(JsonObject.serializer(), body))
             }
@@ -170,17 +173,25 @@ class GeminiEstimator(
         ?.get("reason")?.jsonPrimitive?.contentOrNull
 
     /**
-     * Per-day quotas ("...PerDay..." quota ids) reset at midnight Pacific; anything else is a
-     * short window with the server's RetryInfo delay (AI_PROVIDERS.md §2.5–2.6).
+     * A 429 from Google (AI_PROVIDERS.md §2.5–2.6). Its details say which quota was hit
+     * (`QuotaFailure.violations[].quotaId`, e.g. `GenerateRequestsPerDayPerProjectPerModel-FreeTier`)
+     * and when to try again (`RetryInfo.retryDelay`, e.g. "37s").
+     * - Only per-day quotas hit: out until midnight Pacific.
+     * - Any per-minute quota hit (requests or tokens), or no quota named (Google's shared free-tier
+     *   capacity also answers 429): a short wait, Google's delay or 60 s. A per-minute 429 must never
+     *   park the profile until midnight (owner's report, 2026-10-22), so per-minute wins when both appear.
      */
     private fun rateLimit(err: ErrorBody?, reply: ProviderReply): AiError {
         val details = err?.details.orEmpty()
-        val daily = details.any { d ->
-            (d["violations"] as? JsonArray)?.any { v -> v.jsonObject["quotaId"]?.jsonPrimitive?.contentOrNull?.contains("PerDay") == true } == true
+        val quotas = details.flatMap { d ->
+            (d["violations"] as? JsonArray).orEmpty().mapNotNull { v -> v.jsonObject["quotaId"]?.jsonPrimitive?.contentOrNull }
         }
-        if (daily) return AiError.QuotaExhausted(QuotaWindows.nextMidnightPacific(clock.instant()).toEpochMilli(), reply = reply)
-        val delay = details.firstNotNullOfOrNull { it["retryDelay"]?.jsonPrimitive?.contentOrNull }
-        return AiError.RateLimited(delay?.removeSuffix("s")?.toDoubleOrNull()?.let { (it * 1000).toLong() }, reply)
+        val quota = quotas.distinct().joinToString(", ").ifBlank { null }
+        val delayMs = details.firstNotNullOfOrNull { it["retryDelay"]?.jsonPrimitive?.contentOrNull }
+            ?.removeSuffix("s")?.toDoubleOrNull()?.let { (it * 1000).toLong() }
+        val daily = quotas.isNotEmpty() && quotas.all { "PerDay" in it }
+        if (daily) return AiError.QuotaExhausted(QuotaWindows.nextMidnightPacific(clock.instant()).toEpochMilli(), reply = reply, quota = quota)
+        return AiError.RateLimited(delayMs, reply, quota)
     }
 
     @Serializable

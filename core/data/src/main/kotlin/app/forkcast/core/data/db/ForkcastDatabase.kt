@@ -15,6 +15,9 @@ import androidx.room.TypeConverters
  * v4 (Phase 3): activity_day, tdee_estimate; Health Connect write state on log_entry and water_entry
  * v5: drinks count toward water (food.countsAsWater, log_entry/saved_meal_item.waterMl, log_entry.hcWaterRecordId)
  * v6 (Phase 4): recipe, recipe_ingredient
+ * v7 (1.2): meal times on log_entry (eatenMinute, timeEstimated; existing entries get a typical
+ *   time for their meal, [MealTimeBackfill]), food.describedAs, and on ai_estimate the status
+ *   and retry fields (kind, portion, attemptLog, tries, runStartedAt, eatenMinute, phase, …)
  */
 @Database(
     entities = [
@@ -40,9 +43,12 @@ import androidx.room.TypeConverters
         RecipeEntity::class,
         RecipeIngredientEntity::class,
     ],
-    version = 6,
+    version = 7,
     exportSchema = true,
-    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5), AutoMigration(from = 5, to = 6)],
+    autoMigrations = [
+        AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5),
+        AutoMigration(from = 5, to = 6), AutoMigration(from = 6, to = 7, spec = MealTimeBackfill::class),
+    ],
 )
 @TypeConverters(Converters::class)
 abstract class ForkcastDatabase : RoomDatabase() {

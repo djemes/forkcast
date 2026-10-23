@@ -32,6 +32,7 @@ class ClaudeEstimator(
     private val effort: String = "low",
     private val maxOutputTokens: Int = 4096,
     private val baseUrl: String = BASE,
+    private val estimateTimeoutMs: Long? = null,
 ) : MealEstimator {
     override val providerId = ProviderId.CLAUDE
 
@@ -60,7 +61,7 @@ class ClaudeEstimator(
     }
 
     override suspend fun estimate(request: MealEstimateRequest): Result<MealEstimateResult> = aiResult {
-        val t = post(requestBody(request))
+        val t = post(requestBody(request), estimateTimeoutMs, request.onSent)
         val r = NetworkJson.decodeFromString(MessageResponse.serializer(), t.body)
         when (r.stopReason) {
             "refusal" -> throw AiError.ContentRefused(r.stopDetails?.get("explanation")?.jsonPrimitive?.content)
@@ -101,11 +102,12 @@ class ClaudeEstimator(
         }
     }
 
-    private suspend fun post(body: JsonObject): Timed {
+    private suspend fun post(body: JsonObject, timeoutMs: Long? = null, onSent: (() -> Unit)? = null): Timed {
         val key = key()
         val t = timedCall {
             http.post("$baseUrl/v1/messages") {
                 auth(key)
+                estimateOptions(timeoutMs, onSent)
                 contentType(ContentType.Application.Json)
                 setBody(NetworkJson.encodeToString(JsonObject.serializer(), body))
             }

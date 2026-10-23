@@ -31,6 +31,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import app.forkcast.ui.common.MealTimeField
+import app.forkcast.ui.common.keyboardAware
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -121,7 +125,11 @@ fun PhotoMealScreen(
 
     when (state.step) {
         PhotoStep.CAPTURE -> CaptureStep(state, onEvent, onBack, openGallery)
-        PhotoStep.DETAILS -> DetailsStep(state, onEvent, onBack = { onEvent(PhotoMealEvent.BackToCamera) }, onEstimate = estimate, onOpenAiSettings = onOpenAiSettings)
+        // Describe has no camera step: Back leaves.
+        PhotoStep.DETAILS -> DetailsStep(
+            state, onEvent, onBack = { if (state.describe) onBack() else onEvent(PhotoMealEvent.BackToCamera) },
+            onEstimate = estimate, onOpenAiSettings = onOpenAiSettings,
+        )
     }
 }
 
@@ -309,7 +317,7 @@ private fun DetailsStep(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.photo_meal_title)) },
+                title = { Text(stringResource(if (state.describe) R.string.describe_title else R.string.photo_meal_title)) },
                 navigationIcon = {
                     IconButton(onClick = onBack) { Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back)) }
                 },
@@ -320,24 +328,28 @@ private fun DetailsStep(
             verticalArrangement = Arrangement.spacedBy(16.dp),
             modifier = Modifier
                 .padding(padding)
+                .keyboardAware(padding)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
         ) {
-            Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = 88.dp)
+            if (!state.describe) Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = 88.dp)
             // Held here so fast typing never waits for the ViewModel's combined flow.
             var description by rememberSaveable { mutableStateOf(state.description) }
+            val focus = remember { FocusRequester() }
+            if (state.describe) LaunchedEffect(Unit) { focus.requestFocus() }
             OutlinedTextField(
                 value = description,
                 onValueChange = {
                     description = it.take(PhotoMealUiState.MAX_DESCRIPTION)
                     onEvent(PhotoMealEvent.SetDescription(description))
                 },
-                label = { Text(stringResource(R.string.photo_description)) },
-                placeholder = { Text(stringResource(R.string.photo_description_hint)) },
+                label = { Text(stringResource(if (state.describe) R.string.describe_field else R.string.photo_description)) },
+                placeholder = { Text(stringResource(if (state.describe) R.string.describe_hint else R.string.photo_description_hint)) },
                 minLines = 3,
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth().focusRequester(focus),
             )
+            MealTimeField(state.minute, onChange = { onEvent(PhotoMealEvent.SetTime(it)) }, latestMinute = state.latestMinute)
             Text(stringResource(R.string.photo_meal_label), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 for (slot in state.slots) {
@@ -357,7 +369,10 @@ private fun DetailsStep(
                 }
             }
             Button(onClick = onEstimate, enabled = state.canEstimate, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-                Text(stringResource(R.string.photo_estimate))
+                Text(stringResource(if (state.describe) R.string.describe_estimate else R.string.photo_estimate))
+            }
+            if (state.describe) {
+                Text(stringResource(R.string.describe_knowledge_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

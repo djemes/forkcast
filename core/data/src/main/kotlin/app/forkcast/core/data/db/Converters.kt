@@ -39,6 +39,10 @@ class Converters {
     @TypeConverter fun jsonToSessions(s: String): List<ExerciseSession> =
         json.decodeFromString(ListSerializer(ExerciseSession.serializer()), s)
 
+    @TypeConverter fun attemptsToJson(list: List<AttemptRecord>): String = json.encodeToString(ListSerializer(AttemptRecord.serializer()), list)
+    @TypeConverter fun jsonToAttempts(s: String): List<AttemptRecord> =
+        runCatching { json.decodeFromString(ListSerializer(AttemptRecord.serializer()), s) }.getOrDefault(emptyList())
+
     @TypeConverter fun estimateToJson(e: MealEstimateJson?): String? = e?.let { json.encodeToString(MealEstimateJson.serializer(), it) }
     @TypeConverter fun jsonToEstimate(s: String?): MealEstimateJson? = s?.let { json.decodeFromString(MealEstimateJson.serializer(), it) }
 

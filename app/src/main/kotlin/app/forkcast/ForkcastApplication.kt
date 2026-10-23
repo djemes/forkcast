@@ -58,6 +58,8 @@ class ForkcastApplication : Application(), Configuration.Provider {
             }
             // Meal photos older than the retention setting (default 14 days) are deleted; entries stay (SPEC §4.6).
             runCatching { estimates.get().cleanUpPhotos() }
+            // Estimates left pending with no live job (killed app, stuck in an older version) get queued or a Failed status.
+            runCatching { estimates.get().recover() }
         }
     }
 }

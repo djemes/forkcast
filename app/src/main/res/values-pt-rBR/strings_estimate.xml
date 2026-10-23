@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Status da estimativa por IA, ações da revisão, porção, Descrever (1.2). -->
+<resources>
+    <!-- Descrever (registro por IA só com texto) -->
+    <string name="describe_title">Descrever uma refeição</string>
+    <string name="describe_action">Descrever</string>
+    <string name="describe_field">O que você comeu?</string>
+    <string name="describe_hint">ex.: 2 fatias de pizza de queijo da Costco, ou um bowl do Chipotle com arroz integral, frango e guacamole</string>
+    <string name="describe_estimate">Estimar</string>
+    <string name="describe_you_said">Você descreveu</string>
+    <string name="describe_knowledge_note">Vem do conhecimento da própria IA, não de uma busca na web: confira a faixa e as suposições.</string>
+    <string name="describe_save_as_food">Salvar como alimento</string>
+    <string name="describe_save_as_food_body">Na próxima vez ele aparece na busca, offline, sem IA.</string>
+    <string name="describe_food_name">Nome do alimento</string>
+    <string name="describe_from_search">Descrever para a IA</string>
+    <string name="describe_from_search_body">Não encontrou? A IA pode estimar “%1$s”.</string>
+    <string name="describe_needs_ai">Configure um perfil de IA em Configurações → IA para descrever refeições.</string>
+    <string name="badge_ai_text">IA · texto</string>
+    <string name="badge_ai_text_review">IA · texto · revisar</string>
+
+    <!-- Alterações não salvas -->
+    <string name="discard_title">Descartar alterações?</string>
+    <string name="discard_body">Suas alterações não foram salvas.</string>
+    <string name="discard_confirm">Descartar</string>
+    <string name="discard_keep">Continuar editando</string>
+
+    <!-- Quanto você comeu? -->
+    <string name="portion_title">Quanto você comeu?</string>
+    <string name="portion_all">Tudo</string>
+    <string name="portion_custom">Outro</string>
+    <string name="portion_custom_value">%1$d%%</string>
+    <string name="portion_percent">Parte do prato</string>
+    <string name="portion_summary">Você comeu %1$s: %2$s dos %3$s estimados.</string>
+
+    <!-- Status: um de cada vez -->
+    <string name="stage_step_send">Enviar</string>
+    <string name="stage_step_answer">Resposta</string>
+    <string name="stage_step_match">Alimentos</string>
+    <string name="stage_leave_hint">Você pode sair desta tela. Uma notificação avisa quando terminar.</string>
+    <string name="stage_the_ai">a IA</string>
+    <string name="stage_starting">Começando</string>
+    <string name="stage_starting_body">Roda assim que o celular estiver online.</string>
+    <string name="stage_sending">Enviando para %1$s</string>
+    <string name="stage_waiting">Esperando %1$s · %2$s</string>
+    <string name="stage_trying_next">Tentando %1$s</string>
+    <string name="stage_matching">Associando os alimentos ao USDA</string>
+    <string name="stage_retry_waiting">Esperando para tentar de novo</string>
+    <string name="stage_retry_when">Tentativa %1$d de %2$d feita. Próxima às %3$s.</string>
+    <string name="stage_quota">Cota de IA esgotada</string>
+    <string name="stage_quota_when">Todos os perfis estão sem cota. Próxima tentativa às %1$s, quando a cota renovar.</string>
+    <string name="stage_offline">Esperando conexão</string>
+    <string name="stage_failed">Não foi possível estimar</string>
+    <string name="stage_stopped">Esta estimativa travou numa versão antiga do Forkcast e foi parada. Tentar agora começa de novo.</string>
+    <string name="stage_tried">O que foi tentado</string>
+    <string name="stage_tried_line">%1$s · %2$s</string>
+    <string name="estimate_waiting_retry">Esperando para tentar de novo (%1$s)</string>
+    <string name="estimate_trying">Perguntando a %1$s…</string>
+
+    <!-- Uma requisição, em palavras simples -->
+    <string name="attempt_ok">%1$s respondeu em %2$s</string>
+    <string name="attempt_timeout">%1$s demorou demais (sem resposta em %2$s)</string>
+    <string name="attempt_rate_limited">%1$s: requisições demais agora (limite por minuto ou ocupado)</string>
+    <string name="attempt_quota">%1$s: cota diária esgotada</string>
+    <string name="attempt_server">%1$s teve um problema (erro %2$d)</string>
+    <string name="attempt_network">Sem conexão</string>
+    <string name="attempt_key">%1$s recusou a chave de API</string>
+    <string name="attempt_model">%1$s não tem o modelo %2$s</string>
+    <string name="attempt_refused">%1$s recusou</string>
+    <string name="attempt_bad">%1$s mandou uma resposta que o Forkcast não conseguiu ler</string>
+    <string name="attempt_rejected">%1$s recusou a requisição (HTTP %2$d)</string>
+
+    <!-- Ações -->
+    <string name="action_retry_now">Tentar agora</string>
+    <string name="action_try_other_profile">Tentar com outro perfil</string>
+    <string name="action_edit_description">Editar descrição e tentar</string>
+    <string name="action_log_manually">Registrar manualmente</string>
+
+    <!-- Modelo reserva -->
+    <string name="backup_model_title">Adicionar um modelo reserva</string>
+    <string name="backup_model_body">%1$s na mesma chave de %2$s tem sua própria cota gratuita, então pode responder quando o primeiro estiver ocupado ou sem cota. Ele fica em segundo na ordem.</string>
+    <string name="backup_model_add">Adicionar modelo reserva</string>
+    <string name="backup_model_added">%1$s adicionado como perfil 2</string>
+
+    <!-- Detalhes -->
+    <string name="details_title">Detalhes</string>
+    <string name="details_show">Mostrar detalhes</string>
+    <string name="details_hide">Ocultar detalhes</string>
+    <string name="details_provider">Provedor: %1$s</string>
+    <string name="details_model">Modelo: %1$s</string>
+    <string name="details_prompt">Prompt: %1$s</string>
+    <string name="details_latency">A resposta levou %1$s</string>
+    <string name="details_tokens">Tokens: %1$d de entrada, %2$d de saída</string>
+    <string name="details_requests">Requisições, mais recentes primeiro</string>
+    <string name="details_request_line">%1$s · %2$s (%3$s) · %4$s · %5$s</string>
+    <string name="details_retry_after">pediu para esperar %1$s</string>
+    <string name="search_manual_photo">Sua foto</string>
+    <string name="badge_saved_meal">Refeição salva</string>
+</resources>

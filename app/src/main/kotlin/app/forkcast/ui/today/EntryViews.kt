@@ -70,6 +70,10 @@ import app.forkcast.core.model.kcal
 import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.onboarding.NumberField
 import app.forkcast.ui.theme.ForkcastTheme
+import app.forkcast.ui.photo.EstimateStage
+import app.forkcast.ui.photo.attemptReason
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun sourceBadge(source: FoodSource): String = stringResource(
@@ -81,15 +85,20 @@ fun sourceBadge(source: FoodSource): String = stringResource(
         FoodSource.QUICK_ADD -> R.string.badge_quick
         FoodSource.RECIPE -> R.string.badge_recipe
         FoodSource.AI -> R.string.badge_ai
+        FoodSource.AI_TEXT -> R.string.badge_ai_text
     },
 )
 
 /** Tiny textual source badge (DESIGN.md §5). An unreviewed AI entry reads "AI·review" (apricot outline). */
 @Composable
 fun SourceBadge(source: FoodSource, needsReview: Boolean = false) {
-    val outline = if (source == FoodSource.AI && needsReview) ForkcastTheme.colors.apricot else MaterialTheme.colorScheme.outlineVariant
+    val outline = if (source.isAi && needsReview) ForkcastTheme.colors.apricot else MaterialTheme.colorScheme.outlineVariant
     Text(
-        if (source == FoodSource.AI && needsReview) stringResource(R.string.badge_ai_review) else sourceBadge(source),
+        when {
+            source == FoodSource.AI && needsReview -> stringResource(R.string.badge_ai_review)
+            source == FoodSource.AI_TEXT && needsReview -> stringResource(R.string.badge_ai_text_review)
+            else -> sourceBadge(source)
+        },
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier
@@ -209,24 +218,36 @@ fun EntryRow(
 }
 
 /**
- * A photo estimate that isn't a log entry yet (DESIGN.md §5): an indeterminate progress line
- * while it runs, otherwise one line saying what it's waiting for. Tap opens the review screen.
+ * An estimate that isn't a log entry yet (DESIGN.md §5): the same one-line status as the review
+ * screen (owner, 2026-10-23), with a thin progress line while it runs. Tap opens the review screen.
  */
 @Composable
 fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit) {
-    val text = when (p.status) {
-        EstimateStatus.PENDING -> when {
-            p.retryAfter != null && p.retryAfter > System.currentTimeMillis() ->
-                stringResource(R.string.estimate_waiting_quota, timeOf(p.retryAfter))
-            p.errorCode == "Network" -> stringResource(R.string.estimate_waiting_network)
-            else -> stringResource(R.string.estimate_running)
+    val res = androidx.compose.ui.platform.LocalContext.current.resources
+    // Re-read every 30 s so "next try at" turns into "Starting" without waiting for a database change.
+    var now by androidx.compose.runtime.remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
+    androidx.compose.runtime.LaunchedEffect(p.estimate.updatedAt) {
+        while (true) {
+            now = System.currentTimeMillis()
+            kotlinx.coroutines.delay(30_000)
         }
-        EstimateStatus.RUNNING -> stringResource(R.string.estimate_running)
-        EstimateStatus.NEEDS_INPUT -> stringResource(R.string.estimate_needs_answer)
-        EstimateStatus.DONE -> stringResource(R.string.estimate_ready_review, f.energy(p.kcalExpected ?: 0.0))
-        EstimateStatus.FAILED -> stringResource(R.string.estimate_failed)
     }
-    val working = p.status == EstimateStatus.RUNNING || (p.status == EstimateStatus.PENDING && p.retryAfter == null && p.errorCode == null)
+    val stage = EstimateStage.of(p.estimate, now)
+    val text = when (stage) {
+        EstimateStage.Starting -> stringResource(R.string.estimate_running)
+        is EstimateStage.Asking -> stage.profile?.let { stringResource(R.string.estimate_trying, it) } ?: stringResource(R.string.estimate_running)
+        EstimateStage.Matching -> stringResource(R.string.stage_matching)
+        is EstimateStage.RetryWaiting -> stringResource(R.string.estimate_waiting_retry, timeOf(stage.nextAtMs))
+        is EstimateStage.QuotaWaiting -> stringResource(R.string.estimate_waiting_quota, timeOf(stage.nextAtMs))
+        EstimateStage.Offline -> stringResource(R.string.estimate_waiting_network)
+        EstimateStage.NeedsAnswer -> stringResource(R.string.estimate_needs_answer)
+        EstimateStage.Done -> stringResource(R.string.estimate_ready_review, f.energy(p.kcalExpected ?: 0.0))
+        is EstimateStage.Failed -> stringResource(R.string.estimate_failed)
+    }
+    val failed = stage is EstimateStage.Failed
+    val working = stage.isWorking
+    val text2 = (stage as? EstimateStage.Failed)?.tried?.lastOrNull()?.let { attemptReason(res, it) }
+    val isText = p.estimate.kind == app.forkcast.core.data.db.EstimateKind.TEXT
     // Same shape as an entry row (DESIGN.md §5): rounded surface, 52 dp min, 12 dp sides.
     Column(
         Modifier
@@ -240,9 +261,9 @@ fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(
-                painterResource(if (p.status == EstimateStatus.FAILED) R.drawable.ic_error else R.drawable.ic_photo_camera),
+                painterResource(if (failed) R.drawable.ic_error else if (isText) R.drawable.ic_edit else R.drawable.ic_photo_camera),
                 contentDescription = null,
-                tint = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.size(20.dp),
             )
             // Status changes (waiting → estimating → ready) cross-fade instead of jumping.
@@ -255,11 +276,14 @@ fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit
                 Text(
                     t,
                     style = MaterialTheme.typography.bodyLarge,
-                    color = if (p.status == EstimateStatus.FAILED) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
+                    color = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurface,
                 )
             }
             // "AI·review" only when there's an estimate to review; a failed one has nothing yet.
-            SourceBadge(FoodSource.AI, needsReview = p.status != EstimateStatus.FAILED)
+            SourceBadge(if (isText) FoodSource.AI_TEXT else FoodSource.AI, needsReview = !failed)
+        }
+        text2?.let {
+            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(start = 28.dp))
         }
         AnimatedVisibility(working, enter = fadeIn(Motion.enter()) + expandVertically(Motion.enter()), exit = fadeOut(Motion.exit()) + shrinkVertically(Motion.exit())) {
             LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 6.dp, start = 28.dp))

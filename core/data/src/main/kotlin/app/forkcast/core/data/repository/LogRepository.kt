@@ -6,6 +6,7 @@ import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.LogEntryDao
 import app.forkcast.core.data.db.LogEntryEntity
 import app.forkcast.core.data.db.LoggedDay
+import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.model.LogEntry
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -33,6 +34,8 @@ interface LogRepository {
     suspend fun restore(ids: List<String>)
     /** Copies entries to another day (and optionally meal), keeping their snapshots. */
     suspend fun copy(ids: List<String>, toDate: LocalDate, toMealSlotId: String?): List<String>
+    /** Sets when these entries were eaten (a meal's time, or one snack's), minutes after midnight. */
+    suspend fun setEatenMinute(ids: List<String>, minute: Int)
 }
 
 @Singleton
@@ -60,9 +63,16 @@ class RoomLogRepository @Inject constructor(
 
     override suspend fun add(entries: List<LogEntry>): List<String> {
         val now = clock.millis()
+        val slots = db.mealSlotDao().all().associateBy { it.id }
         val rows = entries.mapIndexed { i, e ->
             // Keep the order the user added them in, even within the same millisecond.
-            e.toEntity(id = UUID.randomUUID().toString(), now = now, loggedAt = maxOf(e.loggedAt.toEpochMilli(), now) + i)
+            val loggedAt = maxOf(e.loggedAt.toEpochMilli(), now) + i
+            val timed = if (e.eatenMinute != null) e else {
+                val slot = slots[e.mealSlotId]
+                val (minute, estimated) = MealTimes.forNewEntry(slot?.startMinute, slot?.endMinute, e.date, Instant.ofEpochMilli(loggedAt), clock.zone)
+                e.copy(eatenMinute = minute, timeEstimated = estimated)
+            }
+            timed.toEntity(id = UUID.randomUUID().toString(), now = now, loggedAt = loggedAt)
         }
         db.withTransaction {
             dao.upsert(rows)
@@ -80,6 +90,11 @@ class RoomLogRepository @Inject constructor(
             healthConnectRecordId = existing.healthConnectRecordId,
             hcWaterRecordId = existing.hcWaterRecordId,
         )))
+    }
+
+    override suspend fun setEatenMinute(ids: List<String>, minute: Int) {
+        val now = clock.millis()
+        dao.upsert(dao.getAll(ids).filter { it.deletedAt == null }.map { it.copy(eatenMinute = minute, timeEstimated = false, updatedAt = now) })
     }
 
     override suspend fun delete(ids: List<String>) = dao.softDelete(ids, clock.millis())
@@ -112,6 +127,8 @@ class RoomLogRepository @Inject constructor(
         createdAt = now,
         updatedAt = now,
         waterMl = waterMl,
+        eatenMinute = eatenMinute,
+        timeEstimated = timeEstimated,
     )
 }
 
@@ -131,4 +148,6 @@ fun LogEntryEntity.toModel() = LogEntry(
     loggedAt = Instant.ofEpochMilli(loggedAt),
     aiEstimateId = aiEstimateId,
     waterMl = waterMl,
+    eatenMinute = eatenMinute,
+    timeEstimated = timeEstimated,
 )

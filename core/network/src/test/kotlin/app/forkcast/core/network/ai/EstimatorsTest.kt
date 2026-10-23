@@ -139,6 +139,15 @@ class EstimatorsTest {
         val daily = gemini(HttpStatusCode.TooManyRequests, "gemini_429_daily.json").estimate(request("m")).exceptionOrNull()
         // 2026-10-18 12:30 Pacific → resets 2026-10-19 00:00 Pacific (07:00Z, PDT).
         assertThat((daily as AiError.QuotaExhausted).resetsAtMs).isEqualTo(Instant.parse("2026-10-19T07:00:00Z").toEpochMilli())
+        assertThat(daily.quota).isEqualTo("GenerateRequestsPerDayPerProjectPerModel-FreeTier")
+
+        // Owner's report (2026-10-22): when a per-minute quota is among those hit, it's a short wait, not until midnight.
+        val mixed = gemini(HttpStatusCode.TooManyRequests, "gemini_429_mixed.json").estimate(request("m")).exceptionOrNull()
+        assertThat((mixed as AiError.RateLimited).retryAfterMs).isEqualTo(41_000)
+        assertThat(mixed.quota).contains("PerMinute")
+        // Google's shared free-tier capacity also answers 429, naming no quota: short wait too.
+        val capacity = gemini(HttpStatusCode.TooManyRequests, "gemini_429_capacity.json").estimate(request("m")).exceptionOrNull()
+        assertThat((capacity as AiError.RateLimited).retryAfterMs).isNull()
 
         assertThat(openAi(HttpStatusCode.TooManyRequests, "openai_429.json").estimate(request("m")).exceptionOrNull())
             .isInstanceOf(AiError.RateLimited::class.java)

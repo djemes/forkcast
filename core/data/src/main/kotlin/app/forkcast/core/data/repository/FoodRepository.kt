@@ -3,6 +3,7 @@ package app.forkcast.core.data.repository
 import app.forkcast.core.data.db.FoodDao
 import app.forkcast.core.data.db.FoodEntity
 import app.forkcast.core.domain.BarcodeChoice
+import app.forkcast.core.domain.DescribedMatch
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.network.FoodApiError
@@ -64,9 +65,17 @@ class DefaultFoodRepository @Inject constructor(
     override suspend fun searchLocal(query: String, limit: Int): List<Food> {
         val words = query.lowercase(Locale.ROOT).split(Regex("\\s+")).filter { it.isNotBlank() }
         if (words.isEmpty()) return emptyList()
+        // Foods saved from "Describe" first when the search is close to what was described
+        // ("2 slices costco pizza" finds "Costco cheese pizza"): never ask the AI twice (owner, 2026-10-23).
+        val described = dao.bySource(FoodSource.AI_TEXT)
+            .map { it to DescribedMatch.score(query, listOfNotNull(it.name, it.brand, it.describedAs)) }
+            .filter { it.second >= DescribedMatch.THRESHOLD }
+            .sortedByDescending { it.second }
+            .map { it.first }
         // SQL narrows by the longest word; every word must then match name or brand.
-        return dao.search(words.maxBy { it.length }, limit = 200)
+        val plain = dao.search(words.maxBy { it.length }, limit = 200)
             .filter { e -> val hay = "${e.name} ${e.brand.orEmpty()}".lowercase(Locale.ROOT); words.all { it in hay } }
+        return (described + plain).distinctBy { it.id }
             .take(limit)
             .map { it.toModel() }
     }
@@ -137,6 +146,7 @@ class DefaultFoodRepository @Inject constructor(
                     barcode = food.barcode,
                     servingSizes = food.servingSizes,
                     nutrientsPer100g = food.nutrientsPer100g,
+                    describedAs = food.describedAs ?: existing.describedAs,
                     updatedAt = now,
                 ),
             )
@@ -190,6 +200,7 @@ fun FoodEntity.toModel() = Food(
     lastQuantity = lastQuantity,
     lastServingLabel = lastServingLabel,
     countsAsWater = countsAsWater,
+    describedAs = describedAs,
 )
 
 private fun Food.toEntity(id: String, now: Long) = FoodEntity(
@@ -208,4 +219,5 @@ private fun Food.toEntity(id: String, now: Long) = FoodEntity(
     createdAt = now,
     updatedAt = now,
     countsAsWater = countsAsWater,
+    describedAs = describedAs,
 )

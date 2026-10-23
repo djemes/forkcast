@@ -30,6 +30,7 @@ class OpenAiCompatEstimator(
     private val model: String,
     baseUrl: String,
     private val maxOutputTokens: Int = 4096,
+    private val estimateTimeoutMs: Long? = null,
 ) : MealEstimator {
     override val providerId = ProviderId.OPENAI_COMPAT
 
@@ -56,9 +57,9 @@ class OpenAiCompatEstimator(
 
     override suspend fun estimate(request: MealEstimateRequest): Result<MealEstimateResult> = aiResult {
         val t = try {
-            post(requestBody(request, strict = true))
+            post(requestBody(request, strict = true), estimateTimeoutMs, request.onSent)
         } catch (e: AiError.InvalidRequest) {
-            post(requestBody(request, strict = false))
+            post(requestBody(request, strict = false), estimateTimeoutMs)
         }
         val r = NetworkJson.decodeFromString(ChatResponse.serializer(), t.body)
         val choice = r.choices.firstOrNull() ?: throw AiError.BadResponse(t.body, "no choices")
@@ -103,11 +104,12 @@ class OpenAiCompatEstimator(
         }
     }
 
-    private suspend fun post(body: JsonObject): Timed {
+    private suspend fun post(body: JsonObject, timeoutMs: Long? = null, onSent: (() -> Unit)? = null): Timed {
         val key = apiKey()
         val t = timedCall {
             http.post("$root/v1/chat/completions") {
                 auth(key)
+                estimateOptions(timeoutMs, onSent)
                 contentType(ContentType.Application.Json)
                 setBody(NetworkJson.encodeToString(JsonObject.serializer(), body))
             }

@@ -19,6 +19,8 @@ local.properties
 *.iml
 .vscode/
 .fleet/
+# VS Code Java language server output
+bin/
 
 # Secrets — never commit (signing key lives in /keys, see docs/DECISIONS.md)
 /keys/

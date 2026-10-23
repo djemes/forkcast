@@ -10,6 +10,8 @@ import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.defaultRequest
+import io.ktor.client.plugins.onUpload
+import io.ktor.client.plugins.timeout
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
@@ -45,6 +47,29 @@ object AiHttpClientFactory {
             delay { millis -> kotlinx.coroutines.delay(millis); network.awaitOnline(NetworkWaiter.WAIT_MS) }
         }
         defaultRequest { headers.append(HttpHeaders.UserAgent, userAgent) }
+    }
+}
+
+/**
+ * Options for an estimate request (not a model list or Test): its own timeout, longer than the
+ * client's 60 s because a photo estimate with thinking can take that long on a busy free tier
+ * (owner's Test alone took 11 s; AI_PROVIDERS.md §2.7), and a callback once the body is sent.
+ */
+internal fun io.ktor.client.request.HttpRequestBuilder.estimateOptions(timeoutMs: Long?, onSent: (() -> Unit)?) {
+    if (timeoutMs != null) {
+        timeout {
+            requestTimeoutMillis = timeoutMs
+            socketTimeoutMillis = timeoutMs
+        }
+    }
+    if (onSent != null) {
+        var told = false
+        onUpload { sent, total ->
+            if (!told && total != null && sent >= total) {
+                told = true
+                onSent()
+            }
+        }
     }
 }
 

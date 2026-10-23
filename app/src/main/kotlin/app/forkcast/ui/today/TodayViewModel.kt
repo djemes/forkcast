@@ -75,15 +75,12 @@ data class MealSection(
     val pending: List<PendingEstimate> = emptyList(),
 )
 
-/** A photo estimate shown as its own row until it becomes a log entry (SPEC §4.6 step 4). */
-data class PendingEstimate(
-    val id: String,
-    val status: EstimateStatus,
-    val kcalExpected: Double?,
-    /** Waiting for quota until then (epoch ms). */
-    val retryAfter: Long?,
-    val errorCode: String?,
-)
+/** A photo or described estimate shown as its own row until it becomes a log entry (SPEC §4.6 step 4). */
+data class PendingEstimate(val estimate: AiEstimateEntity) {
+    val id: String get() = estimate.id
+    val status: EstimateStatus get() = estimate.status
+    val kcalExpected: Double? get() = estimate.kcalExpected
+}
 
 data class WaterSummary(
     val ml: Double = 0.0,
@@ -300,7 +297,7 @@ class TodayViewModel @Inject constructor(
         // Once logged, an estimate is its entry (deleting the entry hides it; Undo brings it back).
         val pending = estimates
             .filter { it.logEntryId == null }
-            .map { PendingEstimate(it.id, it.status, it.kcalExpected, it.retryAfter, it.errorCode) to it.mealSlotId }
+            .map { PendingEstimate(it) to it.mealSlotId }
         val targets = x.targets
         val units = x.settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
         val now = LocalTime.now(clock)
@@ -359,7 +356,7 @@ class TodayViewModel @Inject constructor(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private fun LogEntry.toLogged(slotStartMinute: Int?): Forecast.Logged =
-        Forecast.Logged(date, Forecast.minuteEaten(date, loggedAt, clock.zone, slotStartMinute), nutrients.kcal)
+        Forecast.Logged(date, eatenMinute ?: Forecast.minuteEaten(date, loggedAt, clock.zone, slotStartMinute), nutrients.kcal)
 
     private fun weightSummary(weights: List<WeightEntry>): WeightSummary? {
         val latest = weights.maxByOrNull { it.timestamp } ?: return null

@@ -16,6 +16,12 @@ data class AiDefaults(
     val jpegQuality: Int = 85,
     val maxImages: Int = 3,
     val maxOutputTokens: Int = 4096,
+    /** Timeout of one photo-estimate request (the client's 60 s stays for lists and Test). */
+    val photoTimeoutSec: Int = 120,
+    /** Timeout of one described-meal request (no images to upload or look at). */
+    val textTimeoutSec: Int = 75,
+    /** "Correct it" resends only the first photo, at this long edge (the previous result carries the rest). */
+    val correctionImageEdgePx: Int = 1024,
     val providers: Map<ProviderId, ProviderDefaults> = emptyMap(),
     val models: Map<String, ModelDefaults> = emptyMap(),
     val defaultChain: List<ChainEntry> = emptyList(),

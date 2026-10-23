@@ -148,7 +148,7 @@ class RoomBackupRepository @Inject constructor(
         val version = root["schemaVersion"]?.jsonPrimitive?.intOrNull
             ?: return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         if (version > ForkcastExport.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
-        // v1 → … → v5 only added arrays and nullable fields, which default to empty/null;
+        // v1 → … → v6 only added arrays and fields with defaults (null, empty, false);
         // older files decode as they are (v1/v2 wrote tdeeEstimates and activityDays as []).
         val export = try {
             BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), root)
@@ -157,7 +157,8 @@ class RoomBackupRepository @Inject constructor(
         } catch (e: DateTimeException) {
             return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         }
-        return ParsedBackup.Ok(export, preview(export))
+        val upgraded = if (version < 6) export.withMealTimes() else export
+        return ParsedBackup.Ok(upgraded, preview(upgraded))
     }
 
     override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = when (mode) {

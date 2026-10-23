@@ -28,6 +28,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -49,6 +50,8 @@ import app.forkcast.ui.format.UnitFormatter
 data class LogSheetActions(
     val scan: (() -> Unit)? = null,
     val photo: (() -> Unit)? = null,
+    /** "Describe" (SPEC §4.6.2): a meal estimated from text alone. */
+    val describe: (() -> Unit)? = null,
     val search: (() -> Unit)? = null,
     val quickAdd: (() -> Unit)? = null,
     val savedMeals: (() -> Unit)? = null,
@@ -107,15 +110,23 @@ fun LogSheet(
                     FilterChip(selected = meal.id == selected?.id, onClick = { onSelectMeal(meal.id) }, label = { Text(meal.name) })
                 }
             }
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-            ) {
-                LogTile(R.drawable.ic_barcode, R.string.log_scan, actions.scan, Modifier.weight(1f))
-                LogTile(R.drawable.ic_photo_camera, R.string.log_photo, actions.photo, Modifier.weight(1f))
-                LogTile(R.drawable.ic_search, R.string.log_search, actions.search, Modifier.weight(1f))
+            // Four tiles in a row; two rows of two at large font sizes, so the labels never squeeze.
+            val tiles = listOf(
+                Triple(R.drawable.ic_barcode, R.string.log_scan, actions.scan),
+                Triple(R.drawable.ic_photo_camera, R.string.log_photo, actions.photo),
+                Triple(R.drawable.ic_edit, R.string.describe_action, actions.describe),
+                Triple(R.drawable.ic_search, R.string.log_search, actions.search),
+            )
+            val perRow = if (LocalDensity.current.fontScale > 1.3f) 2 else 4
+            tiles.chunked(perRow).forEach { row ->
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
+                    row.forEach { (icon, label, action) -> LogTile(icon, label, action, Modifier.weight(1f)) }
+                }
             }
             LogRow(R.drawable.ic_bolt, R.string.log_quick_add, actions.quickAdd)
             LogRow(R.drawable.ic_bookmark, R.string.log_saved_meals, actions.savedMeals)

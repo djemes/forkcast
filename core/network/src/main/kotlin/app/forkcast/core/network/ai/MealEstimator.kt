@@ -39,7 +39,15 @@ data class MealEstimateRequest(
     val previous: MealEstimateJson?,
     val correction: String?,
     val model: String,
-)
+    /**
+     * Called once the request body has been sent, so the screen can move from "Sending" to
+     * "Waiting for Gemini" (owner, 2026-10-23). Never part of what is sent.
+     */
+    val onSent: (() -> Unit)? = null,
+) {
+    /** A described meal (SPEC §4.6.2): no photo, the description is all the model has. */
+    val isTextOnly: Boolean get() = images.isEmpty()
+}
 
 data class MealEstimateResult(
     val parsed: MealEstimateJson,
@@ -81,11 +89,15 @@ sealed class AiError(message: String, val reply: ProviderReply? = null) : Except
         /** No key is saved for the profile: nothing was sent. */
         val missing: Boolean = detail == NO_KEY
     }
-    /** Short window (per-minute limit, overload). [retryAfterMs] when the provider says. */
-    class RateLimited(val retryAfterMs: Long?, reply: ProviderReply? = null) : AiError(text("Rate limited", null, reply), reply)
+    /**
+     * Short window (per-minute limit, overload). [retryAfterMs] when the provider says; [quota] is
+     * which limit, when it says (Gemini's quota id, e.g. `GenerateRequestsPerMinutePerProjectPerModel-FreeTier`).
+     */
+    class RateLimited(val retryAfterMs: Long?, reply: ProviderReply? = null, val quota: String? = null) :
+        AiError(text("Rate limited", quota, reply), reply)
     /** Daily quota or billing credit used up; [resetsAtMs] when known (Gemini: next midnight Pacific). */
-    class QuotaExhausted(val resetsAtMs: Long?, detail: String? = null, reply: ProviderReply? = null) :
-        AiError(text("Quota used up", detail, reply), reply)
+    class QuotaExhausted(val resetsAtMs: Long?, detail: String? = null, reply: ProviderReply? = null, val quota: String? = null) :
+        AiError(text("Quota used up", detail ?: quota, reply), reply)
     class ModelNotFound(val model: String, reply: ProviderReply? = null) : AiError(text("Model not found: $model", null, reply), reply)
     class ContentRefused(detail: String? = null) : AiError(text("The provider declined this request", detail, null))
     /** The provider accepted the request but the output wasn't a usable estimate. */

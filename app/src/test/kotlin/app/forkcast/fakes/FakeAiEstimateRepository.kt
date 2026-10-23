@@ -22,26 +22,37 @@ class FakeAiEstimateRepository : AiEstimateRepository {
 
     override fun observeDay(date: LocalDate): Flow<List<AiEstimateEntity>> = rows.map { l -> l.filter { it.date == date && it.deletedAt == null } }
     override fun observeDetail(id: String): Flow<EstimateDetail?> = details.map { it[id] }
-    override suspend fun create(date: LocalDate, mealSlotId: String, photos: List<Uri>, description: String?): String {
+    /** Meal times the UI passed to create / createDescribed. */
+    val minutes = mutableListOf<Int?>()
+    override suspend fun create(date: LocalDate, mealSlotId: String, photos: List<Uri>, description: String?, eatenMinute: Int?): String {
         created += Triple(mealSlotId, photos, description)
+        minutes += eatenMinute
         return "e${created.size}"
+    }
+    override suspend fun createDescribed(date: LocalDate, mealSlotId: String, description: String, eatenMinute: Int?): String {
+        calls += "describe:$description"
+        minutes += eatenMinute
+        return "d${calls.size}"
     }
     override suspend fun run(id: String): RunOutcome = RunOutcome.Nothing
     override suspend fun correct(id: String, text: String) { calls += "correct:$text" }
     override suspend fun acceptAsIs(id: String) { calls += "accept" }
     override suspend fun retry(id: String) { calls += "retry" }
-    override suspend fun setGrams(componentId: String, grams: Double) { calls += "grams:$componentId:$grams" }
-    override suspend fun setSource(componentId: String, source: ComponentSource) { calls += "source:$componentId:$source" }
-    override suspend fun setMatch(componentId: String, food: app.forkcast.core.model.Food) { calls += "match:$componentId:${food.name}" }
-    override suspend fun removeComponent(componentId: String) { calls += "remove:$componentId" }
-    override suspend fun save(id: String) { calls += "save" }
+    override suspend fun retryWith(id: String, profileId: String) { calls += "retryWith:$profileId" }
+    override suspend fun editDescriptionAndRetry(id: String, description: String) { calls += "edit:$description" }
+    override suspend fun abandon(id: String) { calls += "abandon" }
+    override suspend fun localFood(food: app.forkcast.core.model.Food) = food.copy(id = food.id.ifEmpty { "local-${food.name}" })
+    override suspend fun saveReview(id: String, components: List<app.forkcast.core.data.db.AiComponentEntity>, portion: Double) {
+        calls += "save:${components.size}:$portion"
+    }
+    override suspend fun saveAsFood(id: String, name: String): String? { calls += "food:$name"; return "f1" }
     override suspend fun delete(id: String) {
         calls += "delete"
         details.update { it - id }
     }
     override suspend fun cleanUpPhotos() = Unit
     override suspend fun markNotified(id: String) = Unit
-    override suspend fun stopRetrying(id: String) = Unit
+    override suspend fun recover() { calls += "recover" }
 
     companion object {
         fun row(id: String, date: LocalDate, mealSlotId: String, status: EstimateStatus, logEntryId: String? = null, kcal: Double? = null) =

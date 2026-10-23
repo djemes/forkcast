@@ -89,7 +89,10 @@ class FakeAiRepository(
     }
 
     override suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?) = Result.success(models)
-    override fun estimatorFor(profile: AiProfile): MealEstimator = estimator(profile)
+    override fun estimatorFor(profile: AiProfile, textOnly: Boolean): MealEstimator = estimator(profile)
+    var offer: app.forkcast.core.data.repository.BackupOffer? = null
+    override suspend fun backupOffer() = offer
+    override suspend fun addBackupModel(): String? = offer?.let { offer = null; "backup" }
     override suspend fun recordAttempts(attempts: List<AiChain.Attempt>) { recorded += attempts }
     override fun monthUsage(month: YearMonth): Flow<MonthUsage> = state.map { MonthUsage(month, emptyList()) }
 }
