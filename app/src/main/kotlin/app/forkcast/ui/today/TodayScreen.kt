@@ -195,6 +195,7 @@ fun TodayScreen(
     }
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
     var showNutrients by rememberSaveable { mutableStateOf(false) }
+    var showBudget by rememberSaveable { mutableStateOf(false) }
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(editingId) { editingId?.let { onEvent(TodayEvent.LoadEditServings(it)) } }
     var quickAddMealId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -377,7 +378,7 @@ fun TodayScreen(
                     if (totals != null && targets != null) {
                         val ringAt = order++
                         val macrosAt = order++
-                        item(key = "ring") { TodayItem("ring", ringAt) { BudgetRing(totals, f, Modifier.fillMaxWidth(), day.forecast, day.forecastFromMinute) } }
+                        item(key = "ring") { TodayItem("ring", ringAt) { BudgetRing(totals, f, Modifier.fillMaxWidth(), day.forecast) { showBudget = true } } }
                         item(key = "macros") { TodayItem("macros", macrosAt) { MacroBars(totals, targets, f) { showNutrients = true } } }
                     }
                     val last = day.lastLogged
@@ -448,6 +449,21 @@ fun TodayScreen(
         }
     }
 
+    val sheetTotals = state.totals
+    val sheetTargets = state.targets
+    if (showBudget && sheetTotals != null && sheetTargets != null) {
+        TodayBudgetSheet(
+            state = state,
+            totals = sheetTotals,
+            targets = sheetTargets,
+            f = f,
+            onDismiss = { showBudget = false },
+            onLogFit = { fit, mealId ->
+                showBudget = false
+                onEvent(TodayEvent.LogFit(fit, mealId))
+            },
+        )
+    }
     logSheetMealId?.let { mealId ->
         LogSheet(
             meals = state.loggableSlots,
@@ -717,7 +733,7 @@ private fun dateLabels(date: LocalDate, today: LocalDate): Pair<String, String> 
 
 /** "Yesterday" / "Today" / "Sat, Oct 17", for the last-logged hint. */
 @Composable
-private fun shortDayLabel(date: LocalDate, today: LocalDate): String = when (ChronoUnit.DAYS.between(today, date)) {
+internal fun shortDayLabel(date: LocalDate, today: LocalDate): String = when (ChronoUnit.DAYS.between(today, date)) {
     0L -> stringResource(R.string.today)
     -1L -> stringResource(R.string.yesterday)
     1L -> stringResource(R.string.tomorrow)

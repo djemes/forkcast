@@ -18,6 +18,9 @@ import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.WaterRepository
 import app.forkcast.core.data.repository.WeightRepository
 import app.forkcast.core.domain.AdaptiveTdee
+import app.forkcast.core.domain.BudgetSheet
+import app.forkcast.core.model.forGrams
+import app.forkcast.core.model.sumNutrients
 import app.forkcast.core.domain.DailyTargets
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
@@ -98,6 +101,9 @@ data class PendingEstimate(val estimate: AiEstimateEntity) {
     val kcalExpected: Double? get() = estimate.kcalExpected
 }
 
+/** A "what fits" row: one tap logs [food] (its usual amount) or [savedMeal] to the meal for now. */
+data class FitSuggestion(val candidate: BudgetSheet.Candidate, val food: Food? = null, val savedMeal: SavedMeal? = null)
+
 data class WaterSummary(
     val ml: Double = 0.0,
     val targetMl: Double = NutritionConstants.WATER_TARGET_MALE_ML,
@@ -159,6 +165,12 @@ data class TodayUiState(
     val autoComplete: Boolean = false,
     /** Keys lost in a restore or a move to a new phone (backups never carry keys). */
     val missingKeys: List<app.forkcast.core.data.repository.MissingKey> = emptyList(),
+    /** "Today's budget" sheet (owner, 2026-10-24): this week's logged days before today, today only. */
+    val weekSoFar: BudgetSheet.WeekSoFar? = null,
+    /** Foods and saved meals from history that fit in what's left (today only, not when over). */
+    val fits: List<FitSuggestion> = emptyList(),
+    /** More of the protein target is still to go than of the calories, so [fits] lead with protein. */
+    val proteinBehind: Boolean = false,
 ) {
     val isToday: Boolean get() = date == today
     val isSelecting: Boolean get() = selection.isNotEmpty()
@@ -208,6 +220,8 @@ sealed interface TodayEvent {
         val eatenMinute: Int? = null,
     ) : TodayEvent
     data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
+    /** "What fits" in the budget sheet: logs it to the meal for now, on today. */
+    data class LogFit(val fit: FitSuggestion, val mealSlotId: String) : TodayEvent
     /** Copies entries to [toDate], into [toMealSlotId] or (null) each entry's own meal. */
     data class Copy(val ids: List<String>, val toDate: LocalDate, val toMealSlotId: String?) : TodayEvent
     data class SaveAsMeal(val ids: List<String>, val name: String) : TodayEvent
@@ -285,11 +299,21 @@ class TodayViewModel @Inject constructor(
         val activity: ActivityDay?,
         val bonus: ActivityBonus,
         val completeness: DayCompleteness,
+        /** This week's days before today with their activity bonus (today only). */
+        val weekBonuses: Map<LocalDate, ActivityBonus> = emptyMap(),
     ) {
         val exerciseBonus: Double get() = bonus.bonusKcal
     }
 
-    private data class DayHealth(val activity: ActivityDay?, val bonus: ActivityBonus, val completeness: DayCompleteness)
+    private data class DayHealth(
+        val activity: ActivityDay?,
+        val bonus: ActivityBonus,
+        val completeness: DayCompleteness,
+        val weekBonuses: Map<LocalDate, ActivityBonus>,
+    )
+
+    private fun weekStart(today: LocalDate): LocalDate =
+        today.with(java.time.temporal.TemporalAdjusters.previousOrSame(java.time.temporal.WeekFields.of(Locale.getDefault()).firstDayOfWeek))
 
     private val day: Flow<DayData> = selectedDate.flatMapLatest { d ->
         combine(
@@ -302,10 +326,17 @@ class TodayViewModel @Inject constructor(
             combine(
                 if (d == LocalDate.now(clock)) logRepository.observeRange(d.minusDays(60), d.minusDays(1)) else flowOf(emptyList()),
                 logRepository.observeLatestDay(d),
-                combine(health.observeActivity(d), maintenance.observeActivityBonus(d), maintenance.observeCompleteness(d), ::DayHealth),
+                combine(
+                    health.observeActivity(d),
+                    maintenance.observeActivityBonus(d),
+                    maintenance.observeCompleteness(d),
+                    // The week so far for the budget sheet: today only, and none on the week's first day.
+                    if (d == LocalDate.now(clock) && weekStart(d) < d) maintenance.observeActivityBonuses(weekStart(d), d.minusDays(1)) else flowOf(emptyMap()),
+                    ::DayHealth,
+                ),
             ) { h, l, dh -> Triple(h, l, dh) },
         ) { entries, yesterday, water, estimates, (history, last, dh) ->
-            DayData(d, entries, yesterday, water, estimates, history, last, dh.activity, dh.bonus, dh.completeness)
+            DayData(d, entries, yesterday, water, estimates, history, last, dh.activity, dh.bonus, dh.completeness, dh.weekBonuses)
         }
     }
 
@@ -319,6 +350,20 @@ class TodayViewModel @Inject constructor(
     ) { t, s, (r, favorites), saved, missing -> Extras(t, s, r, saved, favorites, missing) }
 
     private val body = combine(weightRepository.entries, profileRepository.profile) { weights, profile -> weights to profile }
+
+    /** What "what fits" picks from: recent foods first, then saved meals, then favorites (owner, 2026-10-24). */
+    private val fitSources = combine(foods.observeRecents(FIT_RECENTS), savedMealRepository.meals, foods.observeFavorites()) { recents, meals, favorites ->
+        fun food(f: Food): FitSuggestion {
+            val (serving, qty) = FoodLogging.defaultServing(f)
+            val n = f.nutrientsPer100g.forGrams(serving.grams * qty)
+            return FitSuggestion(BudgetSheet.Candidate("food:${f.id}", f.name, n.kcal, n[app.forkcast.core.model.NutrientKey.PROTEIN_G] ?: 0.0, savedMeal = false), food = f)
+        }
+        val saved = meals.filter { it.items.isNotEmpty() }.map { m ->
+            val n = m.items.map { it.nutrients }.sumNutrients()
+            FitSuggestion(BudgetSheet.Candidate("meal:${m.id}", m.name, n.kcal, n[app.forkcast.core.model.NutrientKey.PROTEIN_G] ?: 0.0, savedMeal = true), savedMeal = m)
+        }
+        (recents.map(::food) + saved + favorites.filter { fav -> recents.none { it.id == fav.id } }.map(::food))
+    }
 
     /** Connected with activity reads on, and whether Health Connect exists here at all. */
     private val healthState = health.status.map { s ->
@@ -338,9 +383,10 @@ class TodayViewModel @Inject constructor(
         mealSlotRepository.observeMealSlots(),
         day,
         extras,
-        combine(body, healthState, waterUndo) { b, h, u -> Triple(b, h, u) },
+        combine(body, healthState, waterUndo, fitSources) { b, h, u, fit -> Pair(Triple(b, h, u), fit) },
         selection,
-    ) { slots, dayData, x, (b, healthFlags, undo), selected ->
+    ) { slots, dayData, x, (bhu, fitSource), selected ->
+        val (b, healthFlags, undo) = bhu
         val (weights, profile) = b
         val date = dayData.date
         val entries = dayData.entries
@@ -365,6 +411,25 @@ class TodayViewModel @Inject constructor(
         } else {
             null
         }
+        val totals = targets?.let { DayMath.totals(entries, it.budgetKcal, dayData.exerciseBonus) }
+        val proteinTarget = targets?.targets?.get(app.forkcast.core.model.NutrientKey.PROTEIN_G)?.amount ?: 0.0
+        val proteinBehind = totals != null && isToday &&
+            BudgetSheet.proteinBehind(totals[app.forkcast.core.model.NutrientKey.PROTEIN_G], proteinTarget, totals.eatenKcal, totals.allowanceKcal)
+        val fits = if (totals != null && isToday) {
+            val picked = BudgetSheet.whatFits(fitSource.map { it.candidate }, totals.remainingKcal, proteinBehind).map { it.key }
+            picked.mapNotNull { key -> fitSource.firstOrNull { it.candidate.key == key } }
+        } else {
+            emptyList()
+        }
+        val weekSoFar = if (isToday && targets != null) {
+            val byDay = dayData.history.groupBy { it.date }
+            val days = dayData.weekBonuses.map { (d, bonus) ->
+                BudgetSheet.Day(d, byDay[d].orEmpty().sumOf { it.nutrients.kcal }, targets.budgetKcal + bonus.bonusKcal)
+            }
+            BudgetSheet.weekSoFar(days, date, weekStart(date).dayOfWeek)
+        } else {
+            null
+        }
         TodayUiState(
             date = date,
             today = LocalDate.now(clock),
@@ -376,7 +441,7 @@ class TodayViewModel @Inject constructor(
             defaultMealId = MealSlotPicker.defaultFor(slots, now.hour * 60 + now.minute)?.id,
             units = units,
             targets = targets,
-            totals = targets?.let { DayMath.totals(entries, it.budgetKcal, dayData.exerciseBonus) },
+            totals = totals,
             selection = selected intersect entries.map { it.id }.toSet(),
             recents = x.recents,
             recentsAreFavorites = x.recentsAreFavorites,
@@ -410,6 +475,9 @@ class TodayViewModel @Inject constructor(
             ),
             completeness = dayData.completeness,
             missingKeys = x.missingKeys,
+            weekSoFar = weekSoFar,
+            fits = fits,
+            proteinBehind = proteinBehind,
             autoComplete = AdaptiveTdee.isComplete(
                 AdaptiveTdee.DayLog(date, entries.sumOf { it.nutrients.kcal }, entries.map { it.mealSlotId }.distinct().size),
             ),
@@ -453,6 +521,10 @@ class TodayViewModel @Inject constructor(
             is TodayEvent.QuickAdd -> addEntry(event.mealSlotId) { date ->
                 FoodLogging.quickAdd(event.label, event.kcal, event.protein, event.carbs, event.fat, date, event.mealSlotId, clock.instant())
                     .copy(eatenMinute = event.eatenMinute)
+            }
+            is TodayEvent.LogFit -> when {
+                event.fit.food != null -> onEvent(TodayEvent.AddRecent(event.fit.food, event.mealSlotId))
+                event.fit.savedMeal != null -> onEvent(TodayEvent.LogSavedMeal(event.fit.savedMeal.id, event.mealSlotId))
             }
             is TodayEvent.AddRecent -> addEntry(event.mealSlotId) { date ->
                 val (serving, qty) = FoodLogging.defaultServing(event.food)
@@ -531,7 +603,6 @@ class TodayViewModel @Inject constructor(
                         // Never a future day (owner, 2026-10-23); a time the user set is no longer an estimate.
                         date = minOf(event.date, LocalDate.now(clock)),
                         eatenMinute = event.eatenMinute,
-                        timeEstimated = e.timeEstimated && event.eatenMinute == e.eatenMinute && event.date == e.date,
                     ),
                 )
             }
@@ -573,3 +644,6 @@ class TodayViewModel @Inject constructor(
         }
     }
 }
+
+/** Recent foods "what fits" looks through. */
+private const val FIT_RECENTS = 20

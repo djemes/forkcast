@@ -1,6 +1,9 @@
 package app.forkcast.core.data.db
 
+import androidx.room.AutoMigration
 import androidx.room.Database
+import androidx.room.DeleteColumn
+import androidx.room.migration.AutoMigrationSpec
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
@@ -9,8 +12,9 @@ import androidx.room.TypeConverters
  * release's version and a migration test. Never use destructive fallback: updates install over
  * real data.
  *
- * v7 (1.2): the schema 1.2.x and 1.3 ship. Migrations from v1–v6 (builds before 1.2) were removed
- * in 1.3 (owner, 2026-10-24): every install that matters is on v7. The next change adds 7 → 8.
+ * v7 (1.2, 1.3). Migrations from v1–v6 (builds before 1.2) were removed in 1.3 (owner, 2026-10-24).
+ * v8 (1.4): log_entry.timeEstimated dropped; every entry's time is a normal time ([DropTimeEstimated]).
+ *   Keep 7 → 8 while 1.4 is the previous release; it can go in the release after the next one.
  */
 @Database(
     entities = [
@@ -36,8 +40,9 @@ import androidx.room.TypeConverters
         RecipeEntity::class,
         RecipeIngredientEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = true,
+    autoMigrations = [AutoMigration(from = 7, to = 8, spec = DropTimeEstimated::class)],
 )
 @TypeConverters(Converters::class)
 abstract class ForkcastDatabase : RoomDatabase() {
@@ -60,3 +65,7 @@ abstract class ForkcastDatabase : RoomDatabase() {
         const val NAME = "forkcast.db"
     }
 }
+
+/** v7 → v8: entries keep their time; the "estimated" flag goes (owner, 2026-10-24). */
+@DeleteColumn(tableName = "log_entry", columnName = "timeEstimated")
+class DropTimeEstimated : AutoMigrationSpec

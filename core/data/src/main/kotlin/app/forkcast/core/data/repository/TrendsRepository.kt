@@ -89,7 +89,7 @@ class RoomTrendsRepository @Inject constructor(
                 it.startMinute != null && it.endMinute != null && HealthRules.mealKind(it.name, it.startMinute) != MealKind.SNACK
             }.map { it.id }
             val timing = MealTiming.insights(
-                entries.map { MealTiming.Item(it.date, it.mealSlotId, it.eatenMinute, it.timeEstimated, it.nutrients.kcal) },
+                entries.map { MealTiming.Item(it.date, it.mealSlotId, it.eatenMinute, it.nutrients.kcal) },
                 averagedDays.associate { it.date to it.allowanceKcal },
                 timedMeals,
             )

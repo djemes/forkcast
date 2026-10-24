@@ -69,8 +69,7 @@ class RoomLogRepository @Inject constructor(
             val loggedAt = maxOf(e.loggedAt.toEpochMilli(), now) + i
             val timed = if (e.eatenMinute != null) e else {
                 val slot = slots[e.mealSlotId]
-                val (minute, estimated) = MealTimes.forNewEntry(slot?.startMinute, slot?.endMinute, e.date, Instant.ofEpochMilli(loggedAt), clock.zone)
-                e.copy(eatenMinute = minute, timeEstimated = estimated)
+                e.copy(eatenMinute = MealTimes.forNewEntry(slot?.startMinute, slot?.endMinute, e.date, Instant.ofEpochMilli(loggedAt), clock.zone))
             }
             timed.toEntity(id = UUID.randomUUID().toString(), now = now, loggedAt = loggedAt)
         }
@@ -94,7 +93,7 @@ class RoomLogRepository @Inject constructor(
 
     override suspend fun setEatenMinute(ids: List<String>, minute: Int) {
         val now = clock.millis()
-        dao.upsert(dao.getAll(ids).filter { it.deletedAt == null }.map { it.copy(eatenMinute = minute, timeEstimated = false, updatedAt = now) })
+        dao.upsert(dao.getAll(ids).filter { it.deletedAt == null }.map { it.copy(eatenMinute = minute, updatedAt = now) })
     }
 
     override suspend fun delete(ids: List<String>) = dao.softDelete(ids, clock.millis())
@@ -128,7 +127,6 @@ class RoomLogRepository @Inject constructor(
         updatedAt = now,
         waterMl = waterMl,
         eatenMinute = eatenMinute,
-        timeEstimated = timeEstimated,
     )
 }
 
@@ -149,5 +147,4 @@ fun LogEntryEntity.toModel() = LogEntry(
     aiEstimateId = aiEstimateId,
     waterMl = waterMl,
     eatenMinute = eatenMinute,
-    timeEstimated = timeEstimated,
 )

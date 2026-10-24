@@ -13,7 +13,6 @@
     <string name="forecast_tight">Apertado</string>
     <string name="forecast_likely_over">Deve passar uns ~%1$s</string>
     <string name="forecast_over">%1$s acima</string>
-    <string name="forecast_explain">Pelo que você costuma comer depois das %1$s, deve terminar perto de %2$s.</string>
 
     <!-- Macros / nutrient panel -->
     <string name="macro_progress">%1$s / %2$s</string>
@@ -84,4 +83,41 @@
     <string name="missing_keys_not_now">Agora não</string>
     <!-- Section for entries whose meal was deleted in Settings › Meals. -->
     <string name="meal_other">Outros</string>
+    <!-- Orçamento de hoje, ao tocar no anel (dono, 2026-10-24) -->
+    <string name="ring_open_budget">mostrar o orçamento de hoje</string>
+    <string name="budget_sheet_title">Orçamento de hoje</string>
+    <string name="budget_sheet_title_day">Orçamento de %1$s</string>
+    <string name="budget_maintenance_adaptive">Manutenção, pela tendência do seu peso</string>
+    <string name="budget_maintenance_formula">Manutenção, pela fórmula</string>
+    <string name="budget_deficit">Déficit da meta</string>
+    <string name="budget_surplus">Superávit da meta</string>
+    <string name="budget_base">Orçamento</string>
+    <string name="budget_custom">Orçamento personalizado</string>
+    <string name="budget_activity">Bônus de atividade</string>
+    <string name="budget_eaten">Consumido</string>
+    <string name="budget_left">Restante</string>
+    <string name="budget_over">Acima</string>
+    <string name="budget_by_meal">Por refeição</string>
+    <string name="budget_outlook">Previsão</string>
+    <string name="budget_forecast">Pelo que você costuma comer depois das %1$s, o dia deve terminar perto de %2$s de %3$s.</string>
+    <plurals name="budget_week_under">
+        <item quantity="one">Nesta semana até agora: %1$s abaixo do orçamento em média (%2$d dia).</item>
+        <item quantity="many">Nesta semana até agora: %1$s abaixo do orçamento em média (%2$d dias).</item>
+        <item quantity="other">Nesta semana até agora: %1$s abaixo do orçamento em média (%2$d dias).</item>
+    </plurals>
+    <plurals name="budget_week_over">
+        <item quantity="one">Nesta semana até agora: %1$s acima do orçamento em média (%2$d dia).</item>
+        <item quantity="many">Nesta semana até agora: %1$s acima do orçamento em média (%2$d dias).</item>
+        <item quantity="other">Nesta semana até agora: %1$s acima do orçamento em média (%2$d dias).</item>
+    </plurals>
+    <plurals name="budget_week_on">
+        <item quantity="one">Nesta semana até agora: dentro do orçamento em média (%1$d dia).</item>
+        <item quantity="many">Nesta semana até agora: dentro do orçamento em média (%1$d dias).</item>
+        <item quantity="other">Nesta semana até agora: dentro do orçamento em média (%1$d dias).</item>
+    </plurals>
+    <string name="budget_fits_title">O que cabe em %1$s</string>
+    <string name="budget_fits_protein">Mais proteína primeiro: faltam %1$s de proteína.</string>
+    <string name="budget_fit_line">%1$s · %2$s de proteína</string>
+    <string name="budget_fit_add">Adicionar %1$s a %2$s</string>
+    <string name="budget_saved_meal">Refeição salva</string>
 </resources>

@@ -134,8 +134,6 @@ data class LogEntryEntity(
     @Transient val hcWaterRecordId: String? = null,
     /** v7: when it was eaten, minutes after local midnight on [date] (owner, 2026-10-23). */
     val eatenMinute: Int? = null,
-    /** v7: [eatenMinute] is a typical time for its meal, filled in for entries from before meal times. */
-    @ColumnInfo(defaultValue = "0") val timeEstimated: Boolean = false,
 )
 
 @Serializable

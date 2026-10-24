@@ -25,14 +25,14 @@ import app.forkcast.core.model.AppSettings
 import kotlinx.serialization.Serializable
 
 /**
- * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v6.json). Field names mirror the
+ * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v7.json). Field names mirror the
  * Room entities. Secrets are never included: API keys live in an encrypted file outside the
  * database and [AppSettings] holds no secrets (keys travel only in the separate,
  * passphrase-encrypted settings export).
  *
- * v6 (1.2): written by 1.2.x and 1.3. Each version imports its own format and the one before it
- * (owner, 2026-10-24); files older than v6 (before 1.2) are refused as too old. A new version
- * that changes the format bumps [SCHEMA_VERSION] and upgrades v6 files on import.
+ * v7 (1.4): log entries no longer carry `timeEstimated`. Each version imports its own format and
+ * the one before it (owner, 2026-10-24): v6 files (1.2, 1.3) import as they are, their
+ * `timeEstimated` ignored (unknown fields are). Files older than v6 are refused as too old.
  */
 @Serializable
 data class ForkcastExport(
@@ -67,7 +67,7 @@ data class ForkcastExport(
     val settings: AppSettings? = null,
 ) {
     companion object {
-        const val SCHEMA_VERSION = 6
+        const val SCHEMA_VERSION = 7
         /** The oldest export this version imports: its own and the one before it, no older. */
         const val OLDEST_IMPORTED = 6
     }

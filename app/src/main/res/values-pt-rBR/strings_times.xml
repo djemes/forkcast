@@ -11,9 +11,9 @@
     <!-- Tendências › Horários das refeições -->
     <string name="timing_title">Horários das refeições</string>
     <plurals name="timing_not_enough">
-        <item quantity="one">Os horários são registrados a partir da versão 1.2. Depois de %1$d dia completo com horários, aqui aparece quando você costuma comer e quanto come à noite.</item>
-        <item quantity="many">Os horários são registrados a partir da versão 1.2. Depois de %1$d dias completos com horários, aqui aparece quando você costuma comer e quanto come à noite.</item>
-        <item quantity="other">Os horários são registrados a partir da versão 1.2. Depois de %1$d dias completos com horários, aqui aparece quando você costuma comer e quanto come à noite.</item>
+        <item quantity="one">Depois de %1$d dia completo com horários, aqui aparece quando você costuma comer e quanto come à noite.</item>
+        <item quantity="many">Depois de %1$d dias completos com horários, aqui aparece quando você costuma comer e quanto come à noite.</item>
+        <item quantity="other">Depois de %1$d dias completos com horários, aqui aparece quando você costuma comer e quanto come à noite.</item>
     </plurals>
     <string name="timing_meal_value">%1$s · ±%2$d min</string>
     <string name="timing_window">Janela de alimentação</string>

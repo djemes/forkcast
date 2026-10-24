@@ -7,7 +7,7 @@ import kotlin.math.roundToInt
 /**
  * Meal timing in Trends (owner, 2026-10-23: "you decide, from the perspective of a calorie
  * tracker for losing weight; simple and useful"). Three things, from complete past days whose
- * items all have a real time (estimated times from before 1.2 would only blur them):
+ * items all have a time:
  *
  * - when each meal usually happens, and how much that varies (median and the median distance from it);
  * - the usual eating window (first and last bite);
@@ -22,8 +22,8 @@ object MealTiming {
     /** Each side of the over-budget comparison needs this many days. */
     const val MIN_GROUP_DAYS = 2
 
-    /** One logged item with its real time. [estimated] items come from before meal times existed. */
-    data class Item(val date: LocalDate, val mealSlotId: String, val minute: Int?, val estimated: Boolean, val kcal: Double)
+    /** One logged item with its time. */
+    data class Item(val date: LocalDate, val mealSlotId: String, val minute: Int?, val kcal: Double)
 
     data class MealTime(val mealSlotId: String, val medianMinute: Int, val spreadMinutes: Int, val days: Int)
 
@@ -48,8 +48,8 @@ object MealTiming {
      */
     fun insights(items: List<Item>, days: Map<LocalDate, Double>, mealSlotIds: List<String>): Insights? {
         val byDay = items.filter { it.date in days }.groupBy { it.date }
-            // A day counts only if every item on it has a time the user logged or set.
-            .filterValues { list -> list.isNotEmpty() && list.all { it.minute != null && !it.estimated } }
+            // A day counts only if every item on it has a time.
+            .filterValues { list -> list.isNotEmpty() && list.all { it.minute != null } }
         if (byDay.size < MIN_DAYS) return null
 
         val meals = mealSlotIds.mapNotNull { slot ->

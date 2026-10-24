@@ -222,9 +222,9 @@ class TodayViewModelTest {
         assertThat(log.rows.value.values.map { it.first.date }.toSet()).containsExactly(TestData.TODAY)
     }
 
-    /** Edit sheet: day and time move together; a time the user set is no longer an estimate. */
+    /** Edit sheet: day and time move together. */
     @Test fun editMovesEntryToAnotherDayAndTime() = runTest {
-        val (id) = log.add(listOf(TestData.entry("Oats", "b", 300.0).copy(eatenMinute = 450, timeEstimated = true)))
+        val (id) = log.add(listOf(TestData.entry("Oats", "b", 300.0).copy(eatenMinute = 450)))
         val vm = vm()
         val entry = vm.uiState.filterNotNull().first { it.allEntries.isNotEmpty() }.allEntries.single()
         vm.onEvent(TodayEvent.UpdateEntry(entry, 1.0, "b", date = TestData.TODAY.minusDays(1), eatenMinute = 480))
@@ -233,7 +233,6 @@ class TodayViewModelTest {
         val row = log.rows.value.getValue(id).first
         assertThat(row.date).isEqualTo(TestData.TODAY.minusDays(1))
         assertThat(row.eatenMinute).isEqualTo(480)
-        assertThat(row.timeEstimated).isFalse()
     }
 
     @Test fun saveAsMealThenLogIt() = runTest {
@@ -361,5 +360,51 @@ class TodayViewModelTest {
         override fun getZone(): ZoneId = zone
         override fun withZone(zone: ZoneId): Clock = MutableClock(now, zone)
         override fun instant(): Instant = now
+    }
+
+    private fun food(id: String, name: String, kcalPer100: Double, proteinPer100: Double, usedAt: Long) = app.forkcast.core.model.Food(
+        id, name, null, app.forkcast.core.model.FoodSource.USDA, null, null,
+        listOf(app.forkcast.core.model.ServingSize("serving", 100.0)),
+        mapOf(app.forkcast.core.model.NutrientKey.ENERGY_KCAL to kcalPer100, app.forkcast.core.model.NutrientKey.PROTEIN_G to proteinPer100),
+        isFavorite = false, lastUsedAt = usedAt, lastQuantity = 1.0, lastServingLabel = "serving",
+    )
+
+    /** The budget sheet's "what fits": the user's own foods and saved meals that fit what's left; one tap logs. */
+    @Test fun whatFitsComesFromHistoryAndLogsInOneTap() = runTest {
+        foods.foods.value = listOf(
+            food("f1", "Oatmeal", 300.0, 10.0, 3),
+            food("f2", "Pizza", 2_400.0, 90.0, 2),
+            food("f3", "Greek yogurt", 100.0, 18.0, 1),
+        ).associateBy { it.id }
+        saved.saveFrom("Usual lunch", listOf(TestData.entry("Turkey sandwich", "l", 420.0, 32.0)))
+        log.add(listOf(TestData.entry("Breakfast", "b", 400.0, 30.0)))
+        val vm = vm()
+        val s = vm.uiState.filterNotNull().first { it.fits.isNotEmpty() }
+        // Pizza is more than what's left; recent foods first, then saved meals.
+        assertThat(s.fits.map { it.candidate.name }).containsExactly("Oatmeal", "Greek yogurt", "Usual lunch").inOrder()
+        vm.onEvent(TodayEvent.LogFit(s.fits.first(), "l"))
+        vm.uiState.filterNotNull().first { st -> st.allEntries.any { it.displayName == "Oatmeal" } }
+        val logged = log.rows.value.values.map { it.first }.single { it.displayName == "Oatmeal" }
+        assertThat(logged.mealSlotId).isEqualTo("l")
+        assertThat(logged.date).isEqualTo(TestData.TODAY)
+    }
+
+    @Test fun overBudgetHasNothingThatFits() = runTest {
+        foods.foods.value = mapOf("f1" to food("f1", "Oatmeal", 300.0, 10.0, 1))
+        log.add(listOf(TestData.entry("Big day", "d", 4_000.0)))
+        val s = vm().uiState.filterNotNull().first()
+        assertThat(s.totals!!.remainingKcal).isLessThan(0.0)
+        assertThat(s.fits).isEmpty()
+    }
+
+    @Test fun behindOnProteinLeadsWithProtein() = runTest {
+        foods.foods.value = listOf(
+            food("f1", "Crackers", 200.0, 3.0, 2),
+            food("f2", "Chicken breast", 165.0, 31.0, 1),
+        ).associateBy { it.id }
+        log.add(listOf(TestData.entry("Pasta", "l", 1_100.0, 20.0)))
+        val s = vm().uiState.filterNotNull().first { it.fits.isNotEmpty() }
+        assertThat(s.proteinBehind).isTrue()
+        assertThat(s.fits.first().candidate.name).isEqualTo("Chicken breast")
     }
 }

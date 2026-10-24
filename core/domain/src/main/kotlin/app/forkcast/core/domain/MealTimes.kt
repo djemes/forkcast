@@ -28,18 +28,18 @@ object MealTimes {
 
     /**
      * The typical time for an entry in a meal: the middle of its window; without a window, when it
-     * was logged if that was on the day, else [FALLBACK_MINUTE]. Always an estimate.
+     * was logged if that was on the day, else [FALLBACK_MINUTE].
      */
     fun typicalMinute(startMinute: Int?, endMinute: Int?, date: LocalDate, loggedAt: Instant, zone: ZoneId): Int =
         windowMiddle(startMinute, endMinute) ?: minuteOn(date, loggedAt, zone) ?: FALLBACK_MINUTE
 
     /**
-     * A new entry's time and whether it's estimated: when it's logged, if that is on the entry's
-     * day (the owner's default); otherwise the meal's typical time.
+     * A new entry's time when none was chosen: when it's logged, if that is on the entry's day;
+     * otherwise the meal's typical time, the same default the time fields show. Either is a
+     * normal time (owner, 2026-10-24: no "estimated" times any more).
      */
-    fun forNewEntry(startMinute: Int?, endMinute: Int?, date: LocalDate, loggedAt: Instant, zone: ZoneId): Pair<Int, Boolean> =
-        minuteOn(date, loggedAt, zone)?.let { it to false }
-            ?: (typicalMinute(startMinute, endMinute, date, loggedAt, zone) to true)
+    fun forNewEntry(startMinute: Int?, endMinute: Int?, date: LocalDate, loggedAt: Instant, zone: ZoneId): Int =
+        minuteOn(date, loggedAt, zone) ?: typicalMinute(startMinute, endMinute, date, loggedAt, zone)
 
     /** No time later than now on today (no future, like dates: owner, 2026-10-19). */
     fun clampToNow(minute: Int, date: LocalDate, today: LocalDate, nowMinute: Int): Int =

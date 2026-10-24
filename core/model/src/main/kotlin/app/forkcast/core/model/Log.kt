@@ -27,11 +27,9 @@ data class LogEntry(
     val waterMl: Double? = null,
     /**
      * When it was eaten, minutes after local midnight on [date]; null = not set yet (the log
-     * repository fills it in: the logging time today, else a typical time for the meal).
+     * repository fills it in: the logging time today, else the meal's typical time).
      */
     val eatenMinute: Int? = null,
-    /** [eatenMinute] is a typical time for its meal, not one the user logged or chose. */
-    val timeEstimated: Boolean = false,
 )
 
 data class WeightEntry(

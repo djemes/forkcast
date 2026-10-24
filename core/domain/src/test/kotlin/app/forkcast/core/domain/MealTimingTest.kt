@@ -7,8 +7,8 @@ import java.time.LocalDate
 class MealTimingTest {
     private val d0 = LocalDate.of(2026, 10, 20)
     private fun day(n: Int) = d0.plusDays(n.toLong())
-    private fun item(n: Int, slot: String, h: Int, m: Int, kcal: Double, estimated: Boolean = false) =
-        MealTiming.Item(day(n), slot, h * 60 + m, estimated, kcal)
+    private fun item(n: Int, slot: String, h: Int, m: Int, kcal: Double) =
+        MealTiming.Item(day(n), slot, h * 60 + m, kcal)
 
     /** Four days: breakfast around 7:30, dinner around 7 pm, one late snack on the over-budget days. */
     private val items = listOf(
@@ -44,9 +44,9 @@ class MealTimingTest {
         assertThat(c.lateKcalOther).isWithin(0.1).of(0.0)
     }
 
-    /** Days with estimated times (from before 1.2) are left out; under three days says nothing. */
-    @Test fun estimatedTimesDontCount() {
-        val old = items.map { if (it.date.isBefore(day(2))) it.copy(estimated = true) else it }
-        assertThat(MealTiming.insights(old, allowance, listOf("b", "d"))).isNull()
+    /** Days with an item that has no time are left out; under three days says nothing. */
+    @Test fun daysWithUntimedItemsDontCount() {
+        val untimed = items.map { if (it.date.isBefore(day(2))) it.copy(minute = null) else it }
+        assertThat(MealTiming.insights(untimed, allowance, listOf("b", "d"))).isNull()
     }
 }

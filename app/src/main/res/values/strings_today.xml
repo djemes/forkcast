@@ -13,7 +13,6 @@
     <string name="forecast_tight">Tight</string>
     <string name="forecast_likely_over">Likely over by ~%1$s</string>
     <string name="forecast_over">%1$s over</string>
-    <string name="forecast_explain">Based on what you usually eat after %1$s, you\'ll likely end near %2$s.</string>
 
     <!-- Macros / nutrient panel -->
     <string name="macro_progress">%1$s / %2$s</string>
@@ -82,4 +81,38 @@
     <string name="missing_keys_not_now">Not now</string>
     <!-- Section for entries whose meal was deleted in Settings › Meals. -->
     <string name="meal_other">Other</string>
+    <!-- Today's budget sheet, from a tap on the ring (owner, 2026-10-24) -->
+    <string name="ring_open_budget">show today\'s budget</string>
+    <string name="budget_sheet_title">Today\'s budget</string>
+    <string name="budget_sheet_title_day">Budget for %1$s</string>
+    <string name="budget_maintenance_adaptive">Maintenance, from your weight trend</string>
+    <string name="budget_maintenance_formula">Maintenance, from the formula</string>
+    <string name="budget_deficit">Goal deficit</string>
+    <string name="budget_surplus">Goal surplus</string>
+    <string name="budget_base">Budget</string>
+    <string name="budget_custom">Custom budget</string>
+    <string name="budget_activity">Activity bonus</string>
+    <string name="budget_eaten">Eaten</string>
+    <string name="budget_left">Left</string>
+    <string name="budget_over">Over</string>
+    <string name="budget_by_meal">By meal</string>
+    <string name="budget_outlook">Outlook</string>
+    <string name="budget_forecast">Based on what you usually eat after %1$s, you\'ll likely end near %2$s of %3$s.</string>
+    <plurals name="budget_week_under">
+        <item quantity="one">This week so far: %1$s under budget on average (%2$d day).</item>
+        <item quantity="other">This week so far: %1$s under budget on average (%2$d days).</item>
+    </plurals>
+    <plurals name="budget_week_over">
+        <item quantity="one">This week so far: %1$s over budget on average (%2$d day).</item>
+        <item quantity="other">This week so far: %1$s over budget on average (%2$d days).</item>
+    </plurals>
+    <plurals name="budget_week_on">
+        <item quantity="one">This week so far: on budget on average (%1$d day).</item>
+        <item quantity="other">This week so far: on budget on average (%1$d days).</item>
+    </plurals>
+    <string name="budget_fits_title">What fits in %1$s</string>
+    <string name="budget_fits_protein">Higher protein first: %1$s of protein to go.</string>
+    <string name="budget_fit_line">%1$s · %2$s protein</string>
+    <string name="budget_fit_add">Add %1$s to %2$s</string>
+    <string name="budget_saved_meal">Saved meal</string>
 </resources>

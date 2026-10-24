@@ -116,7 +116,7 @@ class BackupRepositoryTest {
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v6.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v7.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -164,7 +164,7 @@ class BackupRepositoryTest {
     }
 
     @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":7}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":8}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
@@ -196,6 +196,27 @@ class BackupRepositoryTest {
         dao.upsertActivityDays(listOf(ActivityDayEntity("mine", day, 100, null, null, null, emptyList(), 1, 10)))
         repo.import(export(activityDays = listOf(ActivityDayEntity("theirs", day, 9000, null, null, null, emptyList(), 1, 20))), ImportMode.MERGE)
         assertThat(dao.activityDays().map { it.id to it.steps }).containsExactly("theirs" to 9000L)
+    }
+
+    /** A 1.2/1.3 file (v6) imports in 1.4: its entries keep their times and `timeEstimated` is ignored. */
+    @Test fun importsV6WithTimeEstimated() = runTest {
+        seedEveryTable()
+        val v7 = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
+        val v6 = kotlinx.serialization.json.JsonObject(
+            v7 + mapOf(
+                "schemaVersion" to kotlinx.serialization.json.JsonPrimitive(6),
+                "logEntries" to kotlinx.serialization.json.JsonArray(
+                    v7.getValue("logEntries").jsonArray.map { e ->
+                        kotlinx.serialization.json.JsonObject(e.jsonObject + ("timeEstimated" to kotlinx.serialization.json.JsonPrimitive(true)))
+                    },
+                ),
+            ),
+        )
+        val parsed = repo.parse(v6.toString()) as ParsedBackup.Ok
+        val before = dao.logEntries()
+        dao.clearAll()
+        repo.import(parsed.export, ImportMode.REPLACE)
+        assertThat(dao.logEntries().map { it.id to it.eatenMinute }).containsExactlyElementsIn(before.map { it.id to it.eatenMinute })
     }
 
     @Test fun acceptsMinimalV6AndUnknownFields() {

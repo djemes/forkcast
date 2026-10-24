@@ -40,7 +40,7 @@ class FakeLogRepository : LogRepository {
     override suspend fun copy(ids: List<String>, toDate: LocalDate, toMealSlotId: String?) =
         add(ids.mapNotNull { rows.value[it]?.first }.map { it.copy(date = toDate, mealSlotId = toMealSlotId ?: it.mealSlotId) })
     override suspend fun setEatenMinute(ids: List<String>, minute: Int) =
-        rows.update { m -> m.mapValues { (k, v) -> if (k in ids) v.first.copy(eatenMinute = minute, timeEstimated = false) to v.second else v } }
+        rows.update { m -> m.mapValues { (k, v) -> if (k in ids) v.first.copy(eatenMinute = minute) to v.second else v } }
 }
 
 class FakeMealSlotRepository(slots: List<MealSlot> = DEFAULT) : MealSlotRepository {
