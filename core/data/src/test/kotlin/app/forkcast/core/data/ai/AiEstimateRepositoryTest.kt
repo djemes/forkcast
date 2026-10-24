@@ -380,8 +380,8 @@ class AiEstimateRepositoryTest {
         assertThat(db.aiDao().estimate(id)!!.profileName).isEqualTo("b")
     }
 
-    /** An estimate stuck by an older version (no run start, retry hours away) becomes Failed with Retry. */
-    @Test fun recoverStopsEstimatesStuckInOldVersions() = runTest {
+    /** An unfinished estimate with no run start (or past the hard cap) becomes Failed with Retry. */
+    @Test fun recoverStopsEstimatesWithNoRunStart() = runTest {
         val slot = lunch()
         val id = repo.create(day, slot, listOf(jpeg()), null)
         val stuck = db.aiDao().estimate(id)!!.copy(runStartedAt = null, createdAt = clock.millis() - 3 * 60 * 60_000L, errorCode = "Timeout")

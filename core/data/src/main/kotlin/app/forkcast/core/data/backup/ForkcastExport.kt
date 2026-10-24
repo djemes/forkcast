@@ -1,6 +1,5 @@
 package app.forkcast.core.data.backup
 
-import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.data.db.ActivityDayEntity
 import app.forkcast.core.data.db.AiComponentEntity
 import app.forkcast.core.data.db.AiEstimateEntity
@@ -26,20 +25,14 @@ import app.forkcast.core.model.AppSettings
 import kotlinx.serialization.Serializable
 
 /**
- * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v5.json). Field names mirror the
+ * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v6.json). Field names mirror the
  * Room entities. Secrets are never included: API keys live in an encrypted file outside the
  * database and [AppSettings] holds no secrets (keys travel only in the separate,
  * passphrase-encrypted settings export).
  *
- * v1 (Phase 1): core tracking tables. v2 (Phase 2): AI estimates and components, AI profiles
- * (no keys), usage, notification log, match cache. v3 (Phase 3): maintenance estimates,
- * Health Connect activity days, water's Health Connect record id. Older files read as v3 with
- * the newer arrays empty. v4: drinks count toward water (food.countsAsWater, waterMl on log
- * entries and saved-meal items); older files read with those null. v5 (Phase 4): recipes and
- * their ingredients (older files wrote `recipes` as an always-empty array). v6 (1.2): meal times
- * on log entries (`eatenMinute`, `timeEstimated`; older files get a typical time per meal on
- * import, [withMealTimes]), `food.describedAs`, the `AI_TEXT` source, and the estimate status
- * fields (kind, portion, attemptLog, tries, …; older files read with their defaults).
+ * v6 (1.2): written by 1.2.x and 1.3. Each version imports its own format and the one before it
+ * (owner, 2026-10-24); files older than v6 (before 1.2) are refused as too old. A new version
+ * that changes the format bumps [SCHEMA_VERSION] and upgrades v6 files on import.
  */
 @Serializable
 data class ForkcastExport(
@@ -75,22 +68,7 @@ data class ForkcastExport(
 ) {
     companion object {
         const val SCHEMA_VERSION = 6
+        /** The oldest export this version imports: its own and the one before it, no older. */
+        const val OLDEST_IMPORTED = 6
     }
-}
-
-/**
- * Import of a file older than v6: its log entries get the typical time of their meal, marked
- * estimated, exactly as the database migration did on the phone (MealTimeBackfill).
- */
-fun ForkcastExport.withMealTimes(): ForkcastExport {
-    val slots = mealSlots.associateBy { it.id }
-    return copy(
-        logEntries = logEntries.map { e ->
-            if (e.eatenMinute != null) return@map e
-            val slot = slots[e.mealSlotId]
-            val zone = runCatching { java.time.ZoneId.of(e.zoneId) }.getOrDefault(java.time.ZoneId.systemDefault())
-            val minute = MealTimes.typicalMinute(slot?.startMinute, slot?.endMinute, e.date, java.time.Instant.ofEpochMilli(e.loggedAt), zone)
-            e.copy(eatenMinute = minute, timeEstimated = true)
-        },
-    )
 }

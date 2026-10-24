@@ -1,23 +1,16 @@
 package app.forkcast.core.data.db
 
-import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 /**
- * Every schema change bumps [version], ships a migration (auto or manual) and a
- * migration test. Never use destructive fallback: updates install over real data.
+ * Every schema change bumps [version], ships a migration (auto or manual) from the previous
+ * release's version and a migration test. Never use destructive fallback: updates install over
+ * real data.
  *
- * v1 (Phase 0): meal_slot
- * v2 (Phase 1): profile, goal, target_override, food, log_entry, saved_meal(+item), weight, water, day_status
- * v3 (Phase 2): ai_estimate, ai_component, ai_profile, usage_record, notification_log, ai_match_cache
- * v4 (Phase 3): activity_day, tdee_estimate; Health Connect write state on log_entry and water_entry
- * v5: drinks count toward water (food.countsAsWater, log_entry/saved_meal_item.waterMl, log_entry.hcWaterRecordId)
- * v6 (Phase 4): recipe, recipe_ingredient
- * v7 (1.2): meal times on log_entry (eatenMinute, timeEstimated; existing entries get a typical
- *   time for their meal, [MealTimeBackfill]), food.describedAs, and on ai_estimate the status
- *   and retry fields (kind, portion, attemptLog, tries, runStartedAt, eatenMinute, phase, …)
+ * v7 (1.2): the schema 1.2.x and 1.3 ship. Migrations from v1–v6 (builds before 1.2) were removed
+ * in 1.3 (owner, 2026-10-24): every install that matters is on v7. The next change adds 7 → 8.
  */
 @Database(
     entities = [
@@ -45,10 +38,6 @@ import androidx.room.TypeConverters
     ],
     version = 7,
     exportSchema = true,
-    autoMigrations = [
-        AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3), AutoMigration(from = 3, to = 4), AutoMigration(from = 4, to = 5),
-        AutoMigration(from = 5, to = 6), AutoMigration(from = 6, to = 7, spec = MealTimeBackfill::class),
-    ],
 )
 @TypeConverters(Converters::class)
 abstract class ForkcastDatabase : RoomDatabase() {

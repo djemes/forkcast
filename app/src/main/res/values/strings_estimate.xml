@@ -49,7 +49,7 @@
     <string name="stage_quota_when">Every profile is out of quota. Next try at %1$s, when it resets.</string>
     <string name="stage_offline">Waiting for a connection</string>
     <string name="stage_failed">Couldn\'t estimate</string>
-    <string name="stage_stopped">This estimate got stuck in an older version of Forkcast and was stopped. Retry now starts it again.</string>
+    <string name="stage_stopped">This estimate ran too long and was stopped. Retry now starts it again.</string>
     <string name="stage_tried">What was tried</string>
     <string name="stage_tried_line">%1$s · %2$s</string>
     <string name="estimate_waiting_retry">Waiting to retry (%1$s)</string>

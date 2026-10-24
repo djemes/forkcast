@@ -3,7 +3,6 @@ package app.forkcast.widget
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.mutablePreferencesOf
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.appwidget.testing.unit.runGlanceAppWidgetUnitTest
 import androidx.glance.testing.unit.hasContentDescription
 import androidx.glance.testing.unit.hasText
@@ -60,11 +59,5 @@ class WidgetsTest {
         val prefs = mutablePreferencesOf(WidgetStyle.BACKGROUND to 0.25f, WidgetStyle.THEME to "DARK")
         assertThat(WidgetStyle.from(prefs)).isEqualTo(WidgetStyle(0.25f, WidgetTheme.DARK))
         assertThat(WidgetStyle.from(mutablePreferencesOf())).isEqualTo(WidgetStyle())
-    }
-
-    @Test fun firstBuildsTextColorBecomesTheMatchingWidgetColor() {
-        // The first build stored the text color: light text is a Dark widget.
-        val old = mutablePreferencesOf(stringPreferencesKey("text") to "LIGHT")
-        assertThat(WidgetStyle.from(old).theme).isEqualTo(WidgetTheme.DARK)
     }
 }

@@ -522,16 +522,8 @@ class DefaultAiEstimateRepository @Inject constructor(
             val live = scheduler.isScheduled(e.id)
             val start = e.runStartedAt
             when {
-                // From a version before 1.2: no run start, maybe a retry hours away. Stop it so
-                // the new status screen and Retry work on it; a recent one simply starts again.
-                start == null -> if (now - e.createdAt > EstimatePolicy.TRANSIENT_CAP_MS) {
-                    scheduler.cancel(e.id)
-                    update(e.copy(status = EstimateStatus.FAILED, errorCode = e.errorCode ?: AiErrorCodes.STOPPED, retryAfter = null, phase = null))
-                } else {
-                    update(e.copy(status = EstimateStatus.PENDING, runStartedAt = now, tries = 0, retryAfter = null, phase = null))
-                    scheduler.enqueue(e.id)
-                }
-                EstimatePolicy.pastHardCap(start, now) -> {
+                // Ran too long (or has no run start at all): stop it; Retry now starts it again.
+                start == null || EstimatePolicy.pastHardCap(start, now) -> {
                     scheduler.cancel(e.id)
                     update(e.copy(status = EstimateStatus.FAILED, errorCode = e.errorCode ?: AiErrorCodes.STOPPED, retryAfter = null, phase = null))
                 }

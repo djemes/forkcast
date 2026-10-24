@@ -26,19 +26,12 @@ data class WidgetStyle(val background: Float = DEFAULT_GLASS, val theme: WidgetT
     companion object {
         val BACKGROUND = floatPreferencesKey("background")
         val THEME = stringPreferencesKey("theme")
-        /** The first build stored the text color instead: light text = Dark widget, and back. */
-        private val OLD_TEXT = stringPreferencesKey("text")
         /** Frosted, like One UI's own widgets: the wallpaper shows through, the text stays easy to read. */
         const val DEFAULT_GLASS = 0.75f
 
         fun from(prefs: Preferences) = WidgetStyle(
             background = prefs[BACKGROUND] ?: DEFAULT_GLASS,
-            theme = prefs[THEME]?.let { runCatching { WidgetTheme.valueOf(it) }.getOrNull() }
-                ?: when (prefs[OLD_TEXT]) {
-                    "LIGHT" -> WidgetTheme.DARK
-                    "DARK" -> WidgetTheme.LIGHT
-                    else -> WidgetTheme.AUTO
-                },
+            theme = prefs[THEME]?.let { runCatching { WidgetTheme.valueOf(it) }.getOrNull() } ?: WidgetTheme.AUTO,
         )
     }
 }

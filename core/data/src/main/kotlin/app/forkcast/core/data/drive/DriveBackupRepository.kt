@@ -3,6 +3,7 @@ package app.forkcast.core.data.drive
 import app.forkcast.core.data.backup.BackupRepository
 import app.forkcast.core.data.backup.ForkcastExport
 import app.forkcast.core.data.backup.ParsedBackup
+import app.forkcast.core.data.backup.RejectReason
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.settings.DevicePrefs
 import app.forkcast.core.domain.BackupRetention
@@ -218,7 +219,7 @@ class DefaultDriveBackupRepository @Inject constructor(
         val text = runCatching { unzip(bytes) }.getOrNull() ?: return NotRestorable.UNREADABLE
         return when (val parsed = backup.parse(text)) {
             is ParsedBackup.Ok -> if (parsed.export.schemaVersion == ForkcastExport.SCHEMA_VERSION) null else NotRestorable.OLD_FORMAT
-            is ParsedBackup.Rejected -> NotRestorable.UNREADABLE
+            is ParsedBackup.Rejected -> if (parsed.reason == RejectReason.OLD_VERSION) NotRestorable.OLD_FORMAT else NotRestorable.UNREADABLE
         }
     }
 

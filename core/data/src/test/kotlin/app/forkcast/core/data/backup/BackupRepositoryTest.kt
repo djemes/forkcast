@@ -169,8 +169,16 @@ class BackupRepositoryTest {
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
         assertThat(repo.parse("not json")).isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":1,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":6,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
+    }
+
+    /** Files from before 1.2 (export v1–v5) are refused as too old (owner, 2026-10-24). */
+    @Test fun rejectsExportsOlderThanTheVersionBefore() {
+        for (v in 1..5) {
+            assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":$v,"appVersion":"1.1.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC"}"""))
+                .isEqualTo(ParsedBackup.Rejected(RejectReason.OLD_VERSION))
+        }
     }
 
     /** Phase 3 write state is per phone: never exported, so an imported row is written to Health Connect again. */
@@ -184,25 +192,15 @@ class BackupRepositoryTest {
         assertThat(dao.water().single().hcSyncedAt).isNull()
     }
 
-    @Test fun acceptsV2FileWithReservedPhase3Arrays() {
-        val parsed = repo.parse(
-            """{"app":"Forkcast","schemaVersion":2,"appVersion":"0.2.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC",
-               "tdeeEstimates":[],"activityDays":[],
-               "water":[{"id":"h1","timestamp":1,"date":"2026-10-18","zoneId":"UTC","ml":250.0,"createdAt":1,"updatedAt":1,"deletedAt":null}]}""",
-        ) as ParsedBackup.Ok
-        assertThat(parsed.export.water.single().hcRecordId).isNull()
-        assertThat(parsed.export.activityDays).isEmpty()
-    }
-
     @Test fun mergeMatchesActivityDaysByDate() = runTest {
         dao.upsertActivityDays(listOf(ActivityDayEntity("mine", day, 100, null, null, null, emptyList(), 1, 10)))
         repo.import(export(activityDays = listOf(ActivityDayEntity("theirs", day, 9000, null, null, null, emptyList(), 1, 20))), ImportMode.MERGE)
         assertThat(dao.activityDays().map { it.id to it.steps }).containsExactly("theirs" to 9000L)
     }
 
-    @Test fun acceptsMinimalV1AndUnknownFields() {
+    @Test fun acceptsMinimalV6AndUnknownFields() {
         val parsed = repo.parse(
-            """{"app":"Forkcast","schemaVersion":1,"appVersion":"0.1.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC","futureField":true}""",
+            """{"app":"Forkcast","schemaVersion":6,"appVersion":"1.2.1","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC","futureField":true}""",
         )
         assertThat(parsed).isInstanceOf(ParsedBackup.Ok::class.java)
     }

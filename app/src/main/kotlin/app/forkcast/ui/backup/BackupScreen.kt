@@ -234,6 +234,7 @@ private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) 
             body = stringResource(
                 when (dialog.reason) {
                     RejectReason.NEWER_VERSION -> R.string.backup_rejected_newer
+                    RejectReason.OLD_VERSION -> R.string.backup_rejected_older
                     RejectReason.NOT_FORKCAST -> R.string.backup_rejected_other
                     RejectReason.UNREADABLE -> R.string.backup_rejected_unreadable
                 },

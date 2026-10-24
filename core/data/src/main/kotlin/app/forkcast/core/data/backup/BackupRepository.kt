@@ -32,7 +32,7 @@ const val APP_VERSION = "appVersion"
 
 enum class ImportMode { MERGE, REPLACE }
 
-enum class RejectReason { UNREADABLE, NOT_FORKCAST, NEWER_VERSION }
+enum class RejectReason { UNREADABLE, NOT_FORKCAST, NEWER_VERSION, OLD_VERSION }
 
 /** Visible (not deleted) row counts, for the import preview. */
 data class BackupCounts(
@@ -43,10 +43,8 @@ data class BackupCounts(
     val water: Int,
     val goals: Int,
     val hasProfile: Boolean,
-    /** Export v2 (Phase 2); 0 for v1 files. */
     val aiEstimates: Int = 0,
     val aiProfiles: Int = 0,
-    /** Export v5 (Phase 4). */
     val recipes: Int = 0,
 )
 
@@ -148,8 +146,7 @@ class RoomBackupRepository @Inject constructor(
         val version = root["schemaVersion"]?.jsonPrimitive?.intOrNull
             ?: return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         if (version > ForkcastExport.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
-        // v1 → … → v6 only added arrays and fields with defaults (null, empty, false);
-        // older files decode as they are (v1/v2 wrote tdeeEstimates and activityDays as []).
+        if (version < ForkcastExport.OLDEST_IMPORTED) return ParsedBackup.Rejected(RejectReason.OLD_VERSION)
         val export = try {
             BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), root)
         } catch (e: IllegalArgumentException) {
@@ -157,8 +154,7 @@ class RoomBackupRepository @Inject constructor(
         } catch (e: DateTimeException) {
             return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         }
-        val upgraded = if (version < 6) export.withMealTimes() else export
-        return ParsedBackup.Ok(upgraded, preview(upgraded))
+        return ParsedBackup.Ok(export, preview(export))
     }
 
     override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = when (mode) {

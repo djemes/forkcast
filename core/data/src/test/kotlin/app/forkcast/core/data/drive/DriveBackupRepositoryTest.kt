@@ -54,13 +54,14 @@ class DriveBackupRepositoryTest {
     }
 
     private class FakeBackup : BackupRepository {
-        override suspend fun exportJson() = """{"app":"Forkcast","schemaVersion":5}"""
+        override suspend fun exportJson() = """{"app":"Forkcast","schemaVersion":6}"""
         override suspend fun foodLogCsv() = ""
         override suspend fun weightsCsv() = ""
-        /** Reads only the version: 6 restores, 5 is an older export, anything else is unreadable. */
+        /** Reads only the version: 6 restores, older is refused as too old, no version is unreadable. */
         override fun parse(text: String): ParsedBackup {
             val version = Regex("\"schemaVersion\":(\\d+)").find(text)?.groupValues?.get(1)?.toInt()
                 ?: return ParsedBackup.Rejected(app.forkcast.core.data.backup.RejectReason.UNREADABLE)
+            if (version < ForkcastExport.OLDEST_IMPORTED) return ParsedBackup.Rejected(app.forkcast.core.data.backup.RejectReason.OLD_VERSION)
             val export = ForkcastExport(schemaVersion = version, appVersion = "1.3.0", exportedAt = "2026-10-19T07:00:00Z", timeZone = "UTC")
             return ParsedBackup.Ok(export, app.forkcast.core.data.backup.preview(export))
         }

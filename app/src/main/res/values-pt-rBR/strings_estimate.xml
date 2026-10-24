@@ -49,7 +49,7 @@
     <string name="stage_quota_when">Todos os perfis estão sem cota. Próxima tentativa às %1$s, quando a cota renovar.</string>
     <string name="stage_offline">Esperando conexão</string>
     <string name="stage_failed">Não foi possível estimar</string>
-    <string name="stage_stopped">Esta estimativa travou numa versão antiga do Forkcast e foi parada. Tentar agora começa de novo.</string>
+    <string name="stage_stopped">Esta estimativa demorou demais e foi parada. Tentar agora começa de novo.</string>
     <string name="stage_tried">O que foi tentado</string>
     <string name="stage_tried_line">%1$s · %2$s</string>
     <string name="estimate_waiting_retry">Esperando para tentar de novo (%1$s)</string>

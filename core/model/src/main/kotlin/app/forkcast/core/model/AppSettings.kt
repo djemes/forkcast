@@ -128,8 +128,6 @@ data class AiSettings(
     val autoAccept: Boolean = true,
     /** Delete meal photos older than this many days (only the photo; entries stay); null keeps them. */
     val photoRetentionDays: Int? = 14,
-    /** The 14-day default (owner, 2026-10-19) was applied once to settings saved with the old 90-day default. */
-    val photoRetention14Applied: Boolean = false,
     /** User-edited prices per 1M tokens, keyed by model id; overrides the defaults file. */
     val priceOverrides: Map<String, ModelPrice> = emptyMap(),
     /** The last connection test per profile id, so "does it work?" survives a restart. No secrets. */
