@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Water -->
+    <string name="water_glass">Copo</string>
+    <string name="water_can">Lata</string>
+    <string name="water_bottle">Garrafa</string>
+    <string name="water_tumbler">Copo térmico</string>
+    <string name="water_drop_add">+ %1$s · %2$s</string>
+    <string name="water_pick_container">Escolher um recipiente</string>
+    <string name="water_add_container">Adicionar %1$s (%2$s)</string>
+    <string name="water_total_edit">Total de água do dia</string>
+    <string name="water_total_field">Total (%1$s)</string>
+    <string name="water_total_min">As bebidas registradas somam %1$s, então o total não pode ser menor.</string>
+    <string name="water_can_field">Tamanho da lata (%1$s)</string>
+    <string name="water_bottle_field">Tamanho da garrafa (%1$s)</string>
+    <string name="water_tumbler_field">Tamanho do copo térmico (%1$s)</string>
+    <string name="water_containers_title">Recipientes</string>
+    <string name="water_containers_body">O que a gota de água em Hoje pode adicionar. A gota adiciona o último usado; a seta ao lado mostra os quatro.</string>
     <string name="water_title">Água</string>
     <string name="water_progress">%1$s / %2$s</string>
     <string name="water_add_glass">+ copo</string>

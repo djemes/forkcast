@@ -3,6 +3,7 @@ package app.forkcast.ui.today
 import app.cash.turbine.test
 import app.forkcast.core.domain.BudgetState
 import app.forkcast.core.model.NutrientKey
+import app.forkcast.core.model.WaterContainer
 import app.forkcast.fakes.FakeFoodRepository
 import app.forkcast.fakes.FakeLogRepository
 import app.forkcast.fakes.FakeMealSlotRepository
@@ -266,6 +267,38 @@ class TodayViewModelTest {
         assertThat(vm.uiState.value!!.water.ml).isWithin(1e-6).of(2 * s.water.glassMl)
         vm.onEvent(TodayEvent.RemoveLastWater)
         assertThat(vm.uiState.value!!.water.ml).isWithin(1e-6).of(s.water.glassMl)
+    }
+
+    /**
+     * The water drop (owner, 2026-10-23): a container from the picker is added and becomes the
+     * drop's; Undo removes additions newest first, only those since it appeared.
+     */
+    @Test fun waterContainersAndUndoWindow() = runTest {
+        val vm = vm()
+        vm.uiState.filterNotNull().first()
+        vm.onEvent(TodayEvent.AddWater(250.0))
+        vm.onEvent(TodayEvent.ClearWaterUndo) // Undo's window closed: that glass can't be undone any more.
+        vm.onEvent(TodayEvent.AddWaterContainer(WaterContainer.CAN))
+        val afterCan = vm.uiState.filterNotNull().first { it.water.lastUsed == WaterContainer.CAN }
+        assertThat(afterCan.water.ml).isWithin(1e-6).of(250.0 + 355.0)
+        assertThat(afterCan.water.undoCount).isEqualTo(1)
+        vm.onEvent(TodayEvent.AddWaterContainer(WaterContainer.CAN))
+        vm.onEvent(TodayEvent.UndoWater)
+        vm.onEvent(TodayEvent.UndoWater)
+        vm.onEvent(TodayEvent.UndoWater) // nothing left to undo: the first glass stays
+        val after = vm.uiState.filterNotNull().first { it.water.undoCount == 0 }
+        assertThat(after.water.ml).isWithin(1e-6).of(250.0)
+    }
+
+    /** Long-press on the total: the day's water becomes what was typed (newest entries go first). */
+    @Test fun waterTotalCanBeSetDirectly() = runTest {
+        val vm = vm()
+        vm.onEvent(TodayEvent.AddWater(500.0))
+        vm.onEvent(TodayEvent.AddWater(300.0))
+        vm.onEvent(TodayEvent.SetWaterTotal(600.0))
+        assertThat(vm.uiState.filterNotNull().first { it.water.ml < 700 }.water.ml).isWithin(1e-6).of(600.0)
+        vm.onEvent(TodayEvent.SetWaterTotal(1000.0))
+        assertThat(vm.uiState.filterNotNull().first { it.water.ml > 700 }.water.ml).isWithin(1e-6).of(1000.0)
     }
 
     @Test fun weightSummaryShowsLatestAndTrend() = runTest {

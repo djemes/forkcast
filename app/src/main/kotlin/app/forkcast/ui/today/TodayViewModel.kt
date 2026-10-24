@@ -44,6 +44,7 @@ import app.forkcast.core.model.SavedMeal
 import app.forkcast.core.model.ServingSize
 import app.forkcast.core.model.Sex
 import app.forkcast.core.model.UnitPrefs
+import app.forkcast.core.model.WaterContainer
 import app.forkcast.core.model.WaterEntry
 import app.forkcast.core.model.WaterUnit
 import app.forkcast.core.model.WeightEntry
@@ -57,6 +58,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -104,7 +106,17 @@ data class WaterSummary(
     val lastEntryId: String? = null,
     /** Part of [ml] that came from logged drinks. */
     val fromDrinksMl: Double = 0.0,
-)
+    /** Glass, can, bottle, tumbler with their sizes (Settings › Water). */
+    val containers: List<Pair<WaterContainer, Double>> = emptyList(),
+    /** What the water drop adds in one tap: the container used last. */
+    val lastUsed: WaterContainer = WaterContainer.GLASS,
+    /** Additions Undo can still remove (newest last); Undo shows while there are any. */
+    val undoCount: Int = 0,
+    /** Changes with every addition, so the ~6 s Undo window restarts. */
+    val undoToken: Long = 0,
+) {
+    val lastUsedMl: Double get() = containers.firstOrNull { it.first == lastUsed }?.second ?: glassMl
+}
 
 /** Latest weigh-in and the trend's weekly change (negative = losing). */
 data class WeightSummary(val latestKg: Double, val trendKg: Double, val weeklyChangeKg: Double?)
@@ -202,7 +214,16 @@ sealed interface TodayEvent {
     data class SameAsYesterday(val mealSlotId: String) : TodayEvent
     data class LogSavedMeal(val savedMealId: String, val mealSlotId: String) : TodayEvent
     data class DeleteSavedMeal(val savedMealId: String) : TodayEvent
+    /** A custom amount (tap on the water total). */
     data class AddWater(val ml: Double) : TodayEvent
+    /** The drop (last-used container) or a container from its picker, which becomes the new default. */
+    data class AddWaterContainer(val container: WaterContainer) : TodayEvent
+    /** Removes the newest addition made since Undo appeared. */
+    data object UndoWater : TodayEvent
+    /** Undo's window closed (~6 s after the last addition, or the app left the screen). */
+    data object ClearWaterUndo : TodayEvent
+    /** Long-press on the total: the day's water becomes [ml]. */
+    data class SetWaterTotal(val ml: Double) : TodayEvent
     data object RemoveLastWater : TodayEvent
     data class SetCompleteness(val completeness: DayCompleteness) : TodayEvent
     /** A meal's time from its header: every item in it moves to [minute]. */
@@ -229,7 +250,7 @@ class TodayViewModel @Inject constructor(
     private val savedMealRepository: SavedMealRepository,
     private val waterRepository: WaterRepository,
     weightRepository: WeightRepository,
-    settingsRepository: SettingsRepository,
+    private val settingsRepository: SettingsRepository,
     estimateRepository: AiEstimateRepository,
     health: HealthRepository,
     private val maintenance: MaintenanceRepository,
@@ -241,6 +262,8 @@ class TodayViewModel @Inject constructor(
     /** True while the screen shows today, so it moves to the new day after midnight (see [TodayEvent.Resumed]). */
     private var followingToday = true
     private val selection = MutableStateFlow<Set<String>>(emptySet())
+    /** Water entries added since Undo appeared, newest last, and when the last one was added. */
+    private val waterUndo = MutableStateFlow<Pair<List<String>, Long>>(emptyList<String>() to 0L)
     /** Servings for the entry open in the edit sheet (entry id → servings). */
     private val editServings = MutableStateFlow<Pair<String, List<ServingSize>>?>(null)
     val editServingsFor: StateFlow<Pair<String, List<ServingSize>>?> = editServings
@@ -315,9 +338,9 @@ class TodayViewModel @Inject constructor(
         mealSlotRepository.observeMealSlots(),
         day,
         extras,
-        combine(body, healthState) { b, h -> b to h },
+        combine(body, healthState, waterUndo) { b, h, u -> Triple(b, h, u) },
         selection,
-    ) { slots, dayData, x, (b, healthFlags), selected ->
+    ) { slots, dayData, x, (b, healthFlags, undo), selected ->
         val (weights, profile) = b
         val date = dayData.date
         val entries = dayData.entries
@@ -366,6 +389,13 @@ class TodayViewModel @Inject constructor(
                 targetMl = WaterMath.targetMl(x.settings.waterTargetMl, profile?.sex),
                 glassMl = WaterMath.glassMl(x.settings.waterGlassMl, units.water == WaterUnit.FL_OZ),
                 lastEntryId = water.maxByOrNull { it.timestamp }?.id,
+                containers = WaterContainer.entries.map {
+                    it to WaterMath.containerMl(it, x.settings.waterGlassMl, x.settings.waterContainers, units.water == WaterUnit.FL_OZ)
+                },
+                lastUsed = x.settings.waterContainers.lastUsed,
+                // Only additions on the day on screen that still exist.
+                undoCount = undo.first.count { id -> water.any { it.id == id } },
+                undoToken = undo.second,
             ),
             weight = weightSummary(weights),
             unreviewedEstimateIds = estimates.filter { it.logEntryId in loggedIds && it.reviewedAt == null }.map { it.id }.toSet(),
@@ -457,7 +487,24 @@ class TodayViewModel @Inject constructor(
                 effectChannel.send(TodayEffect.Added(mealName))
             }
             is TodayEvent.DeleteSavedMeal -> viewModelScope.launch { savedMealRepository.delete(event.savedMealId) }
-            is TodayEvent.AddWater -> viewModelScope.launch { waterRepository.add(selectedDate.value, event.ml) }
+            is TodayEvent.AddWater -> viewModelScope.launch { rememberForUndo(waterRepository.add(selectedDate.value, event.ml)) }
+            is TodayEvent.AddWaterContainer -> viewModelScope.launch {
+                val s = settingsRepository.settings.first()
+                val flOz = (s.units ?: UnitFormatter.defaultsFor(Locale.getDefault())).water == WaterUnit.FL_OZ
+                val ml = WaterMath.containerMl(event.container, s.waterGlassMl, s.waterContainers, flOz)
+                rememberForUndo(waterRepository.add(selectedDate.value, ml))
+                settingsRepository.update { it.copy(waterContainers = it.waterContainers.copy(lastUsed = event.container)) }
+            }
+            TodayEvent.UndoWater -> viewModelScope.launch {
+                val id = waterUndo.value.first.lastOrNull() ?: return@launch
+                waterUndo.update { (ids, at) -> ids.dropLast(1) to at }
+                waterRepository.delete(id)
+            }
+            TodayEvent.ClearWaterUndo -> waterUndo.value = emptyList<String>() to 0L
+            is TodayEvent.SetWaterTotal -> viewModelScope.launch {
+                waterUndo.value = emptyList<String>() to 0L
+                waterRepository.setDayTotal(selectedDate.value, event.ml, uiState.value?.water?.fromDrinksMl ?: 0.0)
+            }
             is TodayEvent.SetCompleteness -> viewModelScope.launch { maintenance.setCompleteness(selectedDate.value, event.completeness) }
             is TodayEvent.SetMealTime -> viewModelScope.launch {
                 val ids = uiState.value?.meals?.firstOrNull { it.slot.id == event.mealSlotId }?.entries?.map { it.id }.orEmpty()
@@ -496,6 +543,8 @@ class TodayViewModel @Inject constructor(
         }
     }
 
+    private fun rememberForUndo(id: String) = waterUndo.update { (ids, _) -> (ids + id) to clock.millis() }
+
     /** Logs to the day on screen (so you can fill in yesterday), then confirms "Added to Lunch". */
     private fun addEntry(mealSlotId: String, build: (LocalDate) -> LogEntry) {
         val date = selectedDate.value
@@ -508,6 +557,7 @@ class TodayViewModel @Inject constructor(
 
     private fun changeDate(change: (LocalDate) -> LocalDate) {
         selection.value = emptySet()
+        waterUndo.value = emptyList<String>() to 0L
         // Never past today: nothing can be logged for a future day.
         val today = LocalDate.now(clock)
         selectedDate.update { minOf(change(it), today) }

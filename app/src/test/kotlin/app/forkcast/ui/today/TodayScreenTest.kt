@@ -32,6 +32,8 @@ import app.forkcast.ui.theme.ForkcastTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
+import androidx.compose.ui.test.performTextClearance
+import app.forkcast.core.model.WaterContainer
 import org.junit.runner.RunWith
 
 @RunWith(AndroidJUnit4::class)
@@ -156,15 +158,41 @@ class TodayScreenTest {
         assertThat(events).containsExactly(TodayEvent.PreviousDay, TodayEvent.NextDay).inOrder()
     }
 
-    /** Long-press on "+ glass" asks for another amount (SPEC §4.2 item 5). */
-    @Test fun waterOtherAmount() {
+    /** Water card (owner, 2026-10-23): the drop adds the last-used container; a tap on the total asks for another amount. */
+    @Test fun waterDropAndOtherAmount() {
         val events = mutableListOf<TodayEvent>()
-        compose.setContent { ForkcastTheme { TodayScreen(state.copy(units = UnitPrefs.METRIC), onEvent = { events += it }) } }
-        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("+ glass"))
-        compose.onNodeWithText("+ glass").performTouchInput { longClick() }
+        val water = WaterSummary(ml = 500.0, targetMl = 2500.0, containers = listOf(WaterContainer.GLASS to 250.0, WaterContainer.BOTTLE to 500.0), lastUsed = WaterContainer.BOTTLE)
+        compose.setContent { ForkcastTheme { TodayScreen(state.copy(units = UnitPrefs.METRIC, water = water), onEvent = { events += it }) } }
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("+ Bottle · 500 ml"))
+        compose.onNodeWithText("+ Bottle · 500 ml").performClick()
+        assertThat(events.last()).isEqualTo(TodayEvent.AddWaterContainer(WaterContainer.BOTTLE))
+        compose.onNodeWithText("0.5 L / 2.5 L").performClick()
         compose.onNodeWithText("Amount (ml)").performTextInput("330")
         compose.onAllNodesWithText("Add").filterToOne(hasAnyAncestor(isDialog())).performClick()
-        assertThat(events).contains(TodayEvent.AddWater(330.0))
+        assertThat(events.last()).isEqualTo(TodayEvent.AddWater(330.0))
+    }
+
+    /** Long-press on the total: type the day's total (numbers only). */
+    @Test fun waterTotalLongPressEditsTheDay() {
+        val events = mutableListOf<TodayEvent>()
+        val water = WaterSummary(ml = 500.0, targetMl = 2500.0, containers = listOf(WaterContainer.GLASS to 250.0))
+        compose.setContent { ForkcastTheme { TodayScreen(state.copy(units = UnitPrefs.METRIC, water = water), onEvent = { events += it }) } }
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("0.5 L / 2.5 L"))
+        compose.onNodeWithText("0.5 L / 2.5 L").performTouchInput { longClick() }
+        compose.onNodeWithText("Total (ml)").performTextClearance()
+        compose.onNodeWithText("Total (ml)").performTextInput("1200")
+        compose.onAllNodesWithText("Save").filterToOne(hasAnyAncestor(isDialog())).performClick()
+        assertThat(events.last()).isEqualTo(TodayEvent.SetWaterTotal(1200.0))
+    }
+
+    /** Undo shows after an addition and removes one at a time. */
+    @Test fun waterUndoShowsWhileThereIsSomethingToUndo() {
+        val events = mutableListOf<TodayEvent>()
+        val water = WaterSummary(ml = 250.0, targetMl = 2500.0, containers = listOf(WaterContainer.GLASS to 250.0), undoCount = 1, undoToken = 1)
+        compose.setContent { ForkcastTheme { TodayScreen(state.copy(units = UnitPrefs.METRIC, water = water), onEvent = { events += it }) } }
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Undo"))
+        compose.onNodeWithText("Undo").performClick()
+        assertThat(events).contains(TodayEvent.UndoWater)
     }
 
     @Test fun noNextDayOnToday() {

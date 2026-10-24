@@ -425,9 +425,11 @@ fun TodayScreen(
                         WaterCard(
                             water = day.water,
                             f = f,
-                            onAddGlass = { onEvent(TodayEvent.AddWater(day.water.glassMl)) },
-                            onRemoveLast = { onEvent(TodayEvent.RemoveLastWater) },
+                            onAddContainer = { c -> onEvent(TodayEvent.AddWaterContainer(c)) },
                             onAddAmount = { ml -> onEvent(TodayEvent.AddWater(ml)) },
+                            onUndo = { onEvent(TodayEvent.UndoWater) },
+                            onUndoExpired = { onEvent(TodayEvent.ClearWaterUndo) },
+                            onSetTotal = { ml -> onEvent(TodayEvent.SetWaterTotal(ml)) },
                         )
                       }
                     }

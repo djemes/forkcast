@@ -10,8 +10,10 @@ data class AppSettings(
     val units: UnitPrefs? = null,
     /** Daily water goal in ml; null = default by sex (SPEC §4.9). */
     val waterTargetMl: Double? = null,
-    /** One "+ glass" (Today, the water widget, the shortcut) in ml; null = 8 fl oz or 250 ml by units. */
+    /** The glass (Today, the water widget, the shortcut) in ml; null = 8 fl oz or 250 ml by units. */
     val waterGlassMl: Double? = null,
+    /** Can, bottle and tumbler sizes and the container the water drop adds (owner, 2026-10-23). */
+    val waterContainers: WaterContainers = WaterContainers(),
     val ai: AiSettings = AiSettings(),
     val notifications: NotificationSettings = NotificationSettings(),
     val health: HealthSettings = HealthSettings(),
@@ -29,6 +31,22 @@ data class AppSettings(
     val keyNotes: KeyNotes = KeyNotes(),
     /** Google Drive auto-backup choices (SPEC §4.11). The connection itself is per phone (DevicePrefs). */
     val backup: BackupSettings = BackupSettings(),
+)
+
+/** What the water drop on Today (and the widget) adds. */
+@Serializable
+enum class WaterContainer { GLASS, CAN, BOTTLE, TUMBLER }
+
+/**
+ * Container sizes in ml (null = the default for the user's units; the glass is
+ * [AppSettings.waterGlassMl]) and the last one used, which the drop adds in one tap.
+ */
+@Serializable
+data class WaterContainers(
+    val canMl: Double? = null,
+    val bottleMl: Double? = null,
+    val tumblerMl: Double? = null,
+    val lastUsed: WaterContainer = WaterContainer.GLASS,
 )
 
 /**

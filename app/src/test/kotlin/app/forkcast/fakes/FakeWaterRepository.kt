@@ -19,4 +19,9 @@ class FakeWaterRepository : WaterRepository {
         return id
     }
     override suspend fun delete(id: String) = list.update { l -> l.filterNot { it.id == id } }
+    override suspend fun setDayTotal(date: LocalDate, totalMl: Double, drinksMl: Double) {
+        val change = app.forkcast.core.domain.WaterMath.adjustTo(totalMl, list.value.filter { it.date == date }.map { it.id to it.ml }, drinksMl)
+        change.removeIds.forEach { delete(it) }
+        if (change.addMl > 0.5) add(date, change.addMl)
+    }
 }

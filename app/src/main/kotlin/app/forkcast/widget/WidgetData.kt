@@ -123,7 +123,8 @@ object WidgetData {
             // Drinks that count toward water add to it, as on Today (SPEC §4.9).
             waterMl = WaterMath.dayTotalMl(water.map { it.ml }, entries.map { it.waterMl }),
             waterTargetMl = WaterMath.targetMl(settings.waterTargetMl, profile?.sex),
-            glassMl = WaterMath.glassMl(settings.waterGlassMl, units.water == WaterUnit.FL_OZ),
+            // The container Today's water drop adds (the last one used), so a widget tap adds the same.
+            glassMl = WaterMath.containerMl(settings.waterContainers.lastUsed, settings.waterGlassMl, settings.waterContainers, units.water == WaterUnit.FL_OZ),
             units = units,
         )
     }
@@ -134,14 +135,16 @@ object WidgetData {
     fun glassMl(units: UnitPrefs): Double = WaterMath.defaultGlassMl(units.water == WaterUnit.FL_OZ)
 
     /**
-     * Adds one glass to today through the same repository as Today's "+ glass", so Today, Trends
+     * Adds the container Today's water drop adds (the last one used; owner, 2026-10-23) to today
+     * through the same repository as Today, so Today, Trends
      * and Health Connect see it exactly the same way; returns the new entry's id (for Undo).
      */
     suspend fun addGlass(context: Context): String {
         val g = context.widgetGraph()
         val settings = g.settings().settings.first()
         val units = settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
-        val id = g.water().add(LocalDate.now(g.clock()), WaterMath.glassMl(settings.waterGlassMl, units.water == WaterUnit.FL_OZ))
+        val c = settings.waterContainers
+        val id = g.water().add(LocalDate.now(g.clock()), WaterMath.containerMl(c.lastUsed, settings.waterGlassMl, c, units.water == WaterUnit.FL_OZ))
         g.health().syncSoon()
         return id
     }

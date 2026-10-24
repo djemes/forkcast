@@ -1,6 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Water -->
+    <string name="water_glass">Glass</string>
+    <string name="water_can">Can</string>
+    <string name="water_bottle">Bottle</string>
+    <string name="water_tumbler">Tumbler</string>
+    <string name="water_drop_add">+ %1$s · %2$s</string>
+    <string name="water_pick_container">Choose a container</string>
+    <string name="water_add_container">Add a %1$s (%2$s)</string>
+    <string name="water_total_edit">Day\'s water total</string>
+    <string name="water_total_field">Total (%1$s)</string>
+    <string name="water_total_min">Drinks you logged add %1$s, so the total can\'t be less.</string>
+    <string name="water_can_field">Can size (%1$s)</string>
+    <string name="water_bottle_field">Bottle size (%1$s)</string>
+    <string name="water_tumbler_field">Tumbler size (%1$s)</string>
+    <string name="water_containers_title">Containers</string>
+    <string name="water_containers_body">What the water drop on Today can add. The drop adds the one you used last; the arrow next to it shows all four.</string>
     <string name="water_title">Water</string>
     <string name="water_progress">%1$s / %2$s</string>
     <string name="water_add_glass">+ glass</string>

@@ -4,6 +4,8 @@ import app.forkcast.core.data.db.WaterDao
 import app.forkcast.core.data.db.WaterEntryEntity
 import app.forkcast.core.model.WaterEntry
 import kotlinx.coroutines.flow.Flow
+import app.forkcast.core.domain.WaterMath
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import java.time.Clock
 import java.time.Instant
@@ -16,6 +18,11 @@ interface WaterRepository {
     fun observeDay(date: LocalDate): Flow<List<WaterEntry>>
     suspend fun add(date: LocalDate, ml: Double): String
     suspend fun delete(id: String)
+    /**
+     * Makes the day's water [totalMl] (drinks logged as food, [drinksMl], stay as they are): removes
+     * the newest entries over it, or adds the difference. Health Connect follows each change.
+     */
+    suspend fun setDayTotal(date: LocalDate, totalMl: Double, drinksMl: Double)
 }
 
 @Singleton
@@ -35,4 +42,11 @@ class RoomWaterRepository @Inject constructor(
     }
 
     override suspend fun delete(id: String) = dao.softDelete(id, clock.millis())
+
+    override suspend fun setDayTotal(date: LocalDate, totalMl: Double, drinksMl: Double) {
+        val entries = observeDay(date).first().sortedBy { it.timestamp }.map { it.id to it.ml }
+        val change = WaterMath.adjustTo(totalMl, entries, drinksMl)
+        change.removeIds.forEach { delete(it) }
+        if (change.addMl > 0.5) add(date, change.addMl)
+    }
 }
