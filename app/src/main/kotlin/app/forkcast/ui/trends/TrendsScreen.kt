@@ -101,6 +101,9 @@ data class TrendsUiState(
     val weeklyRateKg: Double?,
     val goalKg: Double?,
     val projection: Trends.GoalProjection?,
+    val timing: app.forkcast.core.domain.MealTiming.Insights? = null,
+    /** Meal id → name, for the timing card. */
+    val mealNames: Map<String, String> = emptyMap(),
 ) {
     val anyLogged: Boolean get() = days.any { it.nutrients != null }
 }
@@ -146,6 +149,8 @@ class TrendsViewModel @Inject constructor(
             weeklyRateKg = rate,
             goalKg = goalKg,
             projection = goalKg?.let { g -> trend.lastOrNull()?.let { Trends.projectGoal(it.trendKg, rate, g, d.today) } },
+            timing = d.timing,
+            mealNames = d.mealSlots.associate { it.id to it.name },
         )
     }
 
@@ -176,11 +181,56 @@ fun TrendsScreen(
             CaloriesCard(s, f, onOpenDay)
             WeightCard(s, f)
             if (s.anyLogged) {
+                MealTimingCard(s, f)
                 s.macros?.let { MacrosCard(it, s, f) }
                 if (s.nutrients.isNotEmpty()) NutrientsCard(s.nutrients, f)
             }
             LoggingCard(s.logging)
         }
+    }
+}
+
+/**
+ * When you eat (owner, 2026-10-23): each meal's usual time and how much it moves, the eating
+ * window, calories after 8 pm, and whether late eating differs on days over the budget.
+ */
+@Composable
+private fun MealTimingCard(s: TrendsUiState, f: UnitFormatter) {
+    Card(R.string.timing_title) {
+        val t = s.timing
+        if (t == null) {
+            Note(stringResource(R.string.timing_not_enough, app.forkcast.core.domain.MealTiming.MIN_DAYS))
+            return@Card
+        }
+        t.meals.forEach { m ->
+            Line(
+                s.mealNames[m.mealSlotId].orEmpty(),
+                stringResource(R.string.timing_meal_value, app.forkcast.ui.common.mealTimeText(m.medianMinute), m.spreadMinutes),
+            )
+        }
+        Line(
+            stringResource(R.string.timing_window),
+            stringResource(
+                R.string.timing_window_value,
+                app.forkcast.ui.common.mealTimeText(t.windowStartMinute),
+                app.forkcast.ui.common.mealTimeText(t.windowEndMinute),
+                f.number(((t.windowEndMinute - t.windowStartMinute + 24 * 60) % (24 * 60)) / 60.0, 1),
+            ),
+        )
+        Line(
+            stringResource(R.string.timing_late, app.forkcast.ui.common.mealTimeText(app.forkcast.core.domain.MealTiming.LATE_MINUTE)),
+            stringResource(R.string.timing_late_value, f.energy(t.lateKcalPerDay), (t.lateShare * 100).roundToInt()),
+        )
+        t.comparison?.let { c ->
+            Note(
+                stringResource(
+                    R.string.timing_over_compare,
+                    c.overDays, f.energy(c.lateKcalOver), c.otherDays, f.energy(c.lateKcalOther),
+                    app.forkcast.ui.common.mealTimeText(app.forkcast.core.domain.MealTiming.LATE_MINUTE),
+                ),
+            )
+        }
+        Note(pluralStringResource(R.plurals.timing_based_on, t.days, t.days))
     }
 }
 

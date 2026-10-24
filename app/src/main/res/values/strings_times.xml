@@ -7,4 +7,18 @@
     <string name="meal_time_title">%1$s time</string>
     <string name="meal_time_body">Every item in %1$s moves to this time.</string>
     <string name="entry_day">Day</string>
+
+    <!-- Trends › Meal timing -->
+    <string name="timing_title">Meal timing</string>
+    <string name="timing_not_enough">Meal times are recorded from version 1.2. After %1$d complete days with times, this shows when you usually eat and how much you eat late in the evening.</string>
+    <string name="timing_meal_value">%1$s · ±%2$d min</string>
+    <string name="timing_window">Eating window</string>
+    <string name="timing_window_value">%1$s – %2$s (%3$s h)</string>
+    <string name="timing_late">After %1$s</string>
+    <string name="timing_late_value">%1$s a day (%2$d%%)</string>
+    <string name="timing_over_compare">On the %1$d days over budget you ate %2$s after %5$s; on the other %3$d days, %4$s.</string>
+    <plurals name="timing_based_on">
+        <item quantity="one">Usual times and how much they vary, from %1$d complete day with meal times.</item>
+        <item quantity="other">Usual times and how much they vary, from %1$d complete days with meal times.</item>
+    </plurals>
 </resources>

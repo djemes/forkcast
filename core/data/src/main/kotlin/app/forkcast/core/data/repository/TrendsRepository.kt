@@ -4,6 +4,9 @@ import app.forkcast.core.data.db.DayStatusDao
 import app.forkcast.core.data.db.LogEntryDao
 import app.forkcast.core.domain.AdaptiveTdee
 import app.forkcast.core.domain.DailyTargets
+import app.forkcast.core.domain.HealthRules
+import app.forkcast.core.domain.MealKind
+import app.forkcast.core.domain.MealTiming
 import app.forkcast.core.domain.Trends
 import app.forkcast.core.model.DayCompleteness
 import app.forkcast.core.model.Goal
@@ -30,6 +33,10 @@ data class TrendsData(
     val targets: DailyTargets?,
     val weights: List<WeightEntry>,
     val goal: Goal?,
+    /** Meal timing over the averaged days, or null until there are enough days with real times. */
+    val timing: MealTiming.Insights? = null,
+    /** Meal slots, for naming the meals in [timing]. */
+    val mealSlots: List<app.forkcast.core.model.MealSlot> = emptyList(),
 )
 
 interface TrendsRepository {
@@ -45,6 +52,7 @@ class RoomTrendsRepository @Inject constructor(
     private val maintenance: MaintenanceRepository,
     private val weights: WeightRepository,
     private val clock: Clock,
+    private val mealSlots: MealSlotRepository,
 ) : TrendsRepository {
 
     override fun observe(period: Trends.Period): Flow<TrendsData> {
@@ -55,9 +63,9 @@ class RoomTrendsRepository @Inject constructor(
             combine(log.observeRange(from, today), dayStatus.observeRange(from, today), maintenance.observeActivityBonuses(from, today)) { e, s, b -> Triple(e, s, b) },
             logDao.observeLoggedDates(),
             profiles.observeDailyTargets(),
-            weights.entries,
+            combine(weights.entries, mealSlots.observeMealSlots()) { w, m -> w to m },
             profiles.activeGoal,
-        ) { (entries, statuses, bonuses), dates, targets, weightList, goal ->
+        ) { (entries, statuses, bonuses), dates, targets, (weightList, slots), goal ->
             val byDay = entries.groupBy { it.date }
             val marks = statuses.associateBy { it.date }
             val budget = targets?.budgetKcal ?: 0
@@ -74,7 +82,17 @@ class RoomTrendsRepository @Inject constructor(
                     ),
                 )
             }.toList()
-            val averaged = Trends.averagedDays(days, today).days.map { it.date }.toSet()
+            val averagedDays = Trends.averagedDays(days, today).days
+            val averaged = averagedDays.map { it.date }.toSet()
+            // Breakfast, Lunch and Dinner: meals with a window that aren't snacks.
+            val timedMeals = slots.filter {
+                it.startMinute != null && it.endMinute != null && HealthRules.mealKind(it.name, it.startMinute) != MealKind.SNACK
+            }.map { it.id }
+            val timing = MealTiming.insights(
+                entries.map { MealTiming.Item(it.date, it.mealSlotId, it.eatenMinute, it.timeEstimated, it.nutrients.kcal) },
+                averagedDays.associate { it.date to it.allowanceKcal },
+                timedMeals,
+            )
             TrendsData(
                 today = today,
                 period = period,
@@ -84,6 +102,8 @@ class RoomTrendsRepository @Inject constructor(
                 targets = targets,
                 weights = weightList,
                 goal = goal,
+                timing = timing,
+                mealSlots = slots,
             )
         }
     }
