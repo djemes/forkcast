@@ -10,6 +10,7 @@ import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DrinkWater
 import app.forkcast.core.domain.FoodLogging
+import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.model.Nutrients
@@ -48,6 +49,12 @@ data class FoodDetailState(
     val date: LocalDate? = null,
     /** Picking an ingredient for a recipe: no meal, the button says "Add to recipe". */
     val forRecipe: Boolean = false,
+    /** When it was eaten, if the user changed it; null = the default ([defaultMinute]). */
+    val eatenMinute: Int? = null,
+    /** Now on today, else the selected meal's typical time. */
+    val defaultMinute: Int = 12 * 60,
+    /** Now, on today: no later time can be picked. */
+    val latestMinute: Int? = null,
 ) {
     val grams: Double? get() = quantity?.let { it * serving.grams }
     val preview: Nutrients get() = food.nutrientsPer100g.forGrams(grams ?: 0.0)
@@ -58,7 +65,13 @@ data class FoodDetailState(
     val isDrink: Boolean get() = DrinkWater.isDrink(food)
 }
 
-private data class Selection(val servingLabel: String? = null, val quantity: Double? = null, val quantityTouched: Boolean = false, val mealSlotId: String? = null)
+private data class Selection(
+    val servingLabel: String? = null,
+    val quantity: Double? = null,
+    val quantityTouched: Boolean = false,
+    val mealSlotId: String? = null,
+    val eatenMinute: Int? = null,
+)
 
 sealed interface FoodDetailEffect {
     data class Added(val mealName: String) : FoodDetailEffect
@@ -89,6 +102,10 @@ class FoodDetailViewModel @Inject constructor(
         val options = FoodLogging.servingOptions(food)
         val (defaultServing, defaultQty) = FoodLogging.defaultServing(food)
         val serving = options.firstOrNull { it.label == sel.servingLabel } ?: defaultServing
+        val mealId = sel.mealSlotId ?: meals.firstOrNull()?.id.orEmpty()
+        val slot = meals.firstOrNull { it.id == mealId }
+        val day = logDate ?: LocalDate.now(clock)
+        val nowMinute = MealTimes.minuteOn(day, clock.instant(), clock.zone)
         FoodDetailState(
             food = food,
             servings = options,
@@ -100,6 +117,9 @@ class FoodDetailViewModel @Inject constructor(
             daysFromToday = logDate?.let { ChronoUnit.DAYS.between(LocalDate.now(clock), it) } ?: 0,
             date = logDate,
             forRecipe = args.forRecipe,
+            eatenMinute = sel.eatenMinute,
+            defaultMinute = nowMinute ?: MealTimes.typicalMinute(slot?.startMinute, slot?.endMinute, day, clock.instant(), clock.zone),
+            latestMinute = nowMinute,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -137,6 +157,8 @@ class FoodDetailViewModel @Inject constructor(
 
     fun selectMeal(id: String) = selection.update { it.copy(mealSlotId = id) }
 
+    fun setTime(minute: Int) = selection.update { it.copy(eatenMinute = minute) }
+
     fun setCountsAsWater(counts: Boolean) {
         val f = state.value?.food ?: return
         viewModelScope.launch { foods.setCountsAsWater(f.id, counts) }
@@ -155,7 +177,7 @@ class FoodDetailViewModel @Inject constructor(
             return
         }
         viewModelScope.launch {
-            log.add(listOf(FoodLogging.entry(s.food, s.serving, q, LocalDate.parse(args.date), s.mealSlotId, clock.instant())))
+            log.add(listOf(FoodLogging.entry(s.food, s.serving, q, LocalDate.parse(args.date), s.mealSlotId, clock.instant()).copy(eatenMinute = s.eatenMinute)))
             effectChannel.send(FoodDetailEffect.Added(s.mealName))
         }
     }

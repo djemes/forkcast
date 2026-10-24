@@ -151,6 +151,8 @@ fun EntryRow(
     onLongClick: () -> Unit,
     onDelete: () -> Unit,
     needsReview: Boolean = false,
+    /** Snacks: each item shows when it was eaten. */
+    showTime: Boolean = false,
 ) {
     val dismiss = rememberSwipeToDismissBoxState()
     val deleteLabel = stringResource(R.string.action_delete)
@@ -204,7 +206,7 @@ fun EntryRow(
                 )
                 Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        amountText(entry, f),
+                        listOfNotNull(entry.eatenMinute?.takeIf { showTime }?.let { app.forkcast.ui.common.mealTimeText(it) }, amountText(entry, f)).joinToString(" · "),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

@@ -23,6 +23,9 @@ import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.DrinkWater
 import app.forkcast.core.domain.FoodLogging
+import app.forkcast.core.domain.HealthRules
+import app.forkcast.core.domain.MealKind
+import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.domain.Forecast
 import app.forkcast.core.domain.MealSlotPicker
 import app.forkcast.core.domain.NutritionConstants
@@ -73,7 +76,18 @@ data class MealSection(
     val kcal: Double,
     /** Photo estimates in this meal that aren't logged yet (running, waiting, question, failed, or awaiting review). */
     val pending: List<PendingEstimate> = emptyList(),
-)
+) {
+    /**
+     * Snacks (no time window, or named a snack) and "Other" can happen several times a day, so
+     * each item shows its own time; Breakfast, Lunch and Dinner show one time in the header
+     * (owner, 2026-10-23).
+     */
+    val timePerItem: Boolean
+        get() = slot.startMinute == null || slot.endMinute == null ||
+            HealthRules.mealKind(slot.name, slot.startMinute) == MealKind.SNACK
+    /** The meal's time: when its first item was eaten. */
+    val mealMinute: Int? get() = MealTimes.mealMinute(entries.map { it.eatenMinute })
+}
 
 /** A photo or described estimate shown as its own row until it becomes a log entry (SPEC §4.6 step 4). */
 data class PendingEstimate(val estimate: AiEstimateEntity) {
@@ -171,7 +185,16 @@ sealed interface TodayEvent {
     ) : TodayEvent
     /** The edit sheet opened: load the food's servings for it. */
     data class LoadEditServings(val entryId: String) : TodayEvent
-    data class QuickAdd(val mealSlotId: String, val label: String, val kcal: Double, val protein: Double?, val carbs: Double?, val fat: Double?) : TodayEvent
+    data class QuickAdd(
+        val mealSlotId: String,
+        val label: String,
+        val kcal: Double,
+        val protein: Double?,
+        val carbs: Double?,
+        val fat: Double?,
+        /** Set in the sheet; null = the default (now on today, else the meal's typical time). */
+        val eatenMinute: Int? = null,
+    ) : TodayEvent
     data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
     /** Copies entries to [toDate], into [toMealSlotId] or (null) each entry's own meal. */
     data class Copy(val ids: List<String>, val toDate: LocalDate, val toMealSlotId: String?) : TodayEvent
@@ -182,6 +205,8 @@ sealed interface TodayEvent {
     data class AddWater(val ml: Double) : TodayEvent
     data object RemoveLastWater : TodayEvent
     data class SetCompleteness(val completeness: DayCompleteness) : TodayEvent
+    /** A meal's time from its header: every item in it moves to [minute]. */
+    data class SetMealTime(val mealSlotId: String, val minute: Int) : TodayEvent
     /** "Not now" on the missing-keys card. */
     data object DismissMissingKeys : TodayEvent
 }
@@ -397,6 +422,7 @@ class TodayViewModel @Inject constructor(
             }
             is TodayEvent.QuickAdd -> addEntry(event.mealSlotId) { date ->
                 FoodLogging.quickAdd(event.label, event.kcal, event.protein, event.carbs, event.fat, date, event.mealSlotId, clock.instant())
+                    .copy(eatenMinute = event.eatenMinute)
             }
             is TodayEvent.AddRecent -> addEntry(event.mealSlotId) { date ->
                 val (serving, qty) = FoodLogging.defaultServing(event.food)
@@ -433,6 +459,10 @@ class TodayViewModel @Inject constructor(
             is TodayEvent.DeleteSavedMeal -> viewModelScope.launch { savedMealRepository.delete(event.savedMealId) }
             is TodayEvent.AddWater -> viewModelScope.launch { waterRepository.add(selectedDate.value, event.ml) }
             is TodayEvent.SetCompleteness -> viewModelScope.launch { maintenance.setCompleteness(selectedDate.value, event.completeness) }
+            is TodayEvent.SetMealTime -> viewModelScope.launch {
+                val ids = uiState.value?.meals?.firstOrNull { it.slot.id == event.mealSlotId }?.entries?.map { it.id }.orEmpty()
+                if (ids.isNotEmpty()) logRepository.setEatenMinute(ids, event.minute)
+            }
             TodayEvent.DismissMissingKeys -> viewModelScope.launch {
                 missingKeys.dismiss(uiState.value?.missingKeys.orEmpty().map { it.id })
             }

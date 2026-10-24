@@ -412,6 +412,8 @@ fun TodayScreen(
                             dayHasEntries = day.allEntries.isNotEmpty(),
                             showSameAsYesterday = meal.slot.id in day.yesterdayMealIds,
                             onSameAsYesterday = { onEvent(TodayEvent.SameAsYesterday(meal.slot.id)) },
+                            onSetMealTime = { minute -> onEvent(TodayEvent.SetMealTime(meal.slot.id, minute)) },
+                            latestMinute = day.nowMinute.takeIf { day.isToday },
                         )
                       }
                     }
@@ -470,14 +472,17 @@ fun TodayScreen(
         )
     }
     quickAddMealId?.let { mealId ->
+        val slot = state.meals.firstOrNull { it.slot.id == mealId }?.slot
         QuickAddSheet(
-            mealName = state.meals.firstOrNull { it.slot.id == mealId }?.slot?.name.orEmpty(),
+            mealName = slot?.name.orEmpty(),
             f = f,
-            onAdd = { label, kcal, p, c, fat ->
+            onAdd = { label, kcal, p, c, fat, minute ->
                 quickAddMealId = null
-                onEvent(TodayEvent.QuickAdd(mealId, label, kcal, p, c, fat))
+                onEvent(TodayEvent.QuickAdd(mealId, label, kcal, p, c, fat, minute))
             },
             onDismiss = { quickAddMealId = null },
+            defaultMinute = if (state.isToday) state.nowMinute else app.forkcast.core.domain.MealTimes.windowMiddle(slot?.startMinute, slot?.endMinute) ?: app.forkcast.core.domain.MealTimes.FALLBACK_MINUTE,
+            latestMinute = state.nowMinute.takeIf { state.isToday },
         )
     }
     savedMealsFor?.let { mealId ->
@@ -827,8 +832,12 @@ private fun MealSectionView(
     onSameAsYesterday: () -> Unit = {},
     unreviewed: Set<String> = emptySet(),
     onPendingClick: (String) -> Unit = {},
+    onSetMealTime: (Int) -> Unit = {},
+    /** Now, on today: a meal time can't be later. */
+    latestMinute: Int? = null,
 ) {
     val name = meal.slot.name.ifEmpty { stringResource(R.string.meal_other) }
+    var editTime by remember { mutableStateOf(false) }
     val addDescription = stringResource(R.string.add_to_meal_description, name)
     var menuOpen by remember { mutableStateOf(false) }
     // Rows already here when the section appeared just show; rows added later (a new entry, Undo,
@@ -851,7 +860,25 @@ private fun MealSectionView(
                     .semantics { heading() },
             )
             if (meal.entries.isNotEmpty()) {
-                Text(f.energy(meal.kcal), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // Right side: the subtotal, and under it the meal's time (tap to change it for the whole meal).
+                val minute = meal.mealMinute.takeIf { !meal.timePerItem }
+                Column(horizontalAlignment = Alignment.End) {
+                    Text(f.energy(meal.kcal), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    if (minute != null) {
+                        val time = app.forkcast.ui.common.mealTimeText(minute)
+                        val label = stringResource(R.string.meal_time_set, name, time)
+                        Text(
+                            time,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .clickable(onClickLabel = label, role = Role.Button) { editTime = true }
+                                .semantics { contentDescription = label }
+                                .padding(horizontal = 4.dp, vertical = 2.dp),
+                        )
+                    }
+                }
             }
             TextButton(onClick = onAdd, modifier = Modifier.semantics { contentDescription = addDescription }) {
                 Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
@@ -911,6 +938,7 @@ private fun MealSectionView(
                     onLongClick = { onEntryLongClick(e.id) },
                     onDelete = { onDelete(e.id) },
                     needsReview = e.aiEstimateId != null && e.aiEstimateId in unreviewed,
+                    showTime = meal.timePerItem,
                 )
               }
             }
@@ -919,6 +947,32 @@ private fun MealSectionView(
             androidx.compose.runtime.key(p.id) { AppearIn(p.id !in shownAtStart) { PendingEstimateRow(p, f) { onPendingClick(p.id) } } }
         }
     }
+    if (editTime) {
+        MealTimeDialog(name, meal.mealMinute ?: 12 * 60, latestMinute, onDismiss = { editTime = false }) { editTime = false; onSetMealTime(it) }
+    }
+}
+
+/** The meal's time, for every item in it (owner, 2026-10-23). */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun MealTimeDialog(mealName: String, minute: Int, latestMinute: Int?, onDismiss: () -> Unit, onSet: (Int) -> Unit) {
+    val is24 = DateFormat.is24HourFormat(androidx.compose.ui.platform.LocalContext.current)
+    val state = androidx.compose.material3.rememberTimePickerState(initialHour = minute / 60, initialMinute = minute % 60, is24Hour = is24)
+    val picked = state.hour * 60 + state.minute
+    val future = latestMinute != null && picked > latestMinute
+    androidx.compose.material3.AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.meal_time_title, mealName)) },
+        text = {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(stringResource(R.string.meal_time_body, mealName), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(bottom = 12.dp))
+                androidx.compose.material3.TimePicker(state = state)
+                if (future) Text(stringResource(R.string.meal_time_future), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            }
+        },
+        confirmButton = { TextButton(onClick = { onSet(picked) }, enabled = !future) { Text(stringResource(R.string.ok)) } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
+    )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

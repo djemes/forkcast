@@ -37,9 +37,14 @@ import app.forkcast.ui.onboarding.NumberField
 fun QuickAddSheet(
     mealName: String,
     f: UnitFormatter,
-    onAdd: (label: String, kcal: Double, protein: Double?, carbs: Double?, fat: Double?) -> Unit,
+    onAdd: (label: String, kcal: Double, protein: Double?, carbs: Double?, fat: Double?, eatenMinute: Int?) -> Unit,
     onDismiss: () -> Unit,
+    /** Shown in the time field until changed (now on today, else the meal's typical time). */
+    defaultMinute: Int = 12 * 60,
+    /** Now, on today. */
+    latestMinute: Int? = null,
 ) {
+    var minute by rememberSaveable { mutableStateOf<Int?>(null) }
     val defaultLabel = stringResource(R.string.quick_add_default_label)
     var label by rememberSaveable { mutableStateOf("") }
     var energy by rememberSaveable { mutableStateOf<Double?>(null) }
@@ -72,9 +77,10 @@ fun QuickAddSheet(
                 NumberField("", stringResource(R.string.quick_add_carbs), { carbs = it }, Modifier.weight(1f), key = "qa-c")
                 NumberField("", stringResource(R.string.quick_add_fat), { fat = it }, Modifier.weight(1f), key = "qa-f")
             }
+            app.forkcast.ui.common.MealTimeField(minute ?: defaultMinute, onChange = { minute = it }, latestMinute = latestMinute)
             Button(
                 onClick = {
-                    energy?.let { onAdd(label.trim().ifEmpty { defaultLabel }, f.energyToKcal(it), protein, carbs, fat) }
+                    energy?.let { onAdd(label.trim().ifEmpty { defaultLabel }, f.energyToKcal(it), protein, carbs, fat, minute) }
                 },
                 enabled = (energy ?: 0.0) > 0,
                 modifier = Modifier

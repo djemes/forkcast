@@ -82,6 +82,7 @@ fun FoodDetailRoute(
             onQuantity = viewModel::setQuantity,
             onStep = viewModel::step,
             onMeal = viewModel::selectMeal,
+            onTime = viewModel::setTime,
             onFavorite = viewModel::toggleFavorite,
             onEdit = { if (it.food.source == FoodSource.RECIPE) onEditRecipe(it.food.id) else onEdit(it.food.id) },
             onAdd = viewModel::add,
@@ -103,6 +104,7 @@ fun FoodDetailScreen(
     onEdit: () -> Unit,
     onAdd: () -> Unit,
     onCountsAsWater: (Boolean) -> Unit = {},
+    onTime: (Int) -> Unit = {},
 ) {
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
     val food = state.food
@@ -222,6 +224,7 @@ fun FoodDetailScreen(
                         FilterChip(selected = m.id == state.mealSlotId, onClick = { onMeal(m.id) }, label = { Text(m.name) })
                     }
                 }
+                app.forkcast.ui.common.MealTimeField(state.eatenMinute ?: state.defaultMinute, onChange = onTime, latestMinute = state.latestMinute)
             }
             // Water, sparkling water and plain tea count toward the day's water; the user can override it per food.
             // Shown for drinks only (any drink, so coffee or milk can be switched on by hand).
