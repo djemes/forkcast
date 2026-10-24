@@ -66,7 +66,8 @@ class BackupRetentionTest {
         // Monday at 2 am → the same night at 3 am; at 4 am → next Monday.
         val monday = java.time.ZonedDateTime.of(2026, 10, 26, 2, 0, 0, 0, zone)
         assertThat(BackupRetention.delayUntilWeekday(monday, 1)).isEqualTo(java.time.Duration.ofHours(1))
-        assertThat(BackupRetention.delayUntilWeekday(monday.withHour(4), 1)).isEqualTo(java.time.Duration.ofDays(7).minusHours(1))
+        // 4 am → next Monday 3 am: 6 days 23 h, plus the hour clocks go back on Nov 1.
+        assertThat(BackupRetention.delayUntilWeekday(monday.withHour(4), 1)).isEqualTo(java.time.Duration.ofDays(7))
         assertThat(app.forkcast.core.model.BackupSettings().frequency).isEqualTo(app.forkcast.core.model.BackupFrequency.WEEKLY)
     }
 }
