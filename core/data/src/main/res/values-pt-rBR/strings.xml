@@ -15,6 +15,7 @@
     <string name="channel_weekly">Resumo semanal</string>
     <string name="channel_estimate_ready">Estimativa pronta</string>
     <string name="channel_backup_failed">Problemas de backup</string>
+    <string name="channel_updates">Atualizações</string>
     <string name="channel_working">Trabalhando em segundo plano</string>
     <string name="estimating_notification">Estimando sua refeição…</string>
     <string name="described_meal">Refeição descrita</string>
@@ -64,4 +65,7 @@
     <string name="notif_backup_folder_lost">O Forkcast não consegue mais acessar sua pasta de backup. Abra Backup e dados e escolha uma pasta de novo.</string>
     <string name="notif_backup_password_missing">Os backups automáticos estão configurados para usar uma senha, mas nenhuma está salva neste celular. Abra Backup e dados para definir.</string>
     <string name="notif_backup_write_failed">Os últimos backups não puderam ser salvos na sua pasta de backup. Confira se há espaço livre ou escolha outra pasta.</string>
+    <!-- Automatic update check (roadmap 2.0, task 1.5) -->
+    <string name="notif_update_title">Forkcast %1$s está disponível</string>
+    <string name="notif_update_body">Toque para ver as novidades e instalar. Seus dados continuam.</string>
 </resources>

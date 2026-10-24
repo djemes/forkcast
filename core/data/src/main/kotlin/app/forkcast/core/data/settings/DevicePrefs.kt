@@ -39,6 +39,8 @@ data class DeviceState(
     val lastDriveBackupAt: Long? = null,
     /** When Forkcast (1.5+) first ran on this phone: the reminder counts from here before any backup. */
     val firstSeenAt: Long? = null,
+    /** The release tag the update check last notified about, so each version notifies once. */
+    val notifiedUpdate: String? = null,
 )
 
 /** Where and when the last backup was written. [place] is the folder's name, null for a picked file. */
@@ -68,6 +70,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             if (!next.driveBackupWasOn) DRIVE_KEYS.forEach(::remove)
             putOrRemove(DRIVE_LAST_BACKUP, next.lastDriveBackupAt)
             putOrRemove(FIRST_SEEN, next.firstSeenAt)
+            putOrRemove(NOTIFIED_UPDATE, next.notifiedUpdate)
             // The camera tips' open/closed state (1.3–1.4) is gone; drop it from phones that have it.
             remove(CAMERA_WARNINGS)
         }
@@ -97,6 +100,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         driveBackupWasOn = prefs.getString(DRIVE_ACCOUNT, null) != null,
         lastDriveBackupAt = long(DRIVE_LAST_BACKUP),
         firstSeenAt = long(FIRST_SEEN),
+        notifiedUpdate = prefs.getString(NOTIFIED_UPDATE, null),
     )
 
     companion object {
@@ -113,6 +117,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         private const val FAILURES = "backupFailures"
         private const val REMINDER_DISMISSED = "backupReminderDismissedAt"
         private const val FIRST_SEEN = "firstSeenAt"
+        private const val NOTIFIED_UPDATE = "notifiedUpdate"
         // 1.0–1.4 Google Drive backup.
         private const val DRIVE_ACCOUNT = "driveAccount"
         private const val DRIVE_LAST_BACKUP = "lastDriveBackupAt"

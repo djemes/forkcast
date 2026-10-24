@@ -70,6 +70,7 @@ import kotlinx.serialization.Serializable
 @Serializable data class WeeklyDestination(val start: String? = null)
 @Serializable data object AppearanceDestination
 @Serializable data object AboutDestination
+@Serializable data object UpdatesDestination
 @Serializable data object FoodDatabasesDestination
 @Serializable data object BackupDestination
 @Serializable data object WeightDestination
@@ -168,6 +169,7 @@ fun ForkcastNavHost(
                 request == "settings_ai" -> navController.navigate(AiSettingsDestination)
                 request.startsWith("weekly:") -> navController.navigate(WeeklyDestination(request.removePrefix("weekly:")))
                 request == "backup" -> navController.navigate(BackupDestination)
+                request == "updates" && app.forkcast.Distribution.current.hasUpdater -> navController.navigate(UpdatesDestination)
                 // Widget, shortcut and Quick Settings tile (Phase 5): over Today, logging into the meal now.
                 else -> FoodOpen.parse(request)?.let { r ->
                     val day = (r.date ?: java.time.LocalDate.now()).toString()
@@ -332,6 +334,7 @@ fun ForkcastNavHost(
                     appearance = { navController.navigate(AppearanceDestination) },
                     backup = { navController.navigate(BackupDestination) },
                     about = { navController.navigate(AboutDestination) },
+                    updates = { navController.navigate(UpdatesDestination) }.takeIf { app.forkcast.Distribution.current.hasUpdater },
                 ),
             )
         }
@@ -439,7 +442,8 @@ fun ForkcastNavHost(
             )
         }
         composable<AppearanceDestination> { AppearanceRoute(onBack = back) }
-        composable<AboutDestination> { AboutRoute(onBack = back) }
+        composable<AboutDestination> { AboutRoute(onBack = back, onOpenUpdates = { navController.navigate(UpdatesDestination) }) }
+        composable<UpdatesDestination> { app.forkcast.ui.settings.UpdatesRoute(onBack = back) }
     }
 }
 

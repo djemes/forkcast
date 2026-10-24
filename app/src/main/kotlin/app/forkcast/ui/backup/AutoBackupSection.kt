@@ -53,6 +53,7 @@ import app.forkcast.core.data.settings.LastBackup
 import app.forkcast.core.model.BackupFrequency
 import app.forkcast.core.model.BackupSettings
 import app.forkcast.ui.common.DeviceAuth
+import app.forkcast.ui.common.ToggleRow
 import app.forkcast.ui.common.NoScreenLockDialog
 import app.forkcast.ui.theme.ForkcastTheme
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -338,24 +339,6 @@ fun folderProblemText(p: FolderProblem): Int = when (p) {
     FolderProblem.FOLDER_LOST -> R.string.backup_problem_folder_lost
     FolderProblem.PASSWORD_MISSING -> R.string.backup_problem_password_missing
     FolderProblem.WRITE_FAILED -> R.string.backup_problem_write_failed
-}
-
-@Composable
-internal fun ToggleRow(label: String, detail: String?, checked: Boolean, onChange: (Boolean) -> Unit) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .heightIn(min = 56.dp)
-            .clickable(role = Role.Switch) { onChange(!checked) }
-            .semantics(mergeDescendants = true) { toggleableState = ToggleableState(checked) },
-    ) {
-        Column(Modifier.weight(1f).padding(end = 12.dp)) {
-            Text(label, style = MaterialTheme.typography.bodyLarge)
-            detail?.let { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-        }
-        Switch(checked = checked, onCheckedChange = null)
-    }
 }
 
 /** "Oct 24, 3:00 AM" from the file's time, else its name. */

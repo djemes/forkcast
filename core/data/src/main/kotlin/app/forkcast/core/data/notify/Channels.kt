@@ -16,6 +16,8 @@ enum class Channel(val id: String, @StringRes val title: Int, val importance: In
     WEEKLY("weekly_checkin", R.string.channel_weekly, NotificationManager.IMPORTANCE_DEFAULT),
     ESTIMATE_READY("estimate_ready", R.string.channel_estimate_ready, NotificationManager.IMPORTANCE_DEFAULT),
     BACKUP_FAILED("backup_failed", R.string.channel_backup_failed, NotificationManager.IMPORTANCE_DEFAULT),
+    /** A new Forkcast version (roadmap 2.0, task 1.5): quiet, it can wait. */
+    UPDATES("updates", R.string.channel_updates, NotificationManager.IMPORTANCE_LOW),
     /** Silent; only used for the foreground notice expedited work needs on Android 10–11. */
     WORKING("working", R.string.channel_working, NotificationManager.IMPORTANCE_MIN),
     ;

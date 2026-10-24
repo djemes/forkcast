@@ -30,6 +30,8 @@ data class SettingsActions(
     val notifications: () -> Unit = {},
     val appearance: () -> Unit = {},
     val backup: () -> Unit = {},
+    /** Null in builds without the updater (the Play build). */
+    val updates: (() -> Unit)? = null,
     val about: () -> Unit = {},
 )
 
@@ -58,6 +60,7 @@ fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions) {
         Group(R.string.settings_group_app)
         Item(R.string.settings_notifications, R.string.settings_notifications_summary, actions.notifications)
         Item(R.string.settings_backup_data, R.string.settings_backup_data_summary, actions.backup)
+        actions.updates?.let { Item(R.string.settings_updates, R.string.settings_updates_summary, it) }
         Item(R.string.settings_appearance, R.string.settings_appearance_summary, actions.appearance)
         Item(R.string.settings_about, R.string.settings_about_summary, actions.about)
     }

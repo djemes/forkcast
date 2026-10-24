@@ -16,46 +16,60 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.io.OutputStream
 
-/** The newest release on GitHub and its APK (the Release workflow attaches `forkcast-X.Y.Z.apk`). */
+/** A release on GitHub, its APK and its `SHA256SUMS` (the Release workflow attaches both). */
 data class Release(
     val tag: String,
     val name: String?,
     val notes: String?,
     val pageUrl: String,
     val apk: ReleaseAsset?,
+    /** `SHA256SUMS` (releases from 1.5.0 on). */
+    val checksums: ReleaseAsset? = null,
+    /** Marked as a pre-release on GitHub (betas): only offered with "Beta updates" on. */
+    val prerelease: Boolean = false,
 )
 
-data class ReleaseAsset(val name: String, val apiUrl: String, val sizeBytes: Long)
+/** [digest] is GitHub's own `sha256:<hex>` for the file, when it reports one. */
+data class ReleaseAsset(val name: String, val apiUrl: String, val sizeBytes: Long, val digest: String? = null)
 
-/** What can go wrong checking for an update; About names each. */
+/** What can go wrong checking for an update; the Updates page names each. */
 sealed class UpdateError(message: String) : Exception(message) {
     class Offline : UpdateError("No connection")
-    /** 401/403: the token is wrong, expired, or can't read the repository. */
+    /** 401/403 with a token: it's wrong, expired, or can't read the repository. */
     class TokenRejected(val code: Int) : UpdateError("GitHub refused the token (HTTP $code)")
-    /** 404: no release yet, or the token can't see the repository. */
+    /** 404: no release yet, or (without a token) the repository is private. */
     class NoRelease : UpdateError("No release found")
+    /** GitHub's hourly limit for this network (60 requests without a token); [resetAt] in epoch seconds. */
+    class RateLimited(val resetAt: Long?) : UpdateError("GitHub rate limit")
     class Http(val code: Int) : UpdateError("GitHub HTTP $code")
     /** GitHub answered with something that isn't the file (the asset's JSON details, a short body). */
     class WrongDownload : UpdateError("GitHub sent something other than the APK")
 }
 
 /**
- * GitHub's REST API for "Check for updates" (owner, 2026-10-20). The repository is private, so
- * every call carries the user's own fine-grained token (read-only Contents on that repository);
- * it is never stored here or logged. Nothing else is sent. Shapes from
- * docs.github.com/rest/releases (2022-11-28 API version).
+ * GitHub's REST API for updates (owner, 2026-10-20; roadmap 2.0 task 1.5). A public repository
+ * needs no token; while it's private, every call carries the user's own fine-grained token
+ * (read-only Contents on that repository), never stored here or logged. Nothing else is sent.
+ * Shapes from docs.github.com/rest/releases (2022-11-28 API version).
  *
  * [http] must not follow redirects: an asset download answers 302 to a signed storage URL, which
  * is fetched without the token (the token must only ever go to api.github.com).
  */
 class GitHubReleases(private val http: HttpClient, private val repo: String) {
 
-    suspend fun latest(token: String): Release {
+    /** The newest full release (GitHub's "latest" skips drafts and pre-releases). */
+    suspend fun latest(token: String?): Release {
         val r = call { http.get("$API/repos/$repo/releases/latest") { github(token) } }
-        check(r)
-        val body = NetworkJson.decodeFromString(ReleaseJson.serializer(), r.bodyAsText())
-        val apk = body.assets.firstOrNull { it.name.endsWith(".apk") }
-        return Release(body.tagName, body.name, body.body, body.htmlUrl, apk?.let { ReleaseAsset(it.name, it.url, it.size) })
+        check(r, token)
+        return NetworkJson.decodeFromString(ReleaseJson.serializer(), r.bodyAsText()).toRelease()
+    }
+
+    /** The most recent releases, pre-releases included (drafts are only visible to maintainers and skipped). */
+    suspend fun recent(token: String?): List<Release> {
+        val r = call { http.get("$API/repos/$repo/releases?per_page=$RECENT") { github(token) } }
+        check(r, token)
+        val list = NetworkJson.decodeFromString(kotlinx.serialization.builtins.ListSerializer(ReleaseJson.serializer()), r.bodyAsText())
+        return list.filterNot { it.draft }.map { it.toRelease() }
     }
 
     /**
@@ -64,11 +78,11 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
      * 200 with the asset's JSON details instead of the 302 to the file, and 1.1/1.2.0 saved those
      * 1.8 KB as the "APK" (owner's report 2026-10-24: "The download isn't a valid APK").
      */
-    suspend fun download(token: String, asset: ReleaseAsset, out: OutputStream, progress: (Long, Long) -> Unit) {
+    suspend fun download(token: String?, asset: ReleaseAsset, out: OutputStream, progress: (Long, Long) -> Unit) {
         val redirect = call { http.get(asset.apiUrl) { binary(token) } }
         val location = when (redirect.status.value) {
             in 300..399 -> redirect.headers[HttpHeaders.Location] ?: throw UpdateError.Http(redirect.status.value)
-            else -> { check(redirect); asset.apiUrl }
+            else -> { check(redirect, token); asset.apiUrl }
         }
         // The signed storage URL needs no token, and must not get one.
         call {
@@ -76,7 +90,7 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
                 timeout { requestTimeoutMillis = DOWNLOAD_TIMEOUT_MS }
                 if (location == asset.apiUrl) binary(token)
             }.execute { response ->
-                check(response)
+                check(response, token)
                 if (response.headers[HttpHeaders.ContentType]?.contains("json", ignoreCase = true) == true) throw UpdateError.WrongDownload()
                 val total = response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: asset.sizeBytes
                 val channel = response.bodyAsChannel()
@@ -97,24 +111,29 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
         }
     }
 
-    private fun io.ktor.client.request.HttpRequestBuilder.github(token: String) {
-        header(HttpHeaders.Authorization, "Bearer $token")
+    private fun io.ktor.client.request.HttpRequestBuilder.github(token: String?) {
+        token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
         header(HttpHeaders.Accept, "application/vnd.github+json")
         header("X-GitHub-Api-Version", "2022-11-28")
     }
 
-    /** The asset itself: token and API version, and exactly one Accept, the binary one. */
-    private fun io.ktor.client.request.HttpRequestBuilder.binary(token: String) {
-        header(HttpHeaders.Authorization, "Bearer $token")
+    /** The asset itself: token (if any) and API version, and exactly one Accept, the binary one. */
+    private fun io.ktor.client.request.HttpRequestBuilder.binary(token: String?) {
+        token?.let { header(HttpHeaders.Authorization, "Bearer $it") }
         header("X-GitHub-Api-Version", "2022-11-28")
         headers.remove(HttpHeaders.Accept)
         header(HttpHeaders.Accept, "application/octet-stream")
     }
 
-    private fun check(r: HttpResponse) {
-        when (val code = r.status.value) {
+    private fun check(r: HttpResponse, token: String?) {
+        val code = r.status.value
+        // docs.github.com/rest/using-the-rest-api/rate-limits-for-the-rest-api: 403 or 429 with no requests left.
+        if ((code == 403 || code == 429) && r.headers["x-ratelimit-remaining"] == "0") {
+            throw UpdateError.RateLimited(r.headers["x-ratelimit-reset"]?.toLongOrNull())
+        }
+        when (code) {
             in 200..299 -> Unit
-            401, 403 -> throw UpdateError.TokenRejected(code)
+            401, 403 -> throw if (token != null) UpdateError.TokenRejected(code) else UpdateError.Http(code)
             404 -> throw UpdateError.NoRelease()
             else -> throw UpdateError.Http(code)
         }
@@ -134,14 +153,32 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
         val name: String? = null,
         val body: String? = null,
         @SerialName("html_url") val htmlUrl: String,
+        val draft: Boolean = false,
+        val prerelease: Boolean = false,
         val assets: List<AssetJson> = emptyList(),
-    )
+    ) {
+        fun toRelease(): Release {
+            fun AssetJson.asset() = ReleaseAsset(name, url, size, digest)
+            return Release(
+                tag = tagName,
+                name = name,
+                notes = body,
+                pageUrl = htmlUrl,
+                apk = assets.firstOrNull { it.name.endsWith(".apk") }?.asset(),
+                checksums = assets.firstOrNull { it.name == CHECKSUMS }?.asset(),
+                prerelease = prerelease,
+            )
+        }
+    }
 
     @Serializable
-    private data class AssetJson(val name: String, val url: String, val size: Long = 0)
+    private data class AssetJson(val name: String, val url: String, val size: Long = 0, val digest: String? = null)
 
     companion object {
         const val API = "https://api.github.com"
+        /** What the Release workflow names the checksum file. */
+        const val CHECKSUMS = "SHA256SUMS"
+        private const val RECENT = 20
         private const val DOWNLOAD_TIMEOUT_MS = 10 * 60_000L
     }
 }

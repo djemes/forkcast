@@ -1,7 +1,7 @@
 name: Release
 
 # Push a tag like v0.1.0 to build a signed APK and publish it as a GitHub Release.
-# Install it on the phone from there, or over adb (SETUP.md Stage 6).
+# The in-app updater (Settings › Updates) installs it from there; it checks the APK against SHA256SUMS.
 on:
   push:
     tags: ['v*']
@@ -43,13 +43,15 @@ jobs:
           FORKCAST_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: ./gradlew testDebugUnitTest assembleRelease -PversionName="${GITHUB_REF_NAME#v}" --stacktrace
 
-      - name: Verify signature and name the APK
+      - name: Verify signature, name the APK, write SHA256SUMS
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
           APK=app/build/outputs/apk/github/release/app-github-release.apk
           BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           "$BUILD_TOOLS/apksigner" verify --print-certs "$APK"
-          cp "$APK" "forkcast-$VERSION.apk"
+          # Forkcast-vX.Y.Z.apk (roadmap 2.0); the in-app updater takes any .apk and checks it against SHA256SUMS.
+          cp "$APK" "Forkcast-$GITHUB_REF_NAME.apk"
+          sha256sum "Forkcast-$GITHUB_REF_NAME.apk" > SHA256SUMS
+          cat SHA256SUMS
 
       - name: Publish GitHub Release
         env:
@@ -57,8 +59,10 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; *) PRERELEASE="" ;; esac
-          gh release create "$GITHUB_REF_NAME" "forkcast-$VERSION.apk" \
-            --title "Forkcast $VERSION" --generate-notes $PRERELEASE
+          # Notes for users, written in docs/release-notes/<tag>.md; the commit list otherwise.
+          NOTES="docs/release-notes/$GITHUB_REF_NAME.md"
+          if [ -f "$NOTES" ]; then NOTES_ARGS=(--notes-file "$NOTES"); else NOTES_ARGS=(--generate-notes); fi
+          gh release create "$GITHUB_REF_NAME" "Forkcast-$GITHUB_REF_NAME.apk" SHA256SUMS             --title "Forkcast $VERSION" "${NOTES_ARGS[@]}" $PRERELEASE
 
       - name: Remove signing key
         if: always()

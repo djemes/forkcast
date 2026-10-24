@@ -15,10 +15,10 @@
     <string name="update_downloading">Downloading… %1$s of %2$s</string>
     <string name="update_downloading_unknown">Downloading…</string>
     <string name="update_waiting">Waiting for Android to install it. Confirm when asked; your data stays.</string>
-    <string name="update_allow_body">Android needs your OK once before Forkcast can install its own updates: turn on \"Allow from this source\", then come back and tap Install.</string>
+    <string name="update_allow_body">One more step: Android asks once before an app can install its own updates. On the next screen, turn on \"Allow from this source\", then come back here and tap Install. Your data stays.</string>
     <string name="update_allow">Allow installs from Forkcast</string>
     <string name="update_install_again">Install</string>
-    <string name="update_no_token">The repository is private, so checking from the app needs a GitHub token (below). You can also open Releases on GitHub and download the APK there.</string>
+    <string name="update_no_token">Forkcast\'s GitHub project is still private, so checking needs a GitHub token (under Advanced). You can also open Releases on GitHub and download the APK there.</string>
     <string name="update_offline">No connection. Try again when you\'re online.</string>
     <string name="update_token_rejected">GitHub refused the token. Check that it hasn\'t expired and can read the forkcast repository (Contents: read-only).</string>
     <string name="update_no_release">GitHub has no release yet, or the token can\'t see the repository.</string>
@@ -36,6 +36,23 @@
     <string name="update_token_new">New GitHub token</string>
     <string name="update_token_remove">Remove token</string>
     <string name="update_token_help_title">How to make a token</string>
-    <string name="update_token_help">1. On github.com, open Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.\n2. Repository access: Only select repositories › forkcast.\n3. Permissions › Repository permissions › Contents: Read-only.\n4. Pick an expiration, generate, copy the token, and paste it here.\n\nIt stays encrypted on this phone and is only sent to GitHub when you tap Check for updates.</string>
+    <string name="update_token_help">1. On github.com, open Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.\n2. Repository access: Only select repositories › forkcast.\n3. Permissions › Repository permissions › Contents: Read-only.\n4. Pick an expiration, generate, copy the token, and paste it here.\n\nIt stays encrypted on this phone and is only sent to GitHub when Forkcast checks for updates.</string>
     <string name="update_token_page">Open GitHub token settings</string>
+
+    <!-- Settings › Updates (roadmap 2.0, task 1.5) -->
+    <string name="update_from_github">From GitHub, where Forkcast is published</string>
+    <string name="update_current">You have Forkcast %1$s.</string>
+    <string name="update_whats_new">What\'s new</string>
+    <string name="update_available_beta">Beta %1$s is available. Betas are early versions and may have bugs.</string>
+    <string name="update_auto">Check automatically</string>
+    <string name="update_auto_detail">At most once a day. You\'ll get a notification when a new version is out; nothing installs by itself.</string>
+    <string name="update_beta">Beta updates</string>
+    <string name="update_beta_detail">Also offer early versions to try before they\'re final. They may have bugs.</string>
+    <string name="update_advanced">Advanced</string>
+    <string name="update_advanced_hide">Hide advanced</string>
+    <string name="update_token_why">A GitHub token is needed only while Forkcast\'s GitHub project is private.</string>
+    <string name="update_rate_limited">GitHub limits how often checks can come from one network. Try again in an hour.</string>
+    <string name="update_rate_limited_until">GitHub limits how often checks can come from one network. Try again after %1$s.</string>
+    <string name="update_no_checksum">This release doesn\'t list a checksum, so Forkcast can\'t confirm the download is genuine. Nothing was changed. You can get the APK from the Releases page instead.</string>
+    <string name="update_wrong_checksum">The download doesn\'t match the release\'s checksum, so it may be damaged or changed on the way. Nothing was changed. Try again.</string>
 </resources>

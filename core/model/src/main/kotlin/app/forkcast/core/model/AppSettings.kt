@@ -31,6 +31,17 @@ data class AppSettings(
     val keyNotes: KeyNotes = KeyNotes(),
     /** Automatic backup choices (SPEC §4.11). The folder itself is per phone (DevicePrefs). */
     val backup: BackupSettings = BackupSettings(),
+    /** Settings › Updates (roadmap 2.0, task 1.5; GitHub build only). */
+    val updates: UpdateSettings = UpdateSettings(),
+)
+
+/** How Forkcast looks for new versions on GitHub. */
+@Serializable
+data class UpdateSettings(
+    /** Look at most once a day in the background and notify when there's a new version. */
+    val auto: Boolean = true,
+    /** Offer pre-releases (betas) too. */
+    val beta: Boolean = false,
 )
 
 /** What the water drop on Today (and the "+1 glass" shortcut) adds. */

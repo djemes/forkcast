@@ -27,6 +27,7 @@ class ForkcastApplication : Application(), Configuration.Provider {
     @Inject lateinit var health: Lazy<HealthSyncStarter>
     @Inject lateinit var missingKeys: Lazy<app.forkcast.core.data.repository.MissingKeysRepository>
     @Inject lateinit var folderBackup: Lazy<app.forkcast.core.data.backup.folder.FolderBackupScheduler>
+    @Inject lateinit var updateCheck: Lazy<app.forkcast.core.data.update.UpdateCheckScheduler>
     @Inject lateinit var widgets: Lazy<app.forkcast.widget.WidgetUpdater>
 
     private val appScope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
@@ -47,6 +48,9 @@ class ForkcastApplication : Application(), Configuration.Provider {
             health.get().start(appScope)
             missingKeys.get().start(appScope)
             folderBackup.get().start(appScope)
+            // The daily update check exists only where the updater does.
+            if (Distribution.current.hasUpdater) updateCheck.get().start(appScope)
+            else app.forkcast.core.data.update.UpdateCheckScheduler.stop(this@ForkcastApplication)
             widgets.get().start(appScope)
             // Meal photos older than the retention setting (default 14 days) are deleted; entries stay (SPEC §4.6).
             runCatching { estimates.get().cleanUpPhotos() }

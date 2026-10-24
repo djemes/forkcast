@@ -94,6 +94,58 @@ class GitHubReleasesTest {
         assertThat(e).isInstanceOf(UpdateError.WrongDownload::class.java)
     }
 
+    /** A public repository: no token, so no Authorization header anywhere. */
+    @Test fun withoutATokenNothingIsSentButTheRequest() = runTest {
+        val auths = mutableListOf<String?>()
+        val engine = MockEngine { req ->
+            auths += req.headers[HttpHeaders.Authorization]
+            when {
+                req.url.encodedPath.endsWith("/releases/latest") -> respond(latestJson, HttpStatusCode.OK, json)
+                req.url.host == "api.github.com" -> respond("", HttpStatusCode.Found, headersOf(HttpHeaders.Location, "https://release-assets.githubusercontent.com/s"))
+                else -> respond(ByteReadChannel(byteArrayOf(1, 2, 3, 4, 5)), HttpStatusCode.OK, headersOf(HttpHeaders.ContentLength, "5"))
+            }
+        }
+        val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")
+        val r = client.latest(null)
+        client.download(null, r.apk!!, ByteArrayOutputStream()) { _, _ -> }
+        assertThat(auths).containsExactly(null, null, null)
+    }
+
+    @Test fun withoutATokenA403IsNotBlamedOnTheToken() = runTest {
+        val engine = MockEngine { respond("{}", HttpStatusCode.Forbidden, json) }
+        val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")
+        assertThat(runCatching { client.latest(null) }.exceptionOrNull()).isInstanceOf(UpdateError.Http::class.java)
+    }
+
+    @Test fun rateLimitIsNamedWithItsResetTime() = runTest {
+        val engine = MockEngine {
+            respond("{}", HttpStatusCode.Forbidden, headersOf("x-ratelimit-remaining" to listOf("0"), "x-ratelimit-reset" to listOf("1793000000")))
+        }
+        val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")
+        val e = runCatching { client.latest(null) }.exceptionOrNull()
+        assertThat(e).isInstanceOf(UpdateError.RateLimited::class.java)
+        assertThat((e as UpdateError.RateLimited).resetAt).isEqualTo(1_793_000_000L)
+    }
+
+    @Test fun recentListsBetasWithTheirChecksumsAndSkipsDrafts() = runTest {
+        val list = """
+            [{"tag_name":"v2.0.0-beta.1","html_url":"h1","prerelease":true,"draft":false,
+              "assets":[{"name":"Forkcast-v2.0.0-beta.1.apk","url":"u1","size":9,"digest":"sha256:abc"},{"name":"SHA256SUMS","url":"u2","size":80}]},
+             {"tag_name":"v2.0.0-beta.2","html_url":"h2","prerelease":true,"draft":true,"assets":[]},
+             {"tag_name":"v1.9.0","html_url":"h3","assets":[]}]
+        """.trimIndent()
+        var url: String? = null
+        val engine = MockEngine { req -> url = req.url.toString(); respond(list, HttpStatusCode.OK, json) }
+        val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")
+        val releases = client.recent(null)
+        assertThat(url).isEqualTo("https://api.github.com/repos/djemes/forkcast/releases?per_page=20")
+        assertThat(releases.map { it.tag }).containsExactly("v2.0.0-beta.1", "v1.9.0").inOrder()
+        val beta = releases.first()
+        assertThat(beta.prerelease).isTrue()
+        assertThat(beta.apk).isEqualTo(ReleaseAsset("Forkcast-v2.0.0-beta.1.apk", "u1", 9, "sha256:abc"))
+        assertThat(beta.checksums?.name).isEqualTo("SHA256SUMS")
+    }
+
     @Test fun offlineIsNamed() = runTest {
         val engine = MockEngine { throw java.io.IOException("no route") }
         val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")

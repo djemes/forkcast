@@ -15,6 +15,7 @@
     <string name="channel_weekly">Weekly check-in</string>
     <string name="channel_estimate_ready">Estimate ready</string>
     <string name="channel_backup_failed">Backup problems</string>
+    <string name="channel_updates">Updates</string>
     <string name="channel_working">Working in the background</string>
     <string name="estimating_notification">Estimating your meal…</string>
     <string name="described_meal">Described meal</string>
@@ -62,4 +63,7 @@
     <string name="notif_backup_folder_lost">Forkcast can\'t reach your backup folder any more. Open Backup &amp; data and choose a folder again.</string>
     <string name="notif_backup_password_missing">Automatic backups are set to use a password, but none is saved on this phone. Open Backup &amp; data to set it.</string>
     <string name="notif_backup_write_failed">The last backups couldn\'t be saved to your backup folder. Check that there\'s free space, or choose another folder.</string>
+    <!-- Automatic update check (roadmap 2.0, task 1.5) -->
+    <string name="notif_update_title">Forkcast %1$s is available</string>
+    <string name="notif_update_body">Tap to see what\'s new and install it. Your data stays.</string>
 </resources>

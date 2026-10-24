@@ -78,6 +78,8 @@
     <string name="settings_ai">Estimativas por foto com IA</string>
     <string name="settings_food_databases">Bancos de alimentos</string>
     <string name="settings_health_connect">Health Connect</string>
+    <string name="settings_updates">Atualizações</string>
+    <string name="settings_updates_summary">Do GitHub: verificar agora, automático, betas</string>
     <string name="settings_backup_data">Backup e dados</string>
     <string name="settings_appearance">Aparência</string>
     <string name="settings_about">Sobre</string>

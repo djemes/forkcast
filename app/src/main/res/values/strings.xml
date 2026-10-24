@@ -75,6 +75,8 @@
     <string name="settings_ai">AI photo estimates</string>
     <string name="settings_food_databases">Food databases</string>
     <string name="settings_health_connect">Health Connect</string>
+    <string name="settings_updates">Updates</string>
+    <string name="settings_updates_summary">From GitHub: check now, automatic checks, betas</string>
     <string name="settings_backup_data">Backup &amp; data</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_about">About</string>

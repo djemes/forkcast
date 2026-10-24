@@ -21,6 +21,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.common.ToggleRow
 import app.forkcast.core.data.backup.SettingsCrypto
 
 /** A new password, twice, with the strength hint of the settings export. Valid when [onValid] gets non-null. */

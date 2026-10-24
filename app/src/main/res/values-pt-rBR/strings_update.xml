@@ -15,10 +15,10 @@
     <string name="update_downloading">Baixando… %1$s de %2$s</string>
     <string name="update_downloading_unknown">Baixando…</string>
     <string name="update_waiting">Esperando o Android instalar. Confirme quando ele pedir; seus dados ficam.</string>
-    <string name="update_allow_body">O Android precisa da sua permissão uma vez antes que o Forkcast possa instalar as próprias atualizações: ative \"Permitir desta fonte\", depois volte e toque em Instalar.</string>
+    <string name="update_allow_body">Só mais um passo: o Android pede uma vez antes de um app poder instalar as próprias atualizações. Na próxima tela, ative \"Permitir desta fonte\", volte aqui e toque em Instalar. Seus dados continuam.</string>
     <string name="update_allow">Permitir instalações do Forkcast</string>
     <string name="update_install_again">Instalar</string>
-    <string name="update_no_token">O repositório é privado, então procurar pelo app precisa de um token do GitHub (abaixo). Você também pode abrir as versões no GitHub e baixar o APK por lá.</string>
+    <string name="update_no_token">O projeto do Forkcast no GitHub ainda é privado, então a verificação precisa de um token do GitHub (em Avançado). Você também pode abrir as Releases no GitHub e baixar o APK por lá.</string>
     <string name="update_offline">Sem conexão. Tente de novo quando estiver online.</string>
     <string name="update_token_rejected">O GitHub recusou o token. Confira se ele não expirou e se pode ler o repositório forkcast (Contents: somente leitura).</string>
     <string name="update_no_release">O GitHub ainda não tem nenhuma versão, ou o token não consegue ver o repositório.</string>
@@ -36,6 +36,23 @@
     <string name="update_token_new">Novo token do GitHub</string>
     <string name="update_token_remove">Remover token</string>
     <string name="update_token_help_title">Como criar um token</string>
-    <string name="update_token_help">1. No github.com, abra Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.\n2. Repository access: Only select repositories › forkcast.\n3. Permissions › Repository permissions › Contents: Read-only.\n4. Escolha uma validade, gere o token, copie e cole aqui.\n\nEle fica criptografado neste celular e só é enviado ao GitHub quando você toca em Procurar atualizações.</string>
+    <string name="update_token_help">1. No github.com, abra Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.\n2. Repository access: Only select repositories › forkcast.\n3. Permissions › Repository permissions › Contents: Read-only.\n4. Escolha uma validade, gere, copie o token e cole aqui.\n\nEle fica criptografado neste celular e só é enviado ao GitHub quando o Forkcast procura atualizações.</string>
     <string name="update_token_page">Abrir as configurações de token do GitHub</string>
+
+    <!-- Settings › Updates (roadmap 2.0, task 1.5) -->
+    <string name="update_from_github">Do GitHub, onde o Forkcast é publicado</string>
+    <string name="update_current">Você tem o Forkcast %1$s.</string>
+    <string name="update_whats_new">Novidades</string>
+    <string name="update_available_beta">A beta %1$s está disponível. Betas são versões antecipadas e podem ter erros.</string>
+    <string name="update_auto">Verificar automaticamente</string>
+    <string name="update_auto_detail">No máximo uma vez por dia. Você recebe uma notificação quando sair uma versão nova; nada é instalado sozinho.</string>
+    <string name="update_beta">Atualizações beta</string>
+    <string name="update_beta_detail">Oferecer também versões antecipadas para testar antes da final. Podem ter erros.</string>
+    <string name="update_advanced">Avançado</string>
+    <string name="update_advanced_hide">Ocultar avançado</string>
+    <string name="update_token_why">Um token do GitHub só é necessário enquanto o projeto do Forkcast no GitHub for privado.</string>
+    <string name="update_rate_limited">O GitHub limita quantas verificações podem vir de uma mesma rede. Tente de novo em uma hora.</string>
+    <string name="update_rate_limited_until">O GitHub limita quantas verificações podem vir de uma mesma rede. Tente de novo depois das %1$s.</string>
+    <string name="update_no_checksum">Esta versão não traz um checksum, então o Forkcast não consegue confirmar que o download é autêntico. Nada foi alterado. Você pode baixar o APK na página de Releases.</string>
+    <string name="update_wrong_checksum">O download não confere com o checksum da versão, então pode estar danificado ou ter sido alterado no caminho. Nada foi alterado. Tente de novo.</string>
 </resources>
