@@ -475,7 +475,8 @@ class DefaultAiEstimateRepository @Inject constructor(
         if (grams <= 0) return null
         val total = components.map { it.nutrientsUsed }.sumNutrients()
         val waterOnly = components.isNotEmpty() && components.all { DrinkWater.snapshotCountsAsWater(it.name, it.usdaQuery, it.nutrientsUsed, it.grams) }
-        val foodId = foods.saveCustom(
+        // Keyed by the estimate (source AI_TEXT, sourceId = estimate id): saving the review again updates that food, no duplicate.
+        val foodId = foods.cache(
             Food(
                 id = "", name = name.trim().ifBlank { e.mealName ?: e.description.orEmpty() }, brand = null, source = FoodSource.AI_TEXT,
                 sourceId = e.id, barcode = null, servingSizes = listOf(ServingSize(SERVING_LABEL, grams)),

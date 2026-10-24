@@ -430,6 +430,9 @@ class AiEstimateRepositoryTest {
         // Found again offline by something close to what was described.
         assertThat(foods.searchLocal("costco pizza slices").first().id).isEqualTo(foodId)
         assertThat(log.observeDay(day).first().single().foodId).isEqualTo(foodId)
+        // Saving the review again updates the same food.
+        assertThat(repo.saveAsFood(id, "Costco pizza, 2 slices")).isEqualTo(foodId)
+        assertThat(foods.get(foodId)!!.name).isEqualTo("Costco pizza, 2 slices")
     }
 
     /** Profiles with scripted answers, in order. */
