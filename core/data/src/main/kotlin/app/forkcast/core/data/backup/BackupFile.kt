@@ -109,6 +109,12 @@ class BackupFile @Inject constructor(
     /** `forkcast-backup-2026-10-24.forkcast` for [day] (default today). */
     fun fileName(day: LocalDate = LocalDate.now(clock)): String = PREFIX + DAY.format(day) + EXTENSION
 
+    /**
+     * `forkcast-backup-2026-10-24-0300.forkcast` for automatic backups: the time keeps several in
+     * a day apart and in order by name, for folders whose app doesn't report file times.
+     */
+    fun timedFileName(): String = PREFIX + TIMED.format(clock.instant().atZone(clock.zone)) + EXTENSION
+
     private class CountingStream(out: OutputStream) : FilterOutputStream(out) {
         var count = 0L
         override fun write(b: Int) {
@@ -127,6 +133,7 @@ class BackupFile @Inject constructor(
         /** What the file picker and the folder get; ".forkcast" has no registered type. */
         const val MIME_TYPE = "application/octet-stream"
         private val DAY: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE
+        private val TIMED: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmm")
 
         /** Whether [name] looks like a backup Forkcast made (also "… (1).forkcast" from a picker). */
         fun isBackupName(name: String): Boolean = name.startsWith(PREFIX) && name.endsWith(EXTENSION)

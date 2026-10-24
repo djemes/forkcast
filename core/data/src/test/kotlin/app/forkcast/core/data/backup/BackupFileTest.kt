@@ -81,6 +81,7 @@ class BackupFileTest {
 
     @Test fun names() {
         assertThat(file.fileName()).isEqualTo("forkcast-backup-2026-10-24.forkcast")
+        assertThat(file.timedFileName()).isEqualTo("forkcast-backup-2026-10-24-0600.forkcast")
         assertThat(file.fileName(LocalDate.of(2027, 1, 5))).isEqualTo("forkcast-backup-2027-01-05.forkcast")
         assertThat(BackupFile.isBackupName("forkcast-backup-2026-10-24 (1).forkcast")).isTrue()
         assertThat(BackupFile.isBackupName("forkcast-20261024-0300.json")).isFalse()

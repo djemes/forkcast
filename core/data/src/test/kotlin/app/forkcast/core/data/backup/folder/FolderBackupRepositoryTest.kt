@@ -60,10 +60,10 @@ class FolderBackupRepositoryTest {
         chosen()
         assertThat(repo.backupNow()).isNull()
         val files = folder.list(DirFolder.TREE)
-        assertThat(files.map { it.name }).containsExactly("forkcast-backup-2026-10-26.forkcast")
+        assertThat(files.map { it.name }).containsExactly("forkcast-backup-2026-10-26-0300.forkcast")
         val status = repo.status.first()
         assertThat(status.folderName).isEqualTo("Backups")
-        assertThat(status.last?.name).isEqualTo("forkcast-backup-2026-10-26.forkcast")
+        assertThat(status.last?.name).isEqualTo("forkcast-backup-2026-10-26-0300.forkcast")
         assertThat(status.last?.place).isEqualTo("Backups")
         assertThat(status.last?.sizeBytes).isEqualTo(files.single().sizeBytes)
         val opened = folder.openInput(files.single().uri).use { backupFile.open(it, null) } as OpenedBackupFile.Ok
@@ -79,7 +79,7 @@ class FolderBackupRepositoryTest {
         assertThat(repo.backupNow()).isNull()
         val names = folder.list(DirFolder.TREE).map { it.name }
         assertThat(names).containsExactly(
-            "forkcast-backup-2026-10-26.forkcast",
+            "forkcast-backup-2026-10-26-0300.forkcast",
             "forkcast-backup-2026-10-10.forkcast",
             "forkcast-backup-2026-10-09.forkcast",
             "forkcast-backup-2026-10-08.forkcast",
@@ -133,7 +133,7 @@ class FolderBackupRepositoryTest {
         repeat(3) { folder.put("forkcast-backup-2026-10-0${it + 1}.forkcast", modified = it + 1L) }
         assertThat(repo.backupNow()).isNull()
         val plan = repo.cleanupPlan() as CleanupPlan.Ready
-        assertThat(plan.keep.name).isEqualTo("forkcast-backup-2026-10-26.forkcast")
+        assertThat(plan.keep.name).isEqualTo("forkcast-backup-2026-10-26-0300.forkcast")
         assertThat(plan.delete.map { it.name }).containsExactly(
             "forkcast-backup-2026-10-03.forkcast",
             "forkcast-backup-2026-10-02.forkcast",
@@ -145,7 +145,7 @@ class FolderBackupRepositoryTest {
         val result = repo.deleteOld(plan)
         assertThat(result.deleted).isEqualTo(2)
         assertThat(result.failed).isEqualTo(0)
-        assertThat(folder.list(DirFolder.TREE).map { it.name }).containsExactly("forkcast-backup-2026-10-26.forkcast", "notes.txt")
+        assertThat(folder.list(DirFolder.TREE).map { it.name }).containsExactly("forkcast-backup-2026-10-26-0300.forkcast", "notes.txt")
     }
 
     @Test fun cleanupRefusesWhenTheNewestCantBeRestored() = runTest {
@@ -171,7 +171,7 @@ class FolderBackupRepositoryTest {
     }
 
     @Test fun aBackupSavedWithThePickerCountsAsTheLast() = runTest {
-        repo.recordSaved("forkcast-backup-2026-10-26.forkcast", 1234)
+        repo.recordSaved("forkcast-backup-2026-10-26-0300.forkcast", 1234)
         val last = repo.status.first().last!!
         assertThat(last.at).isEqualTo(clock.millis())
         assertThat(last.place).isNull()

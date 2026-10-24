@@ -187,7 +187,7 @@ class DefaultFolderBackupRepository @Inject constructor(
         val s = settings.settings.first().backup
         val password = if (s.password) secrets.get(SecretName.BACKUP_PASSWORD) ?: return FolderProblem.PASSWORD_MISSING else null
         val created = try {
-            folder.create(tree, file.fileName(), BackupFile.MIME_TYPE)
+            folder.create(tree, file.timedFileName(), BackupFile.MIME_TYPE)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) { // SecurityException, IOException, or a provider's own failure
