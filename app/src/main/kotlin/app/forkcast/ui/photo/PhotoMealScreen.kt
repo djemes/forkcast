@@ -205,42 +205,46 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
     val count: @Composable (Color) -> Unit = { color ->
         Text(
             stringResource(R.string.photo_count, state.photos.size),
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.labelLarge,
             color = color,
             textAlign = TextAlign.Center,
         )
     }
 
+    // Portrait and landscape share one style (owner, 2026-10-25): a bar holding only the three
+    // buttons, and the thumbnails with their count floating on a scrim over the preview's corner.
+    val strip: @Composable (Modifier) -> Unit = { modifier ->
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = modifier
+                .padding(8.dp)
+                .background(SCRIM, RoundedCornerShape(16.dp))
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+        ) {
+            Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = THUMB)
+            count(Color.White)
+        }
+    }
+    val barColor = MaterialTheme.colorScheme.surfaceContainerLow
+
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         if (maxWidth > maxHeight) {
             // Landscape (owner, 2026-10-24; narrower 2026-10-25): the preview beside a slim bar on the
-            // right with only the buttons (Next at the top, the shutter centered, the gallery at the
-            // bottom); the thumbnails and count float over the preview's bottom edge.
+            // right: Next at the top, the shutter centered, the gallery at the bottom.
             Row(Modifier.fillMaxSize()) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     CameraPreview(granted, capture, request)
                     CameraTop(onBack, Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Start)))
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier
-                            .align(Alignment.BottomStart)
-                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Start))
-                            .padding(8.dp)
-                            .background(SCRIM, RoundedCornerShape(16.dp))
-                            .padding(horizontal = 8.dp, vertical = 4.dp),
-                    ) {
-                        Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = SIDE_THUMB)
-                        count(Color.White)
-                    }
+                    strip(Modifier.align(Alignment.BottomStart).windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Start)))
                 }
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxHeight()
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
+                        .background(barColor, RoundedCornerShape(topStart = BAR_RADIUS, bottomStart = BAR_RADIUS))
                         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical))
-                        .padding(horizontal = 12.dp, vertical = 16.dp),
+                        .padding(horizontal = BAR_SIDE, vertical = BAR_ENDS),
                 ) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.TopCenter) { next() }
                     shutter()
@@ -248,24 +252,22 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
                 }
             }
         } else {
-            CameraPreview(granted, capture, request)
-            CameraTop(onBack, Modifier.statusBarsPadding())
-            // Bottom: thumbnails, then three equal zones (gallery · shutter · next) so the shutter
-            // stays centered and full size at any font scale.
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                    .navigationBarsPadding()
-                    .padding(16.dp),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, modifier = Modifier.weight(1f, fill = false))
-                    count(MaterialTheme.colorScheme.onSurfaceVariant)
+            // Portrait: the same bar along the bottom: gallery · shutter · Next in three equal zones,
+            // so the shutter stays centered and full size at any font scale.
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxWidth()) {
+                    CameraPreview(granted, capture, request)
+                    CameraTop(onBack, Modifier.statusBarsPadding())
+                    strip(Modifier.align(Alignment.BottomStart))
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(barColor, RoundedCornerShape(topStart = BAR_RADIUS, topEnd = BAR_RADIUS))
+                        .navigationBarsPadding()
+                        .padding(horizontal = BAR_ENDS, vertical = BAR_SIDE),
+                ) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { gallery() }
                     shutter()
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { next() }
@@ -320,8 +322,13 @@ private fun CameraTop(onBack: () -> Unit, modifier: Modifier) {
 /** Lighter than [SCRIM]: the tip is there to glance at, not to read first. */
 private val TIP_SCRIM = Color.Black.copy(alpha = 0.35f)
 
-/** Thumbnails over the landscape preview: smaller, so they cover little of it. */
-private val SIDE_THUMB = 56.dp
+/** Thumbnails over the preview: small, so they cover little of it. */
+private val THUMB = 56.dp
+
+/** The button bar, the same in both orientations: corner radius, padding across it and at its ends. */
+private val BAR_RADIUS = 28.dp
+private val BAR_SIDE = 12.dp
+private val BAR_ENDS = 16.dp
 
 /** Translucent black behind text and buttons over the camera image. */
 private val SCRIM = Color.Black.copy(alpha = 0.55f)
