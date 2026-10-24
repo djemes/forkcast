@@ -18,9 +18,6 @@
     <string name="water_containers_body">O que a gota de água em Hoje pode adicionar. A gota adiciona o último usado; a seta ao lado mostra os quatro.</string>
     <string name="water_title">Água</string>
     <string name="water_progress">%1$s / %2$s</string>
-    <string name="water_add_glass">+ copo</string>
-    <string name="water_add_glass_description">Adicionar um copo de água (%1$s)</string>
-    <string name="water_remove_last">Remover o último registro de água</string>
     <string name="water_other_amount">Outra quantidade</string>
     <string name="water_amount_field">Quantidade (%1$s)</string>
     <string name="water_add">Adicionar</string>

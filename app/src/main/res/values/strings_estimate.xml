@@ -14,7 +14,6 @@
     <string name="describe_food_name">Food name</string>
     <string name="describe_from_search">Describe it to AI</string>
     <string name="describe_from_search_body">Not finding it? The AI can estimate “%1$s”.</string>
-    <string name="describe_needs_ai">Set up an AI profile in Settings → AI to describe meals.</string>
     <string name="badge_ai_text">AI · text</string>
     <string name="badge_ai_text_review">AI · text · review</string>
 
@@ -45,7 +44,7 @@
     <string name="stage_trying_next">Trying %1$s</string>
     <string name="stage_matching">Matching the foods to USDA</string>
     <string name="stage_retry_waiting">Waiting to retry</string>
-    <string name="stage_retry_when">Try %1$d of %2$d done. Next try at %3$s.</string>
+    <string name="stage_retry_when">Tries so far: %1$d/%2$d. Next try at %3$s.</string>
     <string name="stage_quota">Out of AI quota</string>
     <string name="stage_quota_when">Every profile is out of quota. Next try at %1$s, when it resets.</string>
     <string name="stage_offline">Waiting for a connection</string>
@@ -89,7 +88,7 @@
     <string name="details_model">Model: %1$s</string>
     <string name="details_prompt">Prompt: %1$s</string>
     <string name="details_latency">Answer took %1$s</string>
-    <string name="details_tokens">Tokens: %1$d in, %2$d out</string>
+    <string name="details_tokens">Tokens in: %1$d · out: %2$d</string>
     <string name="details_requests">Requests, newest first</string>
     <string name="details_request_line">%1$s · %2$s (%3$s) · %4$s · %5$s</string>
     <string name="details_retry_after">asked to wait %1$s</string>

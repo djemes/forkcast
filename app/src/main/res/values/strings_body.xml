@@ -18,9 +18,6 @@
     <string name="water_containers_body">What the water drop on Today can add. The drop adds the one you used last; the arrow next to it shows all four.</string>
     <string name="water_title">Water</string>
     <string name="water_progress">%1$s / %2$s</string>
-    <string name="water_add_glass">+ glass</string>
-    <string name="water_add_glass_description">Add a glass of water (%1$s)</string>
-    <string name="water_remove_last">Remove last water entry</string>
     <string name="water_other_amount">Other amount</string>
     <string name="water_amount_field">Amount (%1$s)</string>
     <string name="water_add">Add</string>

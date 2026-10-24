@@ -60,10 +60,8 @@
     <string name="review_delete_body">As fotos dela e o item no registro são removidos.</string>
     <string name="review_photo_open">Abrir foto</string>
     <string name="review_photo_close">Fechar foto</string>
-    <string name="review_retry">Tentar de novo</string>
     <string name="review_warnings">Ajustado: %1$s</string>
     <string name="review_photo">Foto da refeição %1$d</string>
-    <string name="review_running">A IA está trabalhando nisso. Você pode sair desta tela.</string>
     <string name="review_no_profile">Nenhum perfil de IA pôde ser usado. Confira Configurações → IA.</string>
     <string name="review_disabled">As estimativas por foto estão desligadas em Configurações → IA.</string>
 </resources>

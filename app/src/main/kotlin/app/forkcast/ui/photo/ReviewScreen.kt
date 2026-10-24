@@ -380,7 +380,7 @@ private fun portionLabel(p: Double): String = when (p) {
  */
 @Composable
 private fun StatusCard(stage: EstimateStage, e: AiEstimateEntity, now: Long) {
-    val res = LocalContext.current.resources
+    val res = androidx.compose.ui.platform.LocalResources.current
     val failed = stage is EstimateStage.Failed
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -444,7 +444,7 @@ private fun StatusCard(stage: EstimateStage, e: AiEstimateEntity, now: Long) {
 /** Headline and detail line for a stage, in plain words. */
 @Composable
 private fun stageText(stage: EstimateStage, e: AiEstimateEntity, now: Long): Pair<String, String?> {
-    val res = LocalContext.current.resources
+    val res = androidx.compose.ui.platform.LocalResources.current
     return when (stage) {
         EstimateStage.Starting -> stringResource(R.string.stage_starting) to stringResource(R.string.stage_starting_body)
         is EstimateStage.Asking -> {
@@ -619,7 +619,7 @@ fun BackupModelCard(modelName: String, fromProfile: String, onAdd: () -> Unit) {
 @Composable
 private fun DetailsSection(e: AiEstimateEntity) {
     if (e.attemptLog.isEmpty() && e.model == null) return
-    val res = LocalContext.current.resources
+    val res = androidx.compose.ui.platform.LocalResources.current
     var open by rememberSaveable { mutableStateOf(false) }
     Column(Modifier.fillMaxWidth()) {
         Row(

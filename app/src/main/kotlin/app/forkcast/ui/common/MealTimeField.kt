@@ -46,7 +46,7 @@ fun mealTimeText(minute: Int): String {
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MealTimeField(minute: Int, onChange: (Int) -> Unit, latestMinute: Int? = null, modifier: Modifier = Modifier, label: String? = null) {
+fun MealTimeField(minute: Int, onChange: (Int) -> Unit, modifier: Modifier = Modifier, latestMinute: Int? = null, label: String? = null) {
     var open by rememberSaveable { mutableStateOf(false) }
     Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(label ?: stringResource(R.string.meal_time_label), style = MaterialTheme.typography.titleSmall)

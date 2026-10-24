@@ -275,7 +275,33 @@ class AiSettingsTest {
 
     // ---- Saved keys: masked, show/hide, copy (owner request 2026-10-19).
 
+    /** Unlocked (the unlock prompt succeeded on this screen): the key can be shown and copied. */
     @Test fun savedKeyIsMaskedUntilShown() {
+        val gate = app.forkcast.ui.common.KeyGate().apply { open() }
+        compose.setContent {
+            ForkcastTheme {
+                androidx.compose.runtime.CompositionLocalProvider(app.forkcast.ui.common.LocalKeyGate provides gate) {
+                    AiProfileEditScreen(
+                        state = AiProfileEditUiState(loaded = true, isNew = false, provider = ProviderId.CLAUDE, model = "claude-sonnet-5-5", name = "Claude", hasSavedKey = true, savedKey = SecretText("sk-ant-api03-secret-tail1234")),
+                        onEvent = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+        compose.onNodeWithText("sk-ant-api03-secret-tail1234").assertDoesNotExist()
+        compose.onNodeWithText("••••••••••••1234").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Show key").performClick()
+        compose.onNodeWithText("sk-ant-api03-secret-tail1234").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Copy key").assertIsDisplayed()
+        compose.onNodeWithText("Replace key").assertIsDisplayed()
+    }
+
+    /**
+     * Owner, 2026-10-23: showing a key needs Android's unlock. Without a screen lock (Robolectric's
+     * phone has none) the key stays masked and the dialog explains.
+     */
+    @Test fun savedKeyNeedsUnlockAndAScreenLock() {
         compose.setContent {
             ForkcastTheme {
                 AiProfileEditScreen(
@@ -285,12 +311,22 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithText("sk-ant-api03-secret-tail1234").assertDoesNotExist()
-        compose.onNodeWithText("••••••••••••1234").assertIsDisplayed()
         compose.onNodeWithContentDescription("Show key").performClick()
-        compose.onNodeWithText("sk-ant-api03-secret-tail1234").assertIsDisplayed()
-        compose.onNodeWithContentDescription("Copy key").assertIsDisplayed()
-        compose.onNodeWithText("Replace key").assertIsDisplayed()
+        compose.onNodeWithText("Set a screen lock first").assertIsDisplayed()
+        compose.onNodeWithText("sk-ant-api03-secret-tail1234").assertDoesNotExist()
+        compose.onAllNodesWithText("Cancel").filterToOne(hasAnyAncestor(isDialog())).performClick()
+        compose.onNodeWithContentDescription("Copy key").performClick()
+        compose.onNodeWithText("Set a screen lock first").assertIsDisplayed()
+    }
+
+    @Test fun keyGateClosesAfterAMinute() {
+        val gate = app.forkcast.ui.common.KeyGate()
+        gate.open(now = 1_000)
+        assertThat(gate.isOpen(now = 60_999)).isTrue()
+        assertThat(gate.isOpen(now = 61_000)).isFalse()
+        gate.open(now = 1_000)
+        gate.close()
+        assertThat(gate.isOpen(now = 2_000)).isFalse()
     }
 
     @Test fun secretTextNeverPrintsItsValue() {

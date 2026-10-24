@@ -14,7 +14,6 @@
     <string name="describe_food_name">Nome do alimento</string>
     <string name="describe_from_search">Descrever para a IA</string>
     <string name="describe_from_search_body">Não encontrou? A IA pode estimar “%1$s”.</string>
-    <string name="describe_needs_ai">Configure um perfil de IA em Configurações → IA para descrever refeições.</string>
     <string name="badge_ai_text">IA · texto</string>
     <string name="badge_ai_text_review">IA · texto · revisar</string>
 
@@ -45,7 +44,7 @@
     <string name="stage_trying_next">Tentando %1$s</string>
     <string name="stage_matching">Associando os alimentos ao USDA</string>
     <string name="stage_retry_waiting">Esperando para tentar de novo</string>
-    <string name="stage_retry_when">Tentativa %1$d de %2$d feita. Próxima às %3$s.</string>
+    <string name="stage_retry_when">Tentativas até agora: %1$d/%2$d. Próxima às %3$s.</string>
     <string name="stage_quota">Cota de IA esgotada</string>
     <string name="stage_quota_when">Todos os perfis estão sem cota. Próxima tentativa às %1$s, quando a cota renovar.</string>
     <string name="stage_offline">Esperando conexão</string>
@@ -89,7 +88,7 @@
     <string name="details_model">Modelo: %1$s</string>
     <string name="details_prompt">Prompt: %1$s</string>
     <string name="details_latency">A resposta levou %1$s</string>
-    <string name="details_tokens">Tokens: %1$d de entrada, %2$d de saída</string>
+    <string name="details_tokens">Tokens de entrada: %1$d · de saída: %2$d</string>
     <string name="details_requests">Requisições, mais recentes primeiro</string>
     <string name="details_request_line">%1$s · %2$s (%3$s) · %4$s · %5$s</string>
     <string name="details_retry_after">pediu para esperar %1$s</string>

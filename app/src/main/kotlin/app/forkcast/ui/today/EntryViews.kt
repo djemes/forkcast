@@ -228,7 +228,7 @@ fun EntryRow(
  */
 @Composable
 fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit) {
-    val res = androidx.compose.ui.platform.LocalContext.current.resources
+    val res = androidx.compose.ui.platform.LocalResources.current
     // Re-read every 30 s so "next try at" turns into "Starting" without waiting for a database change.
     var now by androidx.compose.runtime.remember { androidx.compose.runtime.mutableLongStateOf(System.currentTimeMillis()) }
     androidx.compose.runtime.LaunchedEffect(p.estimate.updatedAt) {

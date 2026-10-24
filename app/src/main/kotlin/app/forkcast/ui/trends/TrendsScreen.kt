@@ -199,7 +199,8 @@ private fun MealTimingCard(s: TrendsUiState, f: UnitFormatter) {
     Card(R.string.timing_title) {
         val t = s.timing
         if (t == null) {
-            Note(stringResource(R.string.timing_not_enough, app.forkcast.core.domain.MealTiming.MIN_DAYS))
+            val n = app.forkcast.core.domain.MealTiming.MIN_DAYS
+            Note(pluralStringResource(R.plurals.timing_not_enough, n, n))
             return@Card
         }
         t.meals.forEach { m ->
