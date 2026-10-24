@@ -14,6 +14,8 @@ android {
         minSdk = 29
         targetSdk = 37
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        // The app's shipped distribution (app/build.gradle.kts).
+        missingDimensionStrategy("distribution", "github")
     }
 
     compileOptions {

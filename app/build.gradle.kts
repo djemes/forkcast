@@ -43,6 +43,11 @@ fun signingValue(propKey: String, envKey: String): String? =
 val releaseStoreFile: File? = signingValue("storeFile", "FORKCAST_KEYSTORE_FILE")?.let { File(it) }?.takeIf { it.isFile }
 val hasReleaseKey = releaseStoreFile != null
 
+// ---- Distribution (roadmap 2.0, task 1.2): `github` is the only channel that ships. `play` is
+// prepared for a later Google Play build (no in-app updater, no in-app donation link) and its
+// variants exist only with -Pforkcast.play, so every build, test and lint command stays one variant.
+val playEnabled = providers.gradleProperty("forkcast.play").isPresent
+
 android {
     namespace = "app.forkcast"
     compileSdk = 37
@@ -54,6 +59,19 @@ android {
         versionCode = gitCommitCount
         versionName = appVersionName
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    flavorDimensions += "distribution"
+    productFlavors {
+        create("github") {
+            dimension = "distribution"
+            isDefault = true
+            buildConfigField("String", "DISTRIBUTION", "\"github\"")
+        }
+        create("play") {
+            dimension = "distribution"
+            buildConfigField("String", "DISTRIBUTION", "\"play\"")
+        }
     }
 
     signingConfigs {
@@ -110,6 +128,19 @@ android {
         localeFilters += listOf("en", "pt-rBR")
     }
 }
+
+androidComponents {
+    beforeVariants { if (it.productFlavors.any { (_, flavor) -> flavor == "play" } && !playEnabled) it.enable = false }
+}
+
+// The one shipped flavor keeps the flavor-less task names that CLAUDE.md, CI and the memory notes use
+// (without these, `./gradlew testDebugUnitTest lintDebug` would quietly skip :app).
+mapOf(
+    "testDebugUnitTest" to "testGithubDebugUnitTest",
+    "lintDebug" to "lintGithubDebug",
+    "installDebug" to "installGithubDebug",
+    "connectedDebugAndroidTest" to "connectedGithubDebugAndroidTest",
+).forEach { (alias, task) -> tasks.register(alias) { dependsOn(task) } }
 
 // Baseline Profile (SPEC §9): generated on the emulator on demand and committed, so release
 // builds (CI included) use it without a device.

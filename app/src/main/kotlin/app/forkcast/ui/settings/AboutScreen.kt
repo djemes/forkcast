@@ -35,6 +35,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.BuildConfig
+import app.forkcast.Distribution
 import app.forkcast.R
 import app.forkcast.core.data.update.ApkProblem
 import app.forkcast.core.data.update.Download
@@ -119,7 +120,11 @@ fun AboutRoute(onBack: () -> Unit, viewModel: AboutViewModel = hiltViewModel()) 
         versionName = BuildConfig.VERSION_NAME,
         versionCode = BuildConfig.VERSION_CODE,
         onBack = onBack,
-        updates = UpdateSection(ui, installer, token, viewModel::check, viewModel::download, viewModel::install, viewModel::saveToken, viewModel::removeToken),
+        updates = if (Distribution.current.hasUpdater) {
+            UpdateSection(ui, installer, token, viewModel::check, viewModel::download, viewModel::install, viewModel::saveToken, viewModel::removeToken)
+        } else {
+            null
+        },
     )
 }
 

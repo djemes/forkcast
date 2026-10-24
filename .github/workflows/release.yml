@@ -46,7 +46,7 @@ jobs:
       - name: Verify signature and name the APK
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
-          APK=app/build/outputs/apk/release/app-release.apk
+          APK=app/build/outputs/apk/github/release/app-github-release.apk
           BUILD_TOOLS="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
           "$BUILD_TOOLS/apksigner" verify --print-certs "$APK"
           cp "$APK" "forkcast-$VERSION.apk"

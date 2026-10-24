@@ -27,7 +27,7 @@ include(":core:model")
 include(":core:domain")
 include(":core:data")
 include(":core:network")
-// Generates the Baseline Profile (app/src/release/generated/baselineProfiles/) on the emulator.
+// Generates the Baseline Profile (app/src/githubRelease/generated/baselineProfiles/) on the emulator.
 include(":baselineprofile")
 
 // Development only: a stand-in for Samsung Health that writes test data into the emulator's
