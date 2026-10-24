@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.ui.text.style.TextAlign
@@ -203,47 +202,49 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
             Text(stringResource(R.string.photo_next), maxLines = 1)
         }
     }
-    val count: @Composable () -> Unit = {
+    val count: @Composable (Color) -> Unit = { color ->
         Text(
             stringResource(R.string.photo_count, state.photos.size),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            color = color,
             textAlign = TextAlign.Center,
         )
     }
 
     BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
         if (maxWidth > maxHeight) {
-            // Landscape (owner, 2026-10-24): the preview beside a bar on the right, the bottom bar
-            // turned on its side: Next at the top, the shutter centered, the gallery at the bottom.
+            // Landscape (owner, 2026-10-24; narrower 2026-10-25): the preview beside a slim bar on the
+            // right with only the buttons (Next at the top, the shutter centered, the gallery at the
+            // bottom); the thumbnails and count float over the preview's bottom edge.
             Row(Modifier.fillMaxSize()) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     CameraPreview(granted, capture, request)
                     CameraTop(onBack, Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Start)))
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier
+                            .align(Alignment.BottomStart)
+                            .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Start))
+                            .padding(8.dp)
+                            .background(SCRIM, RoundedCornerShape(16.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp),
+                    ) {
+                        Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = SIDE_THUMB)
+                        count(Color.White)
+                    }
                 }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .fillMaxHeight()
                         .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
                         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical))
-                        .padding(16.dp),
+                        .padding(horizontal = 12.dp, vertical = 16.dp),
                 ) {
-                    // The same width with or without photos, so the preview doesn't jump when one is added.
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                        modifier = Modifier.width(SIDE_THUMB + 20.dp).fillMaxHeight().verticalScroll(rememberScrollState()),
-                    ) {
-                        Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = SIDE_THUMB, vertical = true)
-                        count()
-                    }
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxHeight()) {
-                        Box(Modifier.weight(1f), contentAlignment = Alignment.TopCenter) { next() }
-                        shutter()
-                        Box(Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) { gallery() }
-                    }
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.TopCenter) { next() }
+                    shutter()
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) { gallery() }
                 }
             }
         } else {
@@ -262,7 +263,7 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, modifier = Modifier.weight(1f, fill = false))
-                    count()
+                    count(MaterialTheme.colorScheme.onSurfaceVariant)
                 }
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { gallery() }
@@ -319,7 +320,7 @@ private fun CameraTop(onBack: () -> Unit, modifier: Modifier) {
 /** Lighter than [SCRIM]: the tip is there to glance at, not to read first. */
 private val TIP_SCRIM = Color.Black.copy(alpha = 0.35f)
 
-/** Thumbnails in the landscape side bar, smaller so three fit beside the shutter. */
+/** Thumbnails over the landscape preview: smaller, so they cover little of it. */
 private val SIDE_THUMB = 56.dp
 
 /** Translucent black behind text and buttons over the camera image. */
@@ -330,7 +331,7 @@ private val SCRIM = Color.Black.copy(alpha = 0.55f)
  * the corner (24 dp to see, 48 dp to touch) so it never covers the photo.
  */
 @Composable
-private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit, modifier: Modifier = Modifier, size: Dp = 64.dp, vertical: Boolean = false) {
+private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit, modifier: Modifier = Modifier, size: Dp = 64.dp) {
     if (photos.isEmpty()) return
     val items: @Composable () -> Unit = {
         photos.forEachIndexed { i, uri ->
@@ -368,8 +369,7 @@ private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit, modifier: Mod
             }
         }
     }
-    if (vertical) Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) { items() }
-    else Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) { items() }
+    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) { items() }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)

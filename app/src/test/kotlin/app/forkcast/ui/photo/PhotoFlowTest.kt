@@ -258,20 +258,21 @@ class PhotoFlowTest {
     }
 
     @Config(qualifiers = "w891dp-h411dp-land")
-    @Test fun landscapePutsTheControlsInABarOnTheRight() {
+    @Test fun landscapePutsTheButtonsInASlimBarOnTheRight() {
         capture(captureState)
         val width = compose.onRoot().getUnclippedBoundsInRoot().right
         val next = compose.onNodeWithText("Next").assertIsDisplayed().getUnclippedBoundsInRoot()
         val shutter = compose.onNodeWithContentDescription("Take photo").assertIsDisplayed().getUnclippedBoundsInRoot()
         val gallery = compose.onNodeWithContentDescription("Choose from gallery").assertIsDisplayed().getUnclippedBoundsInRoot()
-        val thumb = compose.onNodeWithContentDescription("Remove photo 1").assertIsDisplayed().getUnclippedBoundsInRoot()
-        // All in the right-hand part of the screen, top to bottom: Next, shutter, gallery.
-        listOf(next, shutter, gallery, thumb).forEach { assertThat(it.left.value).isGreaterThan(width.value * 0.6f) }
+        // Only the buttons in the bar: it takes little of the width (owner, 2026-10-25: "too wide").
+        listOf(next, shutter, gallery).forEach { assertThat(it.left.value).isGreaterThan(width.value * 0.8f) }
         assertThat(next.bottom.value).isAtMost(shutter.top.value)
         assertThat(shutter.bottom.value).isAtMost(gallery.top.value)
-        // The tip stays over the preview, left of the bar.
+        // Thumbnails, count and tip sit over the preview, left of the bar.
+        val thumb = compose.onNodeWithContentDescription("Remove photo 1").assertIsDisplayed().getUnclippedBoundsInRoot()
+        val count = compose.onNodeWithText("1 of 3 photos").assertIsDisplayed().getUnclippedBoundsInRoot()
         val tip = compose.onNodeWithText("Fit the whole plate", substring = true).assertIsDisplayed().getUnclippedBoundsInRoot()
-        assertThat(tip.right.value).isAtMost(thumb.left.value)
+        listOf(thumb, count, tip).forEach { assertThat(it.right.value).isAtMost(shutter.left.value) }
     }
 
     @Test fun portraitKeepsTheBottomBar() {
