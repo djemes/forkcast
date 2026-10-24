@@ -178,28 +178,14 @@ class FolderBackupRepositoryTest {
         assertThat(last.sizeBytes).isEqualTo(1234)
     }
 
-    @Test fun driveNoticeShowsOnlyIfDriveBackupWasOnAndGoesOnceAnswered() = runTest {
-        assertThat(repo.notice.first()).isNull()
-        device.update { it.copy(driveBackupWasOn = true, firstSeenAt = clock.millis()) }
-        assertThat(repo.notice.first()).isEqualTo(BackupNotice.DRIVE_REPLACED)
-        // Drive was connected but its automatic backup was off: nothing was lost, no notice.
-        repo.updateSettings { it.copy(auto = false) }
-        assertThat(repo.notice.first()).isNull()
-        repo.updateSettings { it.copy(auto = true) }
-        chosen()
-        assertThat(repo.notice.first()).isNull()
-        assertThat(device.state.value.driveBackupWasOn).isFalse()
-    }
-
     @Test fun reminderAfterFourteenDaysWithoutABackup() = runTest {
         val day = 24L * 3600 * 1000
         device.update { it.copy(firstSeenAt = clock.millis() - 15 * day) }
         assertThat(repo.notice.first()).isEqualTo(BackupNotice.REMINDER)
         repo.dismissNotice(BackupNotice.REMINDER)
         assertThat(repo.notice.first()).isNull()
-        device.update { it.copy(backupReminderDismissedAt = null, lastDriveBackupAt = clock.millis() - 3 * day) }
+        device.update { it.copy(backupReminderDismissedAt = null, lastBackup = app.forkcast.core.data.settings.LastBackup(clock.millis() - 3 * day, "b", null, null)) }
         assertThat(repo.notice.first()).isNull()
-        device.update { it.copy(lastDriveBackupAt = null) }
         repo.updateSettings { it.copy(reminder = false) }
         assertThat(repo.notice.first()).isNull()
     }

@@ -219,7 +219,7 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
                 else -> Unit
             }
 
-            Column(Modifier.padding(top = 16.dp)) {
+            Column(Modifier.padding(top = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 ToggleRow(stringResource(R.string.update_auto), stringResource(R.string.update_auto_detail), state.options.auto, actions.setAuto)
                 ToggleRow(stringResource(R.string.update_beta), stringResource(R.string.update_beta_detail), state.options.beta, actions.setBeta)
             }

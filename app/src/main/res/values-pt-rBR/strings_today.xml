@@ -121,9 +121,6 @@
     <string name="budget_fit_add">Adicionar %1$s a %2$s</string>
     <string name="budget_saved_meal">Refeição salva</string>
     <!-- Backup card (roadmap 2.0, task 1.4) -->
-    <string name="backup_notice_drive_title">O backup no Google Drive foi substituído</string>
-    <string name="backup_notice_drive_body">Agora os backups vão para uma pasta que você escolhe: neste celular, num cartão SD ou na pasta de um app de nuvem como o Google Drive. Seus backups antigos no Drive continuam onde estão.</string>
-    <string name="backup_notice_set_up">Configurar backup</string>
     <string name="backup_notice_reminder_title">Hora de um backup</string>
     <string name="backup_notice_reminder_body">Faz duas semanas que não há um backup. Seus dados ficam só neste celular.</string>
     <string name="backup_notice_back_up">Fazer backup</string>

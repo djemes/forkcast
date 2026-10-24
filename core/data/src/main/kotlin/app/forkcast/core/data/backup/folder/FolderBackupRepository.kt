@@ -73,8 +73,6 @@ enum class NotRestorable {
 
 /** What Today says about backups, if anything. */
 enum class BackupNotice {
-    /** Drive backup was on in 1.4 and is gone: set up the folder backup (once). */
-    DRIVE_REPLACED,
     /** No backup for [BackupReminder.DAYS] days. */
     REMINDER,
 }
@@ -89,7 +87,7 @@ data class CleanupResult(val deleted: Int, val failed: Int, val kept: FolderFile
  */
 interface FolderBackupRepository {
     val status: Flow<FolderStatus>
-    /** Today's backup card: the one-time Drive notice first, then the reminder. */
+    /** Today's backup card: the no-backup reminder. */
     val notice: Flow<BackupNotice?>
     suspend fun dismissNotice(notice: BackupNotice)
     /** The picker returned [tree]: keep access to it and use it from now on. */
@@ -136,9 +134,8 @@ class DefaultFolderBackupRepository @Inject constructor(
 
     override val notice: Flow<BackupNotice?> = combine(device.state, settings.settings) { d, s ->
         when {
-            d.driveBackupWasOn && s.backup.auto -> BackupNotice.DRIVE_REPLACED
             s.backup.reminder && BackupReminder.due(
-                lastBackup = (d.lastBackup?.at ?: d.lastDriveBackupAt)?.let(Instant::ofEpochMilli),
+                lastBackup = d.lastBackup?.at?.let(Instant::ofEpochMilli),
                 firstSeen = d.firstSeenAt?.let(Instant::ofEpochMilli),
                 dismissedAt = d.backupReminderDismissedAt?.let(Instant::ofEpochMilli),
                 now = clock.instant(),
@@ -149,7 +146,6 @@ class DefaultFolderBackupRepository @Inject constructor(
 
     override suspend fun dismissNotice(notice: BackupNotice) = device.update {
         when (notice) {
-            BackupNotice.DRIVE_REPLACED -> it.copy(driveBackupWasOn = false)
             BackupNotice.REMINDER -> it.copy(backupReminderDismissedAt = clock.millis())
         }
     }
@@ -162,8 +158,7 @@ class DefaultFolderBackupRepository @Inject constructor(
             return@withContext FolderProblem.FOLDER_LOST
         }
         if (old != null && old != tree) folder.release(old)
-        // Choosing a folder answers the Drive notice too.
-        device.update { it.copy(backupFolder = tree, backupFolderName = folder.displayName(tree), lastBackupError = null, backupFailures = 0, driveBackupWasOn = false) }
+        device.update { it.copy(backupFolder = tree, backupFolderName = folder.displayName(tree), lastBackupError = null, backupFailures = 0) }
         null
     }
 

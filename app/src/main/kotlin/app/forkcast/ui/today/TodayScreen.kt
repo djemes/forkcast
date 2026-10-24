@@ -388,7 +388,6 @@ fun TodayScreen(
                         item(key = "backup-notice") {
                           TodayItem("backup-notice", i) {
                             BackupNoticeCard(
-                                backupNotice,
                                 onOpen = actions.openBackup,
                                 onDismiss = { onBackupNoticeDismissed(backupNotice) },
                             )

@@ -30,13 +30,6 @@ data class DeviceState(
     val backupFailures: Int = 0,
     /** The no-backup reminder on Today was dismissed at this time (epoch ms); it comes back after another 14 days. */
     val backupReminderDismissedAt: Long? = null,
-    /**
-     * 1.0–1.4 had Google Drive backup connected on this phone (its account key is still here):
-     * Today shows the one-time "Drive backup was replaced" notice until it's dismissed.
-     */
-    val driveBackupWasOn: Boolean = false,
-    /** When the last Drive backup ran (1.0–1.4), for the no-backup reminder. */
-    val lastDriveBackupAt: Long? = null,
     /** When Forkcast (1.5+) first ran on this phone: the reminder counts from here before any backup. */
     val firstSeenAt: Long? = null,
     /** The release tag the update check last notified about, so each version notifies once. */
@@ -66,9 +59,8 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             putOrRemove(LAST_ERROR, next.lastBackupError)
             putInt(FAILURES, next.backupFailures)
             putOrRemove(REMINDER_DISMISSED, next.backupReminderDismissedAt)
-            // Drive backup (1.0–1.4): only its "was connected" mark and last time stay, until the notice goes.
-            if (!next.driveBackupWasOn) DRIVE_KEYS.forEach(::remove)
-            putOrRemove(DRIVE_LAST_BACKUP, next.lastDriveBackupAt)
+            // Google Drive backup (1.0–1.4) is gone; so is its per-phone state.
+            DRIVE_KEYS.forEach(::remove)
             putOrRemove(FIRST_SEEN, next.firstSeenAt)
             putOrRemove(NOTIFIED_UPDATE, next.notifiedUpdate)
             // The camera tips' open/closed state (1.3–1.4) is gone; drop it from phones that have it.
@@ -97,8 +89,6 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         lastBackupError = prefs.getString(LAST_ERROR, null),
         backupFailures = prefs.getInt(FAILURES, 0),
         backupReminderDismissedAt = long(REMINDER_DISMISSED),
-        driveBackupWasOn = prefs.getString(DRIVE_ACCOUNT, null) != null,
-        lastDriveBackupAt = long(DRIVE_LAST_BACKUP),
         firstSeenAt = long(FIRST_SEEN),
         notifiedUpdate = prefs.getString(NOTIFIED_UPDATE, null),
     )
@@ -119,9 +109,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         private const val FIRST_SEEN = "firstSeenAt"
         private const val NOTIFIED_UPDATE = "notifiedUpdate"
         // 1.0–1.4 Google Drive backup.
-        private const val DRIVE_ACCOUNT = "driveAccount"
-        private const val DRIVE_LAST_BACKUP = "lastDriveBackupAt"
-        private val DRIVE_KEYS = listOf(DRIVE_ACCOUNT, "driveFolderId", "lastDriveError")
+        private val DRIVE_KEYS = listOf("driveAccount", "driveFolderId", "lastDriveBackupAt", "lastDriveError")
         private const val CAMERA_WARNINGS = "cameraWarningsOpen"
     }
 }
