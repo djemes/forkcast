@@ -6,6 +6,8 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Barcode and nutrition-label scanning; asked for the first time the scanner opens. -->
     <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Unlock prompt before a saved key is shown or copied (fingerprint, face or screen lock). -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
     <uses-feature android:name="android.hardware.camera.any" android:required="false" />
     <!-- Asked in context: the first time a notification is turned on or a photo is estimated (SPEC §4.8). -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />

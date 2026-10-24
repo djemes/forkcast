@@ -100,6 +100,12 @@
     <string name="key_saved_encrypted">Stored encrypted. Only the passphrase-protected settings export includes it.</string>
     <string name="key_copy">Copy key</string>
     <string name="key_copied">Copied</string>
+    <string name="key_locked">Stored encrypted. Unlock with your fingerprint, face or screen lock to show or copy it.</string>
+    <string name="key_unlock_title">Unlock to see the key</string>
+    <string name="key_unlock_subtitle">%1$s</string>
+    <string name="key_no_lock_title">Set a screen lock first</string>
+    <string name="key_no_lock_body">Showing or copying a saved key needs your phone\'s screen lock (PIN, pattern, password, fingerprint or face), so nobody holding your phone can read it. You can still paste a new key without one.</string>
+    <string name="key_open_security">Open security settings</string>
     <string name="key_state_shown">Key shown</string>
     <string name="key_state_hidden">Key hidden</string>
     <string name="key_replace">Replace key</string>

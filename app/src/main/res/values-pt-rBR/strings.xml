@@ -103,6 +103,12 @@
     <string name="key_saved_encrypted">Guardada com criptografia. Só a exportação de configurações protegida por senha a inclui.</string>
     <string name="key_copy">Copiar chave</string>
     <string name="key_copied">Copiada</string>
+    <string name="key_locked">Guardada com criptografia. Desbloqueie com a digital, o rosto ou o bloqueio de tela para mostrar ou copiar.</string>
+    <string name="key_unlock_title">Desbloqueie para ver a chave</string>
+    <string name="key_unlock_subtitle">%1$s</string>
+    <string name="key_no_lock_title">Configure um bloqueio de tela primeiro</string>
+    <string name="key_no_lock_body">Mostrar ou copiar uma chave salva exige o bloqueio de tela do celular (PIN, padrão, senha, digital ou rosto), para que ninguém com seu celular na mão consiga lê-la. Você ainda pode colar uma chave nova sem ele.</string>
+    <string name="key_open_security">Abrir configurações de segurança</string>
     <string name="key_state_shown">Chave visível</string>
     <string name="key_state_hidden">Chave oculta</string>
     <string name="key_replace">Trocar chave</string>
