@@ -49,6 +49,26 @@ object NutrientTargets {
 
 /** US Daily Values for adults (FDA 2016 labeling rule), used as micronutrient targets. */
 object DailyValues {
+    /**
+     * The vitamins and minerals shown as "% Daily Value" next to their amount ("Vitamin C 45 mg ·
+     * 50%", owner 2026-10-23). Always the FDA value, whatever target the user set.
+     */
+    val reference: Map<NutrientKey, Double> = mapOf(
+        NutrientKey.VITAMIN_A_UG to 900.0,
+        NutrientKey.VITAMIN_C_MG to 90.0,
+        NutrientKey.VITAMIN_D_UG to 20.0,
+        NutrientKey.VITAMIN_B12_UG to 2.4,
+        NutrientKey.CALCIUM_MG to 1300.0,
+        NutrientKey.IRON_MG to 18.0,
+        NutrientKey.MAGNESIUM_MG to 420.0,
+        NutrientKey.POTASSIUM_MG to 4700.0,
+        NutrientKey.SODIUM_MG to 2300.0,
+    )
+
+    /** Whole percent of the Daily Value, or null for nutrients without one here. Under 0.5 % reads 0. */
+    fun percent(key: NutrientKey, amount: Double): Int? =
+        reference[key]?.let { dv -> Math.round(amount / dv * 100).toInt().coerceAtLeast(0) }
+
     val micronutrients = listOf(
         NutrientTarget(NutrientKey.CHOLESTEROL_MG, 300.0, TargetKind.LIMIT),
         NutrientTarget(NutrientKey.POTASSIUM_MG, 4700.0, TargetKind.GOAL),

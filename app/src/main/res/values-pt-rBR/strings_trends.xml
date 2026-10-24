@@ -70,6 +70,8 @@
     <string name="trends_nutrient_no_data">Sem dados</string>
     <string name="trends_nutrient_no_data_hint">Meta %1$s. Nenhum dos alimentos que você registrou informa este nutriente.</string>
     <string name="trends_nutrient_value">%1$s / %2$s · %3$d %%</string>
+    <string name="trends_nutrient_value_dv">%1$s / %2$s · %3$d %% VD</string>
+    <string name="trends_nutrient_value_target_dv">%1$s / %2$s · %3$d %% da sua meta · %4$d %% VD</string>
     <string name="trends_nutrient_partial">Só %1$d %% das suas calorias vieram de alimentos que informam este nutriente, então o número real provavelmente é maior.</string>
     <string name="trends_show_all">Mostrar todos os %d</string>
     <string name="trends_show_fewer">Mostrar menos</string>

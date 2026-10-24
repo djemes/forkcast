@@ -55,6 +55,7 @@ import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.repository.TrendsData
 import app.forkcast.core.data.repository.TrendsRepository
 import app.forkcast.core.domain.TrendPoint
+import app.forkcast.core.domain.DailyValues
 import app.forkcast.core.domain.Trends
 import app.forkcast.core.domain.WeighIn
 import app.forkcast.core.domain.WeightTrend
@@ -451,13 +452,15 @@ private fun NutrientRow(line: Trends.NutrientLine, f: UnitFormatter) {
             )
             return@Column
         }
+        // Vitamins and minerals: % of the Daily Value too (owner, 2026-10-23); it's the same number unless the target was changed.
+        val dv = DailyValues.percent(line.key, line.avg)
+        val dvAmount = DailyValues.reference[line.key]
         Text(
-            stringResource(
-                R.string.trends_nutrient_value,
-                formatNutrient(line.key, line.avg, f),
-                formatNutrient(line.key, line.target.amount, f),
-                (line.ratio * 100).roundToInt(),
-            ),
+            when {
+                dv == null -> stringResource(R.string.trends_nutrient_value, formatNutrient(line.key, line.avg, f), formatNutrient(line.key, line.target.amount, f), (line.ratio * 100).roundToInt())
+                dvAmount == line.target.amount -> stringResource(R.string.trends_nutrient_value_dv, formatNutrient(line.key, line.avg, f), formatNutrient(line.key, line.target.amount, f), dv)
+                else -> stringResource(R.string.trends_nutrient_value_target_dv, formatNutrient(line.key, line.avg, f), formatNutrient(line.key, line.target.amount, f), (line.ratio * 100).roundToInt(), dv)
+            },
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

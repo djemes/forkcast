@@ -31,12 +31,18 @@ data class AppSettings(
     val backup: BackupSettings = BackupSettings(),
 )
 
-/** Owner's defaults (2026-10-19): every night, any network, charging or not, data only (no photos). */
+/**
+ * Any network, charging or not, data only (no photos). Since 1.2 a new install starts weekly on
+ * Mondays around 3 am (owner, 2026-10-23); settings are stored with every field, so phones that
+ * already chose keep their choice.
+ */
 @Serializable
 data class BackupSettings(
     /** Back up automatically once Drive is connected on this phone. */
     val auto: Boolean = true,
-    val frequency: BackupFrequency = BackupFrequency.DAILY,
+    val frequency: BackupFrequency = BackupFrequency.WEEKLY,
+    /** Day of a weekly backup, ISO (1 = Monday). */
+    val weekday: Int = 1,
     val wifiOnly: Boolean = false,
     val chargingOnly: Boolean = false,
 )

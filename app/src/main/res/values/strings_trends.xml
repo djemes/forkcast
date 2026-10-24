@@ -66,6 +66,8 @@
     <string name="trends_nutrient_no_data">No data</string>
     <string name="trends_nutrient_no_data_hint">Target %1$s. None of the foods you logged list it.</string>
     <string name="trends_nutrient_value">%1$s / %2$s · %3$d %%</string>
+    <string name="trends_nutrient_value_dv">%1$s / %2$s · %3$d %% DV</string>
+    <string name="trends_nutrient_value_target_dv">%1$s / %2$s · %3$d %% of your target · %4$d %% DV</string>
     <string name="trends_nutrient_partial">Only %1$d %% of your calories came from foods that list this, so the real number is likely higher.</string>
     <string name="trends_show_all">Show all %d</string>
     <string name="trends_show_fewer">Show fewer</string>

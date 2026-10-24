@@ -33,6 +33,9 @@ import app.forkcast.R
 import app.forkcast.ui.common.rememberFill
 import app.forkcast.ui.theme.Motion
 import app.forkcast.core.domain.DailyTargets
+import app.forkcast.core.domain.DailyValues
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.TargetKind
 import app.forkcast.core.model.NutrientKey
@@ -76,6 +79,51 @@ fun formatNutrient(key: NutrientKey, amount: Double, f: UnitFormatter): String =
     NutrientUnit.G -> f.grams(amount)
     NutrientUnit.MG -> "${f.number(amount, if (amount < 10) 1 else 0)} mg"
     NutrientUnit.UG -> "${f.number(amount, if (amount < 10) 1 else 0)} µg"
+}
+
+/** "45 mg · 50%" for vitamins and minerals (% Daily Value), else just the amount. */
+fun formatNutrientDv(key: NutrientKey, amount: Double, f: UnitFormatter): String =
+    DailyValues.percent(key, amount)?.let { "${formatNutrient(key, amount, f)} · $it%" } ?: formatNutrient(key, amount, f)
+
+/**
+ * Every nutrient in [nutrients] with its amount, vitamins and minerals with their % Daily Value
+ * too. Shared by food detail, the entry sheet and the review screen so they read the same.
+ */
+@Composable
+fun NutrientList(nutrients: app.forkcast.core.model.Nutrients, f: UnitFormatter, modifier: Modifier = Modifier) {
+    Column(modifier) {
+        NutrientKey.entries.filter { it in nutrients && it != NutrientKey.WATER_G }.forEach { key ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
+                Text(nutrientName(key), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                Text(formatNutrientDv(key, nutrients.getValue(key), f), style = MaterialTheme.typography.labelLarge)
+            }
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        }
+        if (nutrients.keys.any { it in DailyValues.reference }) {
+            Text(
+                stringResource(R.string.nutrient_dv_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
+    }
+}
+
+/** "Nutrients" that opens to [NutrientList]. */
+@Composable
+fun NutrientsExpander(nutrients: app.forkcast.core.model.Nutrients, f: UnitFormatter) {
+    var open by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf(false) }
+    Column {
+        androidx.compose.material3.TextButton(onClick = { open = !open }) {
+            androidx.compose.material3.Icon(
+                androidx.compose.ui.res.painterResource(if (open) R.drawable.ic_expand_less else R.drawable.ic_expand_more),
+                contentDescription = null,
+            )
+            Text(stringResource(R.string.food_all_nutrients), modifier = Modifier.padding(start = 4.dp))
+        }
+        androidx.compose.animation.AnimatedVisibility(open) { NutrientList(nutrients, f) }
+    }
 }
 
 private fun numberOnly(key: NutrientKey, amount: Double, f: UnitFormatter): String =
@@ -158,11 +206,13 @@ fun NutrientPanelSheet(totals: DayTotals, targets: DailyTargets, f: UnitFormatte
                 if (target == null && eaten == 0.0) return@forEach
                 Row(Modifier.fillMaxWidth().padding(vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                     Text(nutrientName(key), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+                    // Vitamins and minerals also say how much of the Daily Value that is (owner, 2026-10-23).
+                    val dv = DailyValues.percent(key, eaten)?.let { " · $it%" }.orEmpty()
                     val right = when {
-                        target == null -> "${formatNutrient(key, eaten, f)} · ${stringResource(R.string.nutrient_no_target)}"
+                        target == null -> "${formatNutrient(key, eaten, f)}$dv · ${stringResource(R.string.nutrient_no_target)}"
                         target.kind == TargetKind.LIMIT ->
-                            "${numberOnly(key, eaten, f)} / ${formatNutrient(key, target.amount, f)} ${stringResource(R.string.nutrient_limit)}"
-                        else -> "${numberOnly(key, eaten, f)} / ${formatNutrient(key, target.amount, f)}"
+                            "${numberOnly(key, eaten, f)} / ${formatNutrient(key, target.amount, f)} ${stringResource(R.string.nutrient_limit)}$dv"
+                        else -> "${numberOnly(key, eaten, f)} / ${formatNutrient(key, target.amount, f)}$dv"
                     }
                     Text(right, style = MaterialTheme.typography.labelLarge)
                 }

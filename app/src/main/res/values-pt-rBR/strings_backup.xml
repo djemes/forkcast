@@ -100,6 +100,7 @@
     <string name="drive_auto_detail">À noite, por volta das 3h. Mantém os últimos 14 backups e um de cada um dos últimos 12 meses.</string>
     <string name="drive_daily">Todo dia</string>
     <string name="drive_weekly">Toda semana</string>
+    <string name="drive_weekly_on">%1$s, por volta das 3h</string>
     <string name="drive_wifi_only">Só no Wi-Fi</string>
     <string name="drive_charging_only">Só carregando</string>
     <string name="drive_backup_now">Fazer backup agora</string>

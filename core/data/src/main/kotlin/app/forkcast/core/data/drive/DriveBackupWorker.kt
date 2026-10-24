@@ -18,6 +18,7 @@ import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.settings.DevicePrefs
 import app.forkcast.core.domain.BackupRetention
 import app.forkcast.core.domain.NotificationRules
+import app.forkcast.core.model.BackupFrequency
 import app.forkcast.core.model.BackupSettings
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
@@ -90,9 +91,11 @@ class DriveBackupScheduler @Inject constructor(
             .setRequiredNetworkType(if (backup.wifiOnly) NetworkType.UNMETERED else NetworkType.CONNECTED)
             .setRequiresCharging(backup.chargingOnly)
             .build()
+        val now = ZonedDateTime.now(clock)
+        // First run at night (around 3 am; weekly: on the chosen weekday, Monday by default), then every period from there.
+        val delay = if (backup.frequency == BackupFrequency.WEEKLY) BackupRetention.delayUntilWeekday(now, backup.weekday) else BackupRetention.delayUntil(now)
         val request = PeriodicWorkRequestBuilder<DriveBackupWorker>(backup.frequency.days.toLong(), TimeUnit.DAYS)
-            // First run at night (around 3 am), then every period from there.
-            .setInitialDelay(BackupRetention.delayUntil(ZonedDateTime.now(clock)).toMinutes(), TimeUnit.MINUTES)
+            .setInitialDelay(delay.toMinutes(), TimeUnit.MINUTES)
             .setConstraints(constraints)
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)
             .build()

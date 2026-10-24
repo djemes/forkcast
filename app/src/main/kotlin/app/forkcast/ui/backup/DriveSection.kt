@@ -233,6 +233,12 @@ fun DriveSection(state: DriveUiState, actions: DriveActions) {
                         label = { Text(stringResource(R.string.drive_weekly)) },
                     )
                 }
+                if (s.settings.frequency == BackupFrequency.WEEKLY) {
+                    val day = java.time.DayOfWeek.of(s.settings.weekday.coerceIn(1, 7))
+                        .getDisplayName(java.time.format.TextStyle.FULL, androidx.compose.ui.platform.LocalLocale.current.platformLocale)
+                        .replaceFirstChar { it.titlecase() }
+                    Text(stringResource(R.string.drive_weekly_on, day), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 ToggleRow(stringResource(R.string.drive_wifi_only), null, s.settings.wifiOnly, actions.setWifiOnly)
                 ToggleRow(stringResource(R.string.drive_charging_only), null, s.settings.chargingOnly, actions.setChargingOnly)
             }

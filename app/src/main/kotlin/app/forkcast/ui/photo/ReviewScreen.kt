@@ -87,6 +87,7 @@ import app.forkcast.core.data.db.ComponentSource
 import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.kcal
+import app.forkcast.core.model.sumNutrients
 import app.forkcast.ui.ai.aiErrorMessage
 import app.forkcast.ui.common.DiscardChangesDialog
 import app.forkcast.ui.common.keyboardAware
@@ -250,6 +251,8 @@ private fun ReviewBody(state: ReviewUiState, e: AiEstimateEntity, f: UnitFormatt
         QuestionCard(q, onAnswer = { onEvent(ReviewEvent.Correct(it)) }, onAcceptAsIs = { onEvent(ReviewEvent.AcceptAsIs) })
     }
     PortionPicker(portion, plate.expected, f) { onEvent(ReviewEvent.SetPortion(it)) }
+    // What the entry gets: every component's nutrients × the portion, vitamins and minerals with % DV.
+    app.forkcast.ui.today.NutrientsExpander(components.map { it.nutrientsUsed }.sumNutrients().mapValues { (_, v) -> v * portion }, f)
     val (added, seen) = components.partition { it.isHiddenIngredient }
     seen.forEach { c -> key(c.id) { ComponentRow(c, f, onEvent) } }
     if (added.isNotEmpty()) {

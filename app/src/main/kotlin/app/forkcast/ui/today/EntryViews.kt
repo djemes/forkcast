@@ -411,13 +411,14 @@ fun EditEntrySheet(
             )
             val q = quantity
             if (q != null && q > 0 && entry.quantity > 0) {
-                // kcal from the snapshot, scaled by grams when a serving is known, else by quantity.
-                val kcal = if (serving != null && entry.grams != null && entry.grams!! > 0) {
-                    entry.nutrients.kcal * q * serving.grams / entry.grams!!
+                // The snapshot, scaled by grams when a serving is known, else by quantity.
+                val factor = if (serving != null && entry.grams != null && entry.grams!! > 0) {
+                    q * serving.grams / entry.grams!!
                 } else {
-                    entry.nutrients.kcal * q / entry.quantity
+                    q / entry.quantity
                 }
-                Text(f.energy(kcal), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                Text(f.energy(entry.nutrients.kcal * factor), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                NutrientsExpander(entry.nutrients.mapValues { (_, v) -> v * factor }, f)
             }
             Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

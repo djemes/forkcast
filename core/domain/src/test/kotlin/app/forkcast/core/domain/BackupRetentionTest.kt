@@ -56,4 +56,17 @@ class BackupRetentionTest {
         val fall = java.time.ZonedDateTime.of(2026, 11, 1, 0, 30, 0, 0, ny)
         assertThat(BackupRetention.delayUntil(fall)).isEqualTo(Duration.ofMinutes(3 * 60 + 30))
     }
+
+    /** New installs back up weekly on Mondays around 3 am (owner, 2026-10-23). */
+    @Test fun weeklyBackupWaitsForMondayNight() {
+        val zone = java.time.ZoneId.of("America/New_York")
+        // Friday 2026-10-23, 10 pm → Monday 2026-10-26, 3 am.
+        val friday = java.time.ZonedDateTime.of(2026, 10, 23, 22, 0, 0, 0, zone)
+        assertThat(BackupRetention.delayUntilWeekday(friday, 1)).isEqualTo(java.time.Duration.ofHours(53))
+        // Monday at 2 am → the same night at 3 am; at 4 am → next Monday.
+        val monday = java.time.ZonedDateTime.of(2026, 10, 26, 2, 0, 0, 0, zone)
+        assertThat(BackupRetention.delayUntilWeekday(monday, 1)).isEqualTo(java.time.Duration.ofHours(1))
+        assertThat(BackupRetention.delayUntilWeekday(monday.withHour(4), 1)).isEqualTo(java.time.Duration.ofDays(7).minusHours(1))
+        assertThat(app.forkcast.core.model.BackupSettings().frequency).isEqualTo(app.forkcast.core.model.BackupFrequency.WEEKLY)
+    }
 }

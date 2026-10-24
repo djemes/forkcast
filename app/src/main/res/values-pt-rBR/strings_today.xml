@@ -20,6 +20,7 @@
     <string name="nutrients_open">Mostrar todos os nutrientes</string>
     <string name="nutrients_title">Nutrientes de hoje</string>
     <string name="nutrient_no_target">sem meta</string>
+    <string name="nutrient_dv_note">% é a parte do Valor Diário (EUA, adultos) para vitaminas e minerais.</string>
     <string name="nutrient_limit">limite</string>
 
     <!-- Entries -->

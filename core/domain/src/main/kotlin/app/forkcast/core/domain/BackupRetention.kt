@@ -41,6 +41,13 @@ object BackupRetention {
         return Duration.between(now, next)
     }
 
+    /** Time until the next [at] on ISO [weekday] (1 = Monday) after [now], for weekly backups. */
+    fun delayUntilWeekday(now: ZonedDateTime, weekday: Int, at: LocalTime = NIGHT): Duration {
+        var next = now.with(at)
+        while (!next.isAfter(now) || next.dayOfWeek.value != weekday.coerceIn(1, 7)) next = next.plusDays(1)
+        return Duration.between(now, next)
+    }
+
     /** A backup is overdue (worth a notification) after twice its period without a success. */
     fun overdue(lastSuccess: Instant?, connectedSince: Instant, periodDays: Int, now: Instant): Boolean {
         val since = lastSuccess ?: connectedSince

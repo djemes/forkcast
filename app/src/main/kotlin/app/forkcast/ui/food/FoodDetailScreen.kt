@@ -213,17 +213,7 @@ fun FoodDetailScreen(
                 Icon(painterResource(if (showAll) R.drawable.ic_expand_less else R.drawable.ic_expand_more), contentDescription = null)
                 Text(stringResource(R.string.food_all_nutrients), modifier = Modifier.padding(start = 4.dp))
             }
-            AnimatedVisibility(showAll) {
-                Column {
-                    NutrientKey.entries.filter { it in n }.forEach { key ->
-                        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp)) {
-                            Text(nutrientName(key), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
-                            Text(formatNutrient(key, n.getValue(key), f), style = MaterialTheme.typography.labelLarge)
-                        }
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    }
-                }
-            }
+            AnimatedVisibility(showAll) { app.forkcast.ui.today.NutrientList(n, f) }
 
             if (!state.forRecipe) {
                 Text(stringResource(R.string.edit_meal), style = MaterialTheme.typography.titleSmall)

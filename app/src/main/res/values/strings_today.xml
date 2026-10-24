@@ -20,6 +20,7 @@
     <string name="nutrients_open">Show all nutrients</string>
     <string name="nutrients_title">Nutrients today</string>
     <string name="nutrient_no_target">no target</string>
+    <string name="nutrient_dv_note">% is the share of the Daily Value (US, adults) for vitamins and minerals.</string>
     <string name="nutrient_limit">limit</string>
 
     <!-- Entries -->
