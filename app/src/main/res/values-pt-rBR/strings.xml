@@ -69,7 +69,7 @@
     <string name="settings_ai_summary">Serviços de IA e chaves, a ordem deles, fotos das refeições</string>
     <string name="settings_food_databases_summary">Chave do USDA e Open Food Facts</string>
     <string name="settings_notifications_summary">Orçamento, lembretes, horário de silêncio</string>
-    <string name="settings_backup_data_summary">Backup no Google Drive, exportar, importar e transferir configurações</string>
+    <string name="settings_backup_data_summary">Backups, restauração, planilhas e transferência de configurações</string>
     <string name="settings_appearance_summary">Claro, escuro e cores</string>
     <string name="settings_about_summary">Versão, atualizações, privacidade e licenças</string>
     <string name="settings_daily_targets">Metas diárias</string>
@@ -93,7 +93,7 @@
     <!-- About -->
     <string name="about_version">Versão %1$s (%2$d)</string>
     <string name="about_privacy_title">Privacidade</string>
-    <string name="about_privacy_body">O Forkcast não tem contas, análises, anúncios nem servidor próprio. Seu registro fica neste celular. Ele só se conecta a serviços que você mesmo configurou: bancos de alimentos (USDA, Open Food Facts) para buscas, seu provedor de IA para as fotos das refeições e suas descrições, e o seu próprio Google Drive para backups. Só quando você toca em Procurar atualizações, ele pergunta ao GitHub qual é a versão mais nova, com o token que você informou. Os dados do Health Connect (peso, atividade) ficam no celular e nunca são enviados aos provedores de IA.</string>
+    <string name="about_privacy_body">O Forkcast não tem contas, análises, anúncios nem servidor próprio. Seu registro fica neste celular. Ele só se conecta a serviços que você mesmo configurou: bancos de alimentos (USDA, Open Food Facts) para buscas e seu provedor de IA para as fotos das refeições e suas descrições. Ele pergunta ao GitHub se existe um Forkcast mais novo: quando você procura atualizações e, no máximo uma vez por dia, se a verificação automática estiver ligada. Os backups vão só para onde você escolher salvá-los. Os dados do Health Connect (peso, atividade) ficam no celular e nunca são enviados aos provedores de IA.</string>
     <string name="about_medical_title">Não é orientação médica</string>
     <string name="about_medical_body">O Forkcast faz estimativas, principalmente a partir de fotos. Pese a comida quando a precisão importar, e converse com um médico ou nutricionista antes de grandes mudanças.</string>
     <string name="about_licenses_title">Licenças</string>

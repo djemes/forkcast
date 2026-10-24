@@ -23,7 +23,12 @@ class FakeBackupRepository : BackupRepository {
     override suspend fun foodLogCsv() = "food,csv"
     override suspend fun weightsCsv() = "weights,csv"
 
-    override fun parse(text: String): ParsedBackup = when (text) {
+    private val aliases = mutableMapOf<String, String>()
+
+    /** [text] parses the way [like] does (e.g. the exported "{json}" as "good"). */
+    fun parseAs(text: String, like: String) { aliases[text] = like }
+
+    override fun parse(text: String): ParsedBackup = when (aliases[text] ?: text) {
         "good" -> ParsedBackup.Ok(EXPORT, PREVIEW)
         "newer" -> ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
         else -> ParsedBackup.Rejected(RejectReason.UNREADABLE)
@@ -71,6 +76,11 @@ class FakeDocumentIo : DocumentIo {
         writtenBytes[uri] = out.toByteArray()
     }
 
+    /** Binary files (a real backup) win over text ones. */
+    val fileBytes = mutableMapOf<Uri, ByteArray>()
+
     override suspend fun <T> readStream(uri: Uri, block: suspend (java.io.InputStream) -> T): T =
-        block((files[uri] ?: throw IOException("missing")).byteInputStream())
+        block(fileBytes[uri]?.inputStream() ?: (files[uri] ?: throw IOException("missing")).byteInputStream())
+
+    override suspend fun displayName(uri: Uri): String? = uri.lastPathSegment
 }

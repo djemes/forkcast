@@ -2,7 +2,7 @@
 <!-- Cleartext is allowed at the platform level only so a user can point an OpenAI-compatible
      AI profile at their own server over http (LAN/VPN, e.g. Ollama over Tailscale), which
      Android can't scope to arbitrary IPs. Every built-in endpoint (USDA, Open Food Facts,
-     Claude, Gemini, Drive) is a hardcoded https URL, and the profile editor warns before an
+     Claude, Gemini, GitHub) is a hardcoded https URL, and the profile editor warns before an
      http URL is used (SPEC §8; DECISIONS.md 2026-10-18). -->
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
     <base-config cleartextTrafficPermitted="true" tools:ignore="InsecureBaseConfiguration" />

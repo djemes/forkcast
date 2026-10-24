@@ -59,11 +59,9 @@
     <string name="notif_weekly_up">Tendência de peso subiu %1$s.</string>
     <string name="notif_weekly_steady">Tendência de peso estável.</string>
 
-    <!-- Drive backup problems (SPEC §4.11). -->
+    <!-- Automatic backup problems (SPEC §4.11). -->
     <string name="notif_backup_title">O backup não rodou</string>
-    <string name="notif_backup_reconnect">O Forkcast perdeu o acesso ao Google Drive. Abra Backup e dados e conecte de novo.</string>
-    <string name="notif_backup_not_set_up">O login no Google Drive ainda não está configurado nesta versão do Forkcast.</string>
-    <string name="notif_backup_quota">Seu Google Drive está cheio, então o backup não pôde ser salvo.</string>
-    <string name="notif_backup_offline">Sem conexão nos últimos backups. Ele tenta de novo hoje à noite.</string>
-    <string name="notif_backup_error">O Google Drive teve um problema com os últimos backups. Ele tenta de novo hoje à noite.</string>
+    <string name="notif_backup_folder_lost">O Forkcast não consegue mais acessar sua pasta de backup. Abra Backup e dados e escolha uma pasta de novo.</string>
+    <string name="notif_backup_password_missing">Os backups automáticos estão configurados para usar uma senha, mas nenhuma está salva neste celular. Abra Backup e dados para definir.</string>
+    <string name="notif_backup_write_failed">Os últimos backups não puderam ser salvos na sua pasta de backup. Confira se há espaço livre ou escolha outra pasta.</string>
 </resources>

@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network is used only for services the user configured: USDA, Open Food Facts, their AI provider (and later Drive). -->
+    <!-- Network is used only for services the user configured: USDA, Open Food Facts, their AI provider, and GitHub for update checks. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- Barcode and nutrition-label scanning; asked for the first time the scanner opens. -->
     <uses-permission android:name="android.permission.CAMERA" />

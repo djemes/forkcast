@@ -3,14 +3,17 @@ package app.forkcast.ui.backup
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.forkcast.core.data.backup.BackupFile
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.BackupRepository
 import app.forkcast.core.data.backup.ForkcastExport
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.ImportSummary
+import app.forkcast.core.data.backup.OpenedBackupFile
 import app.forkcast.core.data.backup.ParsedBackup
 import app.forkcast.core.data.backup.PhotoArchive
 import app.forkcast.core.data.backup.RejectReason
+import app.forkcast.core.data.backup.folder.FolderBackupRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,23 +27,24 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 enum class ExportKind(val extension: String, val mimeType: String) {
-    JSON("json", "application/json"),
-    /** JSON plus meal photos (SPEC §4.11 "Include photos"). */
-    ZIP("zip", "application/zip"),
+    /** The `.forkcast` backup file (roadmap 2.0, task 1.4). */
+    BACKUP("forkcast", BackupFile.MIME_TYPE),
     FOOD_LOG_CSV("csv", "text/csv"),
     WEIGHTS_CSV("csv", "text/csv"),
 }
 
 sealed interface BackupDialog {
-    /** What's in the picked file, before anything changes. */
-    data class Preview(val preview: BackupPreview, val isSafetyBackup: Boolean) : BackupDialog
+    /** "Save a backup file": photos and password, before the file picker opens. */
+    data object SaveOptions : BackupDialog
+    /** What's in the picked file, before anything changes. [photos] = meal photos it carries. */
+    data class Preview(val preview: BackupPreview, val isSafetyBackup: Boolean, val photos: Int = 0) : BackupDialog
+    /** The picked backup is password-protected; [wrong] after a wrong try. */
+    data class Password(val wrong: Boolean) : BackupDialog
     data object ConfirmReplace : BackupDialog
     data class Done(val summary: ImportSummary) : BackupDialog
     data class Rejected(val reason: RejectReason) : BackupDialog
     data object ReadFailed : BackupDialog
     data object ImportFailed : BackupDialog
-    /** Downloading a Drive backup failed; [problem] says why. */
-    data class DriveFailed(val problem: app.forkcast.core.data.drive.DriveProblem) : BackupDialog
 }
 
 sealed interface BackupNotice {
@@ -53,14 +57,20 @@ data class BackupUiState(
     val hasSafetyBackup: Boolean = false,
     val dialog: BackupDialog? = null,
     val notice: BackupNotice? = null,
+    /** Options chosen: the screen opens the file picker for the backup now. */
+    val pickBackupFile: Boolean = false,
 )
 
 sealed interface BackupEvent {
-    data class Export(val kind: ExportKind, val uri: Uri) : BackupEvent
+    data object AskSave : BackupEvent
+    /** From the save options; the file picker opens next. */
+    data class SaveChosen(val photos: Boolean, val password: String?) : BackupEvent
+    /** The picker returned where to save (null = canceled). */
+    data class SaveTo(val uri: Uri?) : BackupEvent
+    data class ExportCsv(val kind: ExportKind, val uri: Uri) : BackupEvent
     data class Open(val uri: Uri) : BackupEvent
+    data class Unlock(val password: String) : BackupEvent
     data object OpenSafetyBackup : BackupEvent
-    /** A backup picked in "Restore from Drive": download it, then the usual preview. */
-    data class OpenDrive(val id: String) : BackupEvent
     data object Merge : BackupEvent
     data object AskReplace : BackupEvent
     data object Replace : BackupEvent
@@ -73,7 +83,8 @@ class BackupViewModel @Inject constructor(
     private val backups: BackupRepository,
     private val documents: DocumentIo,
     private val archive: PhotoArchive,
-    private val drive: app.forkcast.core.data.drive.DriveBackupRepository,
+    private val file: BackupFile,
+    private val folder: FolderBackupRepository,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -82,44 +93,50 @@ class BackupViewModel @Inject constructor(
 
     /** The parsed file waiting on Merge/Replace; kept out of UiState because it can be large. */
     private var pending: ForkcastExport? = null
-    /** The pending file was a .zip whose photos are staged. */
+    /** The pending file was a zip whose photos are staged. */
     private var hasStagedPhotos = false
+    /** Save options while the file picker is open; the password never goes into UiState. */
+    private var saveOptions: Pair<Boolean, String?>? = null
+    /** The protected file waiting for its password. */
+    private var lockedUri: Uri? = null
 
     init {
         refreshSafetyBackup()
     }
 
-    /** forkcast-YYYYMMDD-HHMM.json (SPEC §4.11); CSVs get a suffix. */
+    /** `forkcast-backup-YYYY-MM-DD.forkcast`; CSVs `forkcast-YYYYMMDD-HHMM-….csv`. */
     fun suggestedName(kind: ExportKind): String {
+        if (kind == ExportKind.BACKUP) return file.fileName()
         val stamp = NAME_STAMP.format(clock.instant().atZone(clock.zone))
-        val suffix = when (kind) {
-            ExportKind.JSON, ExportKind.ZIP -> ""
-            ExportKind.FOOD_LOG_CSV -> "-food-log"
-            ExportKind.WEIGHTS_CSV -> "-weights"
-        }
+        val suffix = if (kind == ExportKind.FOOD_LOG_CSV) "-food-log" else "-weights"
         return "forkcast-$stamp$suffix.${kind.extension}"
     }
 
     fun onEvent(event: BackupEvent) {
         when (event) {
-            is BackupEvent.Export -> export(event.kind, event.uri)
-            is BackupEvent.Open -> work {
-                // A .zip carries photos: they're staged now and kept only if the import goes ahead.
-                val text = documents.readStream(event.uri) { raw ->
-                    val input = raw.buffered()
-                    hasStagedPhotos = archive.isZip(input)
-                    if (hasStagedPhotos) archive.read(input).json else input.readBytes().decodeToString()
-                }
-                show(text, isSafetyBackup = false)
+            BackupEvent.AskSave -> _state.update { it.copy(dialog = BackupDialog.SaveOptions) }
+            is BackupEvent.SaveChosen -> {
+                saveOptions = event.photos to event.password?.takeIf { it.isNotEmpty() }
+                _state.update { it.copy(dialog = null, pickBackupFile = true) }
             }
-            BackupEvent.OpenSafetyBackup -> work { backups.readSafetyBackup()?.let { show(it, isSafetyBackup = true) } }
-            is BackupEvent.OpenDrive -> work {
+            is BackupEvent.SaveTo -> {
+                _state.update { it.copy(pickBackupFile = false) }
+                val options = saveOptions
+                saveOptions = null
+                if (event.uri != null && options != null) save(event.uri, options.first, options.second)
+            }
+            is BackupEvent.ExportCsv -> exportCsv(event.kind, event.uri)
+            is BackupEvent.Open -> work {
+                lockedUri = null
+                read(event.uri, password = null)
+            }
+            is BackupEvent.Unlock -> {
+                val uri = lockedUri ?: return
+                work { read(uri, event.password) }
+            }
+            BackupEvent.OpenSafetyBackup -> work {
                 hasStagedPhotos = false
-                try {
-                    show(drive.download(event.id), isSafetyBackup = false)
-                } catch (e: app.forkcast.core.data.drive.DriveProblemException) {
-                    _state.update { it.copy(dialog = BackupDialog.DriveFailed(e.problem)) }
-                }
+                backups.readSafetyBackup()?.let { show(it, isSafetyBackup = true, photos = 0) }
             }
             BackupEvent.Merge -> runImport(ImportMode.MERGE)
             BackupEvent.AskReplace -> _state.update { it.copy(dialog = BackupDialog.ConfirmReplace) }
@@ -128,24 +145,47 @@ class BackupViewModel @Inject constructor(
                 if (hasStagedPhotos) viewModelScope.launch { archive.discardStaged() }
                 hasStagedPhotos = false
                 pending = null
+                lockedUri = null
                 _state.update { it.copy(dialog = null) }
             }
             BackupEvent.NoticeShown -> _state.update { it.copy(notice = null) }
         }
     }
 
-    private fun export(kind: ExportKind, uri: Uri) = viewModelScope.launch {
+    private suspend fun read(uri: Uri, password: String?) {
+        val opened = documents.readStream(uri) { file.open(it, password?.toCharArray()) }
+        when (opened) {
+            OpenedBackupFile.NeedsPassword, OpenedBackupFile.WrongPassword -> {
+                lockedUri = uri
+                _state.update { it.copy(dialog = BackupDialog.Password(wrong = opened == OpenedBackupFile.WrongPassword)) }
+            }
+            is OpenedBackupFile.Ok -> {
+                lockedUri = null
+                hasStagedPhotos = opened.photos > 0
+                show(opened.json, isSafetyBackup = false, photos = opened.photos)
+            }
+        }
+    }
+
+    private fun save(uri: Uri, photos: Boolean, password: String?) = viewModelScope.launch {
+        _state.update { it.copy(busy = true) }
+        var size: Long? = null
+        val notice = try {
+            documents.writeStream(uri) { out -> size = file.write(out, photos, password?.toCharArray()) }
+            folder.recordSaved(documents.displayName(uri) ?: file.fileName(), size)
+            BackupNotice.Exported(ExportKind.BACKUP)
+        } catch (e: IOException) {
+            BackupNotice.ExportFailed
+        } catch (e: SecurityException) {
+            BackupNotice.ExportFailed
+        }
+        _state.update { it.copy(busy = false, notice = notice) }
+    }
+
+    private fun exportCsv(kind: ExportKind, uri: Uri) = viewModelScope.launch {
         _state.update { it.copy(busy = true) }
         val notice = try {
-            when (kind) {
-                ExportKind.ZIP -> {
-                    val json = backups.exportJson()
-                    documents.writeStream(uri) { out -> archive.write(out, json) }
-                }
-                ExportKind.JSON -> documents.writeText(uri, backups.exportJson())
-                ExportKind.FOOD_LOG_CSV -> documents.writeText(uri, backups.foodLogCsv())
-                ExportKind.WEIGHTS_CSV -> documents.writeText(uri, backups.weightsCsv())
-            }
+            documents.writeText(uri, if (kind == ExportKind.FOOD_LOG_CSV) backups.foodLogCsv() else backups.weightsCsv())
             BackupNotice.Exported(kind)
         } catch (e: IOException) {
             BackupNotice.ExportFailed
@@ -155,13 +195,17 @@ class BackupViewModel @Inject constructor(
         _state.update { it.copy(busy = false, notice = notice) }
     }
 
-    private fun show(text: String, isSafetyBackup: Boolean) {
+    private suspend fun show(text: String, isSafetyBackup: Boolean, photos: Int) {
         val dialog = when (val parsed = backups.parse(text)) {
             is ParsedBackup.Ok -> {
                 pending = parsed.export
-                BackupDialog.Preview(parsed.preview, isSafetyBackup)
+                BackupDialog.Preview(parsed.preview, isSafetyBackup, photos)
             }
-            is ParsedBackup.Rejected -> BackupDialog.Rejected(parsed.reason)
+            is ParsedBackup.Rejected -> {
+                if (hasStagedPhotos) archive.discardStaged()
+                hasStagedPhotos = false
+                BackupDialog.Rejected(parsed.reason)
+            }
         }
         _state.update { it.copy(dialog = dialog) }
     }

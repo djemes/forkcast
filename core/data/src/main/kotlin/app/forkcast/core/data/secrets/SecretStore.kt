@@ -22,6 +22,8 @@ enum class SecretName {
     USDA_API_KEY,
     /** Read-only GitHub token for "Check for updates" (the repository is private). */
     GITHUB_TOKEN,
+    /** The password automatic backups are locked with, when the user turns that on (roadmap 2.0 D5). */
+    BACKUP_PASSWORD,
 }
 
 /**

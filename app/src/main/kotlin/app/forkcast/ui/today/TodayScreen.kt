@@ -130,6 +130,8 @@ data class TodayActions(
     val openRecipes: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
     /** Missing keys: Settings › AI (true) or Food databases (false). */
     val openKeys: (ai: Boolean) -> Unit = {},
+    /** Settings › Backup & data, from the backup card. */
+    val openBackup: () -> Unit = {},
 )
 
 @Composable
@@ -144,8 +146,10 @@ fun TodayRoute(
     openLogSheet: String? = null,
     onLogSheetOpened: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
+    backupNotice: BackupNoticeViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val notice by backupNotice.notice.collectAsStateWithLifecycle()
     LaunchedEffect(openDate) {
         openDate?.let { iso -> runCatching { LocalDate.parse(iso) }.getOrNull()?.let { viewModel.onEvent(TodayEvent.PickDate(it)) } }
         if (openDate != null) onOpenDateShown()
@@ -164,6 +168,8 @@ fun TodayRoute(
             editServings = editServings,
             openLogSheet = openLogSheet,
             onLogSheetOpened = onLogSheetOpened,
+            backupNotice = notice,
+            onBackupNoticeDismissed = backupNotice::dismiss,
         )
     }
 }
@@ -181,6 +187,8 @@ fun TodayScreen(
     editServings: Pair<String, List<app.forkcast.core.model.ServingSize>>? = null,
     openLogSheet: String? = null,
     onLogSheetOpened: () -> Unit = {},
+    backupNotice: app.forkcast.core.data.backup.folder.BackupNotice? = null,
+    onBackupNoticeDismissed: (app.forkcast.core.data.backup.folder.BackupNotice) -> Unit = {},
 ) {
     // Null = sheet closed; otherwise the meal the sheet logs to.
     var logSheetMealId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -371,6 +379,18 @@ fun TodayScreen(
                                 day.missingKeys,
                                 onAdd = { actions.openKeys(day.missingKeys.any { it.isAi }) },
                                 onDismiss = { onEvent(TodayEvent.DismissMissingKeys) },
+                            )
+                          }
+                        }
+                    }
+                    if (day.isToday && backupNotice != null) {
+                        val i = order++
+                        item(key = "backup-notice") {
+                          TodayItem("backup-notice", i) {
+                            BackupNoticeCard(
+                                backupNotice,
+                                onOpen = actions.openBackup,
+                                onDismiss = { onBackupNoticeDismissed(backupNotice) },
                             )
                           }
                         }

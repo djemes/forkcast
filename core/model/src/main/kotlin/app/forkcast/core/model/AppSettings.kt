@@ -29,7 +29,7 @@ data class AppSettings(
     val activityBonus: Boolean = true,
     /** What the user had saved as keys, so a restored phone (keys are never backed up) can ask for them (SPEC §4.11). */
     val keyNotes: KeyNotes = KeyNotes(),
-    /** Google Drive auto-backup choices (SPEC §4.11). The connection itself is per phone (DevicePrefs). */
+    /** Automatic backup choices (SPEC §4.11). The folder itself is per phone (DevicePrefs). */
     val backup: BackupSettings = BackupSettings(),
 )
 
@@ -50,20 +50,33 @@ data class WaterContainers(
 )
 
 /**
- * Any network, charging or not, data only (no photos). Since 1.2 a new install starts weekly on
- * Mondays around 3 am (owner, 2026-10-23); settings are stored with every field, so phones that
- * already chose keep their choice.
+ * Automatic backup to a folder the user picks (roadmap 2.0, 1.5). Weekly on Mondays around 3 am,
+ * keeping the newest 8, data only (no photos), no password. The folder itself is per phone
+ * (DevicePrefs). The 1.0–1.4 Drive fields `wifiOnly` and `chargingOnly` are gone; settings files
+ * that have them still read (unknown keys are ignored).
  */
 @Serializable
 data class BackupSettings(
-    /** Back up automatically once Drive is connected on this phone. */
+    /** Back up automatically once a folder is chosen on this phone. */
     val auto: Boolean = true,
     val frequency: BackupFrequency = BackupFrequency.WEEKLY,
     /** Day of a weekly backup, ISO (1 = Monday). */
     val weekday: Int = 1,
-    val wifiOnly: Boolean = false,
-    val chargingOnly: Boolean = false,
-)
+    /** How many backups the folder keeps; older Forkcast backups there are deleted. */
+    val keep: Int = DEFAULT_KEEP,
+    /** Automatic backups include meal photos. */
+    val photos: Boolean = false,
+    /** Automatic backups are locked with the password saved on this phone (SecretName.BACKUP_PASSWORD). */
+    val password: Boolean = false,
+    /** Today reminds when there's been no backup for [REMINDER_DAYS] days. */
+    val reminder: Boolean = true,
+) {
+    companion object {
+        const val DEFAULT_KEEP = 8
+        val KEEP_CHOICES = listOf(4, 8, 16)
+        const val REMINDER_DAYS = 14
+    }
+}
 
 @Serializable
 enum class BackupFrequency(val days: Int) { DAILY(1), WEEKLY(7) }

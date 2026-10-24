@@ -85,26 +85,31 @@ class FakeMissingKeysRepository(initial: List<app.forkcast.core.data.repository.
     override fun start(scope: kotlinx.coroutines.CoroutineScope) = Unit
 }
 
-class FakeDriveBackupRepository : app.forkcast.core.data.drive.DriveBackupRepository {
-    val state = MutableStateFlow(app.forkcast.core.data.drive.DriveStatus(null, app.forkcast.core.model.BackupSettings(), null, null))
-    val files = mutableMapOf<String, String>()
-    var problem: app.forkcast.core.data.drive.DriveProblem? = null
+class FakeFolderBackupRepository : app.forkcast.core.data.backup.folder.FolderBackupRepository {
+    val state = MutableStateFlow(app.forkcast.core.data.backup.folder.FolderStatus(null, null, app.forkcast.core.model.BackupSettings(), null, null, hasPassword = false))
+    var problem: app.forkcast.core.data.backup.folder.FolderProblem? = null
     var backups = 0
-    override val status: Flow<app.forkcast.core.data.drive.DriveStatus> = state
-    override suspend fun connect(token: String) = problem.also { if (it == null) state.update { s -> s.copy(account = "gabe@example.com") } }
-    override suspend fun backupNow(interactive: Boolean) = problem.also { if (it == null) backups++ }
-    override suspend fun backups(): List<app.forkcast.core.data.drive.DriveBackup> =
-        problem?.let { throw app.forkcast.core.data.drive.DriveProblemException(it) } ?: files.keys.map { app.forkcast.core.data.drive.DriveBackup(it, it, null, null) }
-    override suspend fun download(id: String): String =
-        problem?.let { throw app.forkcast.core.data.drive.DriveProblemException(it) } ?: files.getValue(id)
-    override suspend fun disconnect() = state.update { it.copy(account = null) }
+    val saved = mutableListOf<Pair<String, Long?>>()
+    var password: String? = null
+    override val status: Flow<app.forkcast.core.data.backup.folder.FolderStatus> = state
+    val noticeState = MutableStateFlow<app.forkcast.core.data.backup.folder.BackupNotice?>(null)
+    override val notice: Flow<app.forkcast.core.data.backup.folder.BackupNotice?> = noticeState
+    override suspend fun dismissNotice(notice: app.forkcast.core.data.backup.folder.BackupNotice) { noticeState.value = null }
+    override suspend fun chooseFolder(tree: String) = problem.also { if (it == null) state.update { s -> s.copy(folder = tree, folderName = "Backups") } }
+    override suspend fun forgetFolder() = state.update { it.copy(folder = null, folderName = null) }
+    override suspend fun backupNow() = problem.also { if (it == null) backups++ }
+    override suspend fun recordSaved(name: String, sizeBytes: Long?) { saved += name to sizeBytes }
     override suspend fun updateSettings(transform: (app.forkcast.core.model.BackupSettings) -> app.forkcast.core.model.BackupSettings) =
         state.update { it.copy(settings = transform(it.settings)) }
-    var plan: app.forkcast.core.data.drive.CleanupPlan = app.forkcast.core.data.drive.CleanupPlan.NothingToDelete(null)
+    override suspend fun setPassword(password: String?) {
+        this.password = password
+        state.update { it.copy(hasPassword = password != null) }
+    }
+    var plan: app.forkcast.core.data.backup.folder.CleanupPlan = app.forkcast.core.data.backup.folder.CleanupPlan.NothingToDelete(null)
     val deleted = mutableListOf<String>()
-    override suspend fun cleanupPlan() = problem?.let { app.forkcast.core.data.drive.CleanupPlan.Failed(it) } ?: plan
-    override suspend fun deleteOld(plan: app.forkcast.core.data.drive.CleanupPlan.Ready): Result<app.forkcast.core.data.drive.CleanupResult> {
-        deleted += plan.delete.map { it.id }
-        return Result.success(app.forkcast.core.data.drive.CleanupResult(plan.delete.size, 0, plan.keep))
+    override suspend fun cleanupPlan() = problem?.let { app.forkcast.core.data.backup.folder.CleanupPlan.Failed(it) } ?: plan
+    override suspend fun deleteOld(plan: app.forkcast.core.data.backup.folder.CleanupPlan.Ready): app.forkcast.core.data.backup.folder.CleanupResult {
+        deleted += plan.delete.map { it.name }
+        return app.forkcast.core.data.backup.folder.CleanupResult(plan.delete.size, 0, plan.keep)
     }
 }

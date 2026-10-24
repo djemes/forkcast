@@ -1,21 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="backup_export_title">Exportar</string>
-    <string name="backup_export_body">Salve tudo (registro de comida, alimentos, receitas, refeições salvas, peso, água, atividade, estimativas por foto, metas e configurações) em um arquivo que você pode guardar onde quiser. As chaves de API nunca vão junto.</string>
-    <string name="backup_export_json">Exportar backup</string>
-    <string name="backup_export_zip">Exportar com fotos (.zip)</string>
-    <string name="backup_saved_zip">Backup com fotos salvo</string>
     <string name="backup_csv_title">Para planilhas</string>
     <string name="backup_csv_food_log">Registro de comida (CSV)</string>
     <string name="backup_csv_weights">Pesos (CSV)</string>
-    <string name="backup_import_title">Importar</string>
-    <string name="backup_import_body">Abra um arquivo de backup do Forkcast. Você vê o que tem nele antes de qualquer mudança.</string>
-    <string name="backup_import">Importar backup</string>
     <string name="backup_restore_safety">Desfazer a última substituição</string>
     <string name="backup_restore_safety_body">O Forkcast salvou uma cópia dos seus dados antes da última substituição. Abri-la mostra as mesmas opções de importação.</string>
     <string name="backup_working">Trabalhando…</string>
-
-    <string name="backup_saved_json">Backup salvo</string>
     <string name="backup_saved_food_log">Registro de comida salvo</string>
     <string name="backup_saved_weights">Pesos salvos</string>
     <string name="backup_save_failed">Não foi possível salvar o arquivo. Tente outro local.</string>
@@ -38,7 +28,7 @@
     <string name="backup_replace_ellipsis">Substituir…</string>
 
     <string name="backup_replace_title">Substituir tudo?</string>
-    <string name="backup_replace_body">Tudo neste celular será apagado e trocado pelo backup, incluindo as configurações. Uma cópia de segurança dos seus dados atuais é salva antes, então dá para desfazer em Backup e dados.</string>
+    <string name="backup_replace_body">Tudo neste celular será excluído e trocado pelo backup, incluindo as configurações. Uma cópia de segurança dos seus dados atuais é salva antes, então dá para desfazer em Backup e dados.</string>
     <string name="backup_replace">Substituir</string>
 
     <string name="backup_done_title">Importação concluída</string>
@@ -89,66 +79,96 @@
     <string name="settings_unreadable">Não foi possível ler este arquivo.</string>
     <string name="settings_failed">Não foi possível salvar o arquivo. Tente outro local.</string>
 
-    <!-- Google Drive backup (SPEC §4.11). -->
-    <string name="drive_title">Backup no Google Drive</string>
-    <string name="drive_intro">Faça backup automático, toda semana ou todo dia, em uma pasta \"Forkcast Backups\" no seu Google Drive. O Forkcast só vê os arquivos que ele mesmo cria. Os backups guardam seus dados, não fotos nem chaves de API.</string>
-    <string name="drive_connect">Conectar o Google Drive</string>
-    <string name="drive_connected_as">Fazendo backup em %1$s</string>
-    <string name="drive_connected">Fazendo backup no Google Drive</string>
-    <string name="drive_last_backup">Último backup: %1$s</string>
-    <string name="drive_no_backup_yet">Nenhum backup ainda. O primeiro roda no próximo horário agendado, ou toque em Fazer backup agora.</string>
-    <string name="drive_auto">Fazer backup automático</string>
-    <string name="drive_auto_detail">Por volta das 3h. Mantém os últimos 14 backups e um de cada um dos últimos 12 meses.</string>
-    <string name="drive_daily">Todo dia</string>
-    <string name="drive_weekly">Toda semana</string>
-    <string name="drive_weekly_on">%1$s, por volta das 3h</string>
-    <string name="drive_wifi_only">Só no Wi-Fi</string>
-    <string name="drive_charging_only">Só carregando</string>
-    <string name="drive_backup_now">Fazer backup agora</string>
-    <string name="drive_backed_up">Backup feito no Google Drive.</string>
-    <string name="drive_restore">Restaurar do Drive</string>
-    <string name="drive_restore_title">Restaurar do Google Drive</string>
-    <string name="drive_restore_hint">Escolha um backup. Você vê o que tem nele e escolhe Mesclar ou Substituir antes de qualquer mudança.</string>
-    <string name="drive_restore_empty">Nenhum backup no seu Drive ainda.</string>
-    <string name="drive_restore_failed">Não foi possível abrir o backup</string>
-    <string name="drive_disconnect">Desconectar</string>
-    <string name="drive_disconnect_title">Desconectar o Google Drive?</string>
-    <string name="drive_disconnect_body">Os backups param e o Forkcast perde o acesso ao seu Drive. Os backups que já estão lá continuam; você pode apagá-los no Drive.</string>
-    <string name="drive_problem_not_connected">Conecte o Google Drive primeiro.</string>
-    <string name="drive_problem_reconnect">O Forkcast perdeu o acesso ao seu Drive. Desconecte e conecte de novo.</string>
-    <string name="drive_problem_not_set_up">O login no Google Drive ainda não está configurado nesta versão do Forkcast.</string>
-    <string name="drive_problem_offline">Sem conexão. Tente de novo quando estiver online.</string>
-    <string name="drive_problem_quota">Seu Google Drive está cheio. Libere espaço e faça o backup de novo.</string>
-    <string name="drive_problem_busy">O Google Drive está ocupado. Tente de novo em alguns minutos.</string>
-    <string name="drive_problem_error">O Google Drive teve um problema. Tente de novo mais tarde.</string>
-    <!-- Excluir backups antigos (dono, 2026-10-24) -->
-    <string name="drive_cleanup">Excluir backups antigos</string>
-    <string name="drive_cleanup_unlock_title">Desbloqueie para excluir backups antigos</string>
-    <string name="drive_cleanup_unlock_subtitle">Backups no Google Drive</string>
-    <string name="drive_cleanup_no_lock_body">Excluir backups exige o bloqueio de tela do celular (PIN, padrão, senha, digital ou rosto), para que ninguém com o seu celular possa apagá-los.</string>
-    <plurals name="drive_cleanup_title">
+    <!-- Backups (roadmap 2.0, task 1.4) -->
+    <string name="backup_title">Backups</string>
+    <string name="backup_body">Um backup é um arquivo com tudo: registro de alimentos, alimentos, receitas, refeições salvas, peso, água, atividade, estimativas por foto, metas e configurações. Chaves de API nunca vão nele. Guarde um em algum lugar fora deste celular.</string>
+    <string name="backup_save">Salvar um arquivo de backup…</string>
+    <string name="backup_restore">Restaurar de um backup…</string>
+    <string name="backup_saved">Backup salvo</string>
+    <string name="backup_none_yet">Nenhum backup ainda.</string>
+    <string name="backup_last">Último backup: %1$s</string>
+    <string name="backup_last_details">Último backup: %1$s · %2$s</string>
+    <string name="backup_detail_separator">" · "</string>
+    <string name="backup_reminder">Lembrar de fazer backup</string>
+    <string name="backup_reminder_detail">Em Hoje, depois de 14 dias sem backup</string>
+    <string name="backup_preview_photos">Fotos de refeições: %1$d</string>
+    <string name="backup_preview_no_photos">Sem fotos de refeições neste arquivo.</string>
+    <string name="backup_photos_detail">Fotos deixam o arquivo bem maior. Seu registro mantém todas as entradas de qualquer jeito.</string>
+
+    <string name="backup_save_title">Salvar um arquivo de backup</string>
+    <string name="backup_save_body">Em seguida, escolha onde salvar: neste celular, num cartão SD ou num app de nuvem como Google Drive ou OneDrive.</string>
+    <string name="backup_save_photos">Incluir fotos das refeições</string>
+    <string name="backup_save_password">Proteger com senha</string>
+    <string name="backup_password_warning">Se você esquecer esta senha, o backup não pode ser restaurado. Ninguém consegue recuperá-la.</string>
+    <string name="backup_password">Senha</string>
+    <string name="backup_password_again">Senha de novo</string>
+    <string name="backup_save_choose">Escolher onde salvar</string>
+    <string name="backup_unlock_title">Este backup tem senha</string>
+    <string name="backup_unlock_body">Digite a senha com que ele foi salvo.</string>
+    <string name="backup_unlock_wrong">Senha errada, ou o arquivo foi alterado.</string>
+    <string name="backup_unlock">Abrir</string>
+
+    <!-- Automatic backup to a folder -->
+    <string name="backup_auto_title">Backup automático</string>
+    <string name="backup_auto_intro">Escolha uma pasta uma vez e o Forkcast salva um backup nela toda semana. Pode ser neste celular, num cartão SD ou na pasta de um app de nuvem (Google Drive, OneDrive e outros). O Forkcast só vê essa pasta.</string>
+    <string name="backup_auto_choose">Escolher uma pasta</string>
+    <string name="backup_auto_folder">Salvando em: %1$s</string>
+    <string name="backup_auto_folder_unnamed">Salvando na pasta que você escolheu</string>
+    <string name="backup_auto_switch">Fazer backup automaticamente</string>
+    <string name="backup_weekly">Toda semana</string>
+    <string name="backup_daily">Todo dia</string>
+    <string name="backup_weekly_on">%1$s, por volta das 3h</string>
+    <string name="backup_daily_at">Por volta das 3h</string>
+    <string name="backup_keep_title">Backups a manter</string>
+    <plurals name="backup_keep_choice">
+        <item quantity="one">%1$d mais recente</item>
+        <item quantity="many">%1$d mais recentes</item>
+        <item quantity="other">%1$d mais recentes</item>
+    </plurals>
+    <string name="backup_auto_photos">Incluir fotos das refeições</string>
+    <string name="backup_auto_password">Proteger com senha</string>
+    <string name="backup_auto_password_detail">Salva neste celular para os backups rodarem sozinhos</string>
+    <string name="backup_auto_password_body">Os backups automáticos serão protegidos com esta senha. Ela fica salva neste celular (criptografada) para os backups rodarem sem você. Para restaurar em outro celular você vai precisar digitá-la, e se esquecer, esses backups não podem ser restaurados.</string>
+    <string name="backup_now_to_folder">Fazer backup agora</string>
+    <string name="backup_backed_up">Backup feito.</string>
+    <string name="backup_auto_change">Trocar pasta</string>
+    <string name="backup_auto_forget">Parar de usar esta pasta</string>
+    <string name="backup_auto_forget_title">Parar os backups automáticos nesta pasta?</string>
+    <string name="backup_auto_forget_body">Os backups param e o Forkcast deixa de acessar a pasta. Os backups que já estão lá continuam.</string>
+    <string name="backup_problem_no_folder">Escolha uma pasta primeiro.</string>
+    <string name="backup_problem_folder_lost">O Forkcast não consegue mais acessar a pasta de backup. Ela pode ter sido movida ou apagada. Escolha uma pasta de novo.</string>
+    <string name="backup_problem_password_missing">Os backups estão configurados para usar senha, mas nenhuma está salva neste celular. Desligue e ligue a senha de novo para defini-la.</string>
+    <string name="backup_problem_write_failed">O backup não pôde ser salvo. Confira se há espaço livre ou escolha outra pasta.</string>
+
+    <!-- Delete old backups (owner, 2026-10-24) -->
+    <string name="backup_cleanup">Excluir backups antigos</string>
+    <string name="backup_cleanup_unlock_title">Desbloqueie para excluir backups antigos</string>
+    <string name="backup_cleanup_unlock_subtitle">Backups do Forkcast</string>
+    <string name="backup_cleanup_no_lock_body">Excluir backups precisa do bloqueio de tela do celular (PIN, padrão, senha, digital ou rosto), para que ninguém com seu celular na mão consiga excluí-los.</string>
+    <plurals name="backup_cleanup_title">
         <item quantity="one">Excluir %1$d backup antigo?</item>
         <item quantity="many">Excluir %1$d backups antigos?</item>
         <item quantity="other">Excluir %1$d backups antigos?</item>
     </plurals>
-    <string name="drive_cleanup_range">Os backups de %1$s a %2$s serão excluídos da pasta Forkcast Backups no seu Google Drive. Não dá para desfazer.</string>
-    <string name="drive_cleanup_single">O backup de %1$s será excluído da pasta Forkcast Backups no seu Google Drive. Não dá para desfazer.</string>
-    <string name="drive_cleanup_keep">Fica: %1$s, o mais recente. Ele foi verificado e pode ser restaurado.</string>
-    <string name="drive_cleanup_delete">Excluir</string>
-    <string name="drive_cleanup_nothing_title">Nada para excluir</string>
-    <string name="drive_cleanup_nothing_one">Só existe um backup (%1$s), e ele fica.</string>
-    <string name="drive_cleanup_nothing_none">Ainda não há backups no seu Drive.</string>
-    <string name="drive_cleanup_first_title">Faça um backup antes</string>
-    <string name="drive_cleanup_old_format">O backup mais recente (%1$s) foi feito por uma versão antiga do Forkcast, então nada foi excluído. Faça um backup agora e depois os antigos podem sair.</string>
-    <string name="drive_cleanup_unreadable">O backup mais recente (%1$s) não pode ser lido, então nada foi excluído. Faça um backup agora e depois os antigos podem sair.</string>
-    <plurals name="drive_cleanup_done">
-        <item quantity="one">%1$d backup excluído. Ficou %2$s.</item>
-        <item quantity="many">%1$d backups excluídos. Ficou %2$s.</item>
-        <item quantity="other">%1$d backups excluídos. Ficou %2$s.</item>
+    <string name="backup_cleanup_range">Os backups de %1$s a %2$s serão excluídos da sua pasta de backup. Isso não pode ser desfeito.</string>
+    <string name="backup_cleanup_single">O backup de %1$s será excluído da sua pasta de backup. Isso não pode ser desfeito.</string>
+    <string name="backup_cleanup_keep">Mantido: %1$s, o mais recente. Ele foi conferido e pode ser restaurado.</string>
+    <string name="backup_cleanup_delete">Excluir</string>
+    <string name="backup_cleanup_nothing_title">Nada para excluir</string>
+    <string name="backup_cleanup_nothing_one">Há só um backup (%1$s), e ele fica.</string>
+    <string name="backup_cleanup_nothing_none">Ainda não há backups na pasta.</string>
+    <string name="backup_cleanup_first_title">Faça um backup primeiro</string>
+    <string name="backup_cleanup_old_format">O backup mais recente (%1$s) foi feito por uma versão mais antiga do Forkcast, então nada foi excluído. Faça um backup agora e aí os antigos podem sair.</string>
+    <string name="backup_cleanup_unreadable">O backup mais recente (%1$s) não pode ser lido, então nada foi excluído. Faça um backup agora e aí os antigos podem sair.</string>
+    <string name="backup_cleanup_password">O backup mais recente (%1$s) tem uma senha diferente da salva para os backups automáticos, então não pôde ser conferido e nada foi excluído. Faça um backup agora e aí os antigos podem sair.</string>
+    <plurals name="backup_cleanup_done">
+        <item quantity="one">%1$d backup excluído. Mantido %2$s.</item>
+        <item quantity="many">%1$d backups excluídos. Mantido %2$s.</item>
+        <item quantity="other">%1$d backups excluídos. Mantido %2$s.</item>
     </plurals>
-    <plurals name="drive_cleanup_partial">
-        <item quantity="one">%1$d backup excluído; %2$d não puderam ser excluídos e ficam por enquanto. Ficou %3$s.</item>
-        <item quantity="many">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Ficou %3$s.</item>
-        <item quantity="other">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Ficou %3$s.</item>
+    <plurals name="backup_cleanup_partial">
+        <item quantity="one">%1$d backup excluído; %2$d não pôde ser excluído e fica por enquanto. Mantido %3$s.</item>
+        <item quantity="many">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Mantido %3$s.</item>
+        <item quantity="other">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Mantido %3$s.</item>
     </plurals>
 </resources>

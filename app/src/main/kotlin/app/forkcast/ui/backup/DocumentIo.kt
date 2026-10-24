@@ -2,6 +2,7 @@ package app.forkcast.ui.backup
 
 import android.content.Context
 import android.net.Uri
+import android.provider.OpenableColumns
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -22,6 +23,8 @@ interface DocumentIo {
     /** For large or binary files (the photo .zip). */
     suspend fun writeStream(uri: Uri, block: suspend (OutputStream) -> Unit)
     suspend fun <T> readStream(uri: Uri, block: suspend (InputStream) -> T): T
+    /** The file's name as its app shows it (a picker may have changed what was suggested). */
+    suspend fun displayName(uri: Uri): String?
 }
 
 class ContentResolverDocumentIo @Inject constructor(
@@ -42,6 +45,14 @@ class ContentResolverDocumentIo @Inject constructor(
     override suspend fun <T> readStream(uri: Uri, block: suspend (InputStream) -> T): T = withContext(Dispatchers.IO) {
         val input = context.contentResolver.openInputStream(uri) ?: throw IOException("No input stream")
         input.use { block(it) }
+    }
+
+    override suspend fun displayName(uri: Uri): String? = withContext(Dispatchers.IO) {
+        runCatching {
+            context.contentResolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { c ->
+                if (c.moveToFirst()) c.getString(0) else null
+            }
+        }.getOrNull()
     }
 
     override suspend fun readText(uri: Uri): String = withContext(Dispatchers.IO) {

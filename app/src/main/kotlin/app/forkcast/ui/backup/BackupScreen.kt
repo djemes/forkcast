@@ -38,6 +38,7 @@ import app.forkcast.R
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.RejectReason
+import app.forkcast.core.data.settings.LastBackup
 import app.forkcast.ui.settings.SettingsScaffold
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -49,15 +50,18 @@ fun BackupRoute(
     onBack: () -> Unit,
     viewModel: BackupViewModel = hiltViewModel(),
     transfer: SettingsTransferViewModel = hiltViewModel(),
-    drive: DriveViewModel = hiltViewModel(),
+    auto: AutoBackupViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val driveState by drive.state.collectAsStateWithLifecycle()
+    val autoState by auto.state.collectAsStateWithLifecycle()
     val transferState by transfer.state.collectAsStateWithLifecycle()
     val onEvent = viewModel::onEvent
 
-    val exportZip = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.ZIP.mimeType)) { uri ->
-        uri?.let { onEvent(BackupEvent.Export(ExportKind.ZIP, it)) }
+    val saveBackup = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.BACKUP.mimeType)) { uri ->
+        onEvent(BackupEvent.SaveTo(uri))
+    }
+    LaunchedEffect(state.pickBackupFile) {
+        if (state.pickBackupFile) saveBackup.launch(viewModel.suggestedName(ExportKind.BACKUP))
     }
     val exportSettings = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/octet-stream")) { uri ->
         transfer.export(uri)
@@ -67,14 +71,11 @@ fun BackupRoute(
         if (transferState.step == SettingsTransferStep.PickExportFile) exportSettings.launch(transfer.suggestedName())
     }
 
-    val exportJson = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.JSON.mimeType)) { uri ->
-        uri?.let { onEvent(BackupEvent.Export(ExportKind.JSON, it)) }
-    }
     val exportFoodLog = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.FOOD_LOG_CSV.mimeType)) { uri ->
-        uri?.let { onEvent(BackupEvent.Export(ExportKind.FOOD_LOG_CSV, it)) }
+        uri?.let { onEvent(BackupEvent.ExportCsv(ExportKind.FOOD_LOG_CSV, it)) }
     }
     val exportWeights = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.WEIGHTS_CSV.mimeType)) { uri ->
-        uri?.let { onEvent(BackupEvent.Export(ExportKind.WEIGHTS_CSV, it)) }
+        uri?.let { onEvent(BackupEvent.ExportCsv(ExportKind.WEIGHTS_CSV, it)) }
     }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { onEvent(BackupEvent.Open(it)) }
@@ -84,15 +85,16 @@ fun BackupRoute(
         state = state,
         onEvent = onEvent,
         actions = BackupActions(
-            exportJson = { exportJson.launch(viewModel.suggestedName(ExportKind.JSON)) },
-            exportZip = { exportZip.launch(viewModel.suggestedName(ExportKind.ZIP)) },
             exportFoodLog = { exportFoodLog.launch(viewModel.suggestedName(ExportKind.FOOD_LOG_CSV)) },
             exportWeights = { exportWeights.launch(viewModel.suggestedName(ExportKind.WEIGHTS_CSV)) },
-            // Some file managers label .json as octet-stream or plain text.
-            import = { open.launch(arrayOf("application/json", "application/zip", "application/octet-stream", "text/plain")) },
+            // .forkcast has no registered type; 1.x backups are .json or .zip, which some file managers label oddly.
+            restore = { open.launch(arrayOf("*/*")) },
         ),
         onBack = onBack,
-        driveSection = { DriveSectionRoute(drive, driveState) { backup -> onEvent(BackupEvent.OpenDrive(backup.id)) } },
+        last = autoState.status.last,
+        reminder = autoState.status.settings.reminder,
+        onReminder = auto::setReminder,
+        autoSection = { AutoBackupSectionRoute(auto, autoState) },
         settingsSection = {
             SettingsTransferSection(
                 busy = state.busy || transferState.busy,
@@ -110,12 +112,9 @@ fun BackupRoute(
 
 /** System file pickers, launched from the route so the screen stays previewable and testable. */
 data class BackupActions(
-    val exportJson: () -> Unit,
-    val exportFoodLog: () -> Unit,
-    val exportWeights: () -> Unit,
-    val import: () -> Unit,
-    /** Last, with a default, so existing positional callers keep working. */
-    val exportZip: () -> Unit = {},
+    val exportFoodLog: () -> Unit = {},
+    val exportWeights: () -> Unit = {},
+    val restore: () -> Unit = {},
 )
 
 @Composable
@@ -124,8 +123,11 @@ fun BackupScreen(
     onEvent: (BackupEvent) -> Unit,
     actions: BackupActions,
     onBack: () -> Unit,
-    /** Google Drive backup (Phase 4), first: it's the backup most people want. */
-    driveSection: @Composable () -> Unit = {},
+    last: LastBackup? = null,
+    reminder: Boolean = true,
+    onReminder: (Boolean) -> Unit = {},
+    /** Automatic backup to a chosen folder. */
+    autoSection: @Composable () -> Unit = {},
     settingsSection: @Composable () -> Unit = {},
     extraNotice: Int? = null,
     onExtraNoticeShown: () -> Unit = {},
@@ -150,21 +152,22 @@ fun BackupScreen(
                 LinearProgressIndicator(Modifier.fillMaxWidth().semantics { contentDescription = working })
             }
             Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(16.dp)) {
-                driveSection()
-                SectionTitle(R.string.backup_export_title, Modifier.padding(top = 16.dp))
-                Text(stringResource(R.string.backup_export_body), style = MaterialTheme.typography.bodyMedium)
-                Button(onClick = actions.exportJson, enabled = !state.busy) { Text(stringResource(R.string.backup_export_json)) }
-                OutlinedButton(onClick = actions.exportZip, enabled = !state.busy) { Text(stringResource(R.string.backup_export_zip)) }
+                SectionTitle(R.string.backup_title)
+                Text(stringResource(R.string.backup_body), style = MaterialTheme.typography.bodyMedium)
+                LastBackupLine(last)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Button(onClick = { onEvent(BackupEvent.AskSave) }, enabled = !state.busy) { Text(stringResource(R.string.backup_save)) }
+                    OutlinedButton(onClick = actions.restore, enabled = !state.busy) { Text(stringResource(R.string.backup_restore)) }
+                }
+                ToggleRow(stringResource(R.string.backup_reminder), stringResource(R.string.backup_reminder_detail), reminder, onReminder)
 
-                SectionTitle(R.string.backup_csv_title)
+                Column(Modifier.padding(top = 16.dp)) { autoSection() }
+
+                SectionTitle(R.string.backup_csv_title, Modifier.padding(top = 16.dp))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = actions.exportFoodLog, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_food_log)) }
                     OutlinedButton(onClick = actions.exportWeights, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_weights)) }
                 }
-
-                SectionTitle(R.string.backup_import_title, Modifier.padding(top = 16.dp))
-                Text(stringResource(R.string.backup_import_body), style = MaterialTheme.typography.bodyMedium)
-                Button(onClick = actions.import, enabled = !state.busy) { Text(stringResource(R.string.backup_import)) }
 
                 Column(Modifier.padding(top = 16.dp)) { settingsSection() }
 
@@ -195,12 +198,14 @@ private fun SectionTitle(title: Int, modifier: Modifier = Modifier) {
 private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) {
     val dismiss = { onEvent(BackupEvent.DismissDialog) }
     when (dialog) {
+        BackupDialog.SaveOptions -> SaveOptionsDialog(onContinue = { photos, password -> onEvent(BackupEvent.SaveChosen(photos, password)) }, onDismiss = dismiss)
+        is BackupDialog.Password -> UnlockBackupDialog(dialog.wrong, onUnlock = { onEvent(BackupEvent.Unlock(it)) }, onDismiss = dismiss)
         is BackupDialog.Preview -> AlertDialog(
             onDismissRequest = dismiss,
             title = {
                 Text(stringResource(if (dialog.isSafetyBackup) R.string.backup_preview_safety_title else R.string.backup_preview_title))
             },
-            text = { PreviewText(dialog.preview) },
+            text = { PreviewText(dialog.preview, dialog.photos) },
             confirmButton = { TextButton(onClick = { onEvent(BackupEvent.Merge) }) { Text(stringResource(R.string.backup_merge)) } },
             dismissButton = {
                 TextButton(onClick = dismiss) { Text(stringResource(R.string.cancel)) }
@@ -243,12 +248,11 @@ private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) 
         )
         BackupDialog.ReadFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_read_failed), dismiss)
         BackupDialog.ImportFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_import_failed), dismiss)
-        is BackupDialog.DriveFailed -> MessageDialog(stringResource(R.string.drive_restore_failed), stringResource(driveProblemText(dialog.problem)), dismiss)
     }
 }
 
 @Composable
-private fun PreviewText(preview: BackupPreview) {
+private fun PreviewText(preview: BackupPreview, photos: Int) {
     val locale = LocalLocale.current.platformLocale
     val dateFormat = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
     val dateTimeFormat = remember(locale) { DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale) }
@@ -267,6 +271,7 @@ private fun PreviewText(preview: BackupPreview) {
             if (recipes > 0) Text(stringResource(R.string.backup_preview_recipes, recipes))
             if (!hasProfile) Text(stringResource(R.string.backup_preview_no_profile))
         }
+        Text(if (photos > 0) stringResource(R.string.backup_preview_photos, photos) else stringResource(R.string.backup_preview_no_photos))
         if (preview.firstDate != null && preview.lastDate != null) {
             Text(stringResource(R.string.backup_preview_dates, dateFormat.format(preview.firstDate), dateFormat.format(preview.lastDate)))
         }
@@ -286,8 +291,7 @@ private fun MessageDialog(title: String, body: String, onDismiss: () -> Unit) {
 
 private fun BackupNotice.message(): Int = when (this) {
     is BackupNotice.Exported -> when (kind) {
-        ExportKind.JSON -> R.string.backup_saved_json
-        ExportKind.ZIP -> R.string.backup_saved_zip
+        ExportKind.BACKUP -> R.string.backup_saved
         ExportKind.FOOD_LOG_CSV -> R.string.backup_saved_food_log
         ExportKind.WEIGHTS_CSV -> R.string.backup_saved_weights
     }

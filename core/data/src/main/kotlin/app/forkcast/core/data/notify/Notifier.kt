@@ -58,6 +58,8 @@ class Notifier @Inject constructor(@ApplicationContext private val context: Cont
         }
     }
 
+    fun cancel(id: Int) = NotificationManagerCompat.from(context).cancel(id)
+
     /** Silent notice for expedited work on Android 10–11 (WorkManager runs it in the foreground there). */
     fun workingNotification(): Notification = NotificationCompat.Builder(context, Channel.WORKING.id)
         .setSmallIcon(R.drawable.ic_notification)

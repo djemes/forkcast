@@ -18,14 +18,14 @@ A private, offline-first Android calorie and nutrition tracker. Log a meal by sc
 - **Health Connect:** weight, body fat, steps and workouts come in; food and water go out
 - **Water:** one tap adds your usual glass, can, bottle or tumbler; drinks like water and plain tea count automatically
 - **Trends:** calories against the budget, weight trend and goal date, macros, nutrients, meal timing, and a weekly check-in
-- **Backups:** JSON export and import, plus automatic backups to your own Google Drive (weekly by default)
+- **Backups:** one backup file you save anywhere (optionally with a password), plus automatic weekly backups to a folder you choose
 - **Privacy, bring your own key:** your data stays on your phone. No account, no server, no analytics. API keys are encrypted on the phone, and Android's unlock prompt is required before one is shown
 
 ## Basic use
 
 1. Install the APK from [Releases](../../releases). Later versions arrive through About › Check for updates.
 2. Answer the onboarding questions (units, body, activity, goal) to get your daily budget.
-3. Optional: add an AI key in Settings › AI photo estimates (a free Gemini key works), connect Health Connect, and connect Google Drive in Settings › Backup & data.
+3. Optional: add an AI key in Settings › AI photo estimates (a free Gemini key works), connect Health Connect, and choose a folder for automatic backups in Settings › Backup & data.
 4. Tap **Log** on Today and pick Scan, Photo, Describe or Search. The ring shows what's left for the day.
 
 Android 10 or newer. English and Portuguese (Brazil).

@@ -57,11 +57,9 @@
     <string name="notif_weekly_up">Weight trend up %1$s.</string>
     <string name="notif_weekly_steady">Weight trend steady.</string>
 
-    <!-- Drive backup problems (SPEC §4.11). -->
+    <!-- Automatic backup problems (SPEC §4.11). -->
     <string name="notif_backup_title">Backup didn\'t run</string>
-    <string name="notif_backup_reconnect">Forkcast lost access to Google Drive. Open Backup &amp; data and connect again.</string>
-    <string name="notif_backup_not_set_up">Google Drive sign-in isn\'t set up for this build of Forkcast yet.</string>
-    <string name="notif_backup_quota">Your Google Drive is full, so the backup couldn\'t be saved.</string>
-    <string name="notif_backup_offline">No connection for the last few backups. It will try again tonight.</string>
-    <string name="notif_backup_error">Google Drive had a problem with the last backups. It will try again tonight.</string>
+    <string name="notif_backup_folder_lost">Forkcast can\'t reach your backup folder any more. Open Backup &amp; data and choose a folder again.</string>
+    <string name="notif_backup_password_missing">Automatic backups are set to use a password, but none is saved on this phone. Open Backup &amp; data to set it.</string>
+    <string name="notif_backup_write_failed">The last backups couldn\'t be saved to your backup folder. Check that there\'s free space, or choose another folder.</string>
 </resources>

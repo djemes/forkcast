@@ -1,21 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="backup_export_title">Export</string>
-    <string name="backup_export_body">Save everything (food log, foods, recipes, saved meals, weight, water, activity, photo estimates, goals and settings) as one file you can keep anywhere. API keys are never included.</string>
-    <string name="backup_export_json">Export backup</string>
-    <string name="backup_export_zip">Export with photos (.zip)</string>
-    <string name="backup_saved_zip">Backup with photos saved</string>
     <string name="backup_csv_title">For spreadsheets</string>
     <string name="backup_csv_food_log">Food log (CSV)</string>
     <string name="backup_csv_weights">Weights (CSV)</string>
-    <string name="backup_import_title">Import</string>
-    <string name="backup_import_body">Open a Forkcast backup file. You\'ll see what\'s in it before anything changes.</string>
-    <string name="backup_import">Import backup</string>
     <string name="backup_restore_safety">Undo the last replace</string>
     <string name="backup_restore_safety_body">Forkcast saved a copy of your data before the last replace. Opening it shows the same import choices.</string>
     <string name="backup_working">Working…</string>
-
-    <string name="backup_saved_json">Backup saved</string>
     <string name="backup_saved_food_log">Food log saved</string>
     <string name="backup_saved_weights">Weights saved</string>
     <string name="backup_save_failed">Couldn\'t save the file. Try another location.</string>
@@ -87,62 +77,91 @@
     <string name="settings_unreadable">This file couldn\'t be read.</string>
     <string name="settings_failed">Couldn\'t save the file. Try another location.</string>
 
-    <!-- Google Drive backup (SPEC §4.11). -->
-    <string name="drive_title">Google Drive backup</string>
-    <string name="drive_intro">Back up automatically, every week or every day, to a \"Forkcast Backups\" folder in your Google Drive. Forkcast can only see the files it creates. Backups hold your data, not photos or API keys.</string>
-    <string name="drive_connect">Connect Google Drive</string>
-    <string name="drive_connected_as">Backing up to %1$s</string>
-    <string name="drive_connected">Backing up to Google Drive</string>
-    <string name="drive_last_backup">Last backup: %1$s</string>
-    <string name="drive_no_backup_yet">No backup yet. The first one runs at the next scheduled time, or tap Back up now.</string>
-    <string name="drive_auto">Back up automatically</string>
-    <string name="drive_auto_detail">Around 3 am. Keeps the last 14 backups and one from each of the last 12 months.</string>
-    <string name="drive_daily">Every day</string>
-    <string name="drive_weekly">Every week</string>
-    <string name="drive_weekly_on">On %1$s, around 3 am</string>
-    <string name="drive_wifi_only">Only on Wi-Fi</string>
-    <string name="drive_charging_only">Only while charging</string>
-    <string name="drive_backup_now">Back up now</string>
-    <string name="drive_backed_up">Backed up to Google Drive.</string>
-    <string name="drive_restore">Restore from Drive</string>
-    <string name="drive_restore_title">Restore from Google Drive</string>
-    <string name="drive_restore_hint">Pick a backup. You\'ll see what\'s in it and choose Merge or Replace before anything changes.</string>
-    <string name="drive_restore_empty">No backups in your Drive yet.</string>
-    <string name="drive_restore_failed">Couldn\'t open the backup</string>
-    <string name="drive_disconnect">Disconnect</string>
-    <string name="drive_disconnect_title">Disconnect Google Drive?</string>
-    <string name="drive_disconnect_body">Backups stop and Forkcast loses access to your Drive. Backups already there stay; you can delete them in Drive.</string>
-    <string name="drive_problem_not_connected">Connect Google Drive first.</string>
-    <string name="drive_problem_reconnect">Forkcast lost access to your Drive. Disconnect, then connect again.</string>
-    <string name="drive_problem_not_set_up">Google Drive sign-in isn\'t set up for this build of Forkcast yet.</string>
-    <string name="drive_problem_offline">No connection. Try again when you\'re online.</string>
-    <string name="drive_problem_quota">Your Google Drive is full. Free up space, then back up again.</string>
-    <string name="drive_problem_busy">Google Drive is busy. Try again in a few minutes.</string>
-    <string name="drive_problem_error">Google Drive had a problem. Try again later.</string>
+    <!-- Backups (roadmap 2.0, task 1.4) -->
+    <string name="backup_title">Backups</string>
+    <string name="backup_body">A backup is one file with everything: food log, foods, recipes, saved meals, weight, water, activity, photo estimates, goals and settings. API keys are never in it. Keep one somewhere other than this phone.</string>
+    <string name="backup_save">Save a backup file…</string>
+    <string name="backup_restore">Restore from a backup…</string>
+    <string name="backup_saved">Backup saved</string>
+    <string name="backup_none_yet">No backup yet.</string>
+    <string name="backup_last">Last backup: %1$s</string>
+    <string name="backup_last_details">Last backup: %1$s · %2$s</string>
+    <string name="backup_detail_separator">" · "</string>
+    <string name="backup_reminder">Remind me to back up</string>
+    <string name="backup_reminder_detail">On Today, after 14 days without a backup</string>
+    <string name="backup_preview_photos">Meal photos: %1$d</string>
+    <string name="backup_preview_no_photos">No meal photos in this file.</string>
+    <string name="backup_photos_detail">Photos make the file much bigger. Your log keeps every entry either way.</string>
+
+    <string name="backup_save_title">Save a backup file</string>
+    <string name="backup_save_body">Next, choose where to save it: this phone, an SD card, or a cloud app like Google Drive or OneDrive.</string>
+    <string name="backup_save_photos">Include meal photos</string>
+    <string name="backup_save_password">Protect with a password</string>
+    <string name="backup_password_warning">If you forget this password, the backup can\'t be restored. Nobody can recover it.</string>
+    <string name="backup_password">Password</string>
+    <string name="backup_password_again">Password again</string>
+    <string name="backup_save_choose">Choose where to save</string>
+    <string name="backup_unlock_title">This backup has a password</string>
+    <string name="backup_unlock_body">Type the password it was saved with.</string>
+    <string name="backup_unlock_wrong">Wrong password, or the file was changed.</string>
+    <string name="backup_unlock">Open</string>
+
+    <!-- Automatic backup to a folder -->
+    <string name="backup_auto_title">Automatic backup</string>
+    <string name="backup_auto_intro">Pick a folder once and Forkcast saves a backup there every week. It can be on this phone, an SD card, or a cloud app\'s folder (Google Drive, OneDrive and others). Forkcast only sees that folder.</string>
+    <string name="backup_auto_choose">Choose a folder</string>
+    <string name="backup_auto_folder">Saving to: %1$s</string>
+    <string name="backup_auto_folder_unnamed">Saving to the folder you chose</string>
+    <string name="backup_auto_switch">Back up automatically</string>
+    <string name="backup_weekly">Every week</string>
+    <string name="backup_daily">Every day</string>
+    <string name="backup_weekly_on">On %1$s, around 3 am</string>
+    <string name="backup_daily_at">Around 3 am</string>
+    <string name="backup_keep_title">Backups to keep</string>
+    <plurals name="backup_keep_choice">
+        <item quantity="one">Newest %1$d</item>
+        <item quantity="other">Newest %1$d</item>
+    </plurals>
+    <string name="backup_auto_photos">Include meal photos</string>
+    <string name="backup_auto_password">Protect with a password</string>
+    <string name="backup_auto_password_detail">Saved on this phone so backups can run on their own</string>
+    <string name="backup_auto_password_body">Automatic backups will be locked with this password. It\'s saved on this phone (encrypted) so backups can run without you. To restore on another phone you\'ll need to type it, and if you forget it, those backups can\'t be restored.</string>
+    <string name="backup_now_to_folder">Back up now</string>
+    <string name="backup_backed_up">Backed up.</string>
+    <string name="backup_auto_change">Change folder</string>
+    <string name="backup_auto_forget">Stop using this folder</string>
+    <string name="backup_auto_forget_title">Stop automatic backups to this folder?</string>
+    <string name="backup_auto_forget_body">Backups stop and Forkcast lets go of the folder. Backups already there stay.</string>
+    <string name="backup_problem_no_folder">Choose a folder first.</string>
+    <string name="backup_problem_folder_lost">Forkcast can\'t reach the backup folder any more. It may have been moved or deleted. Choose a folder again.</string>
+    <string name="backup_problem_password_missing">Backups are set to use a password, but none is saved on this phone. Turn the password off and on again to set it.</string>
+    <string name="backup_problem_write_failed">The backup couldn\'t be saved. Check that there\'s free space, or choose another folder.</string>
+
     <!-- Delete old backups (owner, 2026-10-24) -->
-    <string name="drive_cleanup">Delete old backups</string>
-    <string name="drive_cleanup_unlock_title">Unlock to delete old backups</string>
-    <string name="drive_cleanup_unlock_subtitle">Google Drive backups</string>
-    <string name="drive_cleanup_no_lock_body">Deleting backups needs your phone\'s screen lock (PIN, pattern, password, fingerprint or face), so nobody holding your phone can remove them.</string>
-    <plurals name="drive_cleanup_title">
+    <string name="backup_cleanup">Delete old backups</string>
+    <string name="backup_cleanup_unlock_title">Unlock to delete old backups</string>
+    <string name="backup_cleanup_unlock_subtitle">Forkcast backups</string>
+    <string name="backup_cleanup_no_lock_body">Deleting backups needs your phone\'s screen lock (PIN, pattern, password, fingerprint or face), so nobody holding your phone can remove them.</string>
+    <plurals name="backup_cleanup_title">
         <item quantity="one">Delete %1$d old backup?</item>
         <item quantity="other">Delete %1$d old backups?</item>
     </plurals>
-    <string name="drive_cleanup_range">Backups from %1$s to %2$s will be deleted from the Forkcast Backups folder in your Google Drive. This can\'t be undone.</string>
-    <string name="drive_cleanup_single">The backup from %1$s will be deleted from the Forkcast Backups folder in your Google Drive. This can\'t be undone.</string>
-    <string name="drive_cleanup_keep">Kept: %1$s, the newest. It was checked and can be restored.</string>
-    <string name="drive_cleanup_delete">Delete</string>
-    <string name="drive_cleanup_nothing_title">Nothing to delete</string>
-    <string name="drive_cleanup_nothing_one">There\'s only one backup (%1$s), and it\'s kept.</string>
-    <string name="drive_cleanup_nothing_none">There are no backups in your Drive yet.</string>
-    <string name="drive_cleanup_first_title">Back up first</string>
-    <string name="drive_cleanup_old_format">The newest backup (%1$s) was made by an older version of Forkcast, so nothing was deleted. Back up now, then the old ones can go.</string>
-    <string name="drive_cleanup_unreadable">The newest backup (%1$s) can\'t be read, so nothing was deleted. Back up now, then the old ones can go.</string>
-    <plurals name="drive_cleanup_done">
+    <string name="backup_cleanup_range">Backups from %1$s to %2$s will be deleted from your backup folder. This can\'t be undone.</string>
+    <string name="backup_cleanup_single">The backup from %1$s will be deleted from your backup folder. This can\'t be undone.</string>
+    <string name="backup_cleanup_keep">Kept: %1$s, the newest. It was checked and can be restored.</string>
+    <string name="backup_cleanup_delete">Delete</string>
+    <string name="backup_cleanup_nothing_title">Nothing to delete</string>
+    <string name="backup_cleanup_nothing_one">There\'s only one backup (%1$s), and it\'s kept.</string>
+    <string name="backup_cleanup_nothing_none">There are no backups in the folder yet.</string>
+    <string name="backup_cleanup_first_title">Back up first</string>
+    <string name="backup_cleanup_old_format">The newest backup (%1$s) was made by an older version of Forkcast, so nothing was deleted. Back up now, then the old ones can go.</string>
+    <string name="backup_cleanup_unreadable">The newest backup (%1$s) can\'t be read, so nothing was deleted. Back up now, then the old ones can go.</string>
+    <string name="backup_cleanup_password">The newest backup (%1$s) has a password other than the one saved for automatic backups, so it couldn\'t be checked and nothing was deleted. Back up now, then the old ones can go.</string>
+    <plurals name="backup_cleanup_done">
         <item quantity="one">Deleted %1$d backup. Kept %2$s.</item>
         <item quantity="other">Deleted %1$d backups. Kept %2$s.</item>
     </plurals>
-    <plurals name="drive_cleanup_partial">
+    <plurals name="backup_cleanup_partial">
         <item quantity="one">Deleted %1$d backup; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
         <item quantity="other">Deleted %1$d backups; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
     </plurals>

@@ -5,10 +5,6 @@ import app.forkcast.core.data.ai.AiEstimateRepository
 import app.forkcast.core.data.ai.DefaultAiEstimateRepository
 import app.forkcast.core.data.ai.EstimateScheduler
 import app.forkcast.core.data.ai.WorkManagerEstimateScheduler
-import app.forkcast.core.data.drive.DriveAuth
-import app.forkcast.core.data.drive.DriveMock
-import app.forkcast.core.data.drive.GoogleDriveAuth
-import app.forkcast.core.network.drive.DriveClient
 import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.DefaultAiRepository
 import app.forkcast.core.data.repository.DefaultFoodRepository
@@ -68,17 +64,6 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideAiDefaults(): AiDefaults = AiDefaults.load()
-
-    /** Google's Drive; a local stand-in only in a debuggable build set up for it (DriveMock). */
-    @Provides
-    @Singleton
-    fun provideDriveClient(@ApplicationContext context: Context, http: HttpClient): DriveClient =
-        DriveMock.baseUrl(context)?.let { DriveClient(http, "$it/drive/v3", "$it/upload/drive/v3") } ?: DriveClient(http)
-
-    @Provides
-    @Singleton
-    fun provideDriveAuth(@ApplicationContext context: Context, google: javax.inject.Provider<GoogleDriveAuth>): DriveAuth =
-        if (DriveMock.baseUrl(context) != null) DriveMock.Auth else google.get()
 
     @Provides
     @Singleton

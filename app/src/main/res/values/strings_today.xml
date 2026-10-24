@@ -115,4 +115,12 @@
     <string name="budget_fit_line">%1$s · %2$s protein</string>
     <string name="budget_fit_add">Add %1$s to %2$s</string>
     <string name="budget_saved_meal">Saved meal</string>
+    <!-- Backup card (roadmap 2.0, task 1.4) -->
+    <string name="backup_notice_drive_title">Google Drive backup has been replaced</string>
+    <string name="backup_notice_drive_body">Backups now go to a folder you choose: on this phone, an SD card, or a cloud app\'s folder like Google Drive. Your old Drive backups stay where they are.</string>
+    <string name="backup_notice_set_up">Set up backup</string>
+    <string name="backup_notice_reminder_title">Time for a backup</string>
+    <string name="backup_notice_reminder_body">There hasn\'t been a backup for two weeks. Your data lives only on this phone.</string>
+    <string name="backup_notice_back_up">Back up</string>
+    <string name="backup_notice_not_now">Not now</string>
 </resources>

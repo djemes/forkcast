@@ -18,15 +18,31 @@ import javax.inject.Singleton
 data class DeviceState(
     /** Missing-key prompts dismissed on this phone ("usda", "ai:<profileId>"). */
     val dismissedMissingKeys: Set<String> = emptySet(),
-    /** Google account Drive backups go to (shown in Settings; null = not connected here). */
-    val driveAccount: String? = null,
-    /** Id of the "Forkcast Backups" folder in that Drive, once found or created. */
-    val driveFolderId: String? = null,
-    /** Last successful Drive backup (epoch ms). */
+    /** The folder automatic backups go to (a document-tree uri), null = none chosen here. */
+    val backupFolder: String? = null,
+    /** Its name as shown by its app, saved when it was chosen. */
+    val backupFolderName: String? = null,
+    /** The last successful backup, automatic or saved with the file picker. */
+    val lastBackup: LastBackup? = null,
+    /** Why the last automatic backup failed (a short code), null after a success. */
+    val lastBackupError: String? = null,
+    /** Automatic backups that failed in a row; the second one notifies. */
+    val backupFailures: Int = 0,
+    /** The no-backup reminder on Today was dismissed at this time (epoch ms); it comes back after another 14 days. */
+    val backupReminderDismissedAt: Long? = null,
+    /**
+     * 1.0–1.4 had Google Drive backup connected on this phone (its account key is still here):
+     * Today shows the one-time "Drive backup was replaced" notice until it's dismissed.
+     */
+    val driveBackupWasOn: Boolean = false,
+    /** When the last Drive backup ran (1.0–1.4), for the no-backup reminder. */
     val lastDriveBackupAt: Long? = null,
-    /** Why the last attempt failed (a short code), null after a success. */
-    val lastDriveError: String? = null,
+    /** When Forkcast (1.5+) first ran on this phone: the reminder counts from here before any backup. */
+    val firstSeenAt: Long? = null,
 )
+
+/** Where and when the last backup was written. [place] is the folder's name, null for a picked file. */
+data class LastBackup(val at: Long, val name: String, val place: String?, val sizeBytes: Long?)
 
 @Singleton
 class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
@@ -39,10 +55,19 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         val next = transform(_state.value)
         prefs.edit {
             putStringSet(DISMISSED, next.dismissedMissingKeys)
-            putOrRemove(DRIVE_ACCOUNT, next.driveAccount)
-            putOrRemove(DRIVE_FOLDER, next.driveFolderId)
-            if (next.lastDriveBackupAt != null) putLong(LAST_BACKUP, next.lastDriveBackupAt) else remove(LAST_BACKUP)
-            putOrRemove(LAST_ERROR, next.lastDriveError)
+            putOrRemove(BACKUP_FOLDER, next.backupFolder)
+            putOrRemove(BACKUP_FOLDER_NAME, next.backupFolderName)
+            putOrRemove(LAST_AT, next.lastBackup?.at)
+            putOrRemove(LAST_NAME, next.lastBackup?.name)
+            putOrRemove(LAST_PLACE, next.lastBackup?.place)
+            putOrRemove(LAST_SIZE, next.lastBackup?.sizeBytes)
+            putOrRemove(LAST_ERROR, next.lastBackupError)
+            putInt(FAILURES, next.backupFailures)
+            putOrRemove(REMINDER_DISMISSED, next.backupReminderDismissedAt)
+            // Drive backup (1.0–1.4): only its "was connected" mark and last time stay, until the notice goes.
+            if (!next.driveBackupWasOn) DRIVE_KEYS.forEach(::remove)
+            putOrRemove(DRIVE_LAST_BACKUP, next.lastDriveBackupAt)
+            putOrRemove(FIRST_SEEN, next.firstSeenAt)
             // The camera tips' open/closed state (1.3–1.4) is gone; drop it from phones that have it.
             remove(CAMERA_WARNINGS)
         }
@@ -53,22 +78,45 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         if (value != null) putString(key, value) else remove(key)
     }
 
+    private fun SharedPreferences.Editor.putOrRemove(key: String, value: Long?) {
+        if (value != null) putLong(key, value) else remove(key)
+    }
+
+    private fun long(key: String): Long? = if (prefs.contains(key)) prefs.getLong(key, 0) else null
+
     private fun read() = DeviceState(
         dismissedMissingKeys = prefs.getStringSet(DISMISSED, null)?.toSet().orEmpty(),
-        driveAccount = prefs.getString(DRIVE_ACCOUNT, null),
-        driveFolderId = prefs.getString(DRIVE_FOLDER, null),
-        lastDriveBackupAt = if (prefs.contains(LAST_BACKUP)) prefs.getLong(LAST_BACKUP, 0) else null,
-        lastDriveError = prefs.getString(LAST_ERROR, null),
+        backupFolder = prefs.getString(BACKUP_FOLDER, null),
+        backupFolderName = prefs.getString(BACKUP_FOLDER_NAME, null),
+        lastBackup = long(LAST_AT)?.let { at ->
+            LastBackup(at, prefs.getString(LAST_NAME, null).orEmpty(), prefs.getString(LAST_PLACE, null), long(LAST_SIZE))
+        },
+        lastBackupError = prefs.getString(LAST_ERROR, null),
+        backupFailures = prefs.getInt(FAILURES, 0),
+        backupReminderDismissedAt = long(REMINDER_DISMISSED),
+        driveBackupWasOn = prefs.getString(DRIVE_ACCOUNT, null) != null,
+        lastDriveBackupAt = long(DRIVE_LAST_BACKUP),
+        firstSeenAt = long(FIRST_SEEN),
     )
 
     companion object {
         /** Excluded from Android backup in data_extraction_rules.xml and backup_rules.xml. */
         const val FILE = "device"
         private const val DISMISSED = "dismissedMissingKeys"
+        private const val BACKUP_FOLDER = "backupFolder"
+        private const val BACKUP_FOLDER_NAME = "backupFolderName"
+        private const val LAST_AT = "lastBackupAt"
+        private const val LAST_NAME = "lastBackupName"
+        private const val LAST_PLACE = "lastBackupPlace"
+        private const val LAST_SIZE = "lastBackupSize"
+        private const val LAST_ERROR = "lastBackupError"
+        private const val FAILURES = "backupFailures"
+        private const val REMINDER_DISMISSED = "backupReminderDismissedAt"
+        private const val FIRST_SEEN = "firstSeenAt"
+        // 1.0–1.4 Google Drive backup.
         private const val DRIVE_ACCOUNT = "driveAccount"
-        private const val DRIVE_FOLDER = "driveFolderId"
-        private const val LAST_BACKUP = "lastDriveBackupAt"
-        private const val LAST_ERROR = "lastDriveError"
+        private const val DRIVE_LAST_BACKUP = "lastDriveBackupAt"
+        private val DRIVE_KEYS = listOf(DRIVE_ACCOUNT, "driveFolderId", "lastDriveError")
         private const val CAMERA_WARNINGS = "cameraWarningsOpen"
     }
 }

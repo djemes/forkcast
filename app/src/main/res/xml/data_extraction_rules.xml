@@ -9,14 +9,14 @@
         <!-- Health Connect changes tokens belong to this phone's Health Connect. -->
         <exclude domain="file" path="health-sync/" />
         <exclude domain="sharedpref" path="secrets.xml" />
-        <!-- Per-phone state (dismissed prompts, Drive account and folder): DevicePrefs. -->
+        <!-- Per-phone state (dismissed prompts, backup folder, last backup): DevicePrefs. -->
         <exclude domain="sharedpref" path="device.xml" />
     </cloud-backup>
     <device-transfer>
         <exclude domain="file" path="secrets/" />
         <exclude domain="file" path="health-sync/" />
         <exclude domain="sharedpref" path="secrets.xml" />
-        <!-- Per-phone state (dismissed prompts, Drive account and folder): DevicePrefs. -->
+        <!-- Per-phone state (dismissed prompts, backup folder, last backup): DevicePrefs. -->
         <exclude domain="sharedpref" path="device.xml" />
     </device-transfer>
 </data-extraction-rules>

@@ -6,6 +6,6 @@
     <exclude domain="file" path="safety-backups/" />
     <exclude domain="file" path="health-sync/" />
     <exclude domain="sharedpref" path="secrets.xml" />
-        <!-- Per-phone state (dismissed prompts, Drive account and folder): DevicePrefs. -->
+        <!-- Per-phone state (dismissed prompts, backup folder, last backup): DevicePrefs. -->
         <exclude domain="sharedpref" path="device.xml" />
 </full-backup-content>
