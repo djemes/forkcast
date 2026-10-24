@@ -100,4 +100,11 @@ class FakeDriveBackupRepository : app.forkcast.core.data.drive.DriveBackupReposi
     override suspend fun disconnect() = state.update { it.copy(account = null) }
     override suspend fun updateSettings(transform: (app.forkcast.core.model.BackupSettings) -> app.forkcast.core.model.BackupSettings) =
         state.update { it.copy(settings = transform(it.settings)) }
+    var plan: app.forkcast.core.data.drive.CleanupPlan = app.forkcast.core.data.drive.CleanupPlan.NothingToDelete(null)
+    val deleted = mutableListOf<String>()
+    override suspend fun cleanupPlan() = problem?.let { app.forkcast.core.data.drive.CleanupPlan.Failed(it) } ?: plan
+    override suspend fun deleteOld(plan: app.forkcast.core.data.drive.CleanupPlan.Ready): Result<app.forkcast.core.data.drive.CleanupResult> {
+        deleted += plan.delete.map { it.id }
+        return Result.success(app.forkcast.core.data.drive.CleanupResult(plan.delete.size, 0, plan.keep))
+    }
 }

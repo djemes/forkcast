@@ -16,16 +16,15 @@ import kotlin.math.sin
 /**
  * Shapes Glance can't draw (arcs, Manrope numbers), as alpha masks. Each mask is shown in an
  * Image tinted with a ColorProvider, so one bitmap follows light/dark and the widget's text mode.
- * ALPHA_8 keeps them small enough to resend several times for the water fill animation.
+ * ALPHA_8 keeps them small.
  */
 object WidgetArt {
 
-    /** Ring geometry shared by the masks of one gauge. [gapDegrees] 0 = full circle. */
-    data class Gauge(val sizePx: Int, val strokeFraction: Float, val gapDegrees: Float) {
+    /** Ring geometry shared by the masks of one ring; it starts at the top, like Today's. */
+    data class Gauge(val sizePx: Int, val strokeFraction: Float) {
         val stroke get() = sizePx * strokeFraction
-        /** A full ring starts at the top (like Today's); a gauge starts after its bottom gap. */
-        val startAngle get() = if (gapDegrees <= 0f) -90f else 90f + gapDegrees / 2
-        val span get() = 360f - gapDegrees
+        val startAngle get() = -90f
+        val span get() = 360f
         val rect get() = RectF(stroke, stroke, sizePx - stroke, sizePx - stroke)
     }
 
@@ -35,7 +34,7 @@ object WidgetArt {
      */
     fun track(g: Gauge): Bitmap = arc(g, g.span, TRACK_ALPHA)
 
-    /** The filled part, [fraction] 0..1 of the gauge. */
+    /** The filled part, [fraction] 0..1 of the ring. */
     fun fill(g: Gauge, fraction: Float): Bitmap = arc(g, g.span * fraction.coerceIn(0f, 1f))
 
     /** The "now" dot at the end of the fill (the ring's apricot dot, DESIGN.md §1). */
@@ -86,7 +85,7 @@ object WidgetArt {
 
     private fun mask(w: Int, h: Int) = createBitmap(w, h, Bitmap.Config.ALPHA_8)
 
-    /** How strong the empty part of a ring or gauge is, relative to the text color. */
+    /** How strong the empty part of a ring is, relative to the text color. */
     const val TRACK_ALPHA = 0.2f
     private fun paint() = Paint(Paint.ANTI_ALIAS_FLAG)
 }

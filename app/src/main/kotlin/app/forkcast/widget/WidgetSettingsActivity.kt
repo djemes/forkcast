@@ -23,7 +23,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
@@ -48,7 +47,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
@@ -87,7 +85,6 @@ class WidgetSettingsActivity : ComponentActivity() {
             finish()
             return
         }
-        val isWater = AppWidgetManager.getInstance(this).getAppWidgetInfo(appWidgetId)?.provider?.className == WaterWidgetReceiver::class.java.name
         lifecycleScope.launch {
             val manager = GlanceAppWidgetManager(this@WidgetSettingsActivity)
             val glanceId = runCatching { manager.getGlanceIdBy(appWidgetId) }.getOrNull()
@@ -97,7 +94,7 @@ class WidgetSettingsActivity : ComponentActivity() {
             setContent {
                 ForkcastTheme {
                     val scope = rememberCoroutineScope()
-                    WidgetSettingsScreen(initial, isWater, onBack = { finish() }) { style ->
+                    WidgetSettingsScreen(initial, onBack = { finish() }) { style ->
                         scope.launch {
                             if (glanceId != null) {
                                 updateAppWidgetState(this@WidgetSettingsActivity, glanceId) { prefs ->
@@ -117,7 +114,7 @@ class WidgetSettingsActivity : ComponentActivity() {
 }
 
 @Composable
-private fun WidgetSettingsScreen(initial: WidgetStyle, isWater: Boolean, onBack: () -> Unit, onDone: (WidgetStyle) -> Unit) {
+private fun WidgetSettingsScreen(initial: WidgetStyle, onBack: () -> Unit, onDone: (WidgetStyle) -> Unit) {
     // Saveable: unsaved edits survive a rotation or a dark-mode switch.
     var background by rememberSaveable { mutableFloatStateOf(initial.background) }
     var theme by rememberSaveable { mutableStateOf(initial.theme) }
@@ -126,8 +123,8 @@ private fun WidgetSettingsScreen(initial: WidgetStyle, isWater: Boolean, onBack:
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             // The same widget on a light and a dark wallpaper, so readability is easy to judge.
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                PreviewOn(style, isWater, wallpaperDark = false, Modifier.weight(1f))
-                PreviewOn(style, isWater, wallpaperDark = true, Modifier.weight(1f))
+                PreviewOn(style, wallpaperDark = false, Modifier.weight(1f))
+                PreviewOn(style, wallpaperDark = true, Modifier.weight(1f))
             }
             Text(stringResource(R.string.widget_settings_background), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             val percent = (background * 100).roundToInt()
@@ -162,7 +159,7 @@ private fun WidgetSettingsScreen(initial: WidgetStyle, isWater: Boolean, onBack:
 
 /** A Compose stand-in for the widget, on a sample wallpaper. */
 @Composable
-private fun PreviewOn(style: WidgetStyle, isWater: Boolean, wallpaperDark: Boolean, modifier: Modifier) {
+private fun PreviewOn(style: WidgetStyle, wallpaperDark: Boolean, modifier: Modifier) {
     val systemDark = isSystemInDarkTheme()
     val darkGlass = when (style.theme) {
         WidgetTheme.AUTO -> systemDark
@@ -200,28 +197,16 @@ private fun PreviewOn(style: WidgetStyle, isWater: Boolean, wallpaperDark: Boole
             // The same sample afternoon as the widget picker's preview, in the phone's units.
             val sample = remember { sampleSnapshot() }
             val f = sample.format
-            val fill = if (isWater) palette.protein else palette.pine
             Canvas(Modifier.size(84.dp)) {
                 val stroke = size.minDimension * 0.085f
                 val arcSize = Size(size.width - stroke * 2, size.height - stroke * 2)
                 val topLeft = Offset(stroke, stroke)
-                val gap = if (isWater) 80f else 0f
-                val start = if (isWater) 90f + gap / 2 else -90f
-                val span = 360f - gap
-                drawArc(track, start, span, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
-                drawArc(fill, start, span * 0.6f, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+                drawArc(track, -90f, 360f, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
+                drawArc(palette.pine, -90f, 360f * 0.6f, false, topLeft, arcSize, style = Stroke(stroke, cap = StrokeCap.Round))
             }
-            if (isWater) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Icon(painterResource(R.drawable.ic_water_glass), contentDescription = null, tint = palette.protein, modifier = Modifier.size(28.dp))
-                    val unit = if (f.waterUnitLabel == "fl oz") "oz" else f.waterUnitLabel
-                    Text("${f.number(f.waterValue(sample.waterMl))} $unit", style = MaterialTheme.typography.labelLarge, color = palette.ink)
-                }
-            } else {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(f.energyNumber(sample.totals?.remainingKcal ?: 0.0), style = MaterialTheme.typography.titleLarge, color = palette.ink)
-                    Text(stringResource(R.string.ring_left, f.energyUnitLabel), style = MaterialTheme.typography.labelSmall, color = palette.muted)
-                }
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(f.energyNumber(sample.totals?.remainingKcal ?: 0.0), style = MaterialTheme.typography.titleLarge, color = palette.ink)
+                Text(stringResource(R.string.ring_left, f.energyUnitLabel), style = MaterialTheme.typography.labelSmall, color = palette.muted)
             }
         }
     }

@@ -4,6 +4,9 @@
     <string name="photo_meal_title">Photo meal</string>
     <string name="photo_framing_hint">Fit the whole plate. A fork or hand helps with size.</string>
     <string name="photo_free_tier_hint">Google may review free-tier photos. Keep faces and documents out of the frame.</string>
+    <string name="photo_warnings">Tips and warnings</string>
+    <string name="photo_warnings_shown">Shown</string>
+    <string name="photo_warnings_hidden">Hidden</string>
     <string name="photo_shutter">Take photo</string>
     <string name="photo_gallery">Choose from gallery</string>
     <string name="photo_remove">Remove photo %1$d</string>

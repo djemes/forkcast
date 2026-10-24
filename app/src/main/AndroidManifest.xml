@@ -72,7 +72,7 @@
             android:taskAffinity=""
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
-        <!-- Widget Settings: background opacity and text color (on add and from the widget's menu). -->
+        <!-- Widget style: background opacity and color (on add and from the widget's menu). -->
         <activity
             android:name=".widget.WidgetSettingsActivity"
             android:exported="true"
@@ -89,9 +89,9 @@
             android:name=".update.InstallResultReceiver"
             android:exported="false" />
 
-        <!-- Home-screen widgets (Glance). -->
+        <!-- Home-screen widget (Glance): Calories left, re-rendered after midnight. -->
         <receiver
-            android:name=".widget.UndoExpiredReceiver"
+            android:name=".widget.MidnightReceiver"
             android:exported="false" />
         <receiver
             android:name=".widget.CaloriesWidgetReceiver"
@@ -101,15 +101,6 @@
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_calories_info" />
-        </receiver>
-        <receiver
-            android:name=".widget.WaterWidgetReceiver"
-            android:exported="true"
-            android:label="@string/widget_water_name">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_water_info" />
         </receiver>
 
         <!-- Quick Settings tiles: barcode scan and AI photo meal. -->

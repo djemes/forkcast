@@ -16,6 +16,13 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.SavedStateHandle
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.getUnclippedBoundsInRoot
+import androidx.compose.ui.test.onRoot
+import androidx.test.core.app.ApplicationProvider
+import app.forkcast.core.data.settings.DevicePrefs
+import org.robolectric.annotation.Config
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.cash.turbine.test
 import app.forkcast.core.data.ai.EstimateDetail
@@ -61,7 +68,13 @@ class PhotoFlowTest {
     private val clock = Clock.fixed(Instant.parse("2026-10-18T16:40:00Z"), ZoneId.of("America/New_York"))
     private val photo: Uri = Uri.parse("content://media/1")
 
-    @Before fun setUp() = Dispatchers.setMain(UnconfinedTestDispatcher())
+    private fun device() = DevicePrefs(ApplicationProvider.getApplicationContext())
+
+    @Before fun setUp() {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        // A new install: no saved camera state.
+        ApplicationProvider.getApplicationContext<android.content.Context>().getSharedPreferences(DevicePrefs.FILE, 0).edit().clear().commit()
+    }
     @After fun tearDown() = Dispatchers.resetMain()
 
     @Test fun photoThenDescriptionThenEstimateQueuesAndReturns() = runTest {
@@ -69,7 +82,7 @@ class PhotoFlowTest {
         val estimates = FakeAiEstimateRepository()
         val vm = PhotoMealViewModel(
             SavedStateHandle(mapOf("mealSlotId" to "l", "date" to TestData.TODAY.toString())),
-            estimates, ai, FakeMealSlotRepository(), FakeSettingsRepository(), clock,
+            estimates, ai, FakeMealSlotRepository(), FakeSettingsRepository(), device(), clock,
         )
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect {} }
         assertThat(vm.state.value.firstIsFreeTier).isTrue()
@@ -239,5 +252,70 @@ class PhotoFlowTest {
         compose.onNodeWithContentDescription("Choose from gallery").assertIsDisplayed()
         compose.onNodeWithText("Next").assertIsDisplayed()
         compose.onNodeWithContentDescription("Remove photo 2").assertIsDisplayed()
+    }
+
+    private fun capture(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit = {}) = compose.setContent {
+        ForkcastTheme { PhotoMealScreen(state = state, onEvent = onEvent, onBack = {}, onOpenAiSettings = {}) }
+    }
+
+    private val captureState = PhotoMealUiState(loaded = true, step = PhotoStep.CAPTURE, photos = listOf(photo), mealSlotId = "l", slots = FakeMealSlotRepository.DEFAULT, hasProfile = true, firstIsFreeTier = true)
+
+    @Test fun warningsShowUnderTheWarningButtonAndItHidesThem() {
+        val events = mutableListOf<PhotoMealEvent>()
+        capture(captureState, onEvent = { events += it })
+        compose.onNodeWithText("Fit the whole plate", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("Google may review free-tier photos", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("Tips and warnings").assertIsOn().performClick()
+        assertThat(events).containsExactly(PhotoMealEvent.ToggleWarnings)
+    }
+
+    @Test fun closedWarningsLeaveOnlyTheButton() {
+        capture(captureState.copy(warningsOpen = false))
+        compose.onNodeWithText("Fit the whole plate", substring = true).assertDoesNotExist()
+        compose.onNodeWithText("Google may review", substring = true).assertDoesNotExist()
+        compose.onNodeWithContentDescription("Tips and warnings").assertIsOff()
+    }
+
+    @Test fun warningsStartOpenThenStayAsLeft() = runTest {
+        fun vm() = PhotoMealViewModel(SavedStateHandle(), FakeAiEstimateRepository(), FakeAiRepository(), FakeMealSlotRepository(), FakeSettingsRepository(), device(), clock)
+        val first = vm()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { first.state.collect {} }
+        assertThat(first.state.value.warningsOpen).isTrue()
+        first.onEvent(PhotoMealEvent.ToggleWarnings)
+        assertThat(first.state.value.warningsOpen).isFalse()
+        // The next time the camera opens (a new screen, the phone's saved state read again): still closed.
+        val next = vm()
+        assertThat(next.state.value.warningsOpen).isFalse()
+        next.onEvent(PhotoMealEvent.ToggleWarnings)
+        assertThat(vm().state.value.warningsOpen).isTrue()
+    }
+
+    @Config(qualifiers = "w891dp-h411dp-land")
+    @Test fun landscapePutsTheControlsInABarOnTheRight() {
+        capture(captureState)
+        val width = compose.onRoot().getUnclippedBoundsInRoot().right
+        val next = compose.onNodeWithText("Next").assertIsDisplayed().getUnclippedBoundsInRoot()
+        val shutter = compose.onNodeWithContentDescription("Take photo").assertIsDisplayed().getUnclippedBoundsInRoot()
+        val gallery = compose.onNodeWithContentDescription("Choose from gallery").assertIsDisplayed().getUnclippedBoundsInRoot()
+        val thumb = compose.onNodeWithContentDescription("Remove photo 1").assertIsDisplayed().getUnclippedBoundsInRoot()
+        // All in the right-hand part of the screen, top to bottom: Next, shutter, gallery.
+        listOf(next, shutter, gallery, thumb).forEach { assertThat(it.left.value).isGreaterThan(width.value * 0.6f) }
+        assertThat(next.bottom.value).isAtMost(shutter.top.value)
+        assertThat(shutter.bottom.value).isAtMost(gallery.top.value)
+        // The tips stay over the preview, left of the bar.
+        val tip = compose.onNodeWithText("Fit the whole plate", substring = true).assertIsDisplayed().getUnclippedBoundsInRoot()
+        assertThat(tip.right.value).isAtMost(thumb.left.value)
+        compose.onNodeWithContentDescription("Tips and warnings").assertIsDisplayed()
+    }
+
+    @Test fun portraitKeepsTheBottomBar() {
+        capture(captureState)
+        val height = compose.onRoot().getUnclippedBoundsInRoot().bottom
+        val gallery = compose.onNodeWithContentDescription("Choose from gallery").getUnclippedBoundsInRoot()
+        val shutter = compose.onNodeWithContentDescription("Take photo").getUnclippedBoundsInRoot()
+        val next = compose.onNodeWithText("Next").getUnclippedBoundsInRoot()
+        assertThat(shutter.top.value).isGreaterThan(height.value * 0.6f)
+        assertThat(gallery.right.value).isAtMost(shutter.left.value)
+        assertThat(shutter.right.value).isAtMost(next.left.value)
     }
 }

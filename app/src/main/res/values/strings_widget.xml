@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Home-screen widgets, app shortcuts and Quick Settings tiles (SPEC §3 Phase 5) -->
+    <!-- Home-screen widget, app shortcuts and Quick Settings tiles (SPEC §3 Phase 5) -->
     <string name="widget_calories_name">Calories left</string>
     <string name="widget_calories_description">Today\'s calories left on the ring, with protein, carbs and fat and buttons to log, scan or snap a photo when wider.</string>
-    <string name="widget_water_name">Water</string>
-    <string name="widget_water_description">Today\'s water against your goal, with a button to add a glass.</string>
     <string name="widget_set_up">Set up Forkcast</string>
     <string name="shortcut_scan">Scan</string>
     <string name="shortcut_scan_long">Scan a barcode</string>
@@ -18,9 +16,6 @@
     <string name="shortcut_water_failed">Couldn\'t add water. Open Forkcast and try again.</string>
     <string name="tile_scan">Scan food</string>
     <string name="tile_photo">Photo meal</string>
-    <string name="widget_undo">Undo</string>
-    <string name="widget_water_now">Water today: %1$s of %2$s. Tap to add %3$s.</string>
-    <string name="widget_water_of_goal">of %1$s</string>
     <string name="widget_settings_title">Widget style</string>
     <string name="widget_settings_background">Glass background</string>
     <string name="widget_settings_background_hint" formatted="false">0 % is fully transparent, 100 % is solid. In between, the widget is frosted glass tinted to your phone\'s color palette.</string>

@@ -10,7 +10,7 @@ data class AppSettings(
     val units: UnitPrefs? = null,
     /** Daily water goal in ml; null = default by sex (SPEC §4.9). */
     val waterTargetMl: Double? = null,
-    /** The glass (Today, the water widget, the shortcut) in ml; null = 8 fl oz or 250 ml by units. */
+    /** The glass of Today's water drop (and the shortcut) in ml; null = 8 fl oz or 250 ml by units. */
     val waterGlassMl: Double? = null,
     /** Can, bottle and tumbler sizes and the container the water drop adds (owner, 2026-10-23). */
     val waterContainers: WaterContainers = WaterContainers(),
@@ -33,7 +33,7 @@ data class AppSettings(
     val backup: BackupSettings = BackupSettings(),
 )
 
-/** What the water drop on Today (and the widget) adds. */
+/** What the water drop on Today (and the "+1 glass" shortcut) adds. */
 @Serializable
 enum class WaterContainer { GLASS, CAN, BOTTLE, TUMBLER }
 

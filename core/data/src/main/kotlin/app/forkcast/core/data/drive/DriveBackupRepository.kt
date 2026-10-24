@@ -2,6 +2,7 @@ package app.forkcast.core.data.drive
 
 import app.forkcast.core.data.backup.BackupRepository
 import app.forkcast.core.data.backup.ForkcastExport
+import app.forkcast.core.data.backup.ParsedBackup
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.settings.DevicePrefs
 import app.forkcast.core.domain.BackupRetention
@@ -54,6 +55,30 @@ data class DriveStatus(
 data class DriveBackup(val id: String, val name: String, val createdAt: Instant?, val sizeBytes: Long?)
 
 /**
+ * "Delete old backups" (owner, 2026-10-24): what would happen, worked out before anything is
+ * deleted. Only [Ready] can be carried out.
+ */
+sealed interface CleanupPlan {
+    /** The newest backup was downloaded and reads as a current-format export: the others can go. */
+    data class Ready(val keep: DriveBackup, val delete: List<DriveBackup>) : CleanupPlan
+    /** One backup or none: nothing to delete. */
+    data class NothingToDelete(val keep: DriveBackup?) : CleanupPlan
+    /** The newest backup can't be restored by this version; nothing is deleted until a new one is made. */
+    data class LatestNotRestorable(val latest: DriveBackup, val reason: NotRestorable) : CleanupPlan
+    data class Failed(val problem: DriveProblem) : CleanupPlan
+}
+
+enum class NotRestorable {
+    /** Readable, but an export format older than this version writes. */
+    OLD_FORMAT,
+    /** Not a Forkcast export this version can open (damaged, cut short, or from a newer version). */
+    UNREADABLE,
+}
+
+/** How a cleanup went: [deleted] of the planned ones are gone; [failed] are still there. */
+data class CleanupResult(val deleted: Int, val failed: Int, val kept: DriveBackup)
+
+/**
  * Google Drive backup and restore (SPEC §4.11): a gzipped JSON export (the same file as
  * Backup & data's export, so no keys and no photos) uploaded to "Forkcast Backups", keeping
  * the last 14 plus the first of each of the last 12 months.
@@ -69,6 +94,10 @@ interface DriveBackupRepository {
     suspend fun download(id: String): String
     suspend fun disconnect()
     suspend fun updateSettings(transform: (BackupSettings) -> BackupSettings)
+    /** Checks that the newest backup can be restored and lists the older ones; deletes nothing. */
+    suspend fun cleanupPlan(): CleanupPlan
+    /** Deletes [plan]'s older backups, and only those still in the Forkcast Backups folder. */
+    suspend fun deleteOld(plan: CleanupPlan.Ready): Result<CleanupResult>
 }
 
 @Singleton
@@ -126,13 +155,15 @@ class DefaultDriveBackupRepository @Inject constructor(
     override suspend fun download(id: String): String {
         var bytes = ByteArray(0)
         attempt { withToken { token -> bytes = drive.download(token, id) } }?.let { throw DriveProblemException(it) }
-        return withContext(Dispatchers.IO) {
-            // Backups are gzipped; a plain .json someone put in the folder still opens.
-            if (bytes.size >= 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()) {
-                GZIPInputStream(bytes.inputStream()).use { it.readBytes().decodeToString() }
-            } else {
-                bytes.decodeToString()
-            }
+        return unzip(bytes)
+    }
+
+    private suspend fun unzip(bytes: ByteArray): String = withContext(Dispatchers.IO) {
+        // Backups are gzipped; a plain .json someone put in the folder still opens.
+        if (bytes.size >= 2 && bytes[0] == 0x1f.toByte() && bytes[1] == 0x8b.toByte()) {
+            GZIPInputStream(bytes.inputStream()).use { it.readBytes().decodeToString() }
+        } else {
+            bytes.decodeToString()
         }
     }
 
@@ -143,6 +174,53 @@ class DefaultDriveBackupRepository @Inject constructor(
 
     override suspend fun updateSettings(transform: (BackupSettings) -> BackupSettings) =
         settings.update { it.copy(backup = transform(it.backup)) }
+
+    override suspend fun cleanupPlan(): CleanupPlan = mutex.withLock {
+        if (device.state.value.driveAccount == null) return CleanupPlan.Failed(DriveProblem.NOT_CONNECTED)
+        var plan: CleanupPlan = CleanupPlan.NothingToDelete(null)
+        val problem = attempt {
+            withToken { token ->
+                val all = list(token).map { it.toBackup() }.sortedWith(compareByDescending<DriveBackup> { it.createdAt }.thenByDescending { it.name })
+                val latest = all.firstOrNull()
+                plan = when {
+                    latest == null -> CleanupPlan.NothingToDelete(null)
+                    else -> when (val why = restorable(drive.download(token, latest.id))) {
+                        null -> if (all.size == 1) CleanupPlan.NothingToDelete(latest) else CleanupPlan.Ready(latest, all.drop(1))
+                        else -> CleanupPlan.LatestNotRestorable(latest, why)
+                    }
+                }
+            }
+        }
+        problem?.let { CleanupPlan.Failed(it) } ?: plan
+    }
+
+    override suspend fun deleteOld(plan: CleanupPlan.Ready): Result<CleanupResult> = mutex.withLock {
+        var deleted = 0
+        var failed = 0
+        val problem = attempt {
+            withToken { token ->
+                // Only files Forkcast made in its own folder, listed again now; never the one kept.
+                val inFolder = list(token).map { it.id }.toSet()
+                val targets = plan.delete.filter { it.id in inFolder && it.id != plan.keep.id }
+                deleted = 0
+                failed = 0
+                for (b in targets) {
+                    if (runCatching { drive.delete(token, b.id) }.isSuccess) deleted++ else failed++
+                }
+            }
+        }
+        if (problem != null && deleted == 0) Result.failure(DriveProblemException(problem))
+        else Result.success(CleanupResult(deleted, failed, plan.keep))
+    }
+
+    /** Null when [bytes] is a backup this version restores as it is; else why not. */
+    private suspend fun restorable(bytes: ByteArray): NotRestorable? {
+        val text = runCatching { unzip(bytes) }.getOrNull() ?: return NotRestorable.UNREADABLE
+        return when (val parsed = backup.parse(text)) {
+            is ParsedBackup.Ok -> if (parsed.export.schemaVersion == ForkcastExport.SCHEMA_VERSION) null else NotRestorable.OLD_FORMAT
+            is ParsedBackup.Rejected -> NotRestorable.UNREADABLE
+        }
+    }
 
     private suspend fun list(token: String): List<DriveFile> =
         drive.list(token, folderId(token)).filter { it.name.startsWith("forkcast-") && (it.name.endsWith(".json.gz") || it.name.endsWith(".json")) }

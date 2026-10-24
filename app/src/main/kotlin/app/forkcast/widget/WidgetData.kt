@@ -11,10 +11,7 @@ import app.forkcast.core.domain.WaterMath
 import app.forkcast.core.domain.DayMath
 import app.forkcast.core.domain.DayTotals
 import app.forkcast.core.domain.MealSlotPicker
-import app.forkcast.core.domain.NutritionConstants
-import app.forkcast.core.domain.UnitConversions
 import app.forkcast.core.model.NutrientKey
-import app.forkcast.core.model.Sex
 import app.forkcast.core.model.UnitPrefs
 import app.forkcast.core.model.WaterUnit
 import app.forkcast.ui.format.UnitFormatter
@@ -34,7 +31,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.Locale
 
-/** What widgets, shortcuts and tiles need from the app graph (they aren't Hilt entry points themselves). */
+/** What the widget, shortcuts and tiles need from the app graph (they aren't Hilt entry points themselves). */
 @EntryPoint
 @InstallIn(SingletonComponent::class)
 interface WidgetEntryPoint {
@@ -50,7 +47,7 @@ interface WidgetEntryPoint {
 
 fun Context.widgetGraph(): WidgetEntryPoint = EntryPointAccessors.fromApplication(applicationContext, WidgetEntryPoint::class.java)
 
-/** Today's numbers for the home-screen widgets: the same math as Today (SPEC §4.2, §4.9). */
+/** Today's numbers for the Calories widget: the same math as Today (SPEC §4.2). */
 data class TodaySnapshot(
     /** Null until onboarding is done (no budget yet). */
     val totals: DayTotals?,
@@ -60,14 +57,9 @@ data class TodaySnapshot(
     val carbsTargetG: Double,
     val fatG: Double,
     val fatTargetG: Double,
-    val waterMl: Double,
-    val waterTargetMl: Double,
-    val glassMl: Double,
     val units: UnitPrefs,
 ) {
     val format: UnitFormatter get() = UnitFormatter(units)
-    /** How full the water gauge is, 0–1. */
-    val waterFraction: Float get() = if (waterTargetMl > 0) (waterMl / waterTargetMl).toFloat().coerceIn(0f, 1f) else 0f
 }
 
 object WidgetData {
@@ -75,9 +67,9 @@ object WidgetData {
     suspend fun today(context: Context): TodaySnapshot = observeToday(context).first()
 
     /**
-     * Today's snapshot, re-emitted whenever the log, water, targets, settings, profile or activity
-     * bonus change, and when the day rolls over. A running widget session collects this, so a
-     * "+ glass" tap or a log in the app shows at once.
+     * Today's snapshot, re-emitted whenever the log, targets, settings or activity bonus change,
+     * and when the day rolls over. A running widget session collects this, so a log in the app
+     * shows at once.
      */
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     fun observeToday(context: Context): Flow<TodaySnapshot> {
@@ -90,23 +82,20 @@ object WidgetData {
         }.distinctUntilChanged()
         return day.flatMapLatest { today ->
             combine(
-                combine(g.log().observeDay(today), g.water().observeDay(today), ::Pair),
+                g.log().observeDay(today),
                 g.profiles().observeDailyTargets(),
                 g.settings().settings,
-                g.profiles().profile,
                 g.maintenance().observeActivityBonus(today),
-            ) { (entries, water), targets, settings, profile, bonus ->
-                build(entries, water, targets, settings, profile, bonus.bonusKcal)
+            ) { entries, targets, settings, bonus ->
+                build(entries, targets, settings, bonus.bonusKcal)
             }
         }.distinctUntilChanged()
     }
 
     private fun build(
         entries: List<app.forkcast.core.model.LogEntry>,
-        water: List<app.forkcast.core.model.WaterEntry>,
         targets: app.forkcast.core.domain.DailyTargets?,
         settings: app.forkcast.core.model.AppSettings,
-        profile: app.forkcast.core.model.UserProfile?,
         bonusKcal: Double,
     ): TodaySnapshot {
         val units = settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
@@ -120,40 +109,25 @@ object WidgetData {
             carbsTargetG = target(NutrientKey.CARBS_G),
             fatG = totals?.get(NutrientKey.FAT_G) ?: 0.0,
             fatTargetG = target(NutrientKey.FAT_G),
-            // Drinks that count toward water add to it, as on Today (SPEC §4.9).
-            waterMl = WaterMath.dayTotalMl(water.map { it.ml }, entries.map { it.waterMl }),
-            waterTargetMl = WaterMath.targetMl(settings.waterTargetMl, profile?.sex),
-            // The container Today's water drop adds (the last one used), so a widget tap adds the same.
-            glassMl = WaterMath.containerMl(settings.waterContainers.lastUsed, settings.waterGlassMl, settings.waterContainers, units.water == WaterUnit.FL_OZ),
             units = units,
         )
     }
 
     private const val DAY_CHECK_MS = 60_000L
-
-    /** Default "+ glass" when none is set in Settings › Water: 8 fl oz for US units, 250 ml for metric. */
-    fun glassMl(units: UnitPrefs): Double = WaterMath.defaultGlassMl(units.water == WaterUnit.FL_OZ)
-
     /**
-     * Adds the container Today's water drop adds (the last one used; owner, 2026-10-23) to today
-     * through the same repository as Today, so Today, Trends
-     * and Health Connect see it exactly the same way; returns the new entry's id (for Undo).
+     * The "+1 glass" shortcut: adds the container Today's water drop adds (the last one used;
+     * owner, 2026-10-23) through the same repository as Today, so Today, Trends and Health
+     * Connect see it exactly the same way. Returns the amount added, in ml.
      */
-    suspend fun addGlass(context: Context): String {
+    suspend fun addWater(context: Context): Double {
         val g = context.widgetGraph()
         val settings = g.settings().settings.first()
         val units = settings.units ?: UnitFormatter.defaultsFor(Locale.getDefault())
         val c = settings.waterContainers
-        val id = g.water().add(LocalDate.now(g.clock()), WaterMath.containerMl(c.lastUsed, settings.waterGlassMl, c, units.water == WaterUnit.FL_OZ))
+        val ml = WaterMath.containerMl(c.lastUsed, settings.waterGlassMl, c, units.water == WaterUnit.FL_OZ)
+        g.water().add(LocalDate.now(g.clock()), ml)
         g.health().syncSoon()
-        return id
-    }
-
-    /** Undo for a glass added from a widget. */
-    suspend fun removeGlass(context: Context, id: String) {
-        val g = context.widgetGraph()
-        g.water().delete(id)
-        g.health().syncSoon()
+        return ml
     }
 
     /** The meal that fits the time of day (same rule as the Log button on Today). */

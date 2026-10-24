@@ -8,6 +8,7 @@ import app.forkcast.core.data.ai.AiEstimateRepository
 import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
+import app.forkcast.core.data.settings.DevicePrefs
 import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.network.ai.AiChain
@@ -52,6 +53,8 @@ data class PhotoMealUiState(
     val defaultMinute: Int = 12 * 60,
     /** Now, on today: no later time can be picked. */
     val latestMinute: Int? = null,
+    /** The camera's tips and warnings are shown (remembered on this phone; open on a new install). */
+    val warningsOpen: Boolean = true,
 ) {
     val canAddPhoto: Boolean get() = photos.size < MAX_PHOTOS
     val canEstimate: Boolean
@@ -74,6 +77,7 @@ sealed interface PhotoMealEvent {
     data class SetTime(val minute: Int) : PhotoMealEvent
     data object Estimate : PhotoMealEvent
     data object NotificationPermissionAsked : PhotoMealEvent
+    data object ToggleWarnings : PhotoMealEvent
 }
 
 sealed interface PhotoMealEffect {
@@ -87,6 +91,7 @@ class PhotoMealViewModel @Inject constructor(
     ai: AiRepository,
     slots: MealSlotRepository,
     private val settings: SettingsRepository,
+    private val device: DevicePrefs,
     private val clock: Clock,
 ) : ViewModel() {
 
@@ -103,7 +108,7 @@ class PhotoMealViewModel @Inject constructor(
     private val effects = Channel<PhotoMealEffect>(Channel.BUFFERED)
     val effect: Flow<PhotoMealEffect> = effects.receiveAsFlow()
 
-    val state: StateFlow<PhotoMealUiState> = combine(draft, slots.observeMealSlots(), ai.profiles, settings.settings) { d, s, profiles, app ->
+    val state: StateFlow<PhotoMealUiState> = combine(draft, slots.observeMealSlots(), ai.profiles, settings.settings, device.state) { d, s, profiles, app, phone ->
         val usable = AiChain.usable(profiles.map { it.profile }, clock.instant()).ifEmpty { profiles.map { it.profile }.filter { it.enabled } }
         val mealId = d.mealSlotId.ifBlank { s.firstOrNull()?.id.orEmpty() }
         val slot = s.firstOrNull { it.id == mealId }
@@ -118,8 +123,9 @@ class PhotoMealViewModel @Inject constructor(
             hasProfile = profiles.any { it.profile.enabled },
             firstIsFreeTier = usable.firstOrNull()?.showsFreeTierNote == true,
             notificationPermissionAsked = app.notifications.permissionAsked,
+            warningsOpen = phone.cameraWarningsOpen,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), draft.value)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), draft.value.copy(warningsOpen = device.state.value.cameraWarningsOpen))
 
     fun onEvent(event: PhotoMealEvent) {
         when (event) {
@@ -133,6 +139,7 @@ class PhotoMealViewModel @Inject constructor(
             PhotoMealEvent.NotificationPermissionAsked -> viewModelScope.launch {
                 settings.updateNotifications { it.copy(permissionAsked = true) }
             }
+            PhotoMealEvent.ToggleWarnings -> device.update { it.copy(cameraWarningsOpen = !it.cameraWarningsOpen) }
             PhotoMealEvent.Estimate -> estimate()
         }
     }

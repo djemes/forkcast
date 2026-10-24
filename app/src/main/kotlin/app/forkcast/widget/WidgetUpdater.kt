@@ -11,9 +11,9 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
- * Keeps the home-screen widgets current: whenever what they show changes (today's log, water,
- * targets, units, activity bonus), from the app, a worker, or a widget button, and when the day
- * rolls over while Forkcast runs. When it isn't running, a midnight alarm re-renders them
+ * Keeps the Calories widget current: whenever what it shows changes (today's log, targets, units,
+ * activity bonus), from the app or a worker, and when the day rolls over while Forkcast runs.
+ * When it isn't running, a midnight alarm re-renders it
  * (WidgetPush.refreshAtMidnight).
  */
 @Singleton
@@ -25,8 +25,8 @@ class WidgetUpdater @Inject constructor(
         // Picker previews (Android 15+), published once per app version (the system rate-limits it).
         scope.launch { runCatching { publishPreviews() } }
         scope.launch {
-            // The widgets' own snapshot, so unrelated settings writes (an AI test, a toggle) don't
-            // re-render them, and each render uses this value instead of reading the day again.
+            // The widget's own snapshot, so unrelated settings writes (an AI test, a toggle) don't
+            // re-render it, and each render uses this value instead of reading the day again.
             WidgetData.observeToday(context)
                 .debounce(DEBOUNCE_MS)
                 .collect { runCatching { WidgetPush.all(context, it) } }
@@ -39,9 +39,7 @@ class WidgetUpdater @Inject constructor(
         val version = app.forkcast.BuildConfig.VERSION_CODE
         if (prefs.getInt(KEY_VERSION, -1) == version) return
         val manager = androidx.glance.appwidget.GlanceAppWidgetManager(context)
-        val ok = listOf(CaloriesWidgetReceiver::class, WaterWidgetReceiver::class).all {
-            manager.setWidgetPreviews(it) == androidx.glance.appwidget.GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS
-        }
+        val ok = manager.setWidgetPreviews(CaloriesWidgetReceiver::class) == androidx.glance.appwidget.GlanceAppWidgetManager.SET_WIDGET_PREVIEWS_RESULT_SUCCESS
         if (ok) prefs.edit { putInt(KEY_VERSION, version) }
     }
 

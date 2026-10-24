@@ -26,7 +26,6 @@
     <string name="water_goal_field">Daily goal (%1$s)</string>
     <string name="water_goal_body">The default is %1$s, from the profile. Drinks such as water and plain tea count toward it when you log them.</string>
     <string name="water_glass_field">Glass size (%1$s)</string>
-    <string name="water_glass_body">A glass among the water drop\'s containers on Today. The water widget and the "+1 glass" shortcut add the container you used last.</string>
     <string name="water_goal_reset">Use the default (%1$s)</string>
     <string name="water_counts_body">Water, sparkling water and plain tea count; sugary drinks, alcohol, milk drinks and shakes don\'t.</string>
     <string name="water_counts_amount">Adds %1$s to the day\'s water</string>

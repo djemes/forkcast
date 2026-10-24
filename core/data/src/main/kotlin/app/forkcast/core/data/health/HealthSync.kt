@@ -35,7 +35,7 @@ class HealthSyncWorker @AssistedInject constructor(
     private val maintenance: MaintenanceRepository,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
-        // syncSoon(): just push the pending writes (a glass from the widget), no reads.
+        // syncSoon(): just push the pending writes (a glass from the shortcut), no reads.
         if (inputData.getBoolean(KEY_WRITES_ONLY, false)) {
             health.sync(SyncReason.WRITES)
             return Result.success()
@@ -85,7 +85,7 @@ class HealthSyncStarter @Inject constructor(
 
     /**
      * Sends pending writes within seconds even if the app process goes away right after, e.g. a
-     * glass added from the home-screen widget. A no-op sync when Health Connect isn't connected.
+     * glass added from the "+1 glass" shortcut. A no-op sync when Health Connect isn't connected.
      */
     fun syncSoon() {
         val request = OneTimeWorkRequestBuilder<HealthSyncWorker>()

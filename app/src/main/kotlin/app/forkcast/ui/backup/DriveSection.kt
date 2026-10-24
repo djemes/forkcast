@@ -46,6 +46,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.core.data.drive.CleanupPlan
+import app.forkcast.core.data.drive.CleanupResult
+import app.forkcast.core.data.drive.NotRestorable
+import app.forkcast.ui.common.DeviceAuth
+import app.forkcast.ui.common.NoScreenLockDialog
+import androidx.compose.ui.res.pluralStringResource
 import app.forkcast.core.data.drive.DefaultDriveBackupRepository
 import app.forkcast.core.data.drive.DriveAccess
 import app.forkcast.core.data.drive.DriveAuth
@@ -70,7 +76,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /** What the Drive section is doing right now (one thing at a time). */
-enum class DriveWork { CONNECTING, BACKING_UP, LISTING }
+enum class DriveWork { CONNECTING, BACKING_UP, LISTING, CHECKING, DELETING }
 
 data class DriveUiState(
     val status: DriveStatus,
@@ -81,6 +87,10 @@ data class DriveUiState(
     val justBackedUp: Boolean = false,
     /** The restore list, while its dialog is open. */
     val backups: List<DriveBackup>? = null,
+    /** "Delete old backups": the checked plan, while its dialog is open. */
+    val cleanup: CleanupPlan? = null,
+    /** How the last cleanup went, until the message is shown. */
+    val cleanedUp: CleanupResult? = null,
 )
 
 sealed interface DriveEffect {
@@ -132,6 +142,33 @@ class DriveViewModel @Inject constructor(
 
     fun closeRestore() = local.update { it.copy(backups = null) }
 
+    /** After the unlock: checks the newest backup and shows what would be deleted (nothing is yet). */
+    fun checkCleanup() = run(DriveWork.CHECKING) { plan() }
+
+    /** The newest backup couldn't be restored: back up now, then check again. */
+    fun backupThenCheckCleanup() = run(DriveWork.BACKING_UP) {
+        local.update { it.copy(cleanup = null) }
+        drive.backupNow(interactive = true) ?: plan()
+    }
+
+    fun confirmCleanup() {
+        val plan = local.value.cleanup as? CleanupPlan.Ready ?: return
+        run(DriveWork.DELETING) {
+            local.update { it.copy(cleanup = null) }
+            drive.deleteOld(plan).fold(
+                onSuccess = { r -> local.update { it.copy(cleanedUp = r) }; null },
+                onFailure = { e -> (e as? DriveProblemException)?.problem ?: DriveProblem.ERROR },
+            )
+        }
+    }
+
+    fun closeCleanup() = local.update { it.copy(cleanup = null) }
+
+    private suspend fun plan(): DriveProblem? = when (val p = drive.cleanupPlan()) {
+        is CleanupPlan.Failed -> p.problem
+        else -> { local.update { it.copy(cleanup = p) }; null }
+    }
+
     fun disconnect() = viewModelScope.launch { drive.disconnect() }
 
     fun setAuto(on: Boolean) = viewModelScope.launch { drive.updateSettings { it.copy(auto = on) } }
@@ -139,12 +176,12 @@ class DriveViewModel @Inject constructor(
     fun setWifiOnly(on: Boolean) = viewModelScope.launch { drive.updateSettings { it.copy(wifiOnly = on) } }
     fun setChargingOnly(on: Boolean) = viewModelScope.launch { drive.updateSettings { it.copy(chargingOnly = on) } }
 
-    fun messageShown() = local.update { it.copy(problem = null, justBackedUp = false) }
+    fun messageShown() = local.update { it.copy(problem = null, justBackedUp = false, cleanedUp = null) }
 
     private fun run(work: DriveWork, block: suspend () -> DriveProblem?) {
         if (local.value.working != null) return
         viewModelScope.launch {
-            local.update { it.copy(working = work, problem = null, justBackedUp = false) }
+            local.update { it.copy(working = work, problem = null, justBackedUp = false, cleanedUp = null) }
             val problem = block()
             local.update { it.copy(working = null, problem = problem) }
         }
@@ -159,6 +196,11 @@ data class DriveActions(
     val closeRestore: () -> Unit = {},
     val restore: (DriveBackup) -> Unit = {},
     val disconnect: () -> Unit = {},
+    /** "Delete old backups": the unlock prompt first, then the check. */
+    val cleanup: () -> Unit = {},
+    val confirmCleanup: () -> Unit = {},
+    val backupThenCleanup: () -> Unit = {},
+    val closeCleanup: () -> Unit = {},
     val setAuto: (Boolean) -> Unit = {},
     val setFrequency: (BackupFrequency) -> Unit = {},
     val setWifiOnly: (Boolean) -> Unit = {},
@@ -178,6 +220,12 @@ fun DriveSectionRoute(viewModel: DriveViewModel, state: DriveUiState, onRestore:
             }
         }
     }
+    // Deleting backups asks the same unlock prompt as showing a saved key (owner, 2026-10-24).
+    val context = LocalContext.current
+    var noLock by rememberSaveable { mutableStateOf(false) }
+    val unlockTitle = stringResource(R.string.drive_cleanup_unlock_title)
+    val unlockSubtitle = stringResource(R.string.drive_cleanup_unlock_subtitle)
+    if (noLock) NoScreenLockDialog(onDismiss = { noLock = false }, body = stringResource(R.string.drive_cleanup_no_lock_body))
     DriveSection(
         state,
         DriveActions(
@@ -187,6 +235,13 @@ fun DriveSectionRoute(viewModel: DriveViewModel, state: DriveUiState, onRestore:
             closeRestore = viewModel::closeRestore,
             restore = { viewModel.closeRestore(); onRestore(it) },
             disconnect = viewModel::disconnect,
+            cleanup = {
+                if (!DeviceAuth.hasScreenLock(context)) noLock = true
+                else DeviceAuth.authenticate(context, unlockTitle, unlockSubtitle, onSuccess = { viewModel.checkCleanup() })
+            },
+            confirmCleanup = viewModel::confirmCleanup,
+            backupThenCleanup = viewModel::backupThenCheckCleanup,
+            closeCleanup = viewModel::closeCleanup,
             setAuto = viewModel::setAuto,
             setFrequency = viewModel::setFrequency,
             setWifiOnly = viewModel::setWifiOnly,
@@ -250,15 +305,20 @@ fun DriveSection(state: DriveUiState, actions: DriveActions) {
                     Text(stringResource(R.string.drive_restore))
                 }
             }
+            OutlinedButton(onClick = actions.cleanup, enabled = state.working == null, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.drive_cleanup))
+            }
             TextButton(onClick = { confirmDisconnect = true }) { Text(stringResource(R.string.drive_disconnect)) }
         }
         when {
             state.justBackedUp -> Text(stringResource(R.string.drive_backed_up), style = MaterialTheme.typography.bodyMedium, color = ForkcastTheme.colors.pine)
+            state.cleanedUp != null -> Text(cleanupResultText(state.cleanedUp), style = MaterialTheme.typography.bodyMedium, color = ForkcastTheme.colors.pine)
             state.problem != null -> Text(problemText(state.problem), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
         }
     }
 
     state.backups?.let { RestoreDialog(it, actions.restore, actions.closeRestore) }
+    state.cleanup?.let { CleanupDialog(it, actions) }
     if (confirmDisconnect) {
         AlertDialog(
             onDismissRequest = { confirmDisconnect = false },
@@ -352,4 +412,77 @@ private fun RestoreDialog(backups: List<DriveBackup>, onPick: (DriveBackup) -> U
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
     )
+}
+
+/** "Oct 24, 3:00 AM", as in the last-backup line; the year shows when it isn't this year. */
+@Composable
+private fun backupTime(b: DriveBackup): String {
+    val context = LocalContext.current
+    return b.createdAt?.let {
+        DateUtils.formatDateTime(context, it.toEpochMilli(), DateUtils.FORMAT_SHOW_DATE or DateUtils.FORMAT_SHOW_TIME or DateUtils.FORMAT_ABBREV_MONTH)
+    } ?: b.name
+}
+
+@Composable
+private fun cleanupResultText(r: CleanupResult): String {
+    val kept = backupTime(r.kept)
+    return if (r.failed == 0) pluralStringResource(R.plurals.drive_cleanup_done, r.deleted, r.deleted, kept)
+    else pluralStringResource(R.plurals.drive_cleanup_partial, r.deleted, r.deleted, r.failed, kept)
+}
+
+/**
+ * "Delete old backups" after the check: how many go (with their dates) and which one stays; or
+ * why nothing can go yet, with Back up now when the newest backup can't be restored.
+ */
+@Composable
+private fun CleanupDialog(plan: CleanupPlan, actions: DriveActions) {
+    when (plan) {
+        is CleanupPlan.Ready -> {
+            val oldest = plan.delete.minWithOrNull(compareBy<DriveBackup> { it.createdAt }) ?: plan.delete.last()
+            val newest = plan.delete.maxWithOrNull(compareBy<DriveBackup> { it.createdAt }) ?: plan.delete.first()
+            AlertDialog(
+                onDismissRequest = actions.closeCleanup,
+                title = { Text(pluralStringResource(R.plurals.drive_cleanup_title, plan.delete.size, plan.delete.size)) },
+                text = {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Text(
+                            if (plan.delete.size == 1) stringResource(R.string.drive_cleanup_single, backupTime(oldest))
+                            else stringResource(R.string.drive_cleanup_range, backupTime(oldest), backupTime(newest)),
+                        )
+                        Text(stringResource(R.string.drive_cleanup_keep, backupTime(plan.keep)), color = ForkcastTheme.colors.pine)
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = actions.confirmCleanup) {
+                        Text(stringResource(R.string.drive_cleanup_delete), color = MaterialTheme.colorScheme.error)
+                    }
+                },
+                dismissButton = { TextButton(onClick = actions.closeCleanup) { Text(stringResource(R.string.cancel)) } },
+            )
+        }
+        is CleanupPlan.NothingToDelete -> AlertDialog(
+            onDismissRequest = actions.closeCleanup,
+            title = { Text(stringResource(R.string.drive_cleanup_nothing_title)) },
+            text = {
+                Text(plan.keep?.let { stringResource(R.string.drive_cleanup_nothing_one, backupTime(it)) } ?: stringResource(R.string.drive_cleanup_nothing_none))
+            },
+            confirmButton = { TextButton(onClick = actions.closeCleanup) { Text(stringResource(R.string.ok)) } },
+        )
+        is CleanupPlan.LatestNotRestorable -> AlertDialog(
+            onDismissRequest = actions.closeCleanup,
+            title = { Text(stringResource(R.string.drive_cleanup_first_title)) },
+            text = {
+                val time = backupTime(plan.latest)
+                Text(
+                    when (plan.reason) {
+                        NotRestorable.OLD_FORMAT -> stringResource(R.string.drive_cleanup_old_format, time)
+                        NotRestorable.UNREADABLE -> stringResource(R.string.drive_cleanup_unreadable, time)
+                    },
+                )
+            },
+            confirmButton = { TextButton(onClick = actions.backupThenCleanup) { Text(stringResource(R.string.drive_backup_now)) } },
+            dismissButton = { TextButton(onClick = actions.closeCleanup) { Text(stringResource(R.string.cancel)) } },
+        )
+        is CleanupPlan.Failed -> Unit
+    }
 }

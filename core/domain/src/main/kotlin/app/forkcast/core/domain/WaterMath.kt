@@ -5,7 +5,7 @@ import app.forkcast.core.model.WaterContainer
 import app.forkcast.core.model.WaterContainers
 
 /**
- * The day's water (SPEC §4.9), one rule for Today, the widget and Settings › Water: glasses plus
+ * The day's water (SPEC §4.9), one rule for Today, the shortcut and Settings › Water: glasses plus
  * drinks that count toward water, a goal by sex unless the user set one, and a glass of 8 fl oz
  * (US units) or 250 ml unless the user set one.
  */

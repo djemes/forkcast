@@ -15,17 +15,16 @@ import app.forkcast.core.data.notify.Notifier
 import kotlinx.coroutines.launch
 
 /**
- * The "+1 glass of water" app shortcut: logs a glass without opening the app, confirms with a
- * short message and closes (an invisible activity, because shortcuts can only start activities).
+ * The "+1 glass of water" app shortcut: logs the water drop's last-used container without opening
+ * the app, confirms with a short message and closes (an invisible activity, because shortcuts can only start activities).
  */
 class AddWaterActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
-            val added = runCatching { WidgetData.addGlass(applicationContext) }
-            updateAllWidgets(applicationContext)
+            val added = runCatching { WidgetData.addWater(applicationContext) }
             val text = added.fold(
-                onSuccess = { WidgetData.today(applicationContext).let { s -> getString(R.string.shortcut_water_done, s.format.waterServing(s.glassMl)) } },
+                onSuccess = { ml -> getString(R.string.shortcut_water_done, WidgetData.today(applicationContext).format.waterServing(ml)) },
                 onFailure = { getString(R.string.shortcut_water_failed) },
             )
             Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()

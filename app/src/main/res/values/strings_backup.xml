@@ -118,4 +118,31 @@
     <string name="drive_problem_quota">Your Google Drive is full. Free up space, then back up again.</string>
     <string name="drive_problem_busy">Google Drive is busy. Try again in a few minutes.</string>
     <string name="drive_problem_error">Google Drive had a problem. Try again later.</string>
+    <!-- Delete old backups (owner, 2026-10-24) -->
+    <string name="drive_cleanup">Delete old backups</string>
+    <string name="drive_cleanup_unlock_title">Unlock to delete old backups</string>
+    <string name="drive_cleanup_unlock_subtitle">Google Drive backups</string>
+    <string name="drive_cleanup_no_lock_body">Deleting backups needs your phone\'s screen lock (PIN, pattern, password, fingerprint or face), so nobody holding your phone can remove them.</string>
+    <plurals name="drive_cleanup_title">
+        <item quantity="one">Delete %1$d old backup?</item>
+        <item quantity="other">Delete %1$d old backups?</item>
+    </plurals>
+    <string name="drive_cleanup_range">Backups from %1$s to %2$s will be deleted from the Forkcast Backups folder in your Google Drive. This can\'t be undone.</string>
+    <string name="drive_cleanup_single">The backup from %1$s will be deleted from the Forkcast Backups folder in your Google Drive. This can\'t be undone.</string>
+    <string name="drive_cleanup_keep">Kept: %1$s, the newest. It was checked and can be restored.</string>
+    <string name="drive_cleanup_delete">Delete</string>
+    <string name="drive_cleanup_nothing_title">Nothing to delete</string>
+    <string name="drive_cleanup_nothing_one">There\'s only one backup (%1$s), and it\'s kept.</string>
+    <string name="drive_cleanup_nothing_none">There are no backups in your Drive yet.</string>
+    <string name="drive_cleanup_first_title">Back up first</string>
+    <string name="drive_cleanup_old_format">The newest backup (%1$s) was made by an older version of Forkcast, so nothing was deleted. Back up now, then the old ones can go.</string>
+    <string name="drive_cleanup_unreadable">The newest backup (%1$s) can\'t be read, so nothing was deleted. Back up now, then the old ones can go.</string>
+    <plurals name="drive_cleanup_done">
+        <item quantity="one">Deleted %1$d backup. Kept %2$s.</item>
+        <item quantity="other">Deleted %1$d backups. Kept %2$s.</item>
+    </plurals>
+    <plurals name="drive_cleanup_partial">
+        <item quantity="one">Deleted %1$d backup; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
+        <item quantity="other">Deleted %1$d backups; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
+    </plurals>
 </resources>

@@ -44,12 +44,11 @@ data class WaterSettingsState(
     val units: UnitPrefs,
     val targetMl: Double?,
     val defaultMl: Double,
+    /** The glass; the other sizes are in [containers]. */
     val glassMl: Double?,
-    val defaultGlassMl: Double,
     val containers: app.forkcast.core.model.WaterContainers = app.forkcast.core.model.WaterContainers(),
 ) {
     val effectiveMl: Double get() = targetMl ?: defaultMl
-    val effectiveGlassMl: Double get() = glassMl ?: defaultGlassMl
 }
 
 @HiltViewModel
@@ -64,34 +63,39 @@ class WaterSettingsViewModel @Inject constructor(
             targetMl = s.waterTargetMl,
             defaultMl = app.forkcast.core.domain.WaterMath.defaultTargetMl(p?.sex),
             glassMl = s.waterGlassMl,
-            defaultGlassMl = app.forkcast.widget.WidgetData.glassMl(units),
             containers = s.waterContainers,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun setTarget(ml: Double?) = viewModelScope.launch { settings.setWaterTargetMl(ml) }
-    fun setGlass(ml: Double?) = viewModelScope.launch { settings.update { it.copy(waterGlassMl = ml) } }
-
-    /** Can, bottle or tumbler size in ml; null goes back to the default. */
+    /** A container's size in ml; null goes back to the default. */
     fun setContainer(c: WaterContainer, ml: Double?) = viewModelScope.launch {
         settings.update {
             val w = it.waterContainers
-            it.copy(
-                waterContainers = when (c) {
-                    WaterContainer.GLASS -> w
-                    WaterContainer.CAN -> w.copy(canMl = ml)
-                    WaterContainer.BOTTLE -> w.copy(bottleMl = ml)
-                    WaterContainer.TUMBLER -> w.copy(tumblerMl = ml)
-                },
-            )
+            when (c) {
+                WaterContainer.GLASS -> it.copy(waterGlassMl = ml)
+                WaterContainer.CAN -> it.copy(waterContainers = w.copy(canMl = ml))
+                WaterContainer.BOTTLE -> it.copy(waterContainers = w.copy(bottleMl = ml))
+                WaterContainer.TUMBLER -> it.copy(waterContainers = w.copy(tumblerMl = ml))
+            }
         }
     }
 }
 
-/** Settings › Water: the daily goal (SPEC §4.9: default 2.5 L men / 2.0 L women, editable). */
+/** Settings › Water: the daily goal (SPEC §4.9: default 2.5 L men / 2.0 L women, editable) and the four container sizes. */
 @Composable
 fun WaterSettingsRoute(onBack: () -> Unit, viewModel: WaterSettingsViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    WaterSettingsScreen(state, onBack, onTarget = viewModel::setTarget, onContainer = viewModel::setContainer)
+}
+
+@Composable
+fun WaterSettingsScreen(
+    state: WaterSettingsState?,
+    onBack: () -> Unit,
+    onTarget: (Double?) -> Unit,
+    onContainer: (WaterContainer, Double?) -> Unit,
+) {
     SettingsScaffold(title = stringResource(R.string.settings_water), onBack = onBack) {
         val s = state ?: return@SettingsScaffold
         val f = remember(s.units) { UnitFormatter(s.units) }
@@ -99,7 +103,7 @@ fun WaterSettingsRoute(onBack: () -> Unit, viewModel: WaterSettingsViewModel = h
             NumberField(
                 initial = UnitFormatter.trimNumber(f.waterValue(s.effectiveMl), 0),
                 label = stringResource(R.string.water_goal_field, f.waterUnitLabel),
-                onValue = { v -> v?.takeIf { it > 0 }?.let { viewModel.setTarget(f.waterToMl(it)) } },
+                onValue = { v -> v?.takeIf { it > 0 }?.let { onTarget(f.waterToMl(it)) } },
                 // Re-seed only when reset to the default, not on every keystroke.
                 key = s.targetMl == null,
             )
@@ -109,32 +113,16 @@ fun WaterSettingsRoute(onBack: () -> Unit, viewModel: WaterSettingsViewModel = h
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
             if (s.targetMl != null) {
-                OutlinedButton(onClick = { viewModel.setTarget(null) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                OutlinedButton(onClick = { onTarget(null) }, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.water_goal_reset, f.waterLiters(s.defaultMl)))
                 }
             }
-            // One "+ glass": Today's water card, the water widget and the "+1 glass" shortcut.
-            NumberField(
-                initial = UnitFormatter.trimNumber(f.waterValue(s.effectiveGlassMl), 0),
-                label = stringResource(R.string.water_glass_field, f.waterUnitLabel),
-                onValue = { v -> v?.takeIf { it > 0 }?.let { viewModel.setGlass(f.waterToMl(it)) } },
-                key = s.glassMl == null,
-            )
-            Text(
-                stringResource(R.string.water_glass_body),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (s.glassMl != null) {
-                OutlinedButton(onClick = { viewModel.setGlass(null) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.water_goal_reset, f.waterServing(s.defaultGlassMl)))
-                }
-            }
-            // The other containers of Today's water drop (owner, 2026-10-23), in the user's units.
+            // The four containers of Today's water drop, one layout each (owner, 2026-10-24), in the user's units.
             Text(stringResource(R.string.water_containers_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
             Text(stringResource(R.string.water_containers_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             val flOz = s.units.water == app.forkcast.core.model.WaterUnit.FL_OZ
             listOf(
+                Triple(WaterContainer.GLASS, s.glassMl, R.string.water_glass_field),
                 Triple(WaterContainer.CAN, s.containers.canMl, R.string.water_can_field),
                 Triple(WaterContainer.BOTTLE, s.containers.bottleMl, R.string.water_bottle_field),
                 Triple(WaterContainer.TUMBLER, s.containers.tumblerMl, R.string.water_tumbler_field),
@@ -145,13 +133,13 @@ fun WaterSettingsRoute(onBack: () -> Unit, viewModel: WaterSettingsViewModel = h
                     NumberField(
                         initial = UnitFormatter.trimNumber(f.waterValue(ml ?: default), 0),
                         label = stringResource(label, f.waterUnitLabel),
-                        onValue = { v -> v?.takeIf { it > 0 }?.let { viewModel.setContainer(c, f.waterToMl(it)) } },
+                        onValue = { v -> v?.takeIf { it > 0 }?.let { onContainer(c, f.waterToMl(it)) } },
                         key = "${c.name}-${ml == null}",
                         modifier = Modifier.weight(1f),
                     )
                 }
                 if (ml != null) {
-                    OutlinedButton(onClick = { viewModel.setContainer(c, null) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                    OutlinedButton(onClick = { onContainer(c, null) }, modifier = Modifier.padding(start = 36.dp).heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.water_goal_reset, f.waterServing(default)))
                     }
                 }

@@ -164,16 +164,17 @@ fun SavedKeyField(label: String, secret: SecretText, modifier: Modifier = Modifi
 }
 
 /**
- * No screen lock on the phone (owner, 2026-10-23, Claude's call): keys stay hidden, because
- * anyone holding the phone could read them, and the dialog says how to set a lock.
+ * No screen lock on the phone (owner, 2026-10-23, Claude's call): what [DeviceAuth] guards stays
+ * locked (saved keys stay hidden, old backups stay), because anyone holding the phone could use
+ * it, and the dialog says how to set a lock. [body] says what needs the lock.
  */
 @Composable
-private fun NoScreenLockDialog(onDismiss: () -> Unit) {
+fun NoScreenLockDialog(onDismiss: () -> Unit, body: String = stringResource(R.string.key_no_lock_body)) {
     val context = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.key_no_lock_title)) },
-        text = { Text(stringResource(R.string.key_no_lock_body)) },
+        text = { Text(body) },
         confirmButton = {
             TextButton(onClick = {
                 onDismiss()

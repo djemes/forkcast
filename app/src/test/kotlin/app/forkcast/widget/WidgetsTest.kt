@@ -15,7 +15,7 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Home-screen widgets (SPEC §3 Phase 5, DESIGN.md §11): what each size shows for a given day. */
+/** The Calories widget (SPEC §3 Phase 5, DESIGN.md §11): what each size shows for a given day. */
 @RunWith(AndroidJUnit4::class)
 class WidgetsTest {
 
@@ -54,31 +54,6 @@ class WidgetsTest {
         val over = day.copy(totals = DayTotals(emptyMap(), eatenKcal = 2_300.0, budgetKcal = 2_100, exerciseKcal = 0.0))
         provideComposable { CaloriesContent(over, WidgetStyle()) }
         onNode(hasContentDescription("200 kcal over")).assertExists()
-    }
-
-    @Test fun waterWidgetShowsAmountThenUndo() = runGlanceAppWidgetUnitTest {
-        setContext(ApplicationProvider.getApplicationContext())
-        setAppWidgetSize(WaterWidget.SMALL)
-        provideComposable { WaterContent(day, WidgetStyle(), undoId = null, undoUntil = 0L) }
-        onNode(hasContentDescription("Water today")).assertExists()
-        // 1,250 ml in US units, with the short "oz" so it fits the 1x1 button.
-        onNode(hasText("42 oz")).assertExists()
-        onNode(hasText("fl oz")).assertDoesNotExist()
-    }
-
-    @Test fun wideWaterWidgetShowsTheGoalBesideTheGauge() = runGlanceAppWidgetUnitTest {
-        setContext(ApplicationProvider.getApplicationContext())
-        setAppWidgetSize(WaterWidget.WIDE)
-        provideComposable { WaterContent(day, WidgetStyle(), undoId = null, undoUntil = 0L) }
-        onNode(hasText("Water")).assertExists()
-        onNode(hasText("of 85 oz")).assertExists()
-    }
-
-    @Test fun waterWidgetOffersUndoRightAfterATap() = runGlanceAppWidgetUnitTest {
-        setContext(ApplicationProvider.getApplicationContext())
-        setAppWidgetSize(WaterWidget.SMALL)
-        provideComposable { WaterContent(day, WidgetStyle(), undoId = "w1", undoUntil = System.currentTimeMillis() + 60_000) }
-        onNode(hasText("Undo")).assertExists()
     }
 
     @Test fun styleReadsBackFromWidgetState() {

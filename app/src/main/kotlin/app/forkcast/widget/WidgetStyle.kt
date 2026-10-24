@@ -86,8 +86,6 @@ class WidgetPalette(private val style: WidgetStyle) {
     val protein = pick({ it.protein })
     val carbs = pick({ it.carbs })
     val fat = pick({ it.fat })
-    /** Water uses the protein blue, as on Today's water bar. */
-    val water = protein
     /** Quiet buttons: the text color at low strength, so they suit any wallpaper. */
     val button = pick({ it.ink }, BUTTON_ALPHA)
 

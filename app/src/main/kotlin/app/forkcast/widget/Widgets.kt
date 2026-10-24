@@ -14,9 +14,6 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.unit.sp
-import androidx.datastore.preferences.core.Preferences
-import androidx.datastore.preferences.core.longPreferencesKey
-import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.glance.ColorFilter
 import androidx.glance.GlanceId
 import androidx.glance.GlanceModifier
@@ -25,20 +22,15 @@ import androidx.glance.ImageProvider
 import androidx.glance.LocalContext
 import androidx.glance.LocalSize
 import androidx.glance.action.Action
-import androidx.glance.action.ActionParameters
-import androidx.glance.action.actionParametersOf
 import androidx.glance.action.clickable
 import androidx.glance.appwidget.GlanceAppWidget
 import androidx.glance.appwidget.GlanceAppWidgetReceiver
 import androidx.glance.appwidget.LinearProgressIndicator
 import androidx.glance.appwidget.SizeMode
-import androidx.glance.appwidget.action.ActionCallback
-import androidx.glance.appwidget.action.actionRunCallback
 import androidx.glance.appwidget.action.actionStartActivity
 import androidx.glance.appwidget.appWidgetBackground
 import androidx.glance.appwidget.cornerRadius
 import androidx.glance.appwidget.provideContent
-import androidx.glance.appwidget.state.updateAppWidgetState
 import androidx.glance.background
 import androidx.glance.currentState
 import androidx.glance.layout.Alignment
@@ -72,9 +64,6 @@ internal fun openApp(context: Context, open: String? = null): Action = actionSta
         .setFlags(OPEN_FLAGS)
         .apply { if (open != null) putExtra(Notifier.EXTRA_OPEN, open) },
 )
-
-/** Re-renders every Forkcast widget (after a log or water change; see WidgetUpdater and WidgetPush). */
-suspend fun updateAllWidgets(context: Context) = WidgetPush.all(context)
 
 /**
  * One UI-matching frame (DESIGN.md §11): the system widget corner radius and the glass background
@@ -132,29 +121,19 @@ private fun BigNumber(text: String, height: Dp, color: ColorProvider, maxWidth: 
     Mask(bmp, color, GlanceModifier.width((bmp.width / scale).dp).height((bmp.height / scale).dp))
 }
 
-/** A ring ([gapDegrees] 0) or a gauge open at the bottom, with content in the middle. */
+/** The budget ring (fill, track and the apricot "now" dot), with content in the middle. */
 @Composable
-private fun Gauge(
-    size: Dp,
-    fraction: Float,
-    fill: ColorProvider,
-    palette: WidgetPalette,
-    gapDegrees: Float,
-    dot: Boolean,
-    content: @Composable () -> Unit,
-) {
+private fun Gauge(size: Dp, fraction: Float, fill: ColorProvider, palette: WidgetPalette, content: @Composable () -> Unit) {
     val context = LocalContext.current
     val scale = context.artScale()
-    val geometry = WidgetArt.Gauge((size.value * scale).toInt().coerceAtLeast(8), STROKE, gapDegrees)
+    val geometry = WidgetArt.Gauge((size.value * scale).toInt().coerceAtLeast(8), STROKE)
     val track = remember(geometry) { WidgetArt.track(geometry) }
     val arc = remember(geometry, fraction) { WidgetArt.fill(geometry, fraction) }
+    val dot = remember(geometry, fraction) { WidgetArt.dot(geometry, fraction) }
     Box(contentAlignment = Alignment.Center, modifier = GlanceModifier.size(size)) {
         Mask(track, palette.text, GlanceModifier.fillMaxSize())
         Mask(arc, fill, GlanceModifier.fillMaxSize())
-        if (dot) {
-            val d = remember(geometry, fraction) { WidgetArt.dot(geometry, fraction) }
-            Mask(d, palette.apricot, GlanceModifier.fillMaxSize())
-        }
+        Mask(dot, palette.apricot, GlanceModifier.fillMaxSize())
         content()
     }
 }
@@ -166,9 +145,9 @@ private const val STROKE = 0.085f
 /**
  * Calories left today (SPEC §3 Phase 5, DESIGN.md §11). Resizable from 1×1 to full width:
  * small sizes = ring and number; 4×1 strip = ring, number and Log; wide = ring + protein, carbs
- * and fat; tall adds Log / Scan / Photo.
+ * and fat; tall adds Log / Scan / Photo. [frameOf]: render this snapshot once (WidgetPush)
+ * instead of reading and watching the data.
  */
-/** [frameOf]: render this snapshot once (WidgetPush) instead of reading and watching the data. */
 class CaloriesWidget(private val frameOf: TodaySnapshot? = null) : GlanceAppWidget() {
     // Exact: layouts follow the real size and re-render on every resize.
     override val sizeMode = SizeMode.Exact
@@ -243,7 +222,7 @@ internal fun CaloriesContent(s: TodaySnapshot, style: WidgetStyle) {
         when {
             strip -> Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxSize()) {
                 val ring = min(innerH, 44.dp)
-                Gauge(ring, fraction, stateColor, palette, gapDegrees = 0f, dot = true) {}
+                Gauge(ring, fraction, stateColor, palette) {}
                 Spacer(GlanceModifier.width(12.dp))
                 Column(modifier = GlanceModifier.defaultWeight().semantics { contentDescription = description }) {
                     BigNumber(number, 22.dp, numberColor)
@@ -254,7 +233,7 @@ internal fun CaloriesContent(s: TodaySnapshot, style: WidgetStyle) {
             square -> {
                 val ring = min(innerW, innerH)
                 val tiny = ring < 72.dp
-                Gauge(ring, fraction, stateColor, palette, gapDegrees = 0f, dot = true) {
+                Gauge(ring, fraction, stateColor, palette) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = GlanceModifier.semantics { contentDescription = description }) {
                         BigNumber(number, ring * 0.26f, numberColor, maxWidth = ring * 0.66f)
                         if (!tiny) Text(label, style = TextStyle(fontSize = 11.sp, color = palette.muted, textAlign = TextAlign.Center), maxLines = 1)
@@ -265,7 +244,7 @@ internal fun CaloriesContent(s: TodaySnapshot, style: WidgetStyle) {
             // Everything keeps its size; extra room only centers it, so the default 4x1 has no empty band.
             else -> Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxSize()) {
                 val ring = min(min(innerH, innerW * 0.36f), 112.dp)
-                Gauge(ring, fraction, stateColor, palette, gapDegrees = 0f, dot = true) {
+                Gauge(ring, fraction, stateColor, palette) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = GlanceModifier.semantics { contentDescription = description }) {
                         BigNumber(number, ring * 0.24f, numberColor, maxWidth = ring * 0.68f)
                         if (ring >= 80.dp) Text(label, style = TextStyle(fontSize = 10.sp, color = palette.muted), maxLines = 1)
@@ -331,202 +310,6 @@ private fun MacroLine(label: String, eaten: Double, target: Double, color: Color
     }
 }
 
-// ---- Water ----
-
-/** The glass the widget just added and until when "Undo" shows (per widget). */
-internal val UNDO_ID = stringPreferencesKey("undo_id")
-internal val UNDO_UNTIL = longPreferencesKey("undo_until")
-internal const val UNDO_MS = 8_000L
-
-/**
- * Water as a small round button (DESIGN.md §11): a gauge open at the bottom, a glass in the
- * middle, today's amount in the gap. Tap = one glass (the size from your water settings); the
- * arc fills in a few quick steps and "Undo" replaces the amount for a few seconds.
- *
- * [fill] pins the arc for one frame of that fill (WidgetPush renders the frames itself), drawn
- * from [frameOf] so the frames don't each read the database.
- */
-class WaterWidget(private val fill: Float? = null, private val frameOf: TodaySnapshot? = null) : GlanceAppWidget() {
-    override val sizeMode = SizeMode.Exact
-
-    override suspend fun provideGlance(context: Context, id: GlanceId) {
-        val initial = frameOf ?: WidgetData.today(context)
-        val updates = if (frameOf != null) kotlinx.coroutines.flow.flowOf(frameOf) else WidgetData.observeToday(context)
-        provideContent {
-            val snapshot by updates.collectAsState(initial)
-            val prefs = currentState<Preferences>()
-            WaterContent(snapshot, WidgetStyle.from(prefs), undoId = prefs[UNDO_ID], undoUntil = prefs[UNDO_UNTIL] ?: 0L, fill = fill)
-        }
-    }
-
-    override suspend fun providePreview(context: Context, widgetCategory: Int) {
-        provideContent { WaterContent(sampleSnapshot(), WidgetStyle(), undoId = null, undoUntil = 0L) }
-    }
-
-    companion object {
-        val TINY = DpSize(57.dp, 57.dp)
-        val SMALL = DpSize(110.dp, 110.dp)
-        val WIDE = DpSize(220.dp, 110.dp)
-    }
-}
-
-class WaterWidgetReceiver : GlanceAppWidgetReceiver() {
-    override val glanceAppWidget: GlanceAppWidget = WaterWidget()
-
-    // Glance renders these in a background job One UI can hold back; render right away too.
-    override fun onUpdate(context: Context, appWidgetManager: AppWidgetManager, appWidgetIds: IntArray) {
-        super.onUpdate(context, appWidgetManager, appWidgetIds)
-        WidgetPush.soon(context)
-    }
-
-    override fun onAppWidgetOptionsChanged(context: Context, appWidgetManager: AppWidgetManager, appWidgetId: Int, newOptions: Bundle) {
-        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
-        WidgetPush.soon(context)
-    }
-}
-
-@Composable
-internal fun WaterContent(s: TodaySnapshot, style: WidgetStyle, undoId: String?, undoUntil: Long, fill: Float? = null) {
-    val context = LocalContext.current
-    val palette = remember(style) { WidgetPalette(style) }
-    val size = LocalSize.current
-    val f = s.format
-    val shown = fill ?: s.waterFraction
-    // The entry Undo removes, while its window is open.
-    val undo = undoId?.takeIf { System.currentTimeMillis() < undoUntil }
-
-    // In the unit you log water in, with "oz" for fl oz so 3–4 digits of ml still fit the 1×1 button.
-    val unit = if (f.waterUnitLabel == "fl oz") "oz" else f.waterUnitLabel
-    val amount = "${f.number(f.waterValue(s.waterMl))} $unit"
-    val goal = "${f.number(f.waterValue(s.waterTargetMl))} $unit"
-    val description = context.getString(
-        R.string.widget_water_now,
-        f.waterLiters(s.waterMl),
-        f.waterLiters(s.waterTargetMl),
-        f.waterServing(s.glassMl),
-    )
-    val wide = size.width >= 150.dp && size.height < size.width * 0.75f
-    val shortest = min(size.width, size.height)
-    val pad = if (shortest < 100.dp) 6.dp else 12.dp
-    val gauge = min(shortest - pad * 2, 160.dp)
-    WidgetFrame(palette, padding = pad, onClick = actionRunCallback<AddGlassAction>()) {
-        if (!wide) {
-            Gauge(gauge, shown, palette.water, palette, gapDegrees = GAP, dot = false) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = GlanceModifier.fillMaxSize().semantics { contentDescription = description },
-                ) {
-                    WaterGlass(gauge * 0.34f, palette)
-                    if (gauge >= 60.dp) {
-                        Spacer(GlanceModifier.height(2.dp))
-                        if (undo != null) {
-                            UndoChip(undo, palette)
-                        } else {
-                            Text(
-                                amount,
-                                style = TextStyle(fontSize = if (gauge < 90.dp) 11.sp else 13.sp, fontWeight = FontWeight.Bold, color = palette.text),
-                                maxLines = 1,
-                            )
-                        }
-                    }
-                }
-            }
-        } else {
-            // Wide: same compact idea as Calories: gauge on the left, the numbers right beside it,
-            // Undo at the end; extra room only centers it.
-            Row(verticalAlignment = Alignment.CenterVertically, modifier = GlanceModifier.fillMaxSize()) {
-                val small = min(gauge, 96.dp)
-                Gauge(small, shown, palette.water, palette, gapDegrees = GAP, dot = false) {
-                    WaterGlass(small * 0.36f, palette)
-                }
-                Spacer(GlanceModifier.width(12.dp))
-                Column(modifier = GlanceModifier.defaultWeight().semantics { contentDescription = description }) {
-                    Text(context.getString(R.string.water_title), style = TextStyle(fontSize = 11.sp, color = palette.muted), maxLines = 1)
-                    BigNumber(amount, 24.dp, palette.text)
-                    Text(context.getString(R.string.widget_water_of_goal, goal), style = TextStyle(fontSize = 11.sp, color = palette.muted), maxLines = 1)
-                }
-                if (undo != null) UndoChip(undo, palette)
-            }
-        }
-    }
-}
-
-@Composable
-private fun WaterGlass(size: Dp, palette: WidgetPalette) {
-    Image(
-        ImageProvider(R.drawable.ic_water_glass),
-        contentDescription = null,
-        colorFilter = ColorFilter.tint(palette.water),
-        modifier = GlanceModifier.size(size),
-    )
-}
-
-@Composable
-private fun UndoChip(entryId: String, palette: WidgetPalette) {
-    val context = LocalContext.current
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = GlanceModifier
-            .height(26.dp)
-            .background(palette.button)
-            .cornerRadius(13.dp)
-            .padding(horizontal = 10.dp)
-            .clickable(actionRunCallback<UndoGlassAction>(actionParametersOf(UNDO_ENTRY to entryId))),
-    ) {
-        Text(context.getString(R.string.widget_undo), style = TextStyle(fontSize = 11.sp, fontWeight = FontWeight.Bold, color = palette.text))
-    }
-}
-
-private const val GAP = 80f
-
-/** Extra time after the Undo window for a tap that was on its way. */
-private const val UNDO_GRACE_MS = 2_000L
-
-private val UNDO_ENTRY = ActionParameters.Key<String>("entry")
-
-/**
- * Tap on the water widget: one glass, the arc fills in a few steps, "Undo" shows. Rendered right
- * here (WidgetPush) rather than through a Glance session, which One UI can hold back for minutes
- * once Forkcast is in the background. No haptic tick: Android drops vibrations from apps in the
- * background, which a widget tap is.
- */
-class AddGlassAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        val before = WidgetData.today(context).waterFraction
-        val id = WidgetData.addGlass(context)
-        updateAppWidgetState(context, glanceId) { prefs ->
-            prefs[UNDO_ID] = id
-            prefs[UNDO_UNTIL] = System.currentTimeMillis() + UNDO_MS
-        }
-        val after = WidgetData.today(context)
-        WidgetPush.fillWater(context, glanceId, from = before, after = after)
-        WidgetPush.all(context, after)
-        WidgetPush.hideUndoLater(context, UNDO_MS)
-    }
-}
-
-/** "Undo" on the water widget: removes that glass; Today and Health Connect follow. */
-class UndoGlassAction : ActionCallback {
-    override suspend fun onAction(context: Context, glanceId: GlanceId, parameters: ActionParameters) {
-        var shownUntil = 0L
-        var shownId: String? = null
-        updateAppWidgetState(context, glanceId) { prefs ->
-            shownId = prefs[UNDO_ID]
-            shownUntil = prefs[UNDO_UNTIL] ?: 0L
-            prefs.remove(UNDO_ID)
-            prefs.remove(UNDO_UNTIL)
-        }
-        // Only inside the 8 s window (plus a little for a slow tap): the alarm that hides the chip
-        // is inexact, so a chip left on screen must not delete a glass minutes later.
-        val entry = parameters[UNDO_ENTRY]
-        if (entry != null && entry == shownId && System.currentTimeMillis() <= shownUntil + UNDO_GRACE_MS) {
-            WidgetData.removeGlass(context, entry)
-        }
-        WidgetPush.all(context)
-    }
-}
-
 /** A plausible afternoon for the widget picker's previews and the settings screen. */
 internal fun sampleSnapshot(): TodaySnapshot {
     val units = UnitFormatter.defaultsFor(java.util.Locale.getDefault())
@@ -535,8 +318,6 @@ internal fun sampleSnapshot(): TodaySnapshot {
         proteinG = 92.0, proteinTargetG = 140.0,
         carbsG = 130.0, carbsTargetG = 230.0,
         fatG = 41.0, fatTargetG = 70.0,
-        waterMl = 1_250.0, waterTargetMl = 2_500.0,
-        glassMl = WidgetData.glassMl(units),
         units = units,
     )
 }

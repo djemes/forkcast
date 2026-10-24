@@ -57,7 +57,13 @@ class DriveBackupRepositoryTest {
         override suspend fun exportJson() = """{"app":"Forkcast","schemaVersion":5}"""
         override suspend fun foodLogCsv() = ""
         override suspend fun weightsCsv() = ""
-        override fun parse(text: String): ParsedBackup = throw UnsupportedOperationException()
+        /** Reads only the version: 6 restores, 5 is an older export, anything else is unreadable. */
+        override fun parse(text: String): ParsedBackup {
+            val version = Regex("\"schemaVersion\":(\\d+)").find(text)?.groupValues?.get(1)?.toInt()
+                ?: return ParsedBackup.Rejected(app.forkcast.core.data.backup.RejectReason.UNREADABLE)
+            val export = ForkcastExport(schemaVersion = version, appVersion = "1.3.0", exportedAt = "2026-10-19T07:00:00Z", timeZone = "UTC")
+            return ParsedBackup.Ok(export, app.forkcast.core.data.backup.preview(export))
+        }
         override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = throw UnsupportedOperationException()
         override suspend fun readSafetyBackup(): String? = null
     }
@@ -65,6 +71,8 @@ class DriveBackupRepositoryTest {
     private class Call(val req: HttpRequestData, val body: ByteArray)
     private val calls = mutableListOf<Call>()
     private val auth = FakeAuth()
+    /** What downloading any backup returns (gzipped). */
+    private var downloaded = """{"app":"Forkcast"}"""
 
     /** 20 daily backups already in the folder (the retention keeps 14 + firsts of months). */
     private val existing = (1..20).joinToString(",") { d ->
@@ -85,7 +93,7 @@ class DriveBackupRepositoryTest {
                 "/about" in url -> respond("""{"user":{"emailAddress":"gabe@example.com"}}""", HttpStatusCode.OK, json)
                 req.method == HttpMethod.Delete -> respond("", HttpStatusCode.NoContent)
                 "uploadType=multipart" in url -> respond("""{"id":"new","name":"x"}""", HttpStatusCode.OK, json)
-                "alt=media" in url -> respond(gzip("""{"app":"Forkcast"}"""), HttpStatusCode.OK)
+                "alt=media" in url -> respond(gzip(downloaded), HttpStatusCode.OK)
                 "in+parents" in url || "in%20parents" in url || req.url.parameters["q"]?.contains("in parents") == true ->
                     respond("""{"files":[$files]}""", HttpStatusCode.OK, json)
                 else -> respond("""{"files":[{"id":"F1","name":"Forkcast Backups"}]}""", HttpStatusCode.OK, json)
@@ -141,6 +149,47 @@ class DriveBackupRepositoryTest {
     @Test fun downloadUnzips() = runTest {
         device.update { it.copy(driveAccount = "gabe@example.com", driveFolderId = "F1") }
         assertThat(repo().download("old1")).isEqualTo("""{"app":"Forkcast"}""")
+    }
+
+    @Test fun cleanupKeepsTheNewestOnceItRestores() = runTest {
+        device.update { it.copy(driveAccount = "gabe@example.com", driveFolderId = "F1") }
+        downloaded = """{"app":"Forkcast","schemaVersion":${ForkcastExport.SCHEMA_VERSION}}"""
+        val r = repo()
+        val plan = r.cleanupPlan() as CleanupPlan.Ready
+        assertThat(plan.keep.id).isEqualTo("old20")
+        assertThat(plan.delete.map { it.id }).containsExactlyElementsIn((1..19).map { "old$it" })
+        // Checking deleted nothing and downloaded only the newest.
+        assertThat(calls.count { it.req.method == HttpMethod.Delete }).isEqualTo(0)
+        assertThat(calls.single { "alt=media" in it.req.url.toString() }.req.url.encodedPath).endsWith("/old20")
+
+        calls.clear()
+        // A file that isn't in the folder any more (or never was) is never touched.
+        val result = r.deleteOld(plan.copy(delete = plan.delete + DriveBackup("elsewhere", "x", null, null))).getOrThrow()
+        assertThat(result).isEqualTo(CleanupResult(deleted = 19, failed = 0, kept = plan.keep))
+        val gone = calls.filter { it.req.method == HttpMethod.Delete }.map { it.req.url.encodedPath.substringAfterLast('/') }
+        assertThat(gone).containsExactlyElementsIn((1..19).map { "old$it" })
+    }
+
+    @Test fun cleanupDeletesNothingWhenTheNewestIsOldOrUnreadable() = runTest {
+        device.update { it.copy(driveAccount = "gabe@example.com", driveFolderId = "F1") }
+        downloaded = """{"app":"Forkcast","schemaVersion":5}"""
+        assertThat((repo().cleanupPlan() as CleanupPlan.LatestNotRestorable).reason).isEqualTo(NotRestorable.OLD_FORMAT)
+        downloaded = """{"app":"Forkcast","logEntries":[{"id":"cut sh"""
+        assertThat((repo().cleanupPlan() as CleanupPlan.LatestNotRestorable).reason).isEqualTo(NotRestorable.UNREADABLE)
+        assertThat(calls.count { it.req.method == HttpMethod.Delete }).isEqualTo(0)
+    }
+
+    @Test fun cleanupWithOneBackupHasNothingToDelete() = runTest {
+        device.update { it.copy(driveAccount = "gabe@example.com", driveFolderId = "F1") }
+        downloaded = """{"app":"Forkcast","schemaVersion":${ForkcastExport.SCHEMA_VERSION}}"""
+        val one = """{"id":"only","name":"forkcast-20261019-0300.json.gz","createdTime":"2026-10-19T07:00:00Z"}"""
+        assertThat((repo(files = one).cleanupPlan() as CleanupPlan.NothingToDelete).keep?.id).isEqualTo("only")
+        assertThat(repo(files = "").cleanupPlan()).isEqualTo(CleanupPlan.NothingToDelete(null))
+    }
+
+    @Test fun cleanupNeedsDrive() = runTest {
+        assertThat(repo().cleanupPlan()).isEqualTo(CleanupPlan.Failed(DriveProblem.NOT_CONNECTED))
+        assertThat(calls).isEmpty()
     }
 
     private companion object {

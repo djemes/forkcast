@@ -26,6 +26,8 @@ data class DeviceState(
     val lastDriveBackupAt: Long? = null,
     /** Why the last attempt failed (a short code), null after a success. */
     val lastDriveError: String? = null,
+    /** The photo camera's tips and warnings are open (owner, 2026-10-24: open on a new install, then as left). */
+    val cameraWarningsOpen: Boolean = true,
 )
 
 @Singleton
@@ -43,6 +45,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             putOrRemove(DRIVE_FOLDER, next.driveFolderId)
             if (next.lastDriveBackupAt != null) putLong(LAST_BACKUP, next.lastDriveBackupAt) else remove(LAST_BACKUP)
             putOrRemove(LAST_ERROR, next.lastDriveError)
+            putBoolean(CAMERA_WARNINGS, next.cameraWarningsOpen)
         }
         _state.value = next
     }
@@ -57,6 +60,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         driveFolderId = prefs.getString(DRIVE_FOLDER, null),
         lastDriveBackupAt = if (prefs.contains(LAST_BACKUP)) prefs.getLong(LAST_BACKUP, 0) else null,
         lastDriveError = prefs.getString(LAST_ERROR, null),
+        cameraWarningsOpen = prefs.getBoolean(CAMERA_WARNINGS, true),
     )
 
     companion object {
@@ -67,5 +71,6 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         private const val DRIVE_FOLDER = "driveFolderId"
         private const val LAST_BACKUP = "lastDriveBackupAt"
         private const val LAST_ERROR = "lastDriveError"
+        private const val CAMERA_WARNINGS = "cameraWarningsOpen"
     }
 }

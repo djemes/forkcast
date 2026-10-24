@@ -120,4 +120,34 @@
     <string name="drive_problem_quota">Seu Google Drive está cheio. Libere espaço e faça o backup de novo.</string>
     <string name="drive_problem_busy">O Google Drive está ocupado. Tente de novo em alguns minutos.</string>
     <string name="drive_problem_error">O Google Drive teve um problema. Tente de novo mais tarde.</string>
+    <!-- Excluir backups antigos (dono, 2026-10-24) -->
+    <string name="drive_cleanup">Excluir backups antigos</string>
+    <string name="drive_cleanup_unlock_title">Desbloqueie para excluir backups antigos</string>
+    <string name="drive_cleanup_unlock_subtitle">Backups no Google Drive</string>
+    <string name="drive_cleanup_no_lock_body">Excluir backups exige o bloqueio de tela do celular (PIN, padrão, senha, digital ou rosto), para que ninguém com o seu celular possa apagá-los.</string>
+    <plurals name="drive_cleanup_title">
+        <item quantity="one">Excluir %1$d backup antigo?</item>
+        <item quantity="many">Excluir %1$d backups antigos?</item>
+        <item quantity="other">Excluir %1$d backups antigos?</item>
+    </plurals>
+    <string name="drive_cleanup_range">Os backups de %1$s a %2$s serão excluídos da pasta Forkcast Backups no seu Google Drive. Não dá para desfazer.</string>
+    <string name="drive_cleanup_single">O backup de %1$s será excluído da pasta Forkcast Backups no seu Google Drive. Não dá para desfazer.</string>
+    <string name="drive_cleanup_keep">Fica: %1$s, o mais recente. Ele foi verificado e pode ser restaurado.</string>
+    <string name="drive_cleanup_delete">Excluir</string>
+    <string name="drive_cleanup_nothing_title">Nada para excluir</string>
+    <string name="drive_cleanup_nothing_one">Só existe um backup (%1$s), e ele fica.</string>
+    <string name="drive_cleanup_nothing_none">Ainda não há backups no seu Drive.</string>
+    <string name="drive_cleanup_first_title">Faça um backup antes</string>
+    <string name="drive_cleanup_old_format">O backup mais recente (%1$s) foi feito por uma versão antiga do Forkcast, então nada foi excluído. Faça um backup agora e depois os antigos podem sair.</string>
+    <string name="drive_cleanup_unreadable">O backup mais recente (%1$s) não pode ser lido, então nada foi excluído. Faça um backup agora e depois os antigos podem sair.</string>
+    <plurals name="drive_cleanup_done">
+        <item quantity="one">%1$d backup excluído. Ficou %2$s.</item>
+        <item quantity="many">%1$d backups excluídos. Ficou %2$s.</item>
+        <item quantity="other">%1$d backups excluídos. Ficou %2$s.</item>
+    </plurals>
+    <plurals name="drive_cleanup_partial">
+        <item quantity="one">%1$d backup excluído; %2$d não puderam ser excluídos e ficam por enquanto. Ficou %3$s.</item>
+        <item quantity="many">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Ficou %3$s.</item>
+        <item quantity="other">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Ficou %3$s.</item>
+    </plurals>
 </resources>

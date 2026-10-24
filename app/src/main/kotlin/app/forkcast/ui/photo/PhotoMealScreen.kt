@@ -17,6 +17,20 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.IconToggleButton
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -173,89 +187,166 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
         )
     }
 
-    Box(Modifier.fillMaxSize().background(Color.Black)) {
-        if (granted) {
-            CameraViewfinder(Modifier.fillMaxSize(), imageCapture = capture)
-        } else {
-            Column(Modifier.align(Alignment.Center).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(stringResource(R.string.photo_camera_needed), color = Color.White, style = MaterialTheme.typography.bodyLarge)
-                Button(onClick = request) { Text(stringResource(R.string.photo_allow_camera)) }
-            }
+    val gallery: @Composable () -> Unit = {
+        // Tonal, not outlined: an outline nearly vanished on the dark camera bar.
+        FilledTonalIconButton(onClick = openGallery, enabled = state.canAddPhoto, modifier = Modifier.size(56.dp)) {
+            Icon(painterResource(R.drawable.ic_photo_library), stringResource(R.string.photo_gallery))
         }
-        // Top: back + framing hint on a scrim, so the text reads over a bright plate.
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier.fillMaxWidth().statusBarsPadding().padding(8.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(
-                    onClick = onBack,
-                    colors = IconButtonDefaults.iconButtonColors(containerColor = SCRIM, contentColor = Color.White),
-                ) { Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back)) }
-                Text(
-                    stringResource(R.string.photo_framing_hint),
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodyMedium,
-                    modifier = Modifier
-                        .padding(start = 8.dp)
-                        .weight(1f, fill = false)
-                        .background(SCRIM, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                )
-            }
-            if (state.firstIsFreeTier) {
-                Text(
-                    stringResource(R.string.photo_free_tier_hint),
-                    color = Color.White,
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .padding(start = 56.dp)
-                        .background(SCRIM, RoundedCornerShape(12.dp))
-                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                )
-            }
+    }
+    val shutter: @Composable () -> Unit = {
+        FilledIconButton(
+            onClick = ::shoot,
+            enabled = granted && state.canAddPhoto && !busy,
+            modifier = Modifier.size(72.dp),
+            shape = CircleShape,
+        ) { Icon(painterResource(R.drawable.ic_photo_camera), stringResource(R.string.photo_shutter), Modifier.size(32.dp)) }
+    }
+    val next: @Composable () -> Unit = {
+        Button(onClick = { onEvent(PhotoMealEvent.Next) }, enabled = state.photos.isNotEmpty(), modifier = Modifier.heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.photo_next), maxLines = 1)
         }
-        // Bottom: thumbnails, then three equal zones (gallery · shutter · next) so the shutter
-        // stays centered and full size at any font scale.
-        Column(
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
-                .navigationBarsPadding()
-                .padding(16.dp),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, modifier = Modifier.weight(1f, fill = false))
-                Text(
-                    stringResource(R.string.photo_count, state.photos.size),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
-                    // Tonal, not outlined: an outline nearly vanished on the dark camera bar.
-                    FilledTonalIconButton(onClick = openGallery, enabled = state.canAddPhoto, modifier = Modifier.size(56.dp)) {
-                        Icon(painterResource(R.drawable.ic_photo_library), stringResource(R.string.photo_gallery))
+    }
+    val count: @Composable () -> Unit = {
+        Text(
+            stringResource(R.string.photo_count, state.photos.size),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+    }
+
+    BoxWithConstraints(Modifier.fillMaxSize().background(Color.Black)) {
+        if (maxWidth > maxHeight) {
+            // Landscape (owner, 2026-10-24): the preview beside a bar on the right, the bottom bar
+            // turned on its side: Next at the top, the shutter centered, the gallery at the bottom.
+            Row(Modifier.fillMaxSize()) {
+                Box(Modifier.weight(1f).fillMaxHeight()) {
+                    CameraPreview(granted, capture, request)
+                    CameraTop(
+                        state, onEvent, onBack,
+                        Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Start)),
+                    )
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(topStart = 28.dp, bottomStart = 28.dp))
+                        .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical))
+                        .padding(16.dp),
+                ) {
+                    // The same width with or without photos, so the preview doesn't jump when one is added.
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                        modifier = Modifier.width(SIDE_THUMB + 20.dp).fillMaxHeight().verticalScroll(rememberScrollState()),
+                    ) {
+                        Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, size = SIDE_THUMB, vertical = true)
+                        count()
+                    }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxHeight()) {
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.TopCenter) { next() }
+                        shutter()
+                        Box(Modifier.weight(1f), contentAlignment = Alignment.BottomCenter) { gallery() }
                     }
                 }
-                FilledIconButton(
-                    onClick = ::shoot,
-                    enabled = granted && state.canAddPhoto && !busy,
-                    modifier = Modifier.size(72.dp),
-                    shape = CircleShape,
-                ) { Icon(painterResource(R.drawable.ic_photo_camera), stringResource(R.string.photo_shutter), Modifier.size(32.dp)) }
-                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) {
-                    Button(onClick = { onEvent(PhotoMealEvent.Next) }, enabled = state.photos.isNotEmpty(), modifier = Modifier.heightIn(min = 48.dp)) {
-                        Text(stringResource(R.string.photo_next), maxLines = 1)
-                    }
+            }
+        } else {
+            CameraPreview(granted, capture, request)
+            CameraTop(state, onEvent, onBack, Modifier.statusBarsPadding())
+            // Bottom: thumbnails, then three equal zones (gallery · shutter · next) so the shutter
+            // stays centered and full size at any font scale.
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp))
+                    .navigationBarsPadding()
+                    .padding(16.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Thumbnails(state.photos, onRemove = { onEvent(PhotoMealEvent.RemovePhoto(it)) }, modifier = Modifier.weight(1f, fill = false))
+                    count()
+                }
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { gallery() }
+                    shutter()
+                    Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { next() }
                 }
             }
         }
     }
 }
+
+/** The camera image, or why it's missing and a button to allow it. */
+@Composable
+private fun BoxScope.CameraPreview(granted: Boolean, capture: ImageCapture, request: () -> Unit) {
+    if (granted) {
+        CameraViewfinder(Modifier.fillMaxSize(), imageCapture = capture)
+    } else {
+        Column(Modifier.align(Alignment.Center).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(stringResource(R.string.photo_camera_needed), color = Color.White, style = MaterialTheme.typography.bodyLarge)
+            Button(onClick = request) { Text(stringResource(R.string.photo_allow_camera)) }
+        }
+    }
+}
+
+/**
+ * Back on the left; on the right one warning button that shows or hides the tips (framing, and
+ * the free-tier privacy note when it applies) on a scrim, so they read over a bright plate
+ * (owner, 2026-10-24). Open or closed is remembered on this phone.
+ */
+@Composable
+private fun CameraTop(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit, onBack: () -> Unit, modifier: Modifier) {
+    Column(
+        horizontalAlignment = Alignment.End,
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = modifier.fillMaxWidth().padding(8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
+            IconButton(
+                onClick = onBack,
+                colors = IconButtonDefaults.iconButtonColors(containerColor = SCRIM, contentColor = Color.White),
+            ) { Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back)) }
+            Spacer(Modifier.weight(1f))
+            val shown = stringResource(if (state.warningsOpen) R.string.photo_warnings_shown else R.string.photo_warnings_hidden)
+            IconToggleButton(
+                checked = state.warningsOpen,
+                onCheckedChange = { onEvent(PhotoMealEvent.ToggleWarnings) },
+                colors = IconButtonDefaults.iconToggleButtonColors(
+                    containerColor = SCRIM, contentColor = WARNING_YELLOW,
+                    checkedContainerColor = SCRIM, checkedContentColor = WARNING_YELLOW,
+                ),
+                modifier = Modifier.semantics { stateDescription = shown },
+            ) { Icon(painterResource(R.drawable.ic_warning), stringResource(R.string.photo_warnings)) }
+        }
+        if (state.warningsOpen) {
+            CameraHint(stringResource(R.string.photo_framing_hint))
+            if (state.firstIsFreeTier) CameraHint(stringResource(R.string.photo_free_tier_hint))
+        }
+    }
+}
+
+@Composable
+private fun CameraHint(text: String) {
+    Text(
+        text,
+        color = Color.White,
+        style = MaterialTheme.typography.bodyMedium,
+        modifier = Modifier
+            .widthIn(max = 360.dp)
+            .background(SCRIM, RoundedCornerShape(12.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    )
+}
+
+/** Muted yellow for the warning button: noticeable on the scrim without shouting. */
+private val WARNING_YELLOW = Color(0xFFD6BD6A)
+
+/** Thumbnails in the landscape side bar, smaller so three fit beside the shutter. */
+private val SIDE_THUMB = 56.dp
 
 /** Translucent black behind text and buttons over the camera image. */
 private val SCRIM = Color.Black.copy(alpha = 0.55f)
@@ -265,9 +356,9 @@ private val SCRIM = Color.Black.copy(alpha = 0.55f)
  * the corner (24 dp to see, 48 dp to touch) so it never covers the photo.
  */
 @Composable
-private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit, modifier: Modifier = Modifier, size: Dp = 64.dp) {
+private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit, modifier: Modifier = Modifier, size: Dp = 64.dp, vertical: Boolean = false) {
     if (photos.isEmpty()) return
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) {
+    val items: @Composable () -> Unit = {
         photos.forEachIndexed { i, uri ->
             // Room above and right of the image for the badge's touch area.
             Box(Modifier.size(size + 20.dp)) {
@@ -303,6 +394,8 @@ private fun Thumbnails(photos: List<Uri>, onRemove: (Int) -> Unit, modifier: Mod
             }
         }
     }
+    if (vertical) Column(verticalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) { items() }
+    else Row(horizontalArrangement = Arrangement.spacedBy(4.dp), modifier = modifier) { items() }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
