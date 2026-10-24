@@ -32,7 +32,7 @@ class PhotoArchiveTest {
 
         // Restore onto a "new phone".
         photos.root.deleteRecursively()
-        val json = archive.read(bytes.inputStream())
+        val json = archive.read(bytes.inputStream()).json
         assertThat(json).isEqualTo("""{"app":"Forkcast"}""")
         assertThat(File(photos.root, "a1/0.jpg").exists()).isFalse()
         archive.commitStaged()

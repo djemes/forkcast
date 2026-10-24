@@ -1,0 +1,107 @@
+package app.forkcast.core.data.backup
+
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertThat
+import org.junit.Assert.assertThrows
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.ConscryptMode
+import java.io.ByteArrayOutputStream
+import kotlin.random.Random
+
+// Robolectric with the JDK's own AES-GCM: an earlier Robolectric test in the same JVM leaves its
+// Conscrypt provider installed, which the JDK's JCE check rejects (see SettingsBackupTest).
+@ConscryptMode(ConscryptMode.Mode.OFF)
+@RunWith(AndroidJUnit4::class)
+class BackupCryptoTest {
+
+    private val password = "correct horse".toCharArray()
+
+    private fun encrypt(plain: ByteArray, pw: CharArray = password): ByteArray {
+        val out = ByteArrayOutputStream()
+        BackupCrypto.encrypt(out, pw, ITERATIONS, SEGMENT).use { it.write(plain) }
+        return out.toByteArray()
+    }
+
+    private fun decrypt(bytes: ByteArray, pw: CharArray = password): ByteArray =
+        BackupCrypto.decrypt(bytes.inputStream(), pw).use { it.readBytes() }
+
+    /** Bytes before the first segment. */
+    private fun headerSize(bytes: ByteArray, plainSize: Int): Int {
+        val segments = plainSize / SEGMENT + 1
+        return bytes.size - plainSize - segments * TAG
+    }
+
+    @Test fun roundTripsAcrossSegmentBoundaries() {
+        for (size in listOf(0, 1, SEGMENT - 1, SEGMENT, SEGMENT + 1, 3 * SEGMENT, 3 * SEGMENT + 5)) {
+            val plain = Random(size).nextBytes(size)
+            val bytes = encrypt(plain)
+            assertThat(BackupCrypto.isEncrypted(bytes)).isTrue()
+            assertThat(decrypt(bytes)).isEqualTo(plain)
+        }
+    }
+
+    @Test fun byteByByteWritesGiveTheSameResult() {
+        val plain = Random(1).nextBytes(2 * SEGMENT + 3)
+        val out = ByteArrayOutputStream()
+        BackupCrypto.encrypt(out, password, ITERATIONS, SEGMENT).use { s -> plain.forEach { s.write(it.toInt()) } }
+        assertThat(decrypt(out.toByteArray())).isEqualTo(plain)
+    }
+
+    @Test fun wrongPasswordFails() {
+        val bytes = encrypt(Random(2).nextBytes(100))
+        assertThrows(BackupDecryptException::class.java) { decrypt(bytes, "wrong password".toCharArray()) }
+    }
+
+    @Test fun aChangedByteFails() {
+        val bytes = encrypt(Random(3).nextBytes(2 * SEGMENT))
+        bytes[bytes.size / 2] = (bytes[bytes.size / 2].toInt() xor 1).toByte()
+        assertThrows(BackupDecryptException::class.java) { decrypt(bytes) }
+    }
+
+    @Test fun cuttingOffWholeSegmentsFails() {
+        val size = 3 * SEGMENT + 10
+        val bytes = encrypt(Random(4).nextBytes(size))
+        // Ends right after the second segment, which was written as "not the last".
+        val cut = bytes.copyOf(headerSize(bytes, size) + 2 * (SEGMENT + TAG))
+        assertThrows(BackupDecryptException::class.java) { decrypt(cut) }
+    }
+
+    @Test fun swappedSegmentsFail() {
+        val size = 2 * SEGMENT + 10
+        val bytes = encrypt(Random(5).nextBytes(size))
+        val header = headerSize(bytes, size)
+        val seg = SEGMENT + TAG
+        val swapped = bytes.copyOf()
+        System.arraycopy(bytes, header, swapped, header + seg, seg)
+        System.arraycopy(bytes, header + seg, swapped, header, seg)
+        assertThrows(BackupDecryptException::class.java) { decrypt(swapped) }
+    }
+
+    @Test fun anEditedHeaderFails() {
+        val bytes = encrypt(Random(6).nextBytes(10))
+        // The salt starts after the magic, the version (1 byte) and the iterations (4 bytes).
+        val i = BackupCrypto.MAGIC.size + 5
+        bytes[i] = (bytes[i].toInt() xor 1).toByte()
+        assertThrows(BackupDecryptException::class.java) { decrypt(bytes) }
+    }
+
+    @Test fun absurdIterationsAreRefusedBeforeAnyWork() {
+        val bytes = encrypt(Random(7).nextBytes(10))
+        val at = BackupCrypto.MAGIC.size + 1
+        bytes[at] = 0x7f
+        for (i in 1 until 4) bytes[at + i] = -1
+        assertThrows(BackupDecryptException::class.java) { decrypt(bytes) }
+    }
+
+    @Test fun plainFilesAreNotTakenForEncryptedOnes() {
+        assertThat(BackupCrypto.isEncrypted("""{"app":"Forkcast"}""".encodeToByteArray())).isFalse()
+        assertThat(BackupCrypto.isEncrypted(byteArrayOf(0x50, 0x4b, 3, 4))).isFalse()
+    }
+
+    private companion object {
+        const val ITERATIONS = 100_000
+        const val SEGMENT = 4_096
+        const val TAG = 16
+    }
+}

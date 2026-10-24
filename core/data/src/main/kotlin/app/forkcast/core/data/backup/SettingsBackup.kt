@@ -105,7 +105,7 @@ object SettingsCrypto {
         val iv = ByteArray(12).also(random::nextBytes)
         val header = SettingsEnvelope(iterations = iterations, salt = b64.encodeToString(salt), iv = b64.encodeToString(iv), ciphertext = "")
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.ENCRYPT_MODE, key(passphrase, salt, iterations), GCMParameterSpec(TAG_BITS, iv))
+        cipher.init(Cipher.ENCRYPT_MODE, deriveKey(passphrase, salt, iterations), GCMParameterSpec(TAG_BITS, iv))
         cipher.updateAAD(header.associatedData())
         return header.copy(ciphertext = b64.encodeToString(cipher.doFinal(plaintext)))
     }
@@ -114,12 +114,13 @@ object SettingsCrypto {
     fun decrypt(envelope: SettingsEnvelope, passphrase: CharArray): ByteArray {
         val salt = unb64.decode(envelope.salt)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
-        cipher.init(Cipher.DECRYPT_MODE, key(passphrase, salt, envelope.iterations), GCMParameterSpec(TAG_BITS, unb64.decode(envelope.iv)))
+        cipher.init(Cipher.DECRYPT_MODE, deriveKey(passphrase, salt, envelope.iterations), GCMParameterSpec(TAG_BITS, unb64.decode(envelope.iv)))
         cipher.updateAAD(envelope.associatedData())
         return cipher.doFinal(unb64.decode(envelope.ciphertext))
     }
 
-    private fun key(passphrase: CharArray, salt: ByteArray, iterations: Int): SecretKeySpec {
+    /** Also the key of password-protected backups ([BackupCrypto]). */
+    internal fun deriveKey(passphrase: CharArray, salt: ByteArray, iterations: Int): SecretKeySpec {
         val spec = PBEKeySpec(passphrase, salt, iterations, KEY_BITS)
         try {
             return SecretKeySpec(SecretKeyFactory.getInstance(SettingsEnvelope.KDF).generateSecret(spec).encoded, "AES")
