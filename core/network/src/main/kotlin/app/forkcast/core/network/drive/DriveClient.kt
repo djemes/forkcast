@@ -20,7 +20,6 @@ import io.ktor.http.contentType
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.encodeToString
 import java.util.UUID
-import javax.inject.Inject
 
 /** A backup file in the user's Drive (only files this app created are visible with `drive.file`). */
 @Serializable
@@ -49,12 +48,13 @@ sealed class DriveError(message: String) : Exception(message) {
  * Google Drive REST v3 over Ktor (SPEC §4.11, §7): no Google SDK. Every call takes the access
  * token from Google's AuthorizationClient (scope `drive.file`); tokens are never stored or logged.
  * Shapes checked against developers.google.com/workspace/drive/api/reference/rest/v3 (2026-10-19).
+ * [api] and [upload] are Google's, except for a local stand-in in emulator testing (DriveMock).
  */
-class DriveClient @Inject constructor(private val http: HttpClient) {
+class DriveClient(private val http: HttpClient, private val api: String = API, private val upload: String = UPLOAD) {
 
     /** The signed-in account's email, for Settings ("Backing up to …"). */
     suspend fun accountEmail(token: String): String? {
-        val r = call { http.get("$API/about") { auth(token); parameter("fields", "user(emailAddress)") } }
+        val r = call { http.get("$api/about") { auth(token); parameter("fields", "user(emailAddress)") } }
         return r.body<About>().user?.emailAddress
     }
 
@@ -62,7 +62,7 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
     suspend fun folder(token: String, name: String = FOLDER_NAME): String {
         val q = "name = '${name.replace("'", "\\'")}' and mimeType = '$FOLDER_MIME' and trashed = false"
         val found = call {
-            http.get("$API/files") {
+            http.get("$api/files") {
                 auth(token)
                 parameter("q", q)
                 parameter("spaces", "drive")
@@ -71,7 +71,7 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
         }.body<FileList>().files.firstOrNull()
         if (found != null) return found.id
         return call {
-            http.post("$API/files") {
+            http.post("$api/files") {
                 auth(token)
                 contentType(ContentType.Application.Json)
                 setBody(NetworkJson.encodeToString(NewFile(name, FOLDER_MIME)))
@@ -86,7 +86,7 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
         var page: String? = null
         do {
             val list = call {
-                http.get("$API/files") {
+                http.get("$api/files") {
                     auth(token)
                     parameter("q", "'$folderId' in parents and trashed = false")
                     parameter("spaces", "drive")
@@ -118,7 +118,7 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
             append("Content-Type: $GZIP_MIME\r\n\r\n")
         }.toByteArray() + bytes + "\r\n--$boundary--\r\n".toByteArray()
         return call {
-            http.post("$UPLOAD/files") {
+            http.post("$upload/files") {
                 auth(token)
                 parameter("uploadType", "multipart")
                 parameter("fields", "id,name,size,createdTime,appProperties")
@@ -131,7 +131,7 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
 
     private suspend fun resumable(token: String, meta: String, bytes: ByteArray): DriveFile {
         val start = call {
-            http.post("$UPLOAD/files") {
+            http.post("$upload/files") {
                 auth(token)
                 parameter("uploadType", "resumable")
                 header("X-Upload-Content-Type", GZIP_MIME)
@@ -152,7 +152,7 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
     }
 
     suspend fun download(token: String, fileId: String): ByteArray = call {
-        http.get("$API/files/$fileId") {
+        http.get("$api/files/$fileId") {
             auth(token)
             parameter("alt", "media")
             timeout { requestTimeoutMillis = LONG_MS; socketTimeoutMillis = LONG_MS }
@@ -160,7 +160,7 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
     }.readRawBytes()
 
     suspend fun delete(token: String, fileId: String) {
-        val r = call(allow404 = true) { http.delete("$API/files/$fileId") { auth(token) } }
+        val r = call(allow404 = true) { http.delete("$api/files/$fileId") { auth(token) } }
         check(r.status.value in 200..299 || r.status.value == 404)
     }
 
@@ -203,8 +203,8 @@ class DriveClient @Inject constructor(private val http: HttpClient) {
         const val FOLDER_NAME = "Forkcast Backups"
         const val FOLDER_MIME = "application/vnd.google-apps.folder"
         const val GZIP_MIME = "application/gzip"
-        private const val API = "https://www.googleapis.com/drive/v3"
-        private const val UPLOAD = "https://www.googleapis.com/upload/drive/v3"
+        const val API = "https://www.googleapis.com/drive/v3"
+        const val UPLOAD = "https://www.googleapis.com/upload/drive/v3"
         private const val LONG_MS = 120_000L
         const val MULTIPART_MAX = 5 * 1024 * 1024
     }
