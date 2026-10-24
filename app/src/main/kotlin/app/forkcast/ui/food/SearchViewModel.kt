@@ -68,14 +68,16 @@ data class SearchUiState(
 
     /**
      * No good results: nothing of your own, and the databases are done with fewer than three
-     * (or failed). Then "Describe it to AI" moves to the top.
+     * foods that match most of the words searched (USDA answers almost anything with something
+     * loosely related). Then "Describe it to AI" moves to the top.
      */
     val fewResults: Boolean
         get() {
             if (!isSearching || local.isNotEmpty() || savedMeals.isNotEmpty()) return false
-            fun count(r: RemoteResults) = (r as? RemoteResults.Done)?.foods?.size ?: 0
+            fun good(r: RemoteResults) = (r as? RemoteResults.Done)?.foods.orEmpty()
+                .count { DescribedMatch.score(query, listOfNotNull(it.name, it.brand)) >= DescribedMatch.THRESHOLD }
             val loading = usda is RemoteResults.Loading || off is RemoteResults.Loading || usda is RemoteResults.Idle
-            return !loading && count(usda) + count(off) < 3
+            return !loading && good(usda) + good(off) < 3
         }
 }
 

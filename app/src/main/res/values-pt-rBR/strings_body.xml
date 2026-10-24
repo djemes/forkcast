@@ -26,7 +26,7 @@
     <string name="water_goal_field">Meta diária (%1$s)</string>
     <string name="water_goal_body">O padrão é %1$s, a partir do perfil. Bebidas como água e chá sem açúcar contam para ela quando você as registra.</string>
     <string name="water_glass_field">Tamanho do copo (%1$s)</string>
-    <string name="water_glass_body">Um toque em "+ copo" em Hoje, no widget de água e no atalho "+1 copo".</string>
+    <string name="water_glass_body">Um copo entre os recipientes da gota de água em Hoje. O widget de água e o atalho "+1 copo" adicionam o último recipiente usado.</string>
     <string name="water_goal_reset">Usar o padrão (%1$s)</string>
     <string name="water_counts_body">Água, água com gás e chá sem açúcar contam; bebidas açucaradas, álcool, bebidas com leite e shakes não.</string>
     <string name="water_counts_amount">Soma %1$s à água do dia</string>

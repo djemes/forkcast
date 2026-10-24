@@ -211,7 +211,7 @@ class DefaultAiEstimateRepository @Inject constructor(
         val tries = e.tries + 1
         patch(id) {
             it.copy(status = EstimateStatus.RUNNING, attempts = it.attempts + 1, tries = tries, phase = EstimatePhase.SENDING,
-                phaseSince = clock.millis(), activeProfileName = null, retryAfter = null)
+                phaseSince = clock.millis(), activeProfileName = null, retryAfter = null, promptVersion = MealPrompt.VERSION)
         }
         return try {
             runChain(e, s.ai.autoAccept, runStart, tries)
@@ -256,7 +256,7 @@ class DefaultAiEstimateRepository @Inject constructor(
                 val p = outcome.profile
                 val r = outcome.result
                 patch(id) { it.copy(phase = EstimatePhase.MATCHING, phaseSince = clock.millis(), activeProfileName = null) }
-                val components = buildComponents(id, r.parsed.items)
+                val components = buildComponents(id, r.parsed.items, preferAi = e.kind == EstimateKind.TEXT)
                 dao.replaceComponents(id, components, clock.millis())
                 val cur = dao.estimate(id) ?: e
                 val totals = ComponentEdits.totals(components, cur.portion)
@@ -356,13 +356,17 @@ class DefaultAiEstimateRepository @Inject constructor(
         return RunOutcome.Failed(e.id, keyProblem)
     }
 
-    private suspend fun buildComponents(estimateId: String, items: List<EstimatedItem>): List<AiComponentEntity> {
+    /**
+     * [preferAi]: a described meal keeps the model's numbers (often a brand's published nutrition,
+     * which a generic USDA match would replace); the match is still offered as "Use USDA values".
+     */
+    private suspend fun buildComponents(estimateId: String, items: List<EstimatedItem>, preferAi: Boolean = false): List<AiComponentEntity> {
         val now = clock.millis()
         return items.mapIndexed { i, item ->
             val aiPer100g = item.nutrients.toNutrients().mapValues { (_, v) -> v * 100.0 / item.grams }
             val match = matcher.match(item)
-            val source = if (match != null) app.forkcast.core.data.db.ComponentSource.USDA else app.forkcast.core.data.db.ComponentSource.AI
-            val per100 = match?.food?.nutrientsPer100g ?: aiPer100g
+            val source = if (match != null && !preferAi) app.forkcast.core.data.db.ComponentSource.USDA else app.forkcast.core.data.db.ComponentSource.AI
+            val per100 = if (source == app.forkcast.core.data.db.ComponentSource.USDA) match!!.food.nutrientsPer100g else aiPer100g
             AiComponentEntity(
                 id = UUID.randomUUID().toString(), estimateId = estimateId, sortOrder = i,
                 name = item.name, preparation = item.preparation, grams = item.grams, gramsLow = item.gramsLow, gramsHigh = item.gramsHigh,

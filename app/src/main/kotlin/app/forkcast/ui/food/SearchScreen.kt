@@ -137,7 +137,12 @@ fun SearchScreen(
                         .focusRequester(focus),
                 )
             }
+            // The "Describe it to AI" card is added above results already on screen; bring it into view.
+            val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+            val offerDescribe = onDescribe != null && state.isSearching && state.fewResults
+            LaunchedEffect(offerDescribe) { if (offerDescribe) listState.animateScrollToItem(0) }
             LazyColumn(
+                state = listState,
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(start = 16.dp, end = 16.dp, bottom = 24.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 modifier = Modifier.fillMaxSize(),

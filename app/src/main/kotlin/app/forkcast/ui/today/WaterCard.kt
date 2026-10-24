@@ -187,13 +187,16 @@ fun WaterCard(
             ) {
                 TextButton(onClick = onUndo, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.undo)) }
             }
-            Box {
-                WaterDrop(water, f, onAdd = { onAddContainer(water.lastUsed) }, onPick = { picking = true })
-                if (picking) ContainerPicker(water, f, onPick = { c -> picking = false; onAddContainer(c) }, onDismiss = { picking = false })
-            }
-            val pickLabel = stringResource(R.string.water_pick_container)
-            IconButton(onClick = { picking = !picking }, modifier = Modifier.semantics { contentDescription = pickLabel }) {
-                Icon(painterResource(if (picking) R.drawable.ic_expand_less else R.drawable.ic_expand_more), contentDescription = null)
+            // The drop and its arrow stay together when the row wraps (large fonts).
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box {
+                    WaterDrop(water, f, onAdd = { onAddContainer(water.lastUsed) }, onPick = { picking = true })
+                    if (picking) ContainerPicker(water, f, onPick = { c -> picking = false; onAddContainer(c) }, onDismiss = { picking = false })
+                }
+                val pickLabel = stringResource(R.string.water_pick_container)
+                IconButton(onClick = { picking = !picking }, modifier = Modifier.semantics { contentDescription = pickLabel }) {
+                    Icon(painterResource(if (picking) R.drawable.ic_expand_less else R.drawable.ic_expand_more), contentDescription = null)
+                }
             }
         }
     }

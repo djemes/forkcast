@@ -824,17 +824,16 @@ private fun QuestionCard(question: String, onAnswer: (String) -> Unit, onAcceptA
 @Composable
 private fun CorrectField(onSend: (String) -> Unit) {
     var text by rememberSaveable { mutableStateOf("") }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        OutlinedTextField(
-            value = text,
-            onValueChange = { text = it },
-            label = { Text(stringResource(R.string.review_correct)) },
-            placeholder = { Text(stringResource(R.string.review_correct_hint)) },
-            minLines = 2,
-            modifier = Modifier.fillMaxWidth(),
-        )
-        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+    // Send sits inside the field, so it stays above the keyboard with the text (owner, 2026-10-23).
+    OutlinedTextField(
+        value = text,
+        onValueChange = { text = it },
+        label = { Text(stringResource(R.string.review_correct)) },
+        placeholder = { Text(stringResource(R.string.review_correct_hint)) },
+        minLines = 2,
+        trailingIcon = {
             TextButton(onClick = { onSend(text); text = "" }, enabled = text.isNotBlank()) { Text(stringResource(R.string.review_send)) }
-        }
-    }
+        },
+        modifier = Modifier.fillMaxWidth(),
+    )
 }

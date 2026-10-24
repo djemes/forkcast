@@ -49,8 +49,37 @@ class FoodFlowViewModelTest {
     private fun search() = SearchViewModel(
         SavedStateHandle(route = SearchDestination("l", "2026-10-18")),
         foods, testSecretStore(tmp.root), FakeSettingsRepository(), savedMeals, log, app.forkcast.fakes.FakeMealSlotRepository(),
-        app.forkcast.fakes.FakeAiRepository(), app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()),
+        ai, app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()),
     )
+    private val ai = app.forkcast.fakes.FakeAiRepository()
+
+    /** Owner, 2026-10-23: no good results → "Describe it to AI"; saved meals show and log in one tap. */
+    @Test fun describeOfferAndSavedMealsInResults() = runTest(dispatcher) {
+        ai.saveProfile(app.forkcast.core.data.repository.AiProfileDraft(null, "Gemini", app.forkcast.core.model.ProviderId.GEMINI, "m", null, app.forkcast.core.model.TierLabel.FREE), "k")
+        foods.usdaResults = { listOf(FakeFoodRepository.food("Burrito bowl, chicken", sourceId = "2")) }
+        foods.offResults = { emptyList() }
+        savedMeals.state.value = listOf(
+            app.forkcast.core.model.SavedMeal("m1", "Usual breakfast", listOf(
+                app.forkcast.core.model.SavedMealItem("i", null, "Oats", null, 1.0, "cup", 80.0, mapOf(app.forkcast.core.model.NutrientKey.ENERGY_KCAL to 300.0), app.forkcast.core.model.FoodSource.USDA),
+            )),
+        )
+        val vm = search()
+        collect(vm)
+        vm.onQueryChange("grandmas farofa bowl")
+        advanceUntilIdle()
+        assertThat(vm.state.value.canDescribe).isTrue()
+        // One loosely related USDA hit isn't a good result.
+        assertThat(vm.state.value.fewResults).isTrue()
+        vm.onQueryChange("usual breakfast")
+        advanceUntilIdle()
+        assertThat(vm.state.value.savedMeals.map { it.name }).containsExactly("Usual breakfast")
+        assertThat(vm.state.value.fewResults).isFalse()
+        vm.effects.test {
+            vm.logSavedMeal(vm.state.value.savedMeals.single())
+            assertThat(awaitItem()).isInstanceOf(SearchEffect.LoggedMeal::class.java)
+        }
+        assertThat(log.rows.value.values.single().first.displayName).isEqualTo("Oats")
+    }
     private val savedMeals = app.forkcast.fakes.FakeSavedMealRepository()
     private val log = app.forkcast.fakes.FakeLogRepository()
 
