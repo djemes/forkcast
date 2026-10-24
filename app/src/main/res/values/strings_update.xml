@@ -22,6 +22,7 @@
     <string name="update_offline">No connection. Try again when you\'re online.</string>
     <string name="update_token_rejected">GitHub refused the token. Check that it hasn\'t expired and can read the forkcast repository (Contents: read-only).</string>
     <string name="update_no_release">GitHub has no release yet, or the token can\'t see the repository.</string>
+    <string name="update_wrong_download">GitHub sent something other than the APK. Try again; if it keeps happening, get the APK from the Releases page.</string>
     <string name="update_http">GitHub answered with an error (HTTP %1$d). Try again later.</string>
     <string name="update_no_apk">That release has no APK attached.</string>
     <string name="update_not_apk">The download isn\'t a valid APK. Try again.</string>

@@ -35,6 +35,8 @@ sealed class UpdateError(message: String) : Exception(message) {
     /** 404: no release yet, or the token can't see the repository. */
     class NoRelease : UpdateError("No release found")
     class Http(val code: Int) : UpdateError("GitHub HTTP $code")
+    /** GitHub answered with something that isn't the file (the asset's JSON details, a short body). */
+    class WrongDownload : UpdateError("GitHub sent something other than the APK")
 }
 
 /**
@@ -56,14 +58,14 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
         return Release(body.tagName, body.name, body.body, body.htmlUrl, apk?.let { ReleaseAsset(it.name, it.url, it.size) })
     }
 
-    /** Streams [asset] into [out], reporting (bytes so far, total). */
+    /**
+     * Streams [asset] into [out], reporting (bytes so far, total). The request asks for
+     * `application/octet-stream` **only**: with GitHub's JSON type also in Accept, the API answers
+     * 200 with the asset's JSON details instead of the 302 to the file, and 1.1/1.2.0 saved those
+     * 1.8 KB as the "APK" (owner's report 2026-10-24: "The download isn't a valid APK").
+     */
     suspend fun download(token: String, asset: ReleaseAsset, out: OutputStream, progress: (Long, Long) -> Unit) {
-        val redirect = call {
-            http.get(asset.apiUrl) {
-                github(token)
-                header(HttpHeaders.Accept, "application/octet-stream")
-            }
-        }
+        val redirect = call { http.get(asset.apiUrl) { binary(token) } }
         val location = when (redirect.status.value) {
             in 300..399 -> redirect.headers[HttpHeaders.Location] ?: throw UpdateError.Http(redirect.status.value)
             else -> { check(redirect); asset.apiUrl }
@@ -72,9 +74,10 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
         call {
             http.prepareGet(location) {
                 timeout { requestTimeoutMillis = DOWNLOAD_TIMEOUT_MS }
-                if (location == asset.apiUrl) { github(token); header(HttpHeaders.Accept, "application/octet-stream") }
+                if (location == asset.apiUrl) binary(token)
             }.execute { response ->
                 check(response)
+                if (response.headers[HttpHeaders.ContentType]?.contains("json", ignoreCase = true) == true) throw UpdateError.WrongDownload()
                 val total = response.headers[HttpHeaders.ContentLength]?.toLongOrNull() ?: asset.sizeBytes
                 val channel = response.bodyAsChannel()
                 val buffer = ByteArray(64 * 1024)
@@ -87,6 +90,8 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
                     done += n
                     progress(done, total)
                 }
+                // A cut-off or wrong body would only fail later as "not a valid APK".
+                if (asset.sizeBytes > 0 && done != asset.sizeBytes) throw UpdateError.WrongDownload()
                 response
             }
         }
@@ -96,6 +101,14 @@ class GitHubReleases(private val http: HttpClient, private val repo: String) {
         header(HttpHeaders.Authorization, "Bearer $token")
         header(HttpHeaders.Accept, "application/vnd.github+json")
         header("X-GitHub-Api-Version", "2022-11-28")
+    }
+
+    /** The asset itself: token and API version, and exactly one Accept, the binary one. */
+    private fun io.ktor.client.request.HttpRequestBuilder.binary(token: String) {
+        header(HttpHeaders.Authorization, "Bearer $token")
+        header("X-GitHub-Api-Version", "2022-11-28")
+        headers.remove(HttpHeaders.Accept)
+        header(HttpHeaders.Accept, "application/octet-stream")
     }
 
     private fun check(r: HttpResponse) {

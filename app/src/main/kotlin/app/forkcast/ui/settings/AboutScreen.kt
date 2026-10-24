@@ -274,6 +274,7 @@ private fun errorText(e: UpdateError): String = when (e) {
     is UpdateError.TokenRejected -> stringResource(R.string.update_token_rejected)
     is UpdateError.NoRelease -> stringResource(R.string.update_no_release)
     is UpdateError.Http -> stringResource(R.string.update_http, e.code)
+    is UpdateError.WrongDownload -> stringResource(R.string.update_wrong_download)
 }
 
 @Composable

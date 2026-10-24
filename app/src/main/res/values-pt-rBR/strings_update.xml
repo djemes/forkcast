@@ -22,6 +22,7 @@
     <string name="update_offline">Sem conexão. Tente de novo quando estiver online.</string>
     <string name="update_token_rejected">O GitHub recusou o token. Confira se ele não expirou e se pode ler o repositório forkcast (Contents: somente leitura).</string>
     <string name="update_no_release">O GitHub ainda não tem nenhuma versão, ou o token não consegue ver o repositório.</string>
+    <string name="update_wrong_download">O GitHub enviou algo que não é o APK. Tente de novo; se continuar, baixe o APK na página de Releases.</string>
     <string name="update_http">O GitHub respondeu com um erro (HTTP %1$d). Tente de novo mais tarde.</string>
     <string name="update_no_apk">Essa versão não tem um APK anexado.</string>
     <string name="update_not_apk">O download não é um APK válido. Tente de novo.</string>

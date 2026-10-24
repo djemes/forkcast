@@ -65,6 +65,35 @@ class GitHubReleasesTest {
         assertThat(seen).containsExactly("api.github.com" to "Bearer tok", "objects.githubusercontent.com" to null).inOrder()
     }
 
+    /**
+     * Owner's report (2026-10-24): with GitHub's JSON type also in Accept, the API sent the asset's
+     * JSON details (200), saved as the APK. The asset request carries exactly one Accept.
+     */
+    @Test fun assetRequestAsksForTheBinaryOnly() = runTest {
+        var accepts: List<String>? = null
+        val engine = MockEngine { req ->
+            if (req.url.host == "api.github.com") {
+                accepts = req.headers.getAll(HttpHeaders.Accept)
+                respond("", HttpStatusCode.Found, headersOf(HttpHeaders.Location, "https://release-assets.githubusercontent.com/signed?x=1"))
+            } else {
+                respond(ByteReadChannel(byteArrayOf(1, 2, 3, 4, 5)), HttpStatusCode.OK, headersOf(HttpHeaders.ContentLength, "5"))
+            }
+        }
+        val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")
+        client.download("tok", ReleaseAsset("a.apk", "https://api.github.com/repos/djemes/forkcast/releases/assets/7", 5), ByteArrayOutputStream()) { _, _ -> }
+        assertThat(accepts!!.flatMap { it.split(",") }.map { it.trim() }).containsExactly("application/octet-stream")
+    }
+
+    /** JSON (or a short body) instead of the file is named, not saved as an APK. */
+    @Test fun jsonInsteadOfTheFileIsRefused() = runTest {
+        val engine = MockEngine { respond("{\"id\":7,\"name\":\"a.apk\"}", HttpStatusCode.OK, json) }
+        val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")
+        val e = runCatching {
+            client.download("tok", ReleaseAsset("a.apk", "https://api.github.com/repos/djemes/forkcast/releases/assets/7", 28_000_000), ByteArrayOutputStream()) { _, _ -> }
+        }.exceptionOrNull()
+        assertThat(e).isInstanceOf(UpdateError.WrongDownload::class.java)
+    }
+
     @Test fun offlineIsNamed() = runTest {
         val engine = MockEngine { throw java.io.IOException("no route") }
         val client = GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast")
