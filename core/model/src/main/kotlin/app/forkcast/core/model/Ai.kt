@@ -30,8 +30,6 @@ data class AiProfile(
     /** Epoch ms until which the chain skips this profile (quota window after a 429). */
     val cooldownUntil: Long?,
 ) {
-    /** Free-tier Gemini (or not sure): the privacy note applies (SPEC §4.7). */
-    val showsFreeTierNote: Boolean get() = provider == ProviderId.GEMINI && tierLabel != TierLabel.PAID
 }
 
 /**

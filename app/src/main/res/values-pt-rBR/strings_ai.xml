@@ -70,7 +70,6 @@
     <string name="ai_provider_claude">Claude (Anthropic)</string>
     <string name="ai_provider_gemini">Gemini (Google)</string>
     <string name="ai_provider_openai">Compatível com OpenAI</string>
-    <string name="ai_free_tier_note">Se o faturamento não estiver ativado no projeto do Google Cloud desta chave (o nível gratuito do Gemini), o Google pode usar suas fotos e descrições para melhorar os produtos dele, e pessoas podem revisá-las. Não inclua rostos, documentos nem dados pessoais. Quem está no EEE, no Reino Unido ou na Suíça precisa de uma chave paga.</string>
     <string name="ai_base_url">URL do servidor</string>
     <string name="ai_base_url_hint">ex.: https://openrouter.ai/api ou http://192.168.1.10:11434</string>
     <string name="ai_cleartext_warning">Este endereço não é criptografado (http). Use só na sua própria rede ou VPN.</string>

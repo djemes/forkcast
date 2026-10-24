@@ -3,10 +3,6 @@
     <!-- Photo meal (SPEC §4.6, DESIGN.md §4) -->
     <string name="photo_meal_title">Refeição por foto</string>
     <string name="photo_framing_hint">Enquadre o prato inteiro. Um garfo ou a mão ajudam com o tamanho.</string>
-    <string name="photo_free_tier_hint">O Google pode revisar fotos do nível gratuito. Deixe rostos e documentos fora do quadro.</string>
-    <string name="photo_warnings">Dicas e avisos</string>
-    <string name="photo_warnings_shown">Visíveis</string>
-    <string name="photo_warnings_hidden">Ocultos</string>
     <string name="photo_shutter">Tirar foto</string>
     <string name="photo_gallery">Escolher da galeria</string>
     <string name="photo_remove">Remover a foto %1$d</string>

@@ -67,7 +67,6 @@ class AiSettingsTest {
         val s = vm.state.value
         assertThat(s.provider).isEqualTo(ProviderId.GEMINI)
         assertThat(s.model).isEqualTo("gemini-3.8-flash")
-        assertThat(s.showFreeTierNote).isTrue()
         assertThat(s.canSave).isFalse()
 
         vm.onEvent(AiProfileEditEvent.SetKey("  g-key  "))
@@ -87,7 +86,6 @@ class AiSettingsTest {
         advanceUntilIdle()
         vm.onEvent(AiProfileEditEvent.SetProvider(ProviderId.CLAUDE))
         assertThat(vm.state.value.model).isEqualTo("claude-sonnet-5-5")
-        assertThat(vm.state.value.showFreeTierNote).isFalse()
         vm.onEvent(AiProfileEditEvent.SetKey("sk-bad"))
         vm.onEvent(AiProfileEditEvent.SaveAndTest)
         advanceUntilIdle()
@@ -136,7 +134,8 @@ class AiSettingsTest {
                 )
             }
         }
-        compose.onNodeWithText("Gemini's free tier", substring = true).assertIsDisplayed()
+        // No free-tier privacy note on the editor any more (owner, 2026-10-25).
+        compose.onNodeWithText("Gemini's free tier", substring = true).assertDoesNotExist()
         compose.onNodeWithText("Save and test").performScrollTo().performClick()
         assertThat(event).isEqualTo(AiProfileEditEvent.SaveAndTest)
     }

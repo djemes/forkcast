@@ -13,8 +13,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -87,18 +85,6 @@ fun AiProfileEditScreen(
         if (!state.loaded) return@SettingsScaffold
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ProviderPicker(state.provider) { onEvent(AiProfileEditEvent.SetProvider(it)) }
-
-            // Gemini keys may be free tier, which the app can't detect, so the privacy note always shows
-            // for Gemini (SPEC §4.7; the free/paid question was removed at the owner's request 2026-10-19).
-            if (state.showFreeTierNote) {
-                Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)) {
-                    Text(
-                        stringResource(R.string.ai_free_tier_note),
-                        style = MaterialTheme.typography.bodyMedium,
-                        modifier = Modifier.padding(12.dp),
-                    )
-                }
-            }
 
             if (state.provider == ProviderId.OPENAI_COMPAT) {
                 OutlinedTextField(

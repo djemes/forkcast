@@ -54,7 +54,6 @@ data class AiProfileEditUiState(
     /** Show the saved key read-only (masked) instead of the entry field. */
     val showSavedKey: Boolean get() = savedKey != null && !replacingKey && copyKeyFrom == null
     val canSave: Boolean get() = model.isNotBlank() && keyReady && (provider != ProviderId.OPENAI_COMPAT || baseUrl.isNotBlank()) && !saving
-    val showFreeTierNote: Boolean get() = provider == ProviderId.GEMINI && tier != TierLabel.PAID
     val isCleartext: Boolean get() = provider == ProviderId.OPENAI_COMPAT && baseUrl.trim().startsWith("http://", ignoreCase = true)
 }
 

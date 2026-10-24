@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -28,8 +27,6 @@ import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.IconToggleButton
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
@@ -222,10 +219,7 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
             Row(Modifier.fillMaxSize()) {
                 Box(Modifier.weight(1f).fillMaxHeight()) {
                     CameraPreview(granted, capture, request)
-                    CameraTop(
-                        state, onEvent, onBack,
-                        Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Start)),
-                    )
+                    CameraTop(onBack, Modifier.windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Start)))
                 }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -254,7 +248,7 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
             }
         } else {
             CameraPreview(granted, capture, request)
-            CameraTop(state, onEvent, onBack, Modifier.statusBarsPadding())
+            CameraTop(onBack, Modifier.statusBarsPadding())
             // Bottom: thumbnails, then three equal zones (gallery · shutter · next) so the shutter
             // stays centered and full size at any font scale.
             Column(
@@ -294,65 +288,36 @@ private fun BoxScope.CameraPreview(granted: Boolean, capture: ImageCapture, requ
 }
 
 /**
- * Back on the left; on the right one warning button (an outlined triangle) that shows or hides
- * the tips, centered below: framing, and the free-tier privacy note when it applies, each on a
- * scrim so it reads over a bright plate (owner, 2026-10-24). Open or closed is remembered on
- * this phone.
+ * Back on the left and the framing tip centered on the same row, always shown but quiet: small
+ * text on a light scrim, so it reads over a bright plate without pulling the eye (owner,
+ * 2026-10-25: no warning button, no free-tier note on the camera).
  */
 @Composable
-private fun CameraTop(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit, onBack: () -> Unit, modifier: Modifier) {
-    Column(
-        horizontalAlignment = Alignment.End,
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = modifier.fillMaxWidth().padding(8.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            IconButton(
-                onClick = onBack,
-                colors = IconButtonDefaults.iconButtonColors(containerColor = SCRIM, contentColor = Color.White),
-            ) { Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back)) }
-            Spacer(Modifier.weight(1f))
-            val shown = stringResource(if (state.warningsOpen) R.string.photo_warnings_shown else R.string.photo_warnings_hidden)
-            IconToggleButton(
-                checked = state.warningsOpen,
-                onCheckedChange = { onEvent(PhotoMealEvent.ToggleWarnings) },
-                colors = IconButtonDefaults.iconToggleButtonColors(
-                    containerColor = SCRIM, contentColor = WARNING_YELLOW,
-                    checkedContainerColor = SCRIM, checkedContentColor = WARNING_YELLOW,
-                ),
-                modifier = Modifier.semantics { stateDescription = shown },
-            ) { Icon(painterResource(R.drawable.ic_warning), stringResource(R.string.photo_warnings)) }
-        }
-        if (state.warningsOpen) {
-            // Centered under the top row (owner, 2026-10-24).
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                CameraHint(stringResource(R.string.photo_framing_hint))
-                if (state.firstIsFreeTier) CameraHint(stringResource(R.string.photo_free_tier_hint))
-            }
-        }
+private fun CameraTop(onBack: () -> Unit, modifier: Modifier) {
+    Box(modifier = modifier.fillMaxWidth().padding(8.dp)) {
+        IconButton(
+            onClick = onBack,
+            colors = IconButtonDefaults.iconButtonColors(containerColor = SCRIM, contentColor = Color.White),
+            modifier = Modifier.align(Alignment.CenterStart),
+        ) { Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back)) }
+        Text(
+            stringResource(R.string.photo_framing_hint),
+            color = Color.White.copy(alpha = 0.9f),
+            style = MaterialTheme.typography.labelMedium,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .align(Alignment.Center)
+                // Clear of the back button on both sides, so it stays centered on the screen.
+                .padding(horizontal = 56.dp)
+                .widthIn(max = 320.dp)
+                .background(TIP_SCRIM, RoundedCornerShape(50))
+                .padding(horizontal = 12.dp, vertical = 6.dp),
+        )
     }
 }
 
-@Composable
-private fun CameraHint(text: String) {
-    Text(
-        text,
-        color = Color.White,
-        style = MaterialTheme.typography.bodyMedium,
-        textAlign = TextAlign.Center,
-        modifier = Modifier
-            .widthIn(max = 360.dp)
-            .background(SCRIM, RoundedCornerShape(12.dp))
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-    )
-}
-
-/** Muted yellow for the outlined warning icon: noticeable on the scrim without shouting. */
-private val WARNING_YELLOW = Color(0xFFD6BD6A)
+/** Lighter than [SCRIM]: the tip is there to glance at, not to read first. */
+private val TIP_SCRIM = Color.Black.copy(alpha = 0.35f)
 
 /** Thumbnails in the landscape side bar, smaller so three fit beside the shutter. */
 private val SIDE_THUMB = 56.dp
