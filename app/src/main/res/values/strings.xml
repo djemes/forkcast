@@ -59,7 +59,7 @@
     <string name="settings_daily_targets_summary">Protein, carbs, fat, fiber and other nutrients</string>
     <string name="settings_meals_summary">Names, order and time windows</string>
     <string name="settings_water">Water</string>
-    <string name="settings_water_summary">Daily water goal</string>
+    <string name="settings_water_summary">Daily goal and container sizes</string>
     <string name="settings_units">Units</string>
     <string name="settings_units_summary">Weight, height, energy and water</string>
     <string name="settings_health_connect_summary">Weight, steps and workouts in; food and water out</string>

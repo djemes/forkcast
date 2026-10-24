@@ -62,7 +62,7 @@
     <string name="settings_daily_targets_summary">Proteína, carboidratos, gordura, fibras e outros nutrientes</string>
     <string name="settings_meals_summary">Nomes, ordem e horários</string>
     <string name="settings_water">Água</string>
-    <string name="settings_water_summary">Meta diária de água</string>
+    <string name="settings_water_summary">Meta diária e tamanhos dos recipientes</string>
     <string name="settings_units">Unidades</string>
     <string name="settings_units_summary">Peso, altura, energia e água</string>
     <string name="settings_health_connect_summary">Entram peso, passos e treinos; saem comida e água</string>

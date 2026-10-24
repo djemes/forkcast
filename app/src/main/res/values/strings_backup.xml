@@ -89,14 +89,14 @@
 
     <!-- Google Drive backup (SPEC §4.11). -->
     <string name="drive_title">Google Drive backup</string>
-    <string name="drive_intro">Back up automatically every night to a \"Forkcast Backups\" folder in your Google Drive. Forkcast can only see the files it creates. Backups hold your data, not photos or API keys.</string>
+    <string name="drive_intro">Back up automatically, every week or every day, to a \"Forkcast Backups\" folder in your Google Drive. Forkcast can only see the files it creates. Backups hold your data, not photos or API keys.</string>
     <string name="drive_connect">Connect Google Drive</string>
     <string name="drive_connected_as">Backing up to %1$s</string>
     <string name="drive_connected">Backing up to Google Drive</string>
     <string name="drive_last_backup">Last backup: %1$s</string>
-    <string name="drive_no_backup_yet">No backup yet. The first one runs tonight, or tap Back up now.</string>
+    <string name="drive_no_backup_yet">No backup yet. The first one runs at the next scheduled time, or tap Back up now.</string>
     <string name="drive_auto">Back up automatically</string>
-    <string name="drive_auto_detail">At night, around 3 am. Keeps the last 14 backups and one from each of the last 12 months.</string>
+    <string name="drive_auto_detail">Around 3 am. Keeps the last 14 backups and one from each of the last 12 months.</string>
     <string name="drive_daily">Every day</string>
     <string name="drive_weekly">Every week</string>
     <string name="drive_weekly_on">On %1$s, around 3 am</string>

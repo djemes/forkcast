@@ -294,9 +294,10 @@ private fun BoxScope.CameraPreview(granted: Boolean, capture: ImageCapture, requ
 }
 
 /**
- * Back on the left; on the right one warning button that shows or hides the tips (framing, and
- * the free-tier privacy note when it applies) on a scrim, so they read over a bright plate
- * (owner, 2026-10-24). Open or closed is remembered on this phone.
+ * Back on the left; on the right one warning button (an outlined triangle) that shows or hides
+ * the tips, centered below: framing, and the free-tier privacy note when it applies, each on a
+ * scrim so it reads over a bright plate (owner, 2026-10-24). Open or closed is remembered on
+ * this phone.
  */
 @Composable
 private fun CameraTop(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit, onBack: () -> Unit, modifier: Modifier) {
@@ -323,8 +324,15 @@ private fun CameraTop(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit
             ) { Icon(painterResource(R.drawable.ic_warning), stringResource(R.string.photo_warnings)) }
         }
         if (state.warningsOpen) {
-            CameraHint(stringResource(R.string.photo_framing_hint))
-            if (state.firstIsFreeTier) CameraHint(stringResource(R.string.photo_free_tier_hint))
+            // Centered under the top row (owner, 2026-10-24).
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                CameraHint(stringResource(R.string.photo_framing_hint))
+                if (state.firstIsFreeTier) CameraHint(stringResource(R.string.photo_free_tier_hint))
+            }
         }
     }
 }
@@ -335,6 +343,7 @@ private fun CameraHint(text: String) {
         text,
         color = Color.White,
         style = MaterialTheme.typography.bodyMedium,
+        textAlign = TextAlign.Center,
         modifier = Modifier
             .widthIn(max = 360.dp)
             .background(SCRIM, RoundedCornerShape(12.dp))
@@ -342,7 +351,7 @@ private fun CameraHint(text: String) {
     )
 }
 
-/** Muted yellow for the warning button: noticeable on the scrim without shouting. */
+/** Muted yellow for the outlined warning icon: noticeable on the scrim without shouting. */
 private val WARNING_YELLOW = Color(0xFFD6BD6A)
 
 /** Thumbnails in the landscape side bar, smaller so three fit beside the shutter. */
