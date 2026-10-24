@@ -213,22 +213,29 @@ private fun forecastStatus(f: Forecast.Outlook, units: UnitFormatter): String = 
 }
 
 /**
- * The forecast as a stippled band: dots in two staggered rows across the stroke (one row in the
- * middle, then two at the edges), each step a little further apart, smaller and fainter than the
- * last, so it reads dense next to "now" and fades toward the likely end of the day.
+ * The forecast as a stippled band: small dots in staggered rows across the stroke, four rows next
+ * to "now", thinning to one, each step a little further apart, smaller and fainter, so it reads
+ * dense where the day is certain and fades toward its likely end (owner, 2026-10-24: "smaller
+ * and more dense").
  */
 private fun DrawScope.forecastDots(center: Offset, radius: Float, stroke: Float, startDeg: Float, sweepDeg: Float, color: Color) {
     val arcLength = Math.toRadians(sweepDeg.toDouble()).toFloat() * radius
     if (arcLength <= 0f) return
-    val baseStep = stroke * 0.42f
-    var s = baseStep * 0.7f
+    val baseStep = stroke * 0.17f
+    var s = baseStep * 0.8f
     var row = 0
     while (s < arcLength) {
         val t = s / arcLength
         val angle = Math.toRadians((startDeg + sweepDeg * t).toDouble())
-        val dot = stroke * 0.13f * (1f - 0.35f * t)
-        val alpha = 0.85f - 0.7f * t
-        val offsets = if (row % 2 == 0) floatArrayOf(0f) else floatArrayOf(-0.27f, 0.27f)
+        val dot = stroke * 0.06f * (1f - 0.3f * t)
+        val alpha = 0.9f - 0.75f * t
+        val even = row % 2 == 0
+        val offsets = when {
+            t < 0.3f -> if (even) ROWS_4 else ROWS_3
+            t < 0.55f -> if (even) ROWS_3 else ROWS_2
+            t < 0.8f -> if (even) ROWS_2 else ROWS_1
+            else -> if (even) ROWS_1 else NONE
+        }
         for (o in offsets) {
             val r = radius + o * stroke
             drawCircle(
@@ -237,10 +244,17 @@ private fun DrawScope.forecastDots(center: Offset, radius: Float, stroke: Float,
                 center = Offset(center.x + (r * cos(angle)).toFloat(), center.y + (r * sin(angle)).toFloat()),
             )
         }
-        s += baseStep * (1f + 1.8f * t)
+        s += baseStep * (1f + 1.5f * t)
         row++
     }
 }
+
+// Dot positions across the stroke (fractions of its width from the middle), alternating per step.
+private val ROWS_4 = floatArrayOf(-0.36f, -0.12f, 0.12f, 0.36f)
+private val ROWS_3 = floatArrayOf(-0.24f, 0f, 0.24f)
+private val ROWS_2 = floatArrayOf(-0.12f, 0.12f)
+private val ROWS_1 = floatArrayOf(0f)
+private val NONE = floatArrayOf()
 
 /**
  * A ring value (sweep or number) that starts at 0 and fills over [Motion.RING_FILL] when [fillIn],
