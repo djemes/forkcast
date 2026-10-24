@@ -108,7 +108,7 @@ class BackupViewModel @Inject constructor(
                 val text = documents.readStream(event.uri) { raw ->
                     val input = raw.buffered()
                     hasStagedPhotos = archive.isZip(input)
-                    if (hasStagedPhotos) archive.read(input) else input.readBytes().decodeToString()
+                    if (hasStagedPhotos) archive.read(input).json else input.readBytes().decodeToString()
                 }
                 show(text, isSafetyBackup = false)
             }
