@@ -52,6 +52,7 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
 import app.forkcast.core.model.ProviderId
+import app.forkcast.ui.common.DiscardChangesDialog
 import app.forkcast.ui.common.SavedKeyField
 import app.forkcast.ui.settings.SettingsScaffold
 import kotlinx.coroutines.launch
@@ -74,7 +75,15 @@ fun AiProfileEditScreen(
     val title = stringResource(if (state.isNew) R.string.ai_profile_new else R.string.ai_profile_edit)
     var confirmDelete by remember { mutableStateOf(false) }
     var pickModel by remember { mutableStateOf(false) }
-    SettingsScaffold(title = title, onBack = onBack) {
+    // Changes since the screen loaded; Back or Cancel asks before throwing them away.
+    val initial = remember(state.loaded) { state }
+    val dirty = state.loaded && !state.done && (
+        state.name != initial.name || state.model != initial.model || state.baseUrl != initial.baseUrl ||
+            state.provider != initial.provider || state.keyInput.isNotBlank() || state.copyKeyFrom != initial.copyKeyFrom
+        )
+    var confirmDiscard by remember { mutableStateOf(false) }
+    if (confirmDiscard) DiscardChangesDialog(onDiscard = { confirmDiscard = false; onBack() }, onKeepEditing = { confirmDiscard = false })
+    SettingsScaffold(title = title, onBack = onBack, dirty = dirty) {
         if (!state.loaded) return@SettingsScaffold
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             ProviderPicker(state.provider) { onEvent(AiProfileEditEvent.SetProvider(it)) }
@@ -138,6 +147,10 @@ fun AiProfileEditScreen(
             ) {
                 Text(stringResource(if (state.saving) R.string.ai_testing else R.string.ai_save_and_test))
             }
+            OutlinedButton(
+                onClick = { if (dirty) confirmDiscard = true else onBack() },
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) { Text(stringResource(R.string.cancel)) }
             // Same result view as the profile list's Test (TestResult), from the same call (runTest).
             if (!state.saving) TestResult(state.test, state.provider)
             if (state.test is TestState.Failed && !state.isNew) {

@@ -21,6 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -99,6 +100,8 @@ data class AiSettingsUiState(
     val roles: List<ProfileRole> = emptyList(),
     val usage: MonthUsage? = null,
     val tests: Map<String, TestState> = emptyMap(),
+    /** "Add backup model" when there's only one Gemini profile (owner, 2026-10-23). */
+    val backupOffer: app.forkcast.core.data.repository.BackupOffer? = null,
 ) {
     fun roleAt(index: Int): ProfileRole = roles.getOrElse(index) { ProfileRole.BACKUP }
 }
@@ -116,12 +119,15 @@ sealed interface AiSettingsEvent {
     data class SetAutoAccept(val enabled: Boolean) : AiSettingsEvent
     data class SetRetention(val days: Int?) : AiSettingsEvent
     data class SetPrice(val model: String, val price: ModelPrice?) : AiSettingsEvent
+    data object AddBackupModel : AiSettingsEvent
 }
 
 sealed interface AiSettingsEffect {
     data class Deleted(val name: String) : AiSettingsEffect
+    data class BackupAdded(val name: String) : AiSettingsEffect
 }
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 @HiltViewModel
 class AiSettingsViewModel @Inject constructor(
     private val ai: AiRepository,
@@ -141,7 +147,8 @@ class AiSettingsViewModel @Inject constructor(
         ai.profiles,
         ai.monthUsage(YearMonth.now(clock)),
         tests,
-    ) { settings, profiles, usage, t ->
+        ai.profiles.mapLatest { runCatching { ai.backupOffer() }.getOrNull() },
+    ) { settings, profiles, usage, t, offer ->
         AiSettingsUiState(
             loaded = true,
             settings = settings,
@@ -149,6 +156,7 @@ class AiSettingsViewModel @Inject constructor(
             roles = profileRoles(profiles, clock.millis()),
             usage = usage,
             tests = t,
+            backupOffer = offer,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AiSettingsUiState())
 
@@ -184,6 +192,11 @@ class AiSettingsViewModel @Inject constructor(
                 is AiSettingsEvent.SetPersonalContext -> settingsRepo.updateAi { it.copy(personalContext = event.text) }
                 is AiSettingsEvent.SetAutoAccept -> settingsRepo.updateAi { it.copy(autoAccept = event.enabled) }
                 is AiSettingsEvent.SetRetention -> settingsRepo.updateAi { it.copy(photoRetentionDays = event.days) }
+                AiSettingsEvent.AddBackupModel -> {
+                    val name = ai.backupOffer()?.name ?: return@launch
+                    ai.addBackupModel() ?: return@launch
+                    effectChannel.send(AiSettingsEffect.BackupAdded(name))
+                }
                 is AiSettingsEvent.SetPrice -> settingsRepo.updateAi {
                     it.copy(priceOverrides = if (event.price == null) it.priceOverrides - event.model else it.priceOverrides + (event.model to event.price))
                 }

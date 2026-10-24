@@ -99,6 +99,8 @@ data class TodayUiState(
     val date: LocalDate,
     val today: LocalDate,
     val meals: List<MealSection>,
+    /** Minutes after midnight now (for today's latest meal time). */
+    val nowMinute: Int = 0,
     /** Meal pre-selected in the Log sheet, by current time of day. */
     val defaultMealId: String?,
     val units: UnitPrefs = UnitPrefs.US,
@@ -163,6 +165,9 @@ sealed interface TodayEvent {
         val countsAsWater: Boolean = entry.waterMl != null,
         /** The serving chosen in the edit sheet; null keeps the entry's. */
         val serving: ServingSize? = null,
+        /** Moves it to another day (past or today). */
+        val date: LocalDate = entry.date,
+        val eatenMinute: Int? = entry.eatenMinute,
     ) : TodayEvent
     /** The edit sheet opened: load the food's servings for it. */
     data class LoadEditServings(val entryId: String) : TodayEvent
@@ -315,6 +320,7 @@ class TodayViewModel @Inject constructor(
         TodayUiState(
             date = date,
             today = LocalDate.now(clock),
+            nowMinute = nowMinute,
             meals = slots.map { slot ->
                 val list = entries.filter { it.mealSlotId == slot.id }
                 MealSection(slot, list, DayMath.mealKcal(entries, slot.id), pending.filter { it.second == slot.id }.map { it.first })
@@ -398,8 +404,10 @@ class TodayViewModel @Inject constructor(
             }
             is TodayEvent.Copy -> viewModelScope.launch {
                 selection.value = emptySet()
-                val ids = logRepository.copy(event.ids, event.toDate, event.toMealSlotId)
-                effectChannel.send(TodayEffect.Copied(ids.size, event.toDate))
+                // No future days, whatever the caller passed.
+                val toDate = minOf(event.toDate, LocalDate.now(clock))
+                val ids = logRepository.copy(event.ids, toDate, event.toMealSlotId)
+                effectChannel.send(TodayEffect.Copied(ids.size, toDate))
             }
             is TodayEvent.SaveAsMeal -> viewModelScope.launch {
                 selection.value = emptySet()
@@ -443,6 +451,10 @@ class TodayViewModel @Inject constructor(
                         nutrients = DayMath.rescale(e, event.quantity, grams),
                         mealSlotId = event.mealSlotId,
                         waterMl = DrinkWater.waterMl(event.countsAsWater, grams),
+                        // Never a future day (owner, 2026-10-23); a time the user set is no longer an estimate.
+                        date = minOf(event.date, LocalDate.now(clock)),
+                        eatenMinute = event.eatenMinute,
+                        timeEstimated = e.timeEstimated && event.eatenMinute == e.eatenMinute && event.date == e.date,
                     ),
                 )
             }

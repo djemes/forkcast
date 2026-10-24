@@ -497,6 +497,7 @@ fun TodayScreen(
             allowSameMeal = req.allowSameMeal,
             onCopy = { date, meal -> copyRequest = null; onEvent(TodayEvent.Copy(req.ids, date, meal)) },
             onDismiss = { copyRequest = null },
+            today = state.today,
         )
     }
     saveRequest?.let { req ->
@@ -514,11 +515,18 @@ fun TodayScreen(
         if (entry == null) {
             editingId = null
         } else {
+            val slot = state.meals.firstOrNull { it.slot.id == entry.mealSlotId }?.slot
             EditEntrySheet(
                 entry = entry,
                 meals = state.loggableSlots,
                 f = f,
-                onSave = { q, meal, water, serving -> onEvent(TodayEvent.UpdateEntry(entry, q, meal, water, serving)); editingId = null },
+                onSave = { edit ->
+                    onEvent(TodayEvent.UpdateEntry(entry, edit.quantity, edit.mealSlotId, edit.countsAsWater, edit.serving, edit.date, edit.eatenMinute))
+                    editingId = null
+                },
+                today = state.today,
+                nowMinute = state.nowMinute,
+                defaultMinute = app.forkcast.core.domain.MealTimes.windowMiddle(slot?.startMinute, slot?.endMinute) ?: state.nowMinute,
                 servings = editServings?.takeIf { it.first == entry.id }?.second ?: FoodLogging.editServings(entry, null),
                 onDelete = { onEvent(TodayEvent.Delete(listOf(entry.id))); editingId = null },
                 onDismiss = { editingId = null },

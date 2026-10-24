@@ -13,6 +13,11 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import app.forkcast.ui.common.DiscardChangesDialog
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -54,9 +59,16 @@ fun CustomFoodRoute(
 @Composable
 private fun CustomFoodScreen(form: CustomFoodForm, vm: CustomFoodViewModel, onBack: () -> Unit) {
     val f = UnitFormatter(form.units)
+    // What was there when the screen opened; any difference is an unsaved change.
+    val initial = remember(form.existing?.id, form.seed) { form }
+    val dirty = form.name != initial.name || form.brand != initial.brand || form.servingLabel != initial.servingLabel ||
+        form.servingGrams != initial.servingGrams || form.barcode != initial.barcode || form.perServing != initial.perServing
+    var confirmDiscard by remember { mutableStateOf(false) }
+    if (confirmDiscard) DiscardChangesDialog(onDiscard = { confirmDiscard = false; onBack() }, onKeepEditing = { confirmDiscard = false })
     SettingsScaffold(
         title = stringResource(if (form.existing == null) R.string.custom_food_title else R.string.custom_food_edit_title),
         onBack = onBack,
+        dirty = dirty,
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(horizontal = 16.dp)) {
             if (form.fromLabel) {
@@ -116,11 +128,17 @@ private fun CustomFoodScreen(form: CustomFoodForm, vm: CustomFoodViewModel, onBa
                     key = "${key.name}-${form.seed}",
                 )
             }
-            Button(
-                onClick = vm::save,
-                enabled = form.canSave,
-                modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp).padding(top = 8.dp),
-            ) { Text(stringResource(R.string.action_save)) }
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 8.dp)) {
+                OutlinedButton(
+                    onClick = { if (dirty) confirmDiscard = true else onBack() },
+                    modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                ) { Text(stringResource(R.string.cancel)) }
+                Button(
+                    onClick = vm::save,
+                    enabled = form.canSave,
+                    modifier = Modifier.weight(1f).heightIn(min = 56.dp),
+                ) { Text(stringResource(R.string.action_save)) }
+            }
             if (form.existing != null) {
                 OutlinedButton(onClick = vm::delete, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.custom_delete))

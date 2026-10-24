@@ -200,13 +200,39 @@ class TodayViewModelTest {
         val vm = vm()
         vm.uiState.filterNotNull().first()
         vm.effects.test {
-            vm.onEvent(TodayEvent.Copy(ids, TestData.TODAY.plusDays(1), toMealSlotId = null))
+            vm.onEvent(TodayEvent.Copy(ids, TestData.TODAY.minusDays(1), toMealSlotId = null))
             val copied = awaitItem() as TodayEffect.Copied
             assertThat(copied.count).isEqualTo(2)
         }
-        val tomorrow = log.rows.value.values.map { it.first }.filter { it.date == TestData.TODAY.plusDays(1) }
-        assertThat(tomorrow.map { it.mealSlotId }.toSet()).containsExactly("b")
-        assertThat(tomorrow.sumOf { it.nutrients[NutrientKey.ENERGY_KCAL]!! }).isEqualTo(340.0)
+        val yesterday = log.rows.value.values.map { it.first }.filter { it.date == TestData.TODAY.minusDays(1) }
+        assertThat(yesterday.map { it.mealSlotId }.toSet()).containsExactly("b")
+        assertThat(yesterday.sumOf { it.nutrients[NutrientKey.ENERGY_KCAL]!! }).isEqualTo(340.0)
+    }
+
+    /** Bug (owner, 2026-10-23): copying let a future date be picked. Nothing lands after today. */
+    @Test fun copyNeverGoesToAFutureDay() = runTest {
+        val ids = log.add(listOf(TestData.entry("Oats", "b", 300.0)))
+        val vm = vm()
+        vm.uiState.filterNotNull().first()
+        vm.effects.test {
+            vm.onEvent(TodayEvent.Copy(ids, TestData.TODAY.plusDays(1), toMealSlotId = null))
+            assertThat((awaitItem() as TodayEffect.Copied).toDate).isEqualTo(TestData.TODAY)
+        }
+        assertThat(log.rows.value.values.map { it.first.date }.toSet()).containsExactly(TestData.TODAY)
+    }
+
+    /** Edit sheet: day and time move together; a time the user set is no longer an estimate. */
+    @Test fun editMovesEntryToAnotherDayAndTime() = runTest {
+        val (id) = log.add(listOf(TestData.entry("Oats", "b", 300.0).copy(eatenMinute = 450, timeEstimated = true)))
+        val vm = vm()
+        val entry = vm.uiState.filterNotNull().first { it.allEntries.isNotEmpty() }.allEntries.single()
+        vm.onEvent(TodayEvent.UpdateEntry(entry, 1.0, "b", date = TestData.TODAY.minusDays(1), eatenMinute = 480))
+        val moved = vm.uiState.filterNotNull().first { it.allEntries.isEmpty() }
+        assertThat(moved.allEntries).isEmpty()
+        val row = log.rows.value.getValue(id).first
+        assertThat(row.date).isEqualTo(TestData.TODAY.minusDays(1))
+        assertThat(row.eatenMinute).isEqualTo(480)
+        assertThat(row.timeEstimated).isFalse()
     }
 
     @Test fun saveAsMealThenLogIt() = runTest {

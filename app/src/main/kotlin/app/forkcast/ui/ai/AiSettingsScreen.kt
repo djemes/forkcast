@@ -3,6 +3,7 @@ package app.forkcast.ui.ai
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -96,6 +97,7 @@ fun AiSettingsRoute(
                     )
                     if (result == SnackbarResult.ActionPerformed) viewModel.onEvent(AiSettingsEvent.UndoDelete)
                 }
+                is AiSettingsEffect.BackupAdded -> snackbar.showSnackbar(resources.getString(R.string.backup_model_added, effect.name))
             }
         }
     }
@@ -159,6 +161,12 @@ fun AiSettingsScreen(
                         )
                     }
                 }
+            }
+        }
+        // One Gemini profile: its budget model on the same key is a free second quota (owner, 2026-10-23).
+        state.backupOffer?.let { offer ->
+            Box(Modifier.padding(horizontal = 16.dp, vertical = 4.dp)) {
+                app.forkcast.ui.photo.BackupModelCard(offer.name, offer.fromProfileName) { onEvent(AiSettingsEvent.AddBackupModel) }
             }
         }
         // Adding is always one obvious button; the free Gemini setup is offered until there's a Gemini profile.

@@ -28,6 +28,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.material3.TextButton
+import app.forkcast.ui.common.MealTimeField
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -295,9 +298,24 @@ private fun timeOf(epochMs: Long): String =
     java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
         .format(java.time.Instant.ofEpochMilli(epochMs).atZone(java.time.ZoneId.systemDefault()))
 
+/** What the edit sheet saves (all at once, on Save only). */
+data class EntryEdit(
+    val quantity: Double,
+    val mealSlotId: String,
+    val countsAsWater: Boolean,
+    /** The serving chosen; null keeps the entry's. */
+    val serving: ServingSize?,
+    /** Moves the entry to another day (never a future one). */
+    val date: java.time.LocalDate,
+    /** When it was eaten, minutes after midnight. */
+    val eatenMinute: Int,
+)
+
 /**
- * Change the amount, serving or meal of a logged entry. Nutrients rescale from the entry's own
- * snapshot by grams, so switching cup → g keeps the numbers right and never re-reads the food.
+ * Change the amount, serving, meal, day or time of a logged entry. Nutrients rescale from the
+ * entry's own snapshot by grams, so switching cup → g keeps the numbers right and never re-reads
+ * the food. Nothing is saved until Save; Cancel, Back or a swipe with changes asks "Discard
+ * changes?" (owner, 2026-10-23).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -305,23 +323,50 @@ fun EditEntrySheet(
     entry: LogEntry,
     meals: List<MealSlot>,
     f: UnitFormatter,
-    onSave: (quantity: Double, mealSlotId: String, countsAsWater: Boolean, serving: ServingSize?) -> Unit,
+    onSave: (EntryEdit) -> Unit,
     onDelete: () -> Unit,
     onDismiss: () -> Unit,
     /** Servings to switch between (empty: the amount can only be scaled). */
     servings: List<ServingSize> = emptyList(),
+    today: java.time.LocalDate = java.time.LocalDate.now(),
+    /** Now, for today's time limit. */
+    nowMinute: Int = java.time.LocalTime.now().let { it.hour * 60 + it.minute },
+    /** The entry's time when it has none yet. */
+    defaultMinute: Int = 12 * 60,
 ) {
     var quantity by rememberSaveable(entry.id) { mutableStateOf<Double?>(entry.quantity) }
     var servingLabel by rememberSaveable(entry.id) { mutableStateOf(entry.servingLabel) }
     val serving = servings.firstOrNull { it.label == servingLabel }
     var mealId by rememberSaveable(entry.id) { mutableStateOf(entry.mealSlotId) }
     var countsWater by rememberSaveable(entry.id) { mutableStateOf(entry.waterMl != null) }
-    ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
+    var date by rememberSaveable(entry.id) { mutableStateOf(entry.date) }
+    val initialMinute = entry.eatenMinute ?: defaultMinute
+    var minute by rememberSaveable(entry.id) { mutableStateOf(initialMinute) }
+    val dirty = quantity != entry.quantity || servingLabel != entry.servingLabel || mealId != entry.mealSlotId ||
+        countsWater != (entry.waterMl != null) || date != entry.date || minute != initialMinute
+    var confirmDiscard by rememberSaveable(entry.id) { mutableStateOf(false) }
+    val dirtyNow by androidx.compose.runtime.rememberUpdatedState(dirty)
+    // Swiping the sheet down or tapping outside with changes asks first instead of closing.
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+        confirmValueChange = { value ->
+            if (value == androidx.compose.material3.SheetValue.Hidden && dirtyNow) {
+                confirmDiscard = true
+                false
+            } else {
+                true
+            }
+        },
+    )
+    val leave = { if (dirty) confirmDiscard = true else onDismiss() }
+    ModalBottomSheet(onDismissRequest = leave, sheetState = sheetState) {
         Column(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier
                 .navigationBarsPadding()
-                // Serving chips and the water switch can make it taller than a small screen.
+                // The keyboard (amount field) must not hide what's being typed.
+                .imePadding()
+                // Serving chips, the water switch, day and time can make it taller than a small screen.
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
@@ -380,21 +425,41 @@ fun EditEntrySheet(
                     FilterChip(selected = m.id == mealId, onClick = { mealId = m.id }, label = { Text(m.name) })
                 }
             }
+            // Day and time: move it to another (past) day, or say when it was eaten.
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.entry_day), style = MaterialTheme.typography.titleSmall)
+                app.forkcast.ui.onboarding.DateField(date, "", date, { date = it }, selectableTo = today)
+            }
+            MealTimeField(minute = minute, onChange = { minute = it }, latestMinute = nowMinute.takeIf { date == today })
             // A drink's water counts toward the day (needs its amount in grams/ml).
             if (entry.grams != null && (entry.waterMl != null || app.forkcast.core.domain.DrinkWater.isDrinkName(entry.displayName))) {
                 WaterToggle(countsWater) { countsWater = it }
             }
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(vertical = 8.dp)) {
-                OutlinedButton(onClick = onDelete, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.action_delete))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(top = 8.dp)) {
+                OutlinedButton(onClick = leave, modifier = Modifier.weight(1f).heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.cancel))
                 }
                 Button(
-                    onClick = { quantity?.let { onSave(it, mealId, countsWater, serving) } },
+                    onClick = {
+                        val m = if (date == today) minOf(minute, nowMinute) else minute
+                        quantity?.let { onSave(EntryEdit(it, mealId, countsWater, serving, date, m)) }
+                    },
                     enabled = (quantity ?: 0.0) > 0,
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.action_save)) }
             }
+            TextButton(
+                onClick = onDelete,
+                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            ) { Text(stringResource(R.string.action_delete)) }
         }
+    }
+    if (confirmDiscard) {
+        app.forkcast.ui.common.DiscardChangesDialog(
+            onDiscard = { confirmDiscard = false; onDismiss() },
+            onKeepEditing = { confirmDiscard = false },
+        )
     }
 }
 

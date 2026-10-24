@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -72,6 +73,8 @@ fun MatchSearchSheet(
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier
                 .navigationBarsPadding()
+                // The keyboard shrinks the list instead of covering the search field's results.
+                .imePadding()
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
         ) {

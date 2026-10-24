@@ -88,6 +88,7 @@ import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.kcal
 import app.forkcast.ui.ai.aiErrorMessage
+import app.forkcast.ui.common.DiscardChangesDialog
 import app.forkcast.ui.common.keyboardAware
 import app.forkcast.ui.format.UnitFormatter
 import coil3.compose.AsyncImage
@@ -212,18 +213,6 @@ fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: (
             onKeepEditing = { confirmDiscard = false },
         )
     }
-}
-
-/** "Discard changes?" for every edit screen (owner, 2026-10-23). */
-@Composable
-fun DiscardChangesDialog(onDiscard: () -> Unit, onKeepEditing: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onKeepEditing,
-        title = { Text(stringResource(R.string.discard_title)) },
-        text = { Text(stringResource(R.string.discard_body)) },
-        confirmButton = { TextButton(onClick = onDiscard) { Text(stringResource(R.string.discard_confirm)) } },
-        dismissButton = { TextButton(onClick = onKeepEditing) { Text(stringResource(R.string.discard_keep)) } },
-    )
 }
 
 /** What the user typed for a described meal. */
