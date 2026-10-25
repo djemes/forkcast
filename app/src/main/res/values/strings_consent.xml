@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- First-launch agreement (roadmap 2.0, task 4.1). The legal text itself is strings_legal.xml (English only). -->
+    <string name="agreement_title">Before you start</string>
+    <string name="agreement_intro">Please read Forkcast\'s terms. You can read them again any time in Settings › About.</string>
+    <string name="agreement_changed_title">What changed</string>
+    <string name="agreement_confirm_age">I am 18 or older</string>
+    <string name="agreement_confirm_terms">I have read and agree to the Terms of Use and Disclaimer</string>
+    <string name="agreement_accept">I agree</string>
+    <string name="agreement_accept_hint">Check both boxes to continue.</string>
+    <string name="agreement_decline">Decline</string>
+    <string name="agreement_decline_title">Close Forkcast?</string>
+    <string name="agreement_decline_body">Forkcast can be used only after you accept its terms. You can open it again any time.</string>
+    <string name="agreement_decline_close">Close Forkcast</string>
+    <string name="agreement_decline_back">Back to the terms</string>
+    <string name="agreement_legal_language">The terms are in English.</string>
+
+    <!-- Settings › About › Terms and Privacy policy (tasks 4.1, 4.4) -->
+    <string name="about_terms">Terms of use and disclaimer</string>
+    <string name="about_privacy_policy">Privacy policy</string>
+    <string name="terms_accepted">You accepted version %1$d on %2$s.</string>
+    <string name="terms_not_accepted">Not accepted on this phone yet.</string>
+</resources>

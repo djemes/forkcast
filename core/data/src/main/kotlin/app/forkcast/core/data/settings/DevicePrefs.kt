@@ -2,6 +2,7 @@ package app.forkcast.core.data.settings
 
 import android.content.Context
 import android.content.SharedPreferences
+import app.forkcast.core.model.AgreementAcceptance
 import androidx.core.content.edit
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +35,10 @@ data class DeviceState(
     val firstSeenAt: Long? = null,
     /** The release tag the update check last notified about, so each version notifies once. */
     val notifiedUpdate: String? = null,
+    /** The Terms of Use and Disclaimer accepted on this phone, null = not yet (roadmap 2.0, task 4.1). */
+    val agreement: AgreementAcceptance? = null,
+    /** AI recipients ([app.forkcast.core.model.AiRecipient]) allowed to receive meals, with when (epoch ms). */
+    val aiConsents: Map<String, Long> = emptyMap(),
 )
 
 /** Where and when the last backup was written. [place] is the folder's name, null for a picked file. */
@@ -63,6 +68,10 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             DRIVE_KEYS.forEach(::remove)
             putOrRemove(FIRST_SEEN, next.firstSeenAt)
             putOrRemove(NOTIFIED_UPDATE, next.notifiedUpdate)
+            putOrRemove(AGREEMENT_VERSION, next.agreement?.version?.toLong())
+            putOrRemove(AGREEMENT_AT, next.agreement?.acceptedAt)
+            putOrRemove(AGREEMENT_APP, next.agreement?.appVersion)
+            putStringSet(AI_CONSENTS, next.aiConsents.map { (recipient, at) -> "$at$SEP$recipient" }.toSet())
             // The camera tips' open/closed state (1.3–1.4) is gone; drop it from phones that have it.
             remove(CAMERA_WARNINGS)
         }
@@ -91,6 +100,13 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         backupReminderDismissedAt = long(REMINDER_DISMISSED),
         firstSeenAt = long(FIRST_SEEN),
         notifiedUpdate = prefs.getString(NOTIFIED_UPDATE, null),
+        agreement = long(AGREEMENT_VERSION)?.let { v ->
+            AgreementAcceptance(v.toInt(), long(AGREEMENT_AT) ?: 0, prefs.getString(AGREEMENT_APP, null).orEmpty())
+        },
+        aiConsents = prefs.getStringSet(AI_CONSENTS, null).orEmpty().mapNotNull { entry ->
+            val at = entry.substringBefore(SEP).toLongOrNull() ?: return@mapNotNull null
+            entry.substringAfter(SEP) to at
+        }.toMap(),
     )
 
     companion object {
@@ -108,6 +124,12 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         private const val REMINDER_DISMISSED = "backupReminderDismissedAt"
         private const val FIRST_SEEN = "firstSeenAt"
         private const val NOTIFIED_UPDATE = "notifiedUpdate"
+        private const val AGREEMENT_VERSION = "agreementVersion"
+        private const val AGREEMENT_AT = "agreementAcceptedAt"
+        private const val AGREEMENT_APP = "agreementAppVersion"
+        private const val AI_CONSENTS = "aiConsents"
+        /** Between the time and the recipient in [AI_CONSENTS] entries; recipients never contain it. */
+        private const val SEP = "|"
         // 1.0–1.4 Google Drive backup.
         private val DRIVE_KEYS = listOf("driveAccount", "driveFolderId", "lastDriveBackupAt", "lastDriveError")
         private const val CAMERA_WARNINGS = "cameraWarningsOpen"

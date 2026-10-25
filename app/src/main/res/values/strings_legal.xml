@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The Terms of Use and Disclaimer and the Privacy Policy (roadmap 2.0, tasks 4.1 and 4.4).
+    These are the source of truth: TERMS.md and PRIVACY.md at the repository root are generated
+    from this file (LegalDocsTest; run it with -Dlegal.update=true after a change).
+    English only, in every app language (owner, 2026-10-25): a lawyer reviews this one text.
+    A change in meaning bumps Agreement.VERSION and adds a "What changed" note; typo fixes don't.
+    Body lines starting with "• " are bullets.
+-->
+<resources>
+    <!-- Terms of Use and Disclaimer -->
+    <string name="terms_title" translatable="false">Terms of Use and Disclaimer</string>
+    <string name="terms_effective" translatable="false">Effective date: October 26, 2026. Agreement version 1.</string>
+
+    <string name="terms_short_heading" translatable="false">In short</string>
+    <string name="terms_short_body" translatable="false">• Forkcast helps you estimate and track what you eat. It is not medical advice and not a medical device.\n• Calorie and nutrient numbers are estimates and can be wrong, especially those from AI.\n• Your data stays on your phone. You are responsible for your own backups.\n• AI features are optional and use your own account with an AI company. You are responsible for that account, your API keys, and any costs.\n• Forkcast is free, open-source software provided “as is”, without warranty.\nBy tapping “I agree” you confirm you are at least 18 years old and accept these terms. If you don\'t agree, don\'t use Forkcast.</string>
+
+    <string name="terms_what_heading" translatable="false">1. What Forkcast is</string>
+    <string name="terms_what_body" translatable="false">Forkcast is a free, open-source app for logging food, water, and weight, and for estimating a daily calorie budget based on the information you enter. It can optionally read and write some data in Android\'s Health Connect, look up foods in public food databases, and, if you set it up, send meal photos or descriptions to an AI service you choose to estimate their nutrition.</string>
+
+    <string name="terms_not_heading" translatable="false">2. What Forkcast is not</string>
+    <string name="terms_not_body" translatable="false">• Not medical, nutritional, or health advice. Forkcast doesn\'t diagnose, treat, cure, or prevent any condition, and it isn\'t a substitute for a doctor, registered dietitian, or other qualified professional.\n• Not suitable for everyone. Don\'t rely on Forkcast without professional guidance if you are under 18, pregnant or breastfeeding, have or have had an eating disorder, or have a medical condition (such as diabetes, kidney disease, or heart disease) or take medication affected by what you eat. If calorie tracking makes you feel anxious, preoccupied with food, or unwell, stop using the app and talk to a professional.\n• Not exact. Calorie budgets come from standard formulas and your own data. Food values come from public databases, product labels, your entries, and AI estimates. All of these can be incomplete or wrong. Check anything important, for example by weighing food or reading the label.\n• Not an emergency service. If you feel unwell, contact a medical professional or emergency services.</string>
+
+    <string name="terms_yours_heading" translatable="false">3. Your responsibilities</string>
+    <string name="terms_yours_body" translatable="false">• Use your own judgment about your diet, exercise, and health, and consult a professional before making significant changes.\n• Keep your phone secure. Anyone with access to your unlocked phone may see your data.\n• Keep backups. Your data lives only on your device and in backup files you create. If you lose your phone, uninstall the app, or lose your backup files, your data may be lost permanently.</string>
+
+    <string name="terms_ai_heading" translatable="false">4. AI features and third-party services</string>
+    <string name="terms_ai_body" translatable="false">• AI features are optional. To use them, you create an account with an AI provider (for example Google or Anthropic) and enter your own API key in the app.\n• When you use an AI feature, Forkcast sends the meal photos, descriptions, and personal-context text you provide directly from your phone to that provider. Forkcast asks for your permission before sending anything to a provider for the first time.\n• Your use of the provider is governed by its terms and privacy policy, not by Forkcast. Some free plans allow the provider to use your content to improve its products and to have people review it. Some free plans aren\'t available in some regions.\n• You are responsible for your provider account, keeping your API keys safe, complying with the provider\'s terms, and any charges on your account.\n• AI results are estimates. They can be wrong, sometimes very wrong. Review them before relying on them.\n• Food lookups use public databases (such as Open Food Facts and USDA FoodData Central). Health Connect data is exchanged only with your permission. Forkcast isn\'t responsible for the accuracy or availability of these services.\n• Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, Samsung, or any other company whose services it can connect to.</string>
+
+    <string name="terms_data_heading" translatable="false">5. Your data and privacy</string>
+    <string name="terms_data_body" translatable="false">Forkcast has no servers and no accounts, and the developer does not collect, receive, or store your data. Details are in the Privacy Policy, available in the app under Settings › About.</string>
+
+    <string name="terms_warranty_heading" translatable="false">6. Open-source software, no warranty</string>
+    <string name="terms_warranty_body" translatable="false">Forkcast is provided free of charge under the GNU General Public License, version 3, with an additional permission for the Google libraries it uses. To the maximum extent permitted by law, Forkcast is provided “as is” and “as available”, without warranties of any kind, express or implied, including warranties of accuracy, fitness for a particular purpose, merchantability, and non-infringement. The developer doesn\'t guarantee that the app will be error-free, secure, or available, or that it will be updated or supported.</string>
+
+    <string name="terms_liability_heading" translatable="false">7. Limitation of liability</string>
+    <string name="terms_liability_body" translatable="false">To the maximum extent permitted by law, the developer and contributors are not liable for any direct, indirect, incidental, special, consequential, or punitive damages, or any loss of data, health, or money (including charges from AI providers), arising from your use of or inability to use Forkcast, even if advised of the possibility of such damages. Some jurisdictions don\'t allow some of these limits; in that case they apply to the fullest extent allowed.</string>
+
+    <string name="terms_donations_heading" translatable="false">8. Donations</string>
+    <string name="terms_donations_body" translatable="false">Donations are voluntary gifts to support development. They don\'t buy any product, feature, service, support, or warranty, and they don\'t change these terms.</string>
+
+    <string name="terms_changes_heading" translatable="false">9. Changes</string>
+    <string name="terms_changes_body" translatable="false">These terms may change in future versions. If a change matters, the app will show the new version and ask you to accept it before you continue. Smaller fixes (typos, translations) don\'t require new acceptance.</string>
+
+    <string name="terms_general_heading" translatable="false">10. General</string>
+    <string name="terms_general_body" translatable="false">These terms are governed by the laws of the State of Connecticut, United States, except where the law of your country requires otherwise. If any part is found unenforceable, the rest still applies. Questions: open an issue at https://github.com/djemes/forkcast/issues.</string>
+
+    <!-- Privacy Policy -->
+    <string name="privacy_title" translatable="false">Privacy Policy</string>
+    <string name="privacy_effective" translatable="false">Effective date: October 26, 2026.</string>
+
+    <string name="privacy_summary_heading" translatable="false">Summary</string>
+    <string name="privacy_summary_body" translatable="false">• Forkcast has no servers and no accounts. The developer does not collect, receive, store, or sell any of your data.\n• Your data is stored on your phone, in backup files you create, and in Health Connect if you allow it.\n• Data leaves your phone only when you use a feature that needs it, and it goes directly to the service involved, listed below.\n• No ads, no analytics, no tracking.</string>
+
+    <string name="privacy_stored_heading" translatable="false">What Forkcast stores on your phone</string>
+    <string name="privacy_stored_body" translatable="false">Your profile and goals (such as height, weight, age, sex used for calculations, activity level), food and water logs, meal photos, weight and activity data, settings, and the API keys you enter. API keys are encrypted on the device. You can delete everything by clearing the app\'s data or uninstalling it.</string>
+
+    <string name="privacy_leaves_heading" translatable="false">When data leaves your phone</string>
+    <string name="privacy_leaves_body" translatable="false">• Searching for a food or scanning a barcode sends the search text or barcode number to Open Food Facts, and to USDA FoodData Central if it is set up. Their privacy policies apply.\n• AI photo or text logging (optional, after you give permission) sends your meal photos (with location data removed), your description, and your personal-context note to the AI provider you set up, such as Google Gemini, Anthropic Claude, or a service you configure. That provider\'s privacy policy and terms apply.\n• Checking for or downloading app updates sends a standard web request to GitHub. Your IP address is visible to GitHub, like when visiting any website. GitHub\'s privacy statement applies.\n• Creating a backup writes your full app data to a file, wherever you choose to save it: your phone, an SD card, or a cloud folder you pick. That storage provider\'s policy applies, if any.\n• Android\'s own backup, if it is turned on in your phone\'s settings, copies your app data (without API keys or meal photos) to your Google account. Google\'s privacy policy applies.\n• Turning on Health Connect writes your food and water records to Health Connect on your phone, and lets Forkcast read the records you allow, such as weight, steps, and exercise. Android Health Connect\'s policies apply.\n• Reporting a problem on GitHub (optional) shares only what you choose to post, such as a crash report you saved and attached. Posts on GitHub are public. GitHub\'s privacy statement applies.\nForkcast never sends your weight, goals, age, sex, or other health data to AI providers.\nSome free AI plans let the provider use your content to improve its products, and people may review it. Read your provider\'s terms. Don\'t include faces, documents, or personal information in meal photos.</string>
+
+    <string name="privacy_permissions_heading" translatable="false">Android permissions</string>
+    <string name="privacy_permission_camera" translatable="false">• Camera: scanning barcodes and nutrition labels, and taking meal photos.</string>
+    <string name="privacy_permission_internet" translatable="false">• Internet and network status: food databases, the AI providers you set up, and update checks; waiting for a connection before sending.</string>
+    <string name="privacy_permission_notifications" translatable="false">• Notifications: the reminders and alerts you turn on.</string>
+    <string name="privacy_permission_background" translatable="false">• Running in the background and after a restart: finishing photo estimates, automatic backups, and reminders while the app is closed.</string>
+    <string name="privacy_permission_biometric" translatable="false">• Biometric: unlocking saved API keys before showing or copying them.</string>
+    <string name="privacy_permission_install" translatable="false">• Install apps (asked for when updating): installing Forkcast updates downloaded from GitHub.</string>
+    <string name="privacy_permission_health" translatable="false">• Health Connect, only the data types you allow: reading weight, body fat, height, steps, active and total calories burned, and exercise, including older records and while the app is closed; writing nutrition and hydration.</string>
+
+    <string name="privacy_children_heading" translatable="false">Children</string>
+    <string name="privacy_children_body" translatable="false">Forkcast is intended for adults (18+) and isn\'t directed at children.</string>
+
+    <string name="privacy_security_heading" translatable="false">Security</string>
+    <string name="privacy_security_body" translatable="false">Data is stored in the app\'s private storage on your device. API keys are encrypted with a key held by Android\'s secure keystore. Backups you create can be password-protected (if you turn it on); otherwise anyone with the file can read it, so store backups somewhere safe. A settings export, which you create yourself, contains your API keys, encrypted with the password you choose.</string>
+
+    <string name="privacy_choices_heading" translatable="false">Your choices</string>
+    <string name="privacy_choices_body" translatable="false">You can view, edit, export, or delete your data in the app at any time; revoke AI or Health Connect permissions in Settings; and uninstall the app to remove all data stored on the phone. Because the developer holds no data about you, there\'s nothing for the developer to access, correct, or delete on request.</string>
+
+    <string name="privacy_changes_heading" translatable="false">Changes</string>
+    <string name="privacy_changes_body" translatable="false">If this policy changes, the new version will be included in an app update and posted with the source code at https://github.com/djemes/forkcast. Significant changes will be shown in the app.</string>
+
+    <string name="privacy_contact_heading" translatable="false">Contact</string>
+    <string name="privacy_contact_body" translatable="false">Open an issue at https://github.com/djemes/forkcast/issues.</string>
+</resources>

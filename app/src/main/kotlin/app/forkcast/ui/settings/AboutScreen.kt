@@ -20,18 +20,27 @@ import app.forkcast.R
 import app.forkcast.di.GITHUB_URL
 
 @Composable
-fun AboutRoute(onBack: () -> Unit, onOpenUpdates: () -> Unit) {
+fun AboutRoute(onBack: () -> Unit, onOpenUpdates: () -> Unit, onOpenTerms: () -> Unit, onOpenPrivacy: () -> Unit) {
     AboutScreen(
         versionName = BuildConfig.VERSION_NAME,
         versionCode = BuildConfig.VERSION_CODE,
         onBack = onBack,
         onOpenUpdates = onOpenUpdates.takeIf { Distribution.current.hasUpdater },
+        onOpenTerms = onOpenTerms,
+        onOpenPrivacy = onOpenPrivacy,
     )
 }
 
 /** Settings › About: version (and the way to Updates in the GitHub build), source, privacy, licenses. */
 @Composable
-fun AboutScreen(versionName: String, versionCode: Int, onBack: () -> Unit, onOpenUpdates: (() -> Unit)? = null) {
+fun AboutScreen(
+    versionName: String,
+    versionCode: Int,
+    onBack: () -> Unit,
+    onOpenUpdates: (() -> Unit)? = null,
+    onOpenTerms: () -> Unit = {},
+    onOpenPrivacy: () -> Unit = {},
+) {
     val uri = LocalUriHandler.current
     SettingsScaffold(title = stringResource(R.string.settings_about), onBack = onBack) {
         Column(Modifier.padding(horizontal = 16.dp)) {
@@ -53,6 +62,8 @@ fun AboutScreen(versionName: String, versionCode: Int, onBack: () -> Unit, onOpe
                 Text(stringResource(R.string.about_github_open))
             }
 
+            TextButton(onClick = onOpenTerms, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_terms)) }
+            TextButton(onClick = onOpenPrivacy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_privacy_policy)) }
             AboutSection(R.string.about_privacy_title, stringResource(R.string.about_privacy_body))
             AboutSection(R.string.about_medical_title, stringResource(R.string.about_medical_body))
             AboutSection(R.string.about_licenses_title, stringResource(R.string.about_license_manrope))

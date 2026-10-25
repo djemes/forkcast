@@ -20,6 +20,8 @@ import app.forkcast.core.data.notify.Notifier
 import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.navigation.ForkcastNavHost
+import app.forkcast.ui.legal.Agreement
+import app.forkcast.ui.legal.AgreementScreen
 import app.forkcast.ui.theme.ForkcastTheme
 import app.forkcast.widget.FoodOpen
 import app.forkcast.widget.WidgetData
@@ -73,14 +75,23 @@ class MainActivity : ComponentActivity() {
             }
 
             ForkcastTheme(darkTheme = darkTheme, useWallpaperColors = appearance.useWallpaperColors) {
-                // Decided once per launch, so finishing onboarding doesn't rebuild the graph mid-transition.
-                val needsOnboarding = remember { current.needsOnboarding }
-                val open by openRequest.collectAsStateWithLifecycle()
-                ForkcastNavHost(
-                    startWithOnboarding = needsOnboarding,
-                    openRequest = open,
-                    onOpenHandled = { openRequest.value = null },
-                )
+                // The terms come before anything else, onboarding included (roadmap 2.0, task 4.1).
+                if (current.needsAgreement) {
+                    AgreementScreen(
+                        whatChanged = current.acceptedVersion?.let { Agreement.changes[Agreement.VERSION] },
+                        onAccept = viewModel::acceptAgreement,
+                        onDecline = ::finishAndRemoveTask,
+                    )
+                } else {
+                    // Decided once per launch, so finishing onboarding doesn't rebuild the graph mid-transition.
+                    val needsOnboarding = remember { current.needsOnboarding }
+                    val open by openRequest.collectAsStateWithLifecycle()
+                    ForkcastNavHost(
+                        startWithOnboarding = needsOnboarding,
+                        openRequest = open,
+                        onOpenHandled = { openRequest.value = null },
+                    )
+                }
             }
         }
     }

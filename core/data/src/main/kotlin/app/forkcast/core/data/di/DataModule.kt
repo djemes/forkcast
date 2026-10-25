@@ -161,6 +161,9 @@ abstract class RepositoryModule {
     abstract fun bindMissingKeysRepository(impl: app.forkcast.core.data.repository.DefaultMissingKeysRepository): app.forkcast.core.data.repository.MissingKeysRepository
 
     @Binds
+    abstract fun bindConsentRepository(impl: app.forkcast.core.data.repository.DefaultConsentRepository): app.forkcast.core.data.repository.ConsentRepository
+
+    @Binds
     abstract fun bindRecipeRepository(impl: app.forkcast.core.data.repository.RoomRecipeRepository): app.forkcast.core.data.repository.RecipeRepository
 
     @Binds

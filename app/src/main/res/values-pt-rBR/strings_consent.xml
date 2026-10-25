@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="agreement_title">Antes de começar</string>
+    <string name="agreement_intro">Leia os termos do Forkcast. Você pode lê-los de novo quando quiser em Configurações › Sobre.</string>
+    <string name="agreement_changed_title">O que mudou</string>
+    <string name="agreement_confirm_age">Tenho 18 anos ou mais</string>
+    <string name="agreement_confirm_terms">Li e aceito os Termos de Uso e o Aviso Legal</string>
+    <string name="agreement_accept">Aceito</string>
+    <string name="agreement_accept_hint">Marque as duas opções para continuar.</string>
+    <string name="agreement_decline">Recusar</string>
+    <string name="agreement_decline_title">Fechar o Forkcast?</string>
+    <string name="agreement_decline_body">O Forkcast só pode ser usado depois que você aceitar os termos. Você pode abri-lo de novo quando quiser.</string>
+    <string name="agreement_decline_close">Fechar o Forkcast</string>
+    <string name="agreement_decline_back">Voltar aos termos</string>
+    <string name="agreement_legal_language">Os termos estão em inglês.</string>
+
+    <string name="about_terms">Termos de uso e aviso legal</string>
+    <string name="about_privacy_policy">Política de privacidade</string>
+    <string name="terms_accepted">Você aceitou a versão %1$d em %2$s.</string>
+    <string name="terms_not_accepted">Ainda não aceitos neste celular.</string>
+</resources>

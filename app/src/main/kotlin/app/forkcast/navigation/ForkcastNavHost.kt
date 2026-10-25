@@ -80,6 +80,8 @@ import kotlinx.serialization.Serializable
 @Serializable data class WeeklyDestination(val start: String? = null)
 @Serializable data object AppearanceDestination
 @Serializable data object AboutDestination
+@Serializable data object TermsDestination
+@Serializable data object PrivacyPolicyDestination
 @Serializable data object UpdatesDestination
 @Serializable data object LanguageDestination
 @Serializable data object FoodDatabasesDestination
@@ -489,7 +491,16 @@ fun ForkcastNavHost(
                 )
             }
             composable<AppearanceDestination> { AppearanceRoute(onBack = back) }
-            composable<AboutDestination> { AboutRoute(onBack = back, onOpenUpdates = { navController.navigate(UpdatesDestination) }) }
+            composable<AboutDestination> {
+                AboutRoute(
+                    onBack = back,
+                    onOpenUpdates = { navController.navigate(UpdatesDestination) },
+                    onOpenTerms = { navController.navigate(TermsDestination) },
+                    onOpenPrivacy = { navController.navigate(PrivacyPolicyDestination) },
+                )
+            }
+            composable<TermsDestination> { app.forkcast.ui.legal.TermsRoute(onBack = back) }
+            composable<PrivacyPolicyDestination> { app.forkcast.ui.legal.PrivacyPolicyScreen(onBack = back) }
             composable<UpdatesDestination> { app.forkcast.ui.settings.UpdatesRoute(onBack = back) }
             composable<LanguageDestination> { app.forkcast.ui.settings.LanguageRoute(onBack = back) }
             composable<HelpDestination> {

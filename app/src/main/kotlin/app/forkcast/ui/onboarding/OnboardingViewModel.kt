@@ -285,7 +285,8 @@ class OnboardingViewModel @Inject constructor(
 
         const val DEFAULT_LOSE_RATE_KG = 0.45359237 // 1 lb
         const val DEFAULT_GAIN_RATE_KG = 0.226796185 // 0.5 lb
-        const val MIN_AGE = 13L
+        // The terms are for adults (roadmap 2.0, task 4.1; Gemini's terms also ask for 18+).
+        const val MIN_AGE = 18L
         private const val KEY_DRAFT = "onboarding_draft"
         private const val KEY_STEP = "onboarding_step"
     }

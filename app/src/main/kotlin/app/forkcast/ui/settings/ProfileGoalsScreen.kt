@@ -286,7 +286,7 @@ private fun EditDialog(field: EditField, s: ProfileGoalsState, vm: ProfileGoalsV
                         listOf(Choice(Sex.MALE, stringResource(R.string.sex_male)), Choice(Sex.FEMALE, stringResource(R.string.sex_female))),
                         sex,
                     ) { sex = it }
-                    EditField.BIRTH -> DateField(birth, "", birth, { birth = it }, selectableTo = s.today.minusYears(13))
+                    EditField.BIRTH -> DateField(birth, "", birth, { birth = it }, selectableTo = s.today.minusYears(app.forkcast.ui.onboarding.OnboardingViewModel.MIN_AGE))
                     EditField.HEIGHT -> HeightInput(height, s.units) { height = it }
                     EditField.ACTIVITY -> ChoiceList(activityChoices(), activity) { activity = it }
                     EditField.GOAL -> GoalEditor(goal, s)
