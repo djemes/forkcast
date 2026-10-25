@@ -210,8 +210,13 @@ private fun SectionTitle(title: Int, modifier: Modifier = Modifier) {
     Text(stringResource(title), style = MaterialTheme.typography.titleMedium, modifier = modifier.semantics { heading() })
 }
 
+/**
+ * [newPhone]: opened from onboarding's "Restore a backup" (owner, 2026-10-25). Nothing is on the
+ * phone yet, so the preview offers one "Restore" (a replace, which also brings the backup's
+ * settings and units) instead of Merge or Replace.
+ */
 @Composable
-private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) {
+internal fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit, newPhone: Boolean = false) {
     val dismiss = { onEvent(BackupEvent.DismissDialog) }
     when (dialog) {
         BackupDialog.SaveOptions -> SaveOptionsDialog(onContinue = { photos, password -> onEvent(BackupEvent.SaveChosen(photos, password)) }, onDismiss = dismiss)
@@ -221,11 +226,17 @@ private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) 
             title = {
                 Text(stringResource(if (dialog.isSafetyBackup) R.string.backup_preview_safety_title else R.string.backup_preview_title))
             },
-            text = { PreviewText(dialog.preview, dialog.photos) },
-            confirmButton = { TextButton(onClick = { onEvent(BackupEvent.Merge) }) { Text(stringResource(R.string.backup_merge)) } },
+            text = { PreviewText(dialog.preview, dialog.photos, newPhone) },
+            confirmButton = {
+                if (newPhone) {
+                    TextButton(onClick = { onEvent(BackupEvent.Replace) }) { Text(stringResource(R.string.onb_restore_confirm)) }
+                } else {
+                    TextButton(onClick = { onEvent(BackupEvent.Merge) }) { Text(stringResource(R.string.backup_merge)) }
+                }
+            },
             dismissButton = {
                 TextButton(onClick = dismiss) { Text(stringResource(R.string.cancel)) }
-                TextButton(onClick = { onEvent(BackupEvent.AskReplace) }) { Text(stringResource(R.string.backup_replace_ellipsis)) }
+                if (!newPhone) TextButton(onClick = { onEvent(BackupEvent.AskReplace) }) { Text(stringResource(R.string.backup_replace_ellipsis)) }
             },
         )
         BackupDialog.ConfirmReplace -> AlertDialog(
@@ -271,7 +282,7 @@ private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) 
 }
 
 @Composable
-private fun PreviewText(preview: BackupPreview, photos: Int) {
+private fun PreviewText(preview: BackupPreview, photos: Int, newPhone: Boolean = false) {
     val locale = LocalLocale.current.platformLocale
     val dateFormat = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
     val dateTimeFormat = remember(locale) { DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM, FormatStyle.SHORT).withLocale(locale) }
@@ -295,7 +306,11 @@ private fun PreviewText(preview: BackupPreview, photos: Int) {
         if (preview.firstDate != null && preview.lastDate != null) {
             Text(stringResource(R.string.backup_preview_dates, dateFormat.format(preview.firstDate), dateFormat.format(preview.lastDate)))
         }
-        Text(stringResource(R.string.backup_preview_choices), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
+        Text(
+            stringResource(if (newPhone) R.string.onb_restore_choices else R.string.backup_preview_choices),
+            style = MaterialTheme.typography.bodySmall,
+            modifier = Modifier.padding(top = 8.dp),
+        )
     }
 }
 

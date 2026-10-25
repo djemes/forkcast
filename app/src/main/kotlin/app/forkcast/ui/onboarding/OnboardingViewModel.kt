@@ -21,6 +21,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -71,6 +72,8 @@ data class OnboardingUiState(
     /** Profile, goal and first weight are saved (on leaving the budget step); no way back. */
     val saved: Boolean = false,
     val finished: Boolean = false,
+    /** A restored backup had no profile or goal: the questions still need answers. */
+    val restoreIncomplete: Boolean = false,
 )
 
 sealed interface OnboardingEvent {
@@ -91,6 +94,8 @@ sealed interface OnboardingEvent {
     data object Finish : OnboardingEvent
     /** Leave the extras for Today. */
     data object Done : OnboardingEvent
+    /** A backup was restored from the welcome step (owner, 2026-10-25): skip the questions if it had them. */
+    data object Restored : OnboardingEvent
 }
 
 @HiltViewModel
@@ -131,6 +136,10 @@ class OnboardingViewModel @Inject constructor(
             OnboardingEvent.Back -> move(-1)
             OnboardingEvent.Finish -> finish()
             OnboardingEvent.Done -> _state.update { if (it.saved) it.copy(finished = true) else it }
+            OnboardingEvent.Restored -> viewModelScope.launch {
+                val complete = profileRepository.profile.first() != null && profileRepository.activeGoal.first() != null
+                _state.update { if (complete) it.copy(finished = true) else it.copy(restoreIncomplete = true) }
+            }
         }
     }
 

@@ -178,4 +178,8 @@
     <string name="onb_extra_choose_folder">Choose a folder</string>
     <string name="onb_extra_turn_on">Turn on</string>
     <string name="onb_extra_ready">Ready</string>
+    <string name="onb_restore">Moving from another phone? Restore a backup</string>
+    <string name="onb_restore_confirm">Restore</string>
+    <string name="onb_restore_choices">Restore brings back your log, goal and settings from this backup. API keys are never in backups, so add your AI key again afterwards.</string>
+    <string name="onb_restore_incomplete">That backup didn\'t include a profile and goal, so answer a few questions to finish.</string>
 </resources>

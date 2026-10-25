@@ -40,6 +40,17 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.style.TextAlign
+import app.forkcast.ui.backup.BackupDialog
+import app.forkcast.ui.backup.BackupDialogs
+import app.forkcast.ui.backup.BackupEvent
+import app.forkcast.ui.backup.BackupViewModel
 import app.forkcast.core.domain.GoalPace
 import app.forkcast.core.domain.GoalPlanner
 import app.forkcast.core.model.GoalType
@@ -55,11 +66,29 @@ fun OnboardingRoute(
     extras: ExtrasActions = ExtrasActions(),
     viewModel: OnboardingViewModel = hiltViewModel(),
     extrasViewModel: OnboardingExtrasViewModel = hiltViewModel(),
+    backup: BackupViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val extrasState by extrasViewModel.state.collectAsStateWithLifecycle()
+    val backupState by backup.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.finished) { if (state.finished) onFinished() }
-    OnboardingScreen(state, viewModel::onEvent, extrasState, extras, onNotificationsAsked = { extrasViewModel.notificationPermissionAsked() })
+    // Moving phones: restore a backup instead of answering the questions (owner, 2026-10-25).
+    val pick = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> uri?.let { backup.onEvent(BackupEvent.Open(it)) } }
+    var restoring by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(backupState.dialog) {
+        val dialog = backupState.dialog
+        if (dialog is BackupDialog.Done) restoring = true
+        if (dialog == null && restoring) {
+            restoring = false
+            viewModel.onEvent(OnboardingEvent.Restored)
+        }
+    }
+    OnboardingScreen(
+        state, viewModel::onEvent, extrasState, extras,
+        onNotificationsAsked = { extrasViewModel.notificationPermissionAsked() },
+        onRestore = { pick.launch(arrayOf("*/*")) },
+    )
+    backupState.dialog?.let { BackupDialogs(it, backup::onEvent, newPhone = true) }
 }
 
 @Composable
@@ -69,6 +98,8 @@ fun OnboardingScreen(
     extras: ExtrasState = ExtrasState(),
     extrasActions: ExtrasActions = ExtrasActions(),
     onNotificationsAsked: () -> Unit = {},
+    /** Null hides "Restore a backup" (tests, previews). */
+    onRestore: (() -> Unit)? = null,
 ) {
     // Once the budget is saved there's no going back into the questions (Settings has them all).
     val canGoBack = state.stepIndex > 0 && !state.saved
@@ -124,6 +155,15 @@ fun OnboardingScreen(
                     .padding(16.dp)
                     .heightIn(min = 56.dp),
             ) { Text(stringResource(label)) }
+            if (state.step == OnboardingStep.WELCOME && onRestore != null) {
+                TextButton(
+                    onClick = onRestore,
+                    modifier = Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .padding(bottom = 8.dp)
+                        .heightIn(min = 48.dp),
+                ) { Text(stringResource(R.string.onb_restore), textAlign = TextAlign.Center) }
+            }
         }
     }
 }
@@ -139,7 +179,10 @@ private fun StepContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> 
     val d = state.draft
     val f = UnitFormatter(d.units, labels = unitLabels())
     when (state.step) {
-        OnboardingStep.WELCOME -> Welcome()
+        OnboardingStep.WELCOME -> {
+            Welcome()
+            if (state.restoreIncomplete) RestoreIncomplete()
+        }
         // The agreement step (roadmap 2.0 Phase 4) goes here, between welcome and units.
         OnboardingStep.UNITS -> {
             Title(stringResource(R.string.onb_units_title), stringResource(R.string.onb_units_body))
@@ -223,6 +266,12 @@ private fun Welcome() {
     Title(stringResource(R.string.onb_welcome_title), stringResource(R.string.onb_welcome_body))
     Text(stringResource(R.string.onb_welcome_private), style = MaterialTheme.typography.bodyLarge)
     Text(stringResource(R.string.not_medical_advice), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+/** After a restore without a profile or goal: the questions come next. */
+@Composable
+private fun RestoreIncomplete() {
+    Text(stringResource(R.string.onb_restore_incomplete), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.primary)
 }
 
 /** Preset weekly paces in the user's unit, stored as kg. */

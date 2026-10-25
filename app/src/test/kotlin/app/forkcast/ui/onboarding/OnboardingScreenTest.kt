@@ -38,13 +38,17 @@ class OnboardingScreenTest {
         val weights = FakeWeightRepository()
         val profiles = FakeProfileRepository(weights) { LocalDate.of(2026, 10, 18) }
         val vm = OnboardingViewModel(SavedStateHandle(), profiles, weights, FakeSettingsRepository(), clock)
+        var restoreAsked = false
         compose.setContent {
             val state by vm.state.collectAsState()
-            ForkcastTheme { OnboardingScreen(state, vm::onEvent) }
+            ForkcastTheme { OnboardingScreen(state, vm::onEvent, onRestore = { restoreAsked = true }) }
         }
         fun next() = compose.onNodeWithText("Continue").performClick()
 
         compose.onNodeWithText("Welcome to Forkcast").assertIsDisplayed()
+        // Moving phones: a quieter way out under Get started.
+        compose.onNodeWithText("Moving from another phone? Restore a backup").performClick()
+        assertThat(restoreAsked).isTrue()
         compose.onNodeWithText("Get started").performClick()
         compose.onNodeWithText("Your units").assertIsDisplayed()
         compose.onNodeWithText("kg").performClick()

@@ -8,6 +8,7 @@ import app.forkcast.core.model.UnitPrefs
 import app.forkcast.fakes.FakeProfileRepository
 import app.forkcast.fakes.FakeSettingsRepository
 import app.forkcast.fakes.FakeWeightRepository
+import app.forkcast.fakes.TestData
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -114,6 +115,23 @@ class OnboardingViewModelTest {
         vm.onEvent(OnboardingEvent.GoalChosen(GoalType.LOSE)); vm.onEvent(OnboardingEvent.Next)
         vm.onEvent(OnboardingEvent.TargetKg(95.0))
         assertThat(vm.state.value.canContinue).isFalse()
+    }
+
+    /** Moving phones (owner, 2026-10-25): a restored backup with a profile and goal skips the questions. */
+    @Test fun restoredBackupWithProfileAndGoalFinishes() = runTest {
+        val vm = vm()
+        profiles.saveProfile(TestData.PROFILE)
+        profiles.saveGoal(TestData.GOAL)
+        vm.onEvent(OnboardingEvent.Restored)
+        assertThat(vm.state.value.finished).isTrue()
+    }
+
+    @Test fun restoredBackupWithoutAProfileAsksTheQuestions() = runTest {
+        val vm = vm()
+        vm.onEvent(OnboardingEvent.Restored)
+        assertThat(vm.state.value.finished).isFalse()
+        assertThat(vm.state.value.restoreIncomplete).isTrue()
+        assertThat(vm.state.value.step).isEqualTo(OnboardingStep.WELCOME)
     }
 
     @Test fun draftSurvivesProcessRestart() {
