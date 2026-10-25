@@ -10,7 +10,7 @@
 <body>
 <main>
   <h1>Privacy policy</h1>
-  <p class="lead">Forkcast for Android · Effective October 20, 2026</p>
+  <p class="lead">Forkcast for Android · Effective October 25, 2026</p>
 
   <div class="card">
     <p><strong>In short:</strong> your data stays on your phone. Forkcast has no servers, no accounts, no ads, no analytics and no tracking. The developer never receives your data. Forkcast only connects to services you choose to set up, and only to do what you asked.</p>
@@ -24,24 +24,22 @@
   <ul>
     <li><strong>Food databases:</strong> when you scan a barcode or search for a food, the barcode or search words are sent to <a href="https://world.openfoodfacts.org/privacy">Open Food Facts</a> and, if you added a key, to the <a href="https://fdc.nal.usda.gov/">USDA FoodData Central</a> API.</li>
     <li><strong>AI photo estimates (optional):</strong> when you estimate a meal from a photo, the photo (with location and other metadata removed), your description, and any personal context you entered in Settings are sent to the AI service you configured with your own API key (for example Google Gemini, Anthropic Claude, or an OpenAI-compatible service). That service's own privacy policy and terms apply. Some free tiers, such as Gemini's, allow the provider to use what you send to improve its products.</li>
-    <li><strong>Google Drive backup (optional):</strong> see below.</li>
     <li><strong>Health Connect (optional):</strong> see below.</li>
-    <li><strong>Update check (optional):</strong> when you tap Check for updates in About, Forkcast asks GitHub for the newest release using the GitHub token you entered, and downloads the app's installation file if you choose to install it. Nothing about you or your data is sent. <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a> applies.</li>
+    <li><strong>Update check:</strong> when you check for updates in Settings › Updates, and at most once a day if automatic checks are on, Forkcast asks GitHub whether a newer version exists, and downloads the app's installation file if you choose to install it. Nothing about you or your data is sent. <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a> applies.</li>
   </ul>
   <p>Forkcast does not sell, share or transfer your data to anyone else, and does not use it for advertising.</p>
 
-  <h2>Google Drive backup</h2>
-  <p>If you connect Google Drive, Forkcast asks for the <code>drive.file</code> permission. That lets it create, read and delete only the files it creates itself (in a "Forkcast Backups" folder). It cannot see any other files in your Drive. Forkcast uses this access only to upload your backups, list and download them when you restore, and delete old backups to keep the number of backups it stores limited. Backups contain your Forkcast data, never your API keys or meal photos, and are stored in your own Drive account. You can disconnect at any time in Forkcast (Settings › Backup &amp; data), or remove access in your Google Account settings.</p>
-  <p>Forkcast's use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy">Google API Services User Data Policy</a>, including the Limited Use requirements.</p>
+  <h2>Backups</h2>
+  <p>Backups are files you create: you choose where to save each one with Android's file picker, or pick a folder once for automatic backups. That can be on your phone, an SD card, or a cloud storage app you use; Forkcast only sees the files and the one folder you choose. Backups contain your Forkcast data and, if you choose, your meal photos, never your API keys. You can protect a backup with a password; without one, anyone with the file can read it, so keep it somewhere safe.</p>
 
   <h2>Health Connect</h2>
-  <p>If you allow it, Forkcast reads weight, height, body fat, steps, exercise sessions and calories burned from Health Connect to keep your weight log and daily calorie budget up to date, and writes the food and water you log as nutrition and hydration records. You choose which permissions to grant and can remove them at any time in Health Connect. Health Connect data is used only for these features. It is never used for advertising, never sold, and never sent anywhere except as part of your own backups.</p>
+  <p>If you allow it, Forkcast reads weight, height, body fat, steps, exercise sessions and calories burned from Health Connect to keep your weight log and daily calorie budget up to date, and writes the food and water you log as nutrition and hydration records. You choose which permissions to grant and can remove them at any time in Health Connect. Health Connect data is used only for these features. It is never used for advertising, never sold, and never sent anywhere except as part of the backups you make.</p>
 
   <h2>Android backup</h2>
   <p>Android may back up Forkcast's data to your Google account through Android's own backup service, depending on your phone's settings. API keys are excluded from it.</p>
 
   <h2>Exports</h2>
-  <p>Exports are files you create and choose where to save. The data export never includes API keys. The separate settings export, meant for moving to a new phone, includes your API keys and is encrypted with a passphrase you choose.</p>
+  <p>Spreadsheet exports (CSV) are files you create and choose where to save. They never include API keys. The separate settings export, meant for moving to a new phone, includes your API keys and is encrypted with a passphrase you choose.</p>
 
   <h2>Permissions</h2>
   <ul>
@@ -52,7 +50,7 @@
   </ul>
 
   <h2>Deleting your data</h2>
-  <p>Uninstalling Forkcast deletes everything it stored on the phone. Backups in your Google Drive stay there until you delete them, for example the "Forkcast Backups" folder in Drive.</p>
+  <p>Uninstalling Forkcast deletes everything it stored on the phone. Backup files you saved stay wherever you saved them until you delete them.</p>
 
   <h2>Children</h2>
   <p>Forkcast is not directed at children under 13.</p>
