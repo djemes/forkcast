@@ -4,62 +4,62 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Forkcast Privacy Policy</title>
-  <meta name="description" content="How the Forkcast Android app handles your data.">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <main>
-  <h1>Privacy policy</h1>
-  <p class="lead">Forkcast for Android · Effective October 25, 2026</p>
+  <h1>Privacy Policy</h1>
+  <p class="lead">Effective date: October 26, 2026.</p>
 
-  <div class="card">
-    <p><strong>In short:</strong> your data stays on your phone. Forkcast has no servers, no accounts, no ads, no analytics and no tracking. The developer never receives your data. Forkcast only connects to services you choose to set up, and only to do what you asked.</p>
-  </div>
+  <h2>Summary</h2>
+  <ul>
+    <li>Forkcast has no servers and no accounts. The developer does not collect, receive, store, or sell any of your data.</li>
+    <li>Your data is stored on your phone, in backup files you create, and in Health Connect if you allow it.</li>
+    <li>Data leaves your phone only when you use a feature that needs it, and it goes directly to the service involved, listed below.</li>
+    <li>No ads, no analytics, no tracking.</li>
+  </ul>
 
   <h2>What Forkcast stores on your phone</h2>
-  <p>Your food log, foods and recipes, weight entries, goals, settings and meal photos are stored in the app's private storage on your device. API keys and tokens you enter (for example for an AI service, the USDA food database or GitHub) are encrypted on the device with the Android Keystore.</p>
+  <p>Your profile and goals (such as height, weight, age, sex used for calculations, activity level), food and water logs, meal photos, weight and activity data, settings, and the API keys you enter. API keys are encrypted on the device. You can delete everything by clearing the app's data or uninstalling it.</p>
 
-  <h2>Services Forkcast connects to</h2>
-  <p>Forkcast only sends data to the services below, and only when you use the feature that needs them:</p>
+  <h2>When data leaves your phone</h2>
   <ul>
-    <li><strong>Food databases:</strong> when you scan a barcode or search for a food, the barcode or search words are sent to <a href="https://world.openfoodfacts.org/privacy">Open Food Facts</a> and, if you added a key, to the <a href="https://fdc.nal.usda.gov/">USDA FoodData Central</a> API.</li>
-    <li><strong>AI photo estimates (optional):</strong> when you estimate a meal from a photo, the photo (with location and other metadata removed), your description, and any personal context you entered in Settings are sent to the AI service you configured with your own API key (for example Google Gemini, Anthropic Claude, or an OpenAI-compatible service). That service's own privacy policy and terms apply. Some free tiers, such as Gemini's, allow the provider to use what you send to improve its products.</li>
-    <li><strong>Health Connect (optional):</strong> see below.</li>
-    <li><strong>Update check:</strong> when you check for updates in Settings › Updates, and at most once a day if automatic checks are on, Forkcast asks GitHub whether a newer version exists, and downloads the app's installation file if you choose to install it. Nothing about you or your data is sent. <a href="https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement">GitHub's privacy statement</a> applies.</li>
+    <li>Searching for a food or scanning a barcode sends the search text or barcode number to Open Food Facts, and to USDA FoodData Central if it is set up. Their privacy policies apply.</li>
+    <li>AI photo or text logging (optional, after you give permission) sends your meal photos (with location data removed), your description, and your personal-context note to the AI provider you set up, such as Google Gemini, Anthropic Claude, or a service you configure. That provider's privacy policy and terms apply.</li>
+    <li>Checking for or downloading app updates sends a standard web request to GitHub. Your IP address is visible to GitHub, like when visiting any website. GitHub's privacy statement applies.</li>
+    <li>Creating a backup writes your full app data to a file, wherever you choose to save it: your phone, an SD card, or a cloud folder you pick. That storage provider's policy applies, if any.</li>
+    <li>Android's own backup, if it is turned on in your phone's settings, copies your app data (without API keys or meal photos) to your Google account. Google's privacy policy applies.</li>
+    <li>Turning on Health Connect writes your food and water records to Health Connect on your phone, and lets Forkcast read the records you allow, such as weight, steps, and exercise. Android Health Connect's policies apply.</li>
+    <li>Reporting a problem on GitHub (optional) shares only what you choose to post, such as a crash report you saved and attached. Posts on GitHub are public. GitHub's privacy statement applies.</li>
   </ul>
-  <p>Forkcast does not sell, share or transfer your data to anyone else, and does not use it for advertising.</p>
+  <p>Forkcast never sends your weight, goals, age, sex, or other health data to AI providers.</p>
+  <p>Some free AI plans let the provider use your content to improve its products, and people may review it. Read your provider's terms. Don't include faces, documents, or personal information in meal photos.</p>
 
-  <h2>Backups</h2>
-  <p>Backups are files you create: you choose where to save each one with Android's file picker, or pick a folder once for automatic backups. That can be on your phone, an SD card, or a cloud storage app you use; Forkcast only sees the files and the one folder you choose. Backups contain your Forkcast data and, if you choose, your meal photos, never your API keys. You can protect a backup with a password; without one, anyone with the file can read it, so keep it somewhere safe.</p>
-
-  <h2>Health Connect</h2>
-  <p>If you allow it, Forkcast reads weight, height, body fat, steps, exercise sessions and calories burned from Health Connect to keep your weight log and daily calorie budget up to date, and writes the food and water you log as nutrition and hydration records. You choose which permissions to grant and can remove them at any time in Health Connect. Health Connect data is used only for these features. It is never used for advertising, never sold, and never sent anywhere except as part of the backups you make.</p>
-
-  <h2>Android backup</h2>
-  <p>Android may back up Forkcast's data to your Google account through Android's own backup service, depending on your phone's settings. API keys are excluded from it.</p>
-
-  <h2>Exports</h2>
-  <p>Spreadsheet exports (CSV) are files you create and choose where to save. They never include API keys. The separate settings export, meant for moving to a new phone, includes your API keys and is encrypted with a passphrase you choose.</p>
-
-  <h2>Permissions</h2>
+  <h2>Android permissions</h2>
   <ul>
-    <li><strong>Camera:</strong> to scan barcodes and nutrition labels and take meal photos. Label reading and barcode scanning happen on the device.</li>
-    <li><strong>Notifications:</strong> for reminders you set and for backup problems.</li>
-    <li><strong>Internet:</strong> for the services listed above.</li>
-    <li><strong>Install apps:</strong> only to hand an update you downloaded from Forkcast's releases to Android's installer, which asks you to confirm.</li>
+    <li>Camera: scanning barcodes and nutrition labels, and taking meal photos.</li>
+    <li>Internet and network status: food databases, the AI providers you set up, and update checks; waiting for a connection before sending.</li>
+    <li>Notifications: the reminders and alerts you turn on.</li>
+    <li>Running in the background and after a restart: finishing photo estimates, automatic backups, and reminders while the app is closed.</li>
+    <li>Biometric: unlocking saved API keys before showing or copying them.</li>
+    <li>Install apps (asked for when updating): installing Forkcast updates downloaded from GitHub.</li>
+    <li>Health Connect, only the data types you allow: reading weight, body fat, height, steps, active and total calories burned, and exercise, including older records and while the app is closed; writing nutrition and hydration.</li>
   </ul>
-
-  <h2>Deleting your data</h2>
-  <p>Uninstalling Forkcast deletes everything it stored on the phone. Backup files you saved stay wherever you saved them until you delete them.</p>
 
   <h2>Children</h2>
-  <p>Forkcast is not directed at children under 13.</p>
+  <p>Forkcast is intended for adults (18+) and isn't directed at children.</p>
+
+  <h2>Security</h2>
+  <p>Data is stored in the app's private storage on your device. API keys are encrypted with a key held by Android's secure keystore. Backups you create can be password-protected (if you turn it on); otherwise anyone with the file can read it, so store backups somewhere safe. A settings export, which you create yourself, contains your API keys, encrypted with the password you choose.</p>
+
+  <h2>Your choices</h2>
+  <p>You can view, edit, export, or delete your data in the app at any time; revoke AI or Health Connect permissions in Settings; and uninstall the app to remove all data stored on the phone. Because the developer holds no data about you, there's nothing for the developer to access, correct, or delete on request.</p>
 
   <h2>Changes</h2>
-  <p>If this policy changes, the new version will be posted on this page with a new effective date.</p>
+  <p>If this policy changes, the new version will be included in an app update and posted with the source code at <a href="https://github.com/djemes/forkcast">https://github.com/djemes/forkcast</a>. Significant changes will be shown in the app.</p>
 
   <h2>Contact</h2>
-  <p>Questions about this policy: open an issue on <a href="https://github.com/djemes/forkcast/issues">Forkcast's GitHub page</a>.</p>
+  <p>Open an issue at <a href="https://github.com/djemes/forkcast/issues">https://github.com/djemes/forkcast/issues</a>.</p>
 
   <footer class="muted"><a href="index.html">Forkcast home</a></footer>
 </main>

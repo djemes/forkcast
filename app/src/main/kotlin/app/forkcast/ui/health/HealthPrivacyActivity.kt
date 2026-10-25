@@ -15,6 +15,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.legal.LegalDocumentView
+import app.forkcast.ui.legal.LegalTexts
 import app.forkcast.ui.settings.SettingsScaffold
 import app.forkcast.ui.theme.ForkcastTheme
 
@@ -34,6 +36,8 @@ class HealthPrivacyActivity : ComponentActivity() {
                 SettingsScaffold(title = stringResource(R.string.hc_privacy_title), onBack = ::finish) {
                     Column(Modifier.padding(16.dp)) {
                         Text(stringResource(R.string.hc_privacy_body), style = MaterialTheme.typography.bodyLarge)
+                        // The whole policy follows, so this link is a real privacy policy (roadmap 2.0 task 4.4).
+                        LegalDocumentView(LegalTexts.privacy, Modifier.padding(top = 24.dp))
                         TextButton(onClick = ::finish, modifier = Modifier.padding(top = 16.dp).heightIn(min = 48.dp)) {
                             Text(stringResource(R.string.hc_privacy_close))
                         }

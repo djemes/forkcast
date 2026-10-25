@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
 import app.forkcast.core.data.health.HealthPermissions
+import app.forkcast.ui.legal.LegalTexts
 import com.google.common.truth.Truth.assertThat
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -33,6 +34,22 @@ class ManifestPrivacyTest {
         val declared = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
             .requestedPermissions.orEmpty().filter { it.startsWith("android.permission.health.") }
         assertThat(declared).containsExactlyElementsIn(HealthPermissions.ALL)
+    }
+
+    /**
+     * Roadmap 2.0 task 4.4: every permission the merged manifest asks for is explained in the
+     * privacy policy's permissions list, and the list names nothing the app doesn't ask for.
+     */
+    @Test fun privacyPolicyExplainsEveryPermission() {
+        val context = ApplicationProvider.getApplicationContext<android.content.Context>()
+        val requested = context.packageManager.getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
+            .requestedPermissions.orEmpty()
+            // AndroidX's own signature permission for its receivers: not something the user is asked for.
+            .filterNot { it == "${context.packageName}.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" }
+        val listed = LegalTexts.permissions.values.flatten()
+        assertThat(listed).containsAtLeastElementsIn(requested)
+        // The Play build asks for less (no updater); the GitHub build asks for exactly what's listed.
+        if (Distribution.current == Distribution.GITHUB) assertThat(listed).containsExactlyElementsIn(requested)
     }
 
     /** Health Connect's privacy-policy link (Android 13 and older) reaches our privacy screen. */
