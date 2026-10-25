@@ -50,7 +50,7 @@ class AiSettingsAdvancedTest {
         compose.onNodeWithText("Your AI services").assertIsDisplayed()
         compose.onNodeWithText("Gemini 3.8 Flash").assertIsDisplayed()
         compose.onNodeWithText("Add AI").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Photo estimates").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Personal context").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Edit").assertDoesNotExist()
         compose.onNodeWithText("Add an AI service manually").assertDoesNotExist()
         compose.onNodeWithText("Usage this month").assertDoesNotExist()
