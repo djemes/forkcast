@@ -33,6 +33,10 @@ class PhotoArchive @Inject constructor(
 ) {
     private val staging get() = File(context.cacheDir, "import-photos")
 
+    /** Limits for a file being read; tests lower them. */
+    internal var maxJsonBytes = MAX_JSON_BYTES
+    internal var maxPhotoBytes = MAX_PHOTO_BYTES
+
     suspend fun write(out: OutputStream, json: String, manifest: String? = null, includePhotos: Boolean = true) = withContext(Dispatchers.IO) {
         ZipOutputStream(out.buffered()).use { zip ->
             if (manifest != null) {
@@ -82,15 +86,19 @@ class PhotoArchive @Inject constructor(
                     if (++entries > MAX_ENTRIES) throw IOException("too many entries")
                     when {
                         entry.isDirectory -> Unit
-                        entry.name == JSON_NAME -> json = zip.readText(MAX_JSON_BYTES)
+                        entry.name == JSON_NAME -> json = zip.readText(maxJsonBytes)
                         entry.name == MANIFEST_NAME -> manifest = zip.readText(MAX_MANIFEST_BYTES)
                         entry.name.startsWith(PHOTOS_PREFIX) && entry.name.endsWith(".jpg") -> {
-                            val target = File(stage, entry.name.removePrefix(PHOTOS_PREFIX))
+                            val relative = entry.name.removePrefix(PHOTOS_PREFIX)
+                            val target = File(stage, relative)
                             if (!target.canonicalPath.startsWith(stage.canonicalPath + File.separator)) throw IOException("bad path")
-                            target.parentFile?.mkdirs()
-                            target.outputStream().use { out -> total += zip.copyTo(out) }
-                            if (total > MAX_PHOTO_BYTES) throw IOException("archive too large")
-                            photoCount++
+                            // Only the "<estimate>/<n>.jpg" files Forkcast writes; anything else is skipped.
+                            if (app.forkcast.core.data.ai.PhotoStore.isValidPath(relative)) {
+                                target.parentFile?.mkdirs()
+                                // Stops as soon as the limit is passed, so a crafted file can't fill the phone.
+                                target.outputStream().use { out -> total += zip.copyAtMost(out, maxPhotoBytes - total) }
+                                photoCount++
+                            }
                         }
                     }
                     zip.closeEntry()
@@ -132,6 +140,19 @@ class PhotoArchive @Inject constructor(
 }
 
 /** Reads the rest of this stream as UTF-8, refusing more than [max] bytes. */
+/** Copies at most [max] bytes; more than that throws. */
+private fun InputStream.copyAtMost(out: OutputStream, max: Long): Long {
+    val chunk = ByteArray(64 * 1024)
+    var copied = 0L
+    while (true) {
+        val n = read(chunk)
+        if (n < 0) return copied
+        copied += n
+        if (copied > max) throw IOException("archive too large")
+        out.write(chunk, 0, n)
+    }
+}
+
 internal fun InputStream.readText(max: Int): String {
     val out = ByteArrayOutputStream()
     val chunk = ByteArray(64 * 1024)

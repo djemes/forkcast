@@ -53,4 +53,33 @@ class PhotoArchiveTest {
         ZipOutputStream(out).use { zip -> zip.putNextEntry(ZipEntry("photos/a/0.jpg")); zip.write(byteArrayOf(1)); zip.closeEntry() }
         assertThrows(IOException::class.java) { kotlinx.coroutines.runBlocking { archive.read(out.toByteArray().inputStream()) } }
     }
+
+    private fun zip(vararg entries: Pair<String, ByteArray>): ByteArray {
+        val out = ByteArrayOutputStream()
+        ZipOutputStream(out).use { zip -> entries.forEach { (name, data) -> zip.putNextEntry(ZipEntry(name)); zip.write(data); zip.closeEntry() } }
+        return out.toByteArray()
+    }
+
+    /** REVIEW-2 / Phase 2: an oversized part is refused, nothing stays staged, and the photos already here are untouched. */
+    @Test fun oversizedFilesAreRejectedWithoutChangingAnything() = runTest {
+        photos.root.deleteRecursively()
+        File(photos.root, "mine/0.jpg").apply { parentFile?.mkdirs(); writeBytes(byteArrayOf(7)) }
+        archive.maxPhotoBytes = 1_000
+        archive.maxJsonBytes = 100
+        val bigPhoto = zip("forkcast.json" to "{}".toByteArray(), "photos/a1/0.jpg" to ByteArray(600), "photos/a1/1.jpg" to ByteArray(600))
+        val bigJson = zip("forkcast.json" to ByteArray(200) { 'x'.code.toByte() })
+        for (bytes in listOf(bigPhoto, bigJson)) {
+            assertThrows(IOException::class.java) { kotlinx.coroutines.runBlocking { archive.read(bytes.inputStream()) } }
+            archive.commitStaged()
+            assertThat(photos.root.walkTopDown().filter { it.isFile }.map { it.relativeTo(photos.root).invariantSeparatorsPath }.toList()).containsExactly("mine/0.jpg")
+        }
+    }
+
+    @Test fun onlyForkcastPhotoNamesAreStaged() = runTest {
+        photos.root.deleteRecursively()
+        val bytes = zip("forkcast.json" to "{}".toByteArray(), "photos/a1/0.jpg" to byteArrayOf(1), "photos/a1/deep/x.jpg" to byteArrayOf(2), "photos/odd name.jpg" to byteArrayOf(3))
+        assertThat(archive.read(bytes.inputStream()).photos).isEqualTo(1)
+        archive.commitStaged()
+        assertThat(photos.root.walkTopDown().filter { it.isFile }.map { it.relativeTo(photos.root).invariantSeparatorsPath }.toList()).containsExactly("a1/0.jpg")
+    }
 }
