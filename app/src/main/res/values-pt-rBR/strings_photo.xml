@@ -19,7 +19,7 @@
     <!-- Pending rows on Today -->
     <string name="estimate_running">Estimando…</string>
     <string name="estimate_waiting_network">Esperando uma conexão</string>
-    <string name="estimate_waiting_quota">Esperando cota da IA (renova %1$s)</string>
+    <string name="estimate_waiting_quota">Esperando o limite da IA renovar (%1$s)</string>
     <string name="estimate_needs_answer">A IA tem uma pergunta. Toque para responder.</string>
     <string name="estimate_ready_review">Pronta para revisar: ~%1$s</string>
     <string name="estimate_failed">Não foi possível estimar. Toque para ver detalhes.</string>

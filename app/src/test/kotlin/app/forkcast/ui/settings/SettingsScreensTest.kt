@@ -164,7 +164,7 @@ class SettingsScreensTest {
 
     @Test fun refusedDownloadsSayWhyAndChangeNothing() {
         updates(UpdateUi.Refused(app.forkcast.core.data.update.ApkProblem.WRONG_CHECKSUM, null))
-        compose.onNodeWithText("doesn't match the release's checksum", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("doesn't match what the release lists", substring = true).assertIsDisplayed()
     }
 
     @Test fun automaticAndBetaSwitches() {

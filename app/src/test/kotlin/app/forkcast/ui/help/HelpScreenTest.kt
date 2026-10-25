@@ -42,7 +42,7 @@ class HelpScreenTest {
 
     @Test fun aLinkOpensHelpScrolledToItsAnswer() {
         show(HelpViewModel(SavedStateHandle(mapOf("entry" to HelpEntry.AI_LIMITS.name))))
-        compose.onNodeWithText("It says the AI is busy, at its limit, or out of quota").assertIsDisplayed()
+        compose.onNodeWithText("It says the AI is busy or at its limit").assertIsDisplayed()
         compose.onNodeWithText("reset at midnight Pacific time", substring = true).assertIsDisplayed()
     }
 
@@ -50,7 +50,7 @@ class HelpScreenTest {
         show()
         compose.onNodeWithText("How do I start?").assertIsDisplayed()
         compose.onNodeWithText("Search help").performTextInput("Flash-Lite")
-        compose.onNodeWithText("It says the AI is busy, at its limit, or out of quota").assertIsDisplayed()
+        compose.onNodeWithText("It says the AI is busy or at its limit").assertIsDisplayed()
         compose.onNodeWithText("How do I start?").assertDoesNotExist()
         compose.onNodeWithText("Getting started").assertDoesNotExist()
     }

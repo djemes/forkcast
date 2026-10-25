@@ -5,7 +5,7 @@
     <string name="ai_enabled_body">Estime uma refeição a partir de uma foto ou de uma descrição, usando a sua própria chave de IA.</string>
     <string name="ai_profiles_title">Seus serviços de IA</string>
     <string name="ai_order_title">Qual IA vai primeiro</string>
-    <string name="ai_order_explain">Cada serviço de IA é um provedor e um modelo, com a chave dele. A foto vai primeiro para o número 1. Se ele não conseguir responder (sem cota, ocupado, um erro), o número 2 tenta, e assim por diante. Desligue um serviço de IA para pulá-lo.</string>
+    <string name="ai_order_explain">Cada serviço de IA é um provedor e um modelo, com a chave dele. A foto vai primeiro para o número 1. Se ele não conseguir responder (no limite, ocupado, um erro), o número 2 tenta, e assim por diante. Desligue um serviço de IA para pulá-lo.</string>
     <string name="ai_section_photos">Estimativas por foto</string>
     <string name="ai_move_up_named">Subir %1$s</string>
     <string name="ai_move_down_named">Descer %1$s</string>
@@ -13,7 +13,7 @@
     <string name="ai_check_ok">Funcionando: último teste ok %1$s</string>
     <string name="ai_check_failed">Último teste falhou %1$s: %2$s</string>
     <string name="ai_check_why_key">a chave foi recusada</string>
-    <string name="ai_check_why_quota">sem cota por enquanto</string>
+    <string name="ai_check_why_quota">no limite por enquanto</string>
     <string name="ai_check_why_model">o modelo não foi encontrado</string>
     <string name="ai_check_why_network">sem conexão</string>
     <string name="ai_check_why_other">o serviço respondeu com um erro</string>
@@ -31,7 +31,7 @@
     <string name="ai_delete_body_moves_up">A chave de API dele sai deste celular, e %1$s sobe uma posição. Você pode desfazer logo em seguida.</string>
     <string name="ai_deleted">%1$s excluído</string>
     <string name="ai_used_today">Usado hoje: %1$d</string>
-    <string name="ai_cooling_down">Pausado até %1$s (cota)</string>
+    <string name="ai_cooling_down">Pausado até %1$s (limite atingido)</string>
     <string name="ai_test">Testar</string>
     <string name="ai_testing">Testando…</string>
     <string name="ai_test_ok">Conectado a %1$s em %2$d ms</string>
@@ -153,7 +153,7 @@
     <string name="ai_err_hint_permission">Esta chave não tem permissão para usar este modelo ou API.</string>
     <string name="ai_err_hint_check_key">Confira a chave deste serviço de IA e teste de novo.</string>
     <string name="ai_err_rate_limited">%1$s está ocupado ou no limite. Tente de novo em um minuto.</string>
-    <string name="ai_err_quota">A cota de %1$s acabou. Ela renova mais tarde.</string>
+    <string name="ai_err_quota">%1$s atingiu o limite. Ele renova mais tarde.</string>
     <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro em Configurações › IA, em Avançado.</string>
     <string name="ai_err_refused">%1$s preferiu não estimar esta foto.</string>
     <string name="ai_err_bad_response">%1$s mandou uma resposta que o Forkcast não conseguiu ler. Tente de novo.</string>

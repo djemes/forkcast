@@ -60,7 +60,7 @@
     <string name="help_a_ai_not_set_up">Photo and Describe need an AI service with your own key. Open Settings › AI and tap Add AI: the guide helps you get a free Gemini key or a paid Claude key and checks it before saving. If AI is set up but turned off, turn it on at the top of the same screen. If it says no key is saved, add the key again.</string>
     <string name="help_q_ai_key">The AI service rejected my key</string>
     <string name="help_a_ai_key">Usually part of the key is missing or something extra was copied. Copy it again from the service\'s website, paste it, and tap Test. A brand-new Gemini key can take a few minutes to start working. A Claude key needs a workspace and credit on the account. If you deleted the key at the service, make a new one. An AI service whose key was rejected is skipped until a test passes.</string>
-    <string name="help_q_ai_limits">It says the AI is busy, at its limit, or out of quota</string>
+    <string name="help_q_ai_limits">It says the AI is busy or at its limit</string>
     <string name="help_a_ai_limits">Free Gemini keys have limits per minute and per day. The limits count per Google Cloud project and per model, so a second key in the same project doesn\'t add more, and the daily limits reset at midnight Pacific time. That\'s why the setup also adds Gemini Flash-Lite on the same key: it has its own free limit and takes over when the first model is out. An estimate that hits a limit waits and tries again on its own. Claude is paid per use: if it says the credit is used up, add credit in the Claude Console under Billing.</string>
     <string name="help_q_ai_model">It says the model isn\'t available</string>
     <string name="help_a_ai_model">The service no longer offers the model this AI service uses, or your key can\'t use it. In Settings › AI, open Advanced, tap Edit on that AI service, and pick another model. Or delete it and tap Add AI, which sets up the current recommended model.</string>
@@ -101,7 +101,7 @@
     <string name="help_q_update_check">Checking for updates fails</string>
     <string name="help_a_update_check">Check your connection and try again later; GitHub also limits how often one network can check. While Forkcast\'s GitHub project is private, checking needs a GitHub token, added under Advanced in Settings › Updates. If GitHub refuses the token, it may have expired. You can always download the newest APK from the Releases page on GitHub.</string>
     <string name="help_q_update_install">The update won\'t install</string>
-    <string name="help_a_update_install">Forkcast checks every download first: it must be Forkcast, newer than this version, signed with the same key, and match the release\'s checksum. If a check fails, nothing is changed. Try again; a new download fixes a file that was damaged on the way. An APK signed with a different key can\'t install over this one, which is Android protecting your data.</string>
+    <string name="help_a_update_install">Forkcast checks every download first: it must be Forkcast, newer than this version, signed with the same key, and match what the release lists. If a check fails, nothing is changed. Try again; a new download fixes a file that was damaged on the way. An APK signed with a different key can\'t install over this one, which is Android protecting your data.</string>
 
     <!-- Privacy -->
     <string name="help_q_privacy_data">Where is my data, and who can see it?</string>

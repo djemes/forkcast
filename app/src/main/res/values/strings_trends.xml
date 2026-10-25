@@ -56,7 +56,7 @@
     <string name="trends_macros_target">Target</string>
     <string name="trends_macro_avg">%1$s / %2$s a day</string>
     <string name="trends_split">Protein %1$d %%, carbs %2$d %%, fat %3$d %%</string>
-    <string name="trends_split_hint">Share of calories from each macro, average over the period, compared with your targets.</string>
+    <string name="trends_split_hint">Share of calories from protein, carbs and fat, average over the period, compared with your targets.</string>
 
     <string name="trends_nutrients">Nutrients</string>
     <string name="trends_nutrients_hint">Daily average against your targets, furthest off first.</string>

@@ -142,7 +142,7 @@
     <string name="targets_limit">Limite</string>
     <string name="targets_custom">personalizada</string>
     <string name="targets_default">Padrão %1$s</string>
-    <string name="targets_section_main">Calorias e macros</string>
+    <string name="targets_section_main">Calorias, proteína, carboidratos e gordura</string>
     <string name="targets_section_limits">Fibras e limites</string>
     <string name="targets_section_micros">Vitaminas e minerais (valores diários dos EUA)</string>
     <string name="targets_edit">Meta de %1$s</string>
