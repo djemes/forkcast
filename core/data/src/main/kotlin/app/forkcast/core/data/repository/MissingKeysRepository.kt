@@ -49,7 +49,8 @@ class DefaultMissingKeysRepository @Inject constructor(
 
     override val missing: Flow<List<MissingKey>> =
         combine(ai.profiles, secrets.present, settings.settings, device.state) { profiles, present, s, d ->
-            val aiMissing = profiles
+            // With AI turned off, a missing AI key is no reason to speak up (roadmap 2.0 task 3.1).
+            val aiMissing = profiles.filter { s.ai.enabled }
                 // OpenAI-compatible endpoints (a local Ollama, say) can work without a key.
                 .filter { it.profile.enabled && !it.hasKey && it.profile.provider != ProviderId.OPENAI_COMPAT }
                 .map { MissingKey("ai:${it.profile.id}", it.profile.name) }

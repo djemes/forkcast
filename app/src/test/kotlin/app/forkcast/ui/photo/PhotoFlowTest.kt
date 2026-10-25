@@ -93,22 +93,45 @@ class PhotoFlowTest {
         assertThat(description).isEqualTo("chicken thigh, rice")
     }
 
-    @Test fun noProfileBlocksEstimateAndPointsToSettings() {
-        var openedSettings = false
+    @Test fun noProfileShowsTheOptionalAiExplainer() {
+        var setUp = false
+        var left = false
         compose.setContent {
             ForkcastTheme {
                 PhotoMealScreen(
-                    state = PhotoMealUiState(loaded = true, step = PhotoStep.DETAILS, photos = listOf(photo), mealSlotId = "l",
+                    state = PhotoMealUiState(loaded = true, step = PhotoStep.CAPTURE, mealSlotId = "l",
                         slots = FakeMealSlotRepository.DEFAULT, hasProfile = false),
                     onEvent = {},
-                    onBack = {},
-                    onOpenAiSettings = { openedSettings = true },
+                    onBack = { left = true },
+                    onSetUpAi = { setUp = true },
                 )
             }
         }
-        compose.onNodeWithText("Estimate").assertIsNotEnabled()
-        compose.onNodeWithText("Open AI settings").performScrollTo().performClick()
-        assertThat(openedSettings).isTrue()
+        // No camera and no error: what AI is for, and that the rest works without it.
+        compose.onNodeWithText("Set up AI (optional)").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Take photo").assertDoesNotExist()
+        compose.onNodeWithText("Set up now").performClick()
+        assertThat(setUp).isTrue()
+        compose.onNodeWithText("Not now").performClick()
+        assertThat(left).isTrue()
+    }
+
+    @Test fun aiTurnedOffOffersToTurnItOn() {
+        val events = mutableListOf<PhotoMealEvent>()
+        compose.setContent {
+            ForkcastTheme {
+                PhotoMealScreen(
+                    state = PhotoMealUiState(loaded = true, step = PhotoStep.DETAILS, describe = true, mealSlotId = "l",
+                        slots = FakeMealSlotRepository.DEFAULT, aiEnabled = false, hasProfile = true),
+                    onEvent = { events += it },
+                    onBack = {},
+                    onSetUpAi = {},
+                )
+            }
+        }
+        compose.onNodeWithText("AI estimates are off").assertIsDisplayed()
+        compose.onNodeWithText("Turn on").performClick()
+        assertThat(events).containsExactly(PhotoMealEvent.TurnOnAi)
     }
 
     @Test fun detailsStepSendsEstimate() {
@@ -120,7 +143,7 @@ class PhotoFlowTest {
                         slots = FakeMealSlotRepository.DEFAULT, hasProfile = true, notificationPermissionAsked = true),
                     onEvent = { events += it },
                     onBack = {},
-                    onOpenAiSettings = {},
+                    onSetUpAi = {},
                 )
             }
         }
@@ -232,7 +255,7 @@ class PhotoFlowTest {
                         state = PhotoMealUiState(loaded = true, step = PhotoStep.CAPTURE, photos = listOf(photo, photo), mealSlotId = "l", slots = FakeMealSlotRepository.DEFAULT, hasProfile = true),
                         onEvent = {},
                         onBack = {},
-                        onOpenAiSettings = {},
+                        onSetUpAi = {},
                     )
                 }
             }
@@ -244,7 +267,7 @@ class PhotoFlowTest {
     }
 
     private fun capture(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit = {}) = compose.setContent {
-        ForkcastTheme { PhotoMealScreen(state = state, onEvent = onEvent, onBack = {}, onOpenAiSettings = {}) }
+        ForkcastTheme { PhotoMealScreen(state = state, onEvent = onEvent, onBack = {}, onSetUpAi = {}) }
     }
 
     private val captureState = PhotoMealUiState(loaded = true, step = PhotoStep.CAPTURE, photos = listOf(photo), mealSlotId = "l", slots = FakeMealSlotRepository.DEFAULT, hasProfile = true)

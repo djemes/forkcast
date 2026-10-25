@@ -162,4 +162,15 @@
     <string name="ai_err_network">Sem conexão. A estimativa vai rodar quando você voltar a ficar online.</string>
     <string name="ai_err_timeout">%1$s demorou demais para responder. Tente de novo.</string>
     <string name="ai_err_server">%1$s teve um problema (erro %2$d). Tente de novo mais tarde.</string>
+
+    <!-- "Configurar IA (opcional)" -->
+    <string name="ai_optional_title">Configurar IA (opcional)</string>
+    <string name="ai_optional_body">O Forkcast pode estimar uma refeição a partir de uma foto ou de uma descrição curta. Para isso, ele usa um serviço de IA que você conecta com a sua própria conta.</string>
+    <string name="ai_optional_needs">Do que precisa: uma conta Google gratuita (ou uma conta paga na Anthropic) e uns 5 minutos.</string>
+    <string name="ai_optional_without">Todo o resto funciona sem IA: leia um código de barras, pesquise um alimento ou cadastre o seu.</string>
+    <string name="ai_optional_set_up">Configurar agora</string>
+    <string name="ai_optional_not_now">Agora não</string>
+    <string name="ai_off_title">As estimativas por IA estão desligadas</string>
+    <string name="ai_off_body">Você desligou as estimativas por IA. Ligue-as para estimar uma refeição por foto ou descrição.</string>
+    <string name="ai_off_turn_on">Ligar</string>
 </resources>

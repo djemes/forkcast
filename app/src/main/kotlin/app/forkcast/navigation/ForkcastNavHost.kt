@@ -376,7 +376,10 @@ fun ForkcastNavHost(
             PhotoMealRoute(
                 onBack = back,
                 onQueued = { navController.popBackStack<TodayDestination>(inclusive = false) },
-                onOpenAiSettings = { navController.navigate(AiSettingsDestination) },
+                // VERIFY: becomes the AI setup guide (task 3.3).
+                onSetUpAi = {
+                    navController.navigate(AiSettingsDestination) { popUpTo<PhotoMealDestination> { inclusive = true } }
+                },
             )
         }
         composable<ReviewDestination> {

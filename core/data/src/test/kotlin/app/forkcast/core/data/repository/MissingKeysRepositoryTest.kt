@@ -75,6 +75,12 @@ class MissingKeysRepositoryTest {
         assertThat(device.state.value.dismissedMissingKeys).contains("ai:$id")
     }
 
+    @Test fun aiTurnedOffDoesNotAskForAiKeys() = runTest {
+        ai.saveProfile(AiProfileDraft(null, "Claude", ProviderId.CLAUDE, "m", null, TierLabel.PAID), null)
+        settings.updateAi { it.copy(enabled = false) }
+        assertThat(repo.missing.first()).isEmpty()
+    }
+
     @Test fun keyRemovedOnPurposeIsNotAskedFor() = runTest {
         repo.noteFoodDatabaseKey(true)
         repo.noteFoodDatabaseKey(false)

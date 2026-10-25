@@ -54,7 +54,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -84,6 +83,7 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.ai.AiOptionalPage
 import app.forkcast.ui.scan.CameraViewfinder
 import app.forkcast.ui.scan.rememberCameraPermission
 import coil3.compose.AsyncImage
@@ -94,14 +94,14 @@ import java.util.UUID
 fun PhotoMealRoute(
     onBack: () -> Unit,
     onQueued: (String) -> Unit,
-    onOpenAiSettings: () -> Unit,
+    onSetUpAi: () -> Unit,
     viewModel: PhotoMealViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { if (it is PhotoMealEffect.Queued) onQueued(it.mealName) }
     }
-    PhotoMealScreen(state, viewModel::onEvent, onBack, onOpenAiSettings)
+    PhotoMealScreen(state, viewModel::onEvent, onBack, onSetUpAi)
 }
 
 @Composable
@@ -109,8 +109,18 @@ fun PhotoMealScreen(
     state: PhotoMealUiState,
     onEvent: (PhotoMealEvent) -> Unit,
     onBack: () -> Unit,
-    onOpenAiSettings: () -> Unit,
+    onSetUpAi: () -> Unit,
 ) {
+    // Nothing (no camera, no permission prompt) until we know whether an AI can estimate;
+    // without one, a short explainer instead of a dead end (roadmap 2.0 task 3.1).
+    if (!state.loaded) {
+        Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background))
+        return
+    }
+    if (!state.aiReady) {
+        AiOptionalPage(off = !state.aiEnabled, onSetUp = onSetUpAi, onTurnOn = { onEvent(PhotoMealEvent.TurnOnAi) }, onNotNow = onBack)
+        return
+    }
     val context = LocalContext.current
     val pickOne = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) onEvent(PhotoMealEvent.AddPhotos(listOf(uri)))
@@ -139,7 +149,7 @@ fun PhotoMealScreen(
         // Describe has no camera step: Back leaves.
         PhotoStep.DETAILS -> DetailsStep(
             state, onEvent, onBack = { if (state.describe) onBack() else onEvent(PhotoMealEvent.BackToCamera) },
-            onEstimate = estimate, onOpenAiSettings = onOpenAiSettings,
+            onEstimate = estimate,
         )
     }
 }
@@ -387,7 +397,6 @@ private fun DetailsStep(
     onEvent: (PhotoMealEvent) -> Unit,
     onBack: () -> Unit,
     onEstimate: () -> Unit,
-    onOpenAiSettings: () -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -434,13 +443,6 @@ private fun DetailsStep(
                         label = { Text(slot.name) },
                         modifier = Modifier.heightIn(min = 48.dp),
                     )
-                }
-            }
-            when {
-                !state.aiEnabled -> Text(stringResource(R.string.photo_ai_off), color = MaterialTheme.colorScheme.error)
-                !state.hasProfile -> {
-                    Text(stringResource(R.string.photo_no_ai), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-                    OutlinedButton(onClick = onOpenAiSettings) { Text(stringResource(R.string.photo_open_ai_settings)) }
                 }
             }
             if (state.photoUnreadable) {

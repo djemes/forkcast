@@ -160,4 +160,15 @@
     <string name="ai_err_network">No connection. The estimate will run when you\'re back online.</string>
     <string name="ai_err_timeout">%1$s took too long to answer. Try again.</string>
     <string name="ai_err_server">%1$s had a problem (error %2$d). Try again later.</string>
+
+    <!-- "Set up AI (optional)": Photo or Describe with no AI set up (roadmap 2.0 task 3.1) -->
+    <string name="ai_optional_title">Set up AI (optional)</string>
+    <string name="ai_optional_body">Forkcast can estimate a meal from a photo or a short description. For that it uses an AI service that you connect with your own account.</string>
+    <string name="ai_optional_needs">What it takes: a free Google account (or a paid Anthropic account) and about 5 minutes.</string>
+    <string name="ai_optional_without">Everything else works without it: scan a barcode, search for a food, or add your own.</string>
+    <string name="ai_optional_set_up">Set up now</string>
+    <string name="ai_optional_not_now">Not now</string>
+    <string name="ai_off_title">AI estimates are off</string>
+    <string name="ai_off_body">You turned off AI estimates. Turn them on to estimate a meal from a photo or a description.</string>
+    <string name="ai_off_turn_on">Turn on</string>
 </resources>

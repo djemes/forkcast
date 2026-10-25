@@ -53,8 +53,10 @@ data class PhotoMealUiState(
     val latestMinute: Int? = null,
 ) {
     val canAddPhoto: Boolean get() = photos.size < MAX_PHOTOS
+    /** An AI can take this estimate; otherwise the screen explains AI instead (roadmap 2.0 task 3.1). */
+    val aiReady: Boolean get() = aiEnabled && hasProfile
     val canEstimate: Boolean
-        get() = (if (describe) description.isNotBlank() else photos.isNotEmpty()) && aiEnabled && hasProfile && mealSlotId.isNotBlank() && !submitting
+        get() = (if (describe) description.isNotBlank() else photos.isNotEmpty()) && aiReady && mealSlotId.isNotBlank() && !submitting
     val minute: Int get() = eatenMinute ?: defaultMinute
 
     companion object {
@@ -73,6 +75,7 @@ sealed interface PhotoMealEvent {
     data class SetTime(val minute: Int) : PhotoMealEvent
     data object Estimate : PhotoMealEvent
     data object NotificationPermissionAsked : PhotoMealEvent
+    data object TurnOnAi : PhotoMealEvent
 }
 
 sealed interface PhotoMealEffect {
@@ -130,6 +133,7 @@ class PhotoMealViewModel @Inject constructor(
             PhotoMealEvent.NotificationPermissionAsked -> viewModelScope.launch {
                 settings.updateNotifications { it.copy(permissionAsked = true) }
             }
+            PhotoMealEvent.TurnOnAi -> viewModelScope.launch { settings.updateAi { it.copy(enabled = true) } }
             PhotoMealEvent.Estimate -> estimate()
         }
     }
