@@ -56,6 +56,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
@@ -291,7 +293,7 @@ private fun TypeBarcodeDialog(onSubmit: (String) -> Boolean, onDismiss: () -> Un
 fun PermissionExplainer(onAllow: () -> Unit, modifier: Modifier = Modifier) {
     Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = modifier.padding(24.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(24.dp)) {
-            Text(stringResource(R.string.camera_permission_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.camera_permission_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             Text(stringResource(R.string.camera_permission_body), style = MaterialTheme.typography.bodyLarge)
             Button(onClick = onAllow, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.camera_permission_allow)) }
             HelpLink(HelpEntry.LOG_CAMERA)

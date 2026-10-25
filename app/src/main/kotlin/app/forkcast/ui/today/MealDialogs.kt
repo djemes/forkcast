@@ -31,6 +31,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import app.forkcast.R
 import app.forkcast.core.model.MealSlot
 import app.forkcast.core.model.SavedMeal
@@ -114,7 +116,7 @@ fun SavedMealsSheet(
                 .navigationBarsPadding()
                 .padding(bottom = 16.dp),
         ) {
-            Text(stringResource(R.string.saved_meals_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 16.dp))
+            Text(stringResource(R.string.saved_meals_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.padding(horizontal = 16.dp).semantics { heading() })
             Text(
                 stringResource(R.string.log_sheet_title, mealName),
                 style = MaterialTheme.typography.bodyMedium,

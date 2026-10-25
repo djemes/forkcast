@@ -36,6 +36,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.material3.Icon
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import app.forkcast.core.model.WaterContainer
 import app.forkcast.ui.theme.ForkcastTheme
 import java.util.Locale
@@ -120,7 +122,7 @@ fun WaterSettingsScreen(
                 }
             }
             // The four containers of Today's water drop, one layout each (owner, 2026-10-24), in the user's units.
-            Text(stringResource(R.string.water_containers_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
+            Text(stringResource(R.string.water_containers_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp).semantics { heading() })
             Text(stringResource(R.string.water_containers_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             val flOz = s.units.water == app.forkcast.core.model.WaterUnit.FL_OZ
             listOf(

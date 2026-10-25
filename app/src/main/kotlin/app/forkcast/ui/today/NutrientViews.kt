@@ -29,6 +29,7 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
 import app.forkcast.R
 import app.forkcast.ui.common.rememberFill
 import app.forkcast.ui.theme.Motion
@@ -199,7 +200,7 @@ fun NutrientPanelSheet(totals: DayTotals, targets: DailyTargets, f: UnitFormatte
                 .navigationBarsPadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            Text(stringResource(R.string.nutrients_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.nutrients_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             NutrientKey.entries.forEach { key ->
                 val eaten = totals[key]
                 val target = targets.targets[key]

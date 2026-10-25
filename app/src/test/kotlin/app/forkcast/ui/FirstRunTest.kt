@@ -6,6 +6,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToNodeAction
 import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isHeading
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -105,7 +106,7 @@ class FirstRunTest {
         compose.onNodeWithText("Log what you eat", substring = true).assertIsDisplayed()
         compose.onNodeWithText("Log a meal").performClick()
         // The Log sheet opens for the meal that fits the time (12:40, lunch).
-        compose.onNodeWithText("Log to Lunch").assertExists()
+        compose.onNode(hasText("Log to Lunch") and isHeading()).assertExists()
     }
 
     @Test fun todayFirstDayCardWorksInDarkThemeAtDoubleFontScale() = runTest {
