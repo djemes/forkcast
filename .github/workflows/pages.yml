@@ -1,9 +1,7 @@
 # Publishes site/ (homepage + privacy policy) to GitHub Pages at
 # https://djemes.github.io/forkcast/. Manual only: Pages needs a public repo on the
-# free plan, and this repo is private. While private, the live copy is the public
-# repo djemes/forkcast-site (https://djemes.github.io/forkcast-site/); keep both in sync.
-# To switch: make this repo public, set Settings › Pages › Source to "GitHub Actions",
-# run this workflow, then update the two URLs on the Google Auth Platform Branding page.
+# free plan, and this repo is private until Phase 5. To publish: make this repo public,
+# set Settings › Pages › Source to "GitHub Actions", then run this workflow.
 name: Pages
 
 on:
