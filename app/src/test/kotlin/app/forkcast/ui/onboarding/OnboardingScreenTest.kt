@@ -45,6 +45,8 @@ class OnboardingScreenTest {
         fun next() = compose.onNodeWithText("Continue").performClick()
 
         compose.onNodeWithText("Welcome to Forkcast").assertIsDisplayed()
+        compose.onNodeWithText("Get started").performClick()
+        compose.onNodeWithText("Your units").assertIsDisplayed()
         compose.onNodeWithText("kg").performClick()
         compose.onNodeWithText("cm").performClick()
         next()
@@ -61,6 +63,11 @@ class OnboardingScreenTest {
 
         compose.onNodeWithText("Your daily budget").assertIsDisplayed()
         compose.onNodeWithText("2,290 kcal per day").assertIsDisplayed()
+        next()
+        // The optional extras, each with its own button; none is required.
+        compose.waitUntil(5_000) { vm.state.value.saved }
+        compose.onNodeWithText("Extras, if you want them").assertIsDisplayed()
+        compose.onNodeWithText("Estimate meals from a photo").assertIsDisplayed()
         compose.onNodeWithText("Start tracking").performClick()
         compose.waitUntil(5_000) { vm.state.value.finished }
         assertThat(vm.state.value.draft.units).isEqualTo(UnitPrefs.METRIC)

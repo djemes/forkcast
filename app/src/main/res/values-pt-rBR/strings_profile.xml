@@ -7,8 +7,8 @@
     <string name="action_save">Salvar</string>
 
     <!-- Units -->
-    <string name="onb_units_title">Bem-vindo ao Forkcast</string>
-    <string name="onb_units_body">Algumas perguntas transformam sua meta em um orçamento diário. Primeiro, as unidades que você usa.</string>
+    <string name="onb_units_title">Suas unidades</string>
+    <string name="onb_units_body">Algumas perguntas transformam sua meta em um orçamento diário. Primeiro, as unidades que você usa. Dá para mudar depois.</string>
     <string name="units_weight">Peso</string>
     <string name="units_height">Altura</string>
     <string name="units_energy">Energia</string>
@@ -152,4 +152,30 @@
     <string name="targets_kind_goal">uma meta a alcançar</string>
     <string name="targets_kind_limit">um limite a não passar</string>
     <string name="targets_kind_line">%1$s é %2$s.</string>
+
+    <!-- Integração, 1.7 -->
+    <string name="onb_welcome_title">Boas-vindas ao Forkcast</string>
+    <string name="onb_welcome_body">Registre o que você come e veja como isso cabe num orçamento diário feito para a sua meta.</string>
+    <string name="onb_welcome_private">Tudo fica no seu celular. Sem conta, sem anúncios.</string>
+    <string name="onb_welcome_start">Começar</string>
+    <string name="onb_extras_title">Extras, se você quiser</string>
+    <string name="onb_extras_body">Cada um é opcional. Configure agora ou quando quiser.</string>
+    <string name="onb_extra_ai_title">Estimar refeições por foto</string>
+    <string name="onb_extra_ai_body">Tire uma foto do prato ou descreva-o, e a IA estima as calorias para você.</string>
+    <string name="onb_extra_ai_needs">Precisa de uma conta Google gratuita (ou uma conta paga na Anthropic) e uns 5 minutos.</string>
+    <string name="onb_extra_hc_title">Sincronizar atividade e peso</string>
+    <string name="onb_extra_hc_body">Passos e exercícios podem somar ao seu orçamento, e as pesagens de uma balança inteligente chegam sozinhas.</string>
+    <string name="onb_extra_hc_needs">Precisa do Health Connect neste celular.</string>
+    <string name="onb_extra_backup_title">Backup automático</string>
+    <string name="onb_extra_backup_body">Uma cópia semanal dos seus dados numa pasta que você escolhe, para que perder o celular não signifique perder o histórico.</string>
+    <string name="onb_extra_backup_needs">Precisa de uma pasta. Uma que sincroniza com a nuvem mantém seus dados seguros mesmo se você perder o celular.</string>
+    <string name="onb_extra_notify_title">Lembretes e avisos</string>
+    <string name="onb_extra_notify_body">Lembretes das refeições, um balanço semanal e um aviso quando uma estimativa por foto fica pronta.</string>
+    <string name="onb_extra_notify_needs">O Android pede a sua permissão. Você escolhe quais recebe.</string>
+    <string name="onb_extra_later">Depois: Configurações › %1$s</string>
+    <string name="onb_extra_set_up">Configurar</string>
+    <string name="onb_extra_connect">Conectar</string>
+    <string name="onb_extra_choose_folder">Escolher uma pasta</string>
+    <string name="onb_extra_turn_on">Ativar</string>
+    <string name="onb_extra_ready">Pronto</string>
 </resources>

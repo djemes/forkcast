@@ -130,7 +130,6 @@ fun ScannerScreen(
     var torch by rememberSaveable { mutableStateOf(false) }
     var camera by remember { mutableStateOf<androidx.camera.core.Camera?>(null) }
     var typing by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(granted) { if (!granted) request() }
     LaunchedEffect(torch, camera) { camera?.cameraControl?.enableTorch(torch) }
 
     Box(Modifier.fillMaxSize().background(Color.Black)) {

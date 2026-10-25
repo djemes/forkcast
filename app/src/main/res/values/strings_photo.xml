@@ -64,4 +64,8 @@
     <!-- Validator warnings (roadmap 2.0, task 1.6: words from resources, not from the parser) -->
     <string name="review_warning_no_weight">\"%1$s\" left out: no weight</string>
     <string name="review_warning_kcal_capped">\"%1$s\": calories looked impossible for its weight and were lowered</string>
+    <string name="photo_notify_title">Get a notice when it\'s ready?</string>
+    <string name="photo_notify_body">An estimate can take a minute. Forkcast can let you know when it\'s ready, so you don\'t have to wait here. Android asks for your permission next.</string>
+    <string name="photo_notify_continue">Continue</string>
+    <string name="photo_notify_not_now">Not now</string>
 </resources>

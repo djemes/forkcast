@@ -213,11 +213,18 @@ fun ForkcastNavHost(
         predictivePopExitTransition = { _ -> backAway(follow = true) },
     ) {
         composable<OnboardingDestination> {
-            OnboardingRoute(onFinished = {
-                navController.navigate(TodayDestination) {
-                    popUpTo(OnboardingDestination) { inclusive = true }
-                }
-            })
+            OnboardingRoute(
+                onFinished = {
+                    navController.navigate(TodayDestination) {
+                        popUpTo(OnboardingDestination) { inclusive = true }
+                    }
+                },
+                extras = app.forkcast.ui.onboarding.ExtrasActions(
+                    setUpAi = { navController.navigate(AiSetupDestination) },
+                    healthConnect = { navController.navigate(HealthConnectDestination) },
+                    backup = { navController.navigate(BackupDestination) },
+                ),
+            )
         }
         composable<TodayDestination> { entry ->
             val added by entry.savedStateHandle.getStateFlow<String?>(ADDED_TO, null).collectAsStateWithLifecycle()

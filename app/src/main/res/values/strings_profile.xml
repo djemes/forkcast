@@ -7,8 +7,8 @@
     <string name="action_save">Save</string>
 
     <!-- Units -->
-    <string name="onb_units_title">Welcome to Forkcast</string>
-    <string name="onb_units_body">A few questions turn your goal into a daily budget. First, the units you think in.</string>
+    <string name="onb_units_title">Your units</string>
+    <string name="onb_units_body">A few questions turn your goal into a daily budget. First, the units you think in. You can change them later.</string>
     <string name="units_weight">Weight</string>
     <string name="units_height">Height</string>
     <string name="units_energy">Energy</string>
@@ -152,4 +152,30 @@
     <string name="targets_kind_goal">a goal to reach</string>
     <string name="targets_kind_limit">a limit to stay under</string>
     <string name="targets_kind_line">%1$s is %2$s.</string>
+
+    <!-- Onboarding, 1.7 (roadmap 2.0 task 3.2) -->
+    <string name="onb_welcome_title">Welcome to Forkcast</string>
+    <string name="onb_welcome_body">Log what you eat and see how it fits a daily budget made for your goal.</string>
+    <string name="onb_welcome_private">Everything stays on your phone. No account, no ads.</string>
+    <string name="onb_welcome_start">Get started</string>
+    <string name="onb_extras_title">Extras, if you want them</string>
+    <string name="onb_extras_body">Each one is optional. Set it up now or any time later.</string>
+    <string name="onb_extra_ai_title">Estimate meals from a photo</string>
+    <string name="onb_extra_ai_body">Take a photo of your plate or describe it, and AI estimates the calories for you.</string>
+    <string name="onb_extra_ai_needs">Needs a free Google account (or a paid Anthropic account) and about 5 minutes.</string>
+    <string name="onb_extra_hc_title">Sync activity and weight</string>
+    <string name="onb_extra_hc_body">Steps and workouts can add to your budget, and weigh-ins from a smart scale arrive on their own.</string>
+    <string name="onb_extra_hc_needs">Needs Health Connect on this phone.</string>
+    <string name="onb_extra_backup_title">Back up automatically</string>
+    <string name="onb_extra_backup_body">A weekly copy of your data in a folder you choose, so a lost phone doesn\'t mean lost history.</string>
+    <string name="onb_extra_backup_needs">Needs a folder. One that syncs to the cloud keeps your data safe even if you lose the phone.</string>
+    <string name="onb_extra_notify_title">Reminders and notices</string>
+    <string name="onb_extra_notify_body">Meal reminders, a weekly check-in, and a notice when a photo estimate is ready.</string>
+    <string name="onb_extra_notify_needs">Android asks for your permission. You choose which ones you get.</string>
+    <string name="onb_extra_later">Later: Settings › %1$s</string>
+    <string name="onb_extra_set_up">Set up</string>
+    <string name="onb_extra_connect">Connect</string>
+    <string name="onb_extra_choose_folder">Choose a folder</string>
+    <string name="onb_extra_turn_on">Turn on</string>
+    <string name="onb_extra_ready">Ready</string>
 </resources>

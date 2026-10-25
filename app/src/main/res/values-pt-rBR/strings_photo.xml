@@ -64,4 +64,8 @@
     <!-- Validator warnings (roadmap 2.0, task 1.6: words from resources, not from the parser) -->
     <string name="review_warning_no_weight">\"%1$s\" deixado de fora: sem peso</string>
     <string name="review_warning_kcal_capped">\"%1$s\": as calorias pareciam impossíveis para o peso e foram reduzidas</string>
+    <string name="photo_notify_title">Receber um aviso quando ficar pronta?</string>
+    <string name="photo_notify_body">Uma estimativa pode levar um minuto. O Forkcast pode avisar quando ela ficar pronta, para você não precisar esperar aqui. Em seguida, o Android pede a sua permissão.</string>
+    <string name="photo_notify_continue">Continuar</string>
+    <string name="photo_notify_not_now">Agora não</string>
 </resources>

@@ -45,6 +45,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import app.forkcast.ui.common.MealTimeField
 import app.forkcast.ui.common.keyboardAware
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
@@ -57,6 +58,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -138,10 +140,31 @@ fun PhotoMealScreen(
         onEvent(PhotoMealEvent.NotificationPermissionAsked)
         onEvent(PhotoMealEvent.Estimate)
     }
+    // One plain sentence first; Android's dialog only after "Continue" (roadmap 2.0 task 3.2).
+    var askNotify by rememberSaveable { mutableStateOf(false) }
     val estimate = {
         val needsAsk = Build.VERSION.SDK_INT >= 33 && !state.notificationPermissionAsked &&
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        if (needsAsk) notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS) else onEvent(PhotoMealEvent.Estimate)
+        if (needsAsk) askNotify = true else onEvent(PhotoMealEvent.Estimate)
+    }
+    if (askNotify) {
+        AlertDialog(
+            onDismissRequest = { askNotify = false },
+            title = { Text(stringResource(R.string.photo_notify_title)) },
+            text = { Text(stringResource(R.string.photo_notify_body)) },
+            confirmButton = {
+                TextButton(onClick = { askNotify = false; notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
+                    Text(stringResource(R.string.photo_notify_continue))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = {
+                    askNotify = false
+                    onEvent(PhotoMealEvent.NotificationPermissionAsked)
+                    onEvent(PhotoMealEvent.Estimate)
+                }) { Text(stringResource(R.string.photo_notify_not_now)) }
+            },
+        )
     }
 
     when (state.step) {
@@ -172,7 +195,6 @@ private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Un
     }
     val (granted, request) = rememberCameraPermission()
     var busy by remember { mutableStateOf(false) }
-    LaunchedEffect(granted) { if (!granted) request() }
 
     fun shoot() {
         if (busy || !state.canAddPhoto) return

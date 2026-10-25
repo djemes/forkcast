@@ -38,6 +38,7 @@ class OnboardingViewModelTest {
     @After fun tearDown() = Dispatchers.resetMain()
 
     private fun OnboardingViewModel.fillToGoal() {
+        onEvent(OnboardingEvent.Next) // welcome
         onEvent(OnboardingEvent.Units(UnitPrefs.METRIC)); onEvent(OnboardingEvent.Next)
         onEvent(OnboardingEvent.SexChosen(Sex.MALE)); onEvent(OnboardingEvent.Next)
         onEvent(OnboardingEvent.BirthDate(LocalDate.of(1986, 10, 18))); onEvent(OnboardingEvent.Next)
@@ -57,7 +58,14 @@ class OnboardingViewModelTest {
         assertThat(s.step).isEqualTo(OnboardingStep.RESULT)
         assertThat(s.preview!!.budgetKcal).isEqualTo(2290)
 
+        // Accepting the budget saves everything, then the optional extras; no way back into the questions.
         vm.onEvent(OnboardingEvent.Finish)
+        assertThat(vm.state.value.step).isEqualTo(OnboardingStep.EXTRAS)
+        assertThat(vm.state.value.saved).isTrue()
+        assertThat(vm.state.value.finished).isFalse()
+        vm.onEvent(OnboardingEvent.Back)
+        assertThat(vm.state.value.step).isEqualTo(OnboardingStep.EXTRAS)
+        vm.onEvent(OnboardingEvent.Done)
         assertThat(vm.state.value.finished).isTrue()
         assertThat(profiles.profileState.value!!.heightCm).isEqualTo(180.0)
         assertThat(profiles.goalState.value!!.weeklyRateKg).isEqualTo(0.5)
@@ -67,6 +75,8 @@ class OnboardingViewModelTest {
 
     @Test fun cannotContinueWithoutAnswer() {
         val vm = vm()
+        assertThat(vm.state.value.step).isEqualTo(OnboardingStep.WELCOME)
+        vm.onEvent(OnboardingEvent.Next)
         vm.onEvent(OnboardingEvent.Next)
         assertThat(vm.state.value.step).isEqualTo(OnboardingStep.SEX)
         assertThat(vm.state.value.canContinue).isFalse()

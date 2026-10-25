@@ -132,7 +132,6 @@ fun LabelScanRoute(
     val (granted, request) = rememberCameraPermission()
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-    LaunchedEffect(granted) { if (!granted) request() }
     LaunchedEffect(viewModel) { viewModel.results.collect(onParsed) }
 
     suspend fun takePhoto(): Bitmap = suspendCancellableCoroutine { cont ->

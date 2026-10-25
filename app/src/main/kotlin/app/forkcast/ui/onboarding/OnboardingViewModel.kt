@@ -51,7 +51,12 @@ data class OnboardingDraft(
     fun date(): LocalDate? = targetDate?.let(LocalDate::parse)
 }
 
-enum class OnboardingStep { UNITS, SEX, BIRTH_DATE, HEIGHT, WEIGHT, ACTIVITY, GOAL, TARGET_WEIGHT, PACE, RESULT }
+/**
+ * Welcome → (Phase 4: the agreement goes here) → units → profile and goal → budget → optional
+ * extras (roadmap 2.0 task 3.2). The profile is saved when the budget is accepted, so the extras
+ * can open other screens and a closed app never asks the questions again.
+ */
+enum class OnboardingStep { WELCOME, UNITS, SEX, BIRTH_DATE, HEIGHT, WEIGHT, ACTIVITY, GOAL, TARGET_WEIGHT, PACE, RESULT, EXTRAS }
 
 data class OnboardingUiState(
     val draft: OnboardingDraft,
@@ -63,6 +68,8 @@ data class OnboardingUiState(
     val preview: DailyTargets?,
     val today: LocalDate,
     val saving: Boolean = false,
+    /** Profile, goal and first weight are saved (on leaving the budget step); no way back. */
+    val saved: Boolean = false,
     val finished: Boolean = false,
 )
 
@@ -80,7 +87,10 @@ sealed interface OnboardingEvent {
     data class TargetDate(val date: LocalDate) : OnboardingEvent
     data object Next : OnboardingEvent
     data object Back : OnboardingEvent
+    /** Accept the budget: saves everything and moves on to the optional extras. */
     data object Finish : OnboardingEvent
+    /** Leave the extras for Today. */
+    data object Done : OnboardingEvent
 }
 
 @HiltViewModel
@@ -99,7 +109,7 @@ class OnboardingViewModel @Inject constructor(
             draft = savedState.get<String>(KEY_DRAFT)?.let { runCatching { json.decodeFromString<OnboardingDraft>(it) }.getOrNull() }
                 ?: OnboardingDraft(units = UnitFormatter.defaultsFor(Locale.getDefault())),
             step = savedState.get<String>(KEY_STEP)?.let { runCatching { OnboardingStep.valueOf(it) }.getOrNull() }
-                ?: OnboardingStep.UNITS,
+                ?: OnboardingStep.WELCOME,
         ),
     )
     val state: StateFlow<OnboardingUiState> = _state.asStateFlow()
@@ -120,6 +130,7 @@ class OnboardingViewModel @Inject constructor(
             OnboardingEvent.Next -> move(+1)
             OnboardingEvent.Back -> move(-1)
             OnboardingEvent.Finish -> finish()
+            OnboardingEvent.Done -> _state.update { if (it.saved) it.copy(finished = true) else it }
         }
     }
 
@@ -164,6 +175,7 @@ class OnboardingViewModel @Inject constructor(
 
     private fun move(delta: Int) {
         _state.update { s ->
+            if (s.saved) return@update s
             val steps = stepsFor(s.draft)
             val i = (steps.indexOf(s.step) + delta).coerceIn(0, steps.lastIndex)
             build(s.draft, steps[i])
@@ -187,7 +199,7 @@ class OnboardingViewModel @Inject constructor(
     }
 
     private fun isValid(d: OnboardingDraft, step: OnboardingStep): Boolean = when (step) {
-        OnboardingStep.UNITS -> true
+        OnboardingStep.WELCOME, OnboardingStep.UNITS, OnboardingStep.EXTRAS -> true
         OnboardingStep.SEX -> d.sex != null
         OnboardingStep.BIRTH_DATE -> d.birth()?.let { it.isBefore(today().minusYears(MIN_AGE)) && it.isAfter(today().minusYears(120)) } == true
         OnboardingStep.HEIGHT -> d.heightCm?.let { it in 90.0..250.0 } == true
@@ -241,6 +253,7 @@ class OnboardingViewModel @Inject constructor(
 
     private fun finish() {
         val s = _state.value
+        if (s.saved) return
         val profile = toProfile(s.draft) ?: return
         val goal = toGoal(s.draft) ?: return
         val weight = s.draft.weightKg ?: return
@@ -250,9 +263,9 @@ class OnboardingViewModel @Inject constructor(
             profileRepository.saveProfile(profile)
             profileRepository.saveGoal(goal)
             weightRepository.add(weight, null, clock.instant())
+            _state.update { build(it.draft, OnboardingStep.EXTRAS).copy(saved = true) }
             savedState.remove<String>(KEY_DRAFT)
             savedState.remove<String>(KEY_STEP)
-            _state.update { it.copy(saving = false, finished = true) }
         }
     }
 

@@ -2,6 +2,7 @@ package app.forkcast.ui.onboarding
 
 import app.forkcast.ui.format.unitLabels
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -28,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -47,15 +50,29 @@ import app.forkcast.ui.format.UnitFormatter
 import kotlin.math.abs
 
 @Composable
-fun OnboardingRoute(onFinished: () -> Unit, viewModel: OnboardingViewModel = hiltViewModel()) {
+fun OnboardingRoute(
+    onFinished: () -> Unit,
+    extras: ExtrasActions = ExtrasActions(),
+    viewModel: OnboardingViewModel = hiltViewModel(),
+    extrasViewModel: OnboardingExtrasViewModel = hiltViewModel(),
+) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val extrasState by extrasViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.finished) { if (state.finished) onFinished() }
-    OnboardingScreen(state, viewModel::onEvent)
+    OnboardingScreen(state, viewModel::onEvent, extrasState, extras, onNotificationsAsked = { extrasViewModel.notificationPermissionAsked() })
 }
 
 @Composable
-fun OnboardingScreen(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
-    BackHandler(enabled = state.stepIndex > 0) { onEvent(OnboardingEvent.Back) }
+fun OnboardingScreen(
+    state: OnboardingUiState,
+    onEvent: (OnboardingEvent) -> Unit,
+    extras: ExtrasState = ExtrasState(),
+    extrasActions: ExtrasActions = ExtrasActions(),
+    onNotificationsAsked: () -> Unit = {},
+) {
+    // Once the budget is saved there's no going back into the questions (Settings has them all).
+    val canGoBack = state.stepIndex > 0 && !state.saved
+    BackHandler(enabled = canGoBack) { onEvent(OnboardingEvent.Back) }
     Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
         Column(
             Modifier
@@ -64,7 +81,7 @@ fun OnboardingScreen(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Uni
                 .imePadding(),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 4.dp, vertical = 8.dp)) {
-                if (state.stepIndex > 0) {
+                if (canGoBack) {
                     IconButton(onClick = { onEvent(OnboardingEvent.Back) }) {
                         Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back))
                     }
@@ -87,17 +104,26 @@ fun OnboardingScreen(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Uni
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 16.dp, vertical = 8.dp),
             ) {
-                StepContent(state, onEvent)
+                if (state.step == OnboardingStep.EXTRAS) {
+                    OnboardingExtras(extras, extrasActions, onNotificationsAsked)
+                } else {
+                    StepContent(state, onEvent)
+                }
             }
-            val last = state.step == OnboardingStep.RESULT
+            val (event, label) = when (state.step) {
+                OnboardingStep.WELCOME -> OnboardingEvent.Next to R.string.onb_welcome_start
+                OnboardingStep.RESULT -> OnboardingEvent.Finish to R.string.action_continue
+                OnboardingStep.EXTRAS -> OnboardingEvent.Done to R.string.action_start
+                else -> OnboardingEvent.Next to R.string.action_continue
+            }
             Button(
-                onClick = { onEvent(if (last) OnboardingEvent.Finish else OnboardingEvent.Next) },
+                onClick = { onEvent(event) },
                 enabled = state.canContinue && !state.saving,
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(16.dp)
                     .heightIn(min = 56.dp),
-            ) { Text(stringResource(if (last) R.string.action_start else R.string.action_continue)) }
+            ) { Text(stringResource(label)) }
         }
     }
 }
@@ -113,6 +139,8 @@ private fun StepContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> 
     val d = state.draft
     val f = UnitFormatter(d.units, labels = unitLabels())
     when (state.step) {
+        OnboardingStep.WELCOME -> Welcome()
+        // The agreement step (roadmap 2.0 Phase 4) goes here, between welcome and units.
         OnboardingStep.UNITS -> {
             Title(stringResource(R.string.onb_units_title), stringResource(R.string.onb_units_body))
             UnitsInput(d.units) { onEvent(OnboardingEvent.Units(it)) }
@@ -180,7 +208,21 @@ private fun StepContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> 
                 BudgetSummary(p, d.units, d.sex ?: Sex.MALE, d.heightCm ?: 0.0, d.activity ?: return@let)
             }
         }
+        OnboardingStep.EXTRAS -> Unit
     }
+}
+
+/** What Forkcast does, in two lines, and that it stays on the phone. */
+@Composable
+private fun Welcome() {
+    // The app icon, layered the way the launcher shows it.
+    androidx.compose.foundation.layout.Box(Modifier.size(96.dp).clip(RoundedCornerShape(28.dp))) {
+        Image(painterResource(R.drawable.ic_launcher_background), contentDescription = null, modifier = Modifier.fillMaxSize())
+        Image(painterResource(R.drawable.ic_launcher_foreground), contentDescription = null, modifier = Modifier.fillMaxSize())
+    }
+    Title(stringResource(R.string.onb_welcome_title), stringResource(R.string.onb_welcome_body))
+    Text(stringResource(R.string.onb_welcome_private), style = MaterialTheme.typography.bodyLarge)
+    Text(stringResource(R.string.not_medical_advice), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }
 
 /** Preset weekly paces in the user's unit, stored as kg. */
