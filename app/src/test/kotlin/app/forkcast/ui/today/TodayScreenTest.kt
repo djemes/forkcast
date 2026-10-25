@@ -65,6 +65,20 @@ class TodayScreenTest {
         .performScrollToNode(hasText(text, substring = true))
         .let { compose.onNode(hasText(text, substring = true) and hasClickAction()) }
 
+    /** REVIEW-2 S7: after a crash, Today offers the report; Not now lets it go. */
+    @Test fun crashCardOffersTheReport() {
+        var discarded = false
+        compose.setContent {
+            ForkcastTheme {
+                TodayScreen(state, onEvent = {}, crashCard = { CrashReportCard(onSave = {}, onDiscard = { discarded = true }) })
+            }
+        }
+        compose.onNodeWithText("Forkcast closed unexpectedly").assertIsDisplayed()
+        compose.onNodeWithText("Save report…").assertIsDisplayed()
+        compose.onNodeWithText("Not now").performClick()
+        assertThat(discarded).isTrue()
+    }
+
     @Test fun showsRingMacrosAndEntries() {
         compose.setContent { ForkcastTheme { TodayScreen(state, onEvent = {}) } }
         compose.onNodeWithText("Today").assertIsDisplayed()

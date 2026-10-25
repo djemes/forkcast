@@ -148,9 +148,11 @@ fun TodayRoute(
     onLogSheetOpened: () -> Unit = {},
     viewModel: TodayViewModel = hiltViewModel(),
     backupNotice: BackupNoticeViewModel = hiltViewModel(),
+    crashReport: CrashReportViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     val notice by backupNotice.notice.collectAsStateWithLifecycle()
+    val crashPending by crashReport.pending.collectAsStateWithLifecycle()
     LaunchedEffect(openDate) {
         openDate?.let { iso -> runCatching { LocalDate.parse(iso) }.getOrNull()?.let { viewModel.onEvent(TodayEvent.PickDate(it)) } }
         if (openDate != null) onOpenDateShown()
@@ -171,6 +173,7 @@ fun TodayRoute(
             onLogSheetOpened = onLogSheetOpened,
             backupNotice = notice,
             onBackupNoticeDismissed = backupNotice::dismiss,
+            crashCard = if (crashPending) { { CrashReportCard(onSave = { crashReport.save(it) }, onDiscard = { crashReport.discard() }) } } else null,
         )
     }
 }
@@ -190,6 +193,8 @@ fun TodayScreen(
     onLogSheetOpened: () -> Unit = {},
     backupNotice: app.forkcast.core.data.backup.folder.BackupNotice? = null,
     onBackupNoticeDismissed: (app.forkcast.core.data.backup.folder.BackupNotice) -> Unit = {},
+    /** The last crash's report card ([CrashReportCard]), when there is one. */
+    crashCard: (@Composable () -> Unit)? = null,
 ) {
     // Null = sheet closed; otherwise the meal the sheet logs to.
     var logSheetMealId by rememberSaveable { mutableStateOf<String?>(null) }
@@ -383,6 +388,10 @@ fun TodayScreen(
                             )
                           }
                         }
+                    }
+                    if (day.isToday && crashCard != null) {
+                        val i = order++
+                        item(key = "crash-report") { TodayItem("crash-report", i) { crashCard() } }
                     }
                     if (day.isToday && backupNotice != null) {
                         val i = order++

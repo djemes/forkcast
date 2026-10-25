@@ -125,4 +125,9 @@
     <string name="backup_notice_reminder_body">Faz duas semanas que não há um backup. Seus dados ficam só neste celular.</string>
     <string name="backup_notice_back_up">Fazer backup</string>
     <string name="backup_notice_not_now">Agora não</string>
+    <string name="crash_card_title">O Forkcast fechou inesperadamente</string>
+    <string name="crash_card_body">Um relatório curto ficou neste celular: as versões do app e do Android e o ponto do app em que ele parou. Nenhuma refeição, nota ou chave. Para ajudar a corrigir, salve-o e anexe-o a uma issue no GitHub. Nada é enviado.</string>
+    <string name="crash_save">Salvar relatório…</string>
+    <string name="crash_discard">Agora não</string>
+    <string name="crash_file_name">forkcast-relatorio-de-falha.txt</string>
 </resources>

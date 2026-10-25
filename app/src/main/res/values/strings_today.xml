@@ -120,4 +120,9 @@
     <string name="backup_notice_reminder_body">There hasn\'t been a backup for two weeks. Your data lives only on this phone.</string>
     <string name="backup_notice_back_up">Back up</string>
     <string name="backup_notice_not_now">Not now</string>
+    <string name="crash_card_title">Forkcast closed unexpectedly</string>
+    <string name="crash_card_body">A short report stayed on this phone: the app and Android versions and where in the app it stopped. No meals, notes or keys. To help fix it, save it and attach it to an issue on GitHub. Nothing is sent.</string>
+    <string name="crash_save">Save report…</string>
+    <string name="crash_discard">Not now</string>
+    <string name="crash_file_name">forkcast-crash-report.txt</string>
 </resources>

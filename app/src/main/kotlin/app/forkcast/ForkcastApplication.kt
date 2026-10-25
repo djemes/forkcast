@@ -40,6 +40,7 @@ class ForkcastApplication : Application(), Configuration.Provider {
 
     override fun onCreate() {
         super.onCreate()
+        CrashReports.install(this)
         if (BuildConfig.DEBUG) {
             // Flags disk/network work on the main thread during development (SPEC §9). Log only.
             StrictMode.setThreadPolicy(StrictMode.ThreadPolicy.Builder().detectAll().penaltyLog().build())
