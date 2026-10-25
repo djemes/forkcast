@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -27,6 +29,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import app.forkcast.core.data.health.HealthRepository
 import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.data.repository.SettingsRepository
@@ -52,9 +56,12 @@ import javax.inject.Inject
 /** One day on the Activity screen: what devices reported and what it did to the budget. */
 data class ActivityDayView(val date: LocalDate, val day: ActivityDay?, val bonus: ActivityBonus)
 
-data class ActivityUiState(val units: UnitPrefs, val days: List<ActivityDayView>, val bonusOn: Boolean) {
+/** [connected]: Health Connect is set up, so an empty screen means no data rather than no connection. */
+data class ActivityUiState(val units: UnitPrefs, val days: List<ActivityDayView>, val bonusOn: Boolean, val connected: Boolean = true) {
     val selected: ActivityDayView? get() = days.firstOrNull()
     val recent: List<ActivityDayView> get() = days.drop(1)
+    /** Nothing synced for any of the days shown (a fresh install, or nothing shared with Health Connect). */
+    val empty: Boolean get() = days.all { it.day == null }
 }
 
 @HiltViewModel
@@ -72,13 +79,15 @@ class ActivityViewModel @Inject constructor(
         health.observeActivityRange(from, date),
         maintenance.observeActivityBonuses(from, date),
         settings.settings,
-    ) { days, bonuses, s ->
+        health.status,
+    ) { days, bonuses, s, status ->
         val byDate = days.associateBy { it.date }
         ActivityUiState(
             units = s.units ?: UnitFormatter.defaultsFor(Locale.getDefault()),
             days = generateSequence(date) { it.minusDays(1) }.takeWhile { !it.isBefore(from) }
                 .map { d -> ActivityDayView(d, byDate[d], bonuses[d] ?: ActivityBonus.NONE) }.toList(),
             bonusOn = s.activityBonus,
+            connected = status.settings.connected,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -88,9 +97,11 @@ class ActivityViewModel @Inject constructor(
 }
 
 @Composable
-fun ActivityRoute(onBack: () -> Unit, viewModel: ActivityViewModel = hiltViewModel()) {
+fun ActivityRoute(onBack: () -> Unit, onConnect: () -> Unit, viewModel: ActivityViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    state?.let { ActivityScreen(it, onBack) }
+    // While loading, the title and Back are already there (no blank page).
+    val loaded = state
+    if (loaded != null) ActivityScreen(loaded, onBack, onConnect) else SettingsScaffold(title = stringResource(R.string.activity_title), onBack = onBack) {}
 }
 
 /**
@@ -98,7 +109,7 @@ fun ActivityRoute(onBack: () -> Unit, viewModel: ActivityViewModel = hiltViewMod
  * Connect, the usual day, the extra above it, and the part counted toward the budget.
  */
 @Composable
-fun ActivityScreen(state: ActivityUiState, onBack: () -> Unit) {
+fun ActivityScreen(state: ActivityUiState, onBack: () -> Unit, onConnect: () -> Unit = {}) {
     val labels = unitLabels()
     val f = remember(state.units, labels) { UnitFormatter(state.units, labels = labels) }
     SettingsScaffold(title = stringResource(R.string.activity_title), onBack = onBack) {
@@ -115,6 +126,10 @@ fun ActivityScreen(state: ActivityUiState, onBack: () -> Unit) {
                 },
                 style = MaterialTheme.typography.bodyMedium,
             )
+            if (state.empty) {
+                EmptyActivity(state.connected, onConnect)
+                return@Column
+            }
             state.selected?.let { DayDetail(it, f) }
             Text(stringResource(R.string.activity_source), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
@@ -123,6 +138,31 @@ fun ActivityScreen(state: ActivityUiState, onBack: () -> Unit) {
                 modifier = Modifier.padding(top = 8.dp).semantics { heading() },
             )
             state.recent.forEach { RecentRow(it, f) }
+        }
+    }
+}
+
+/**
+ * Nothing synced yet (roadmap 2.0 task 3.7): one sentence and the next step, instead of two
+ * weeks of "No data". Not connected: set up Health Connect. Connected: check what's shared.
+ */
+@Composable
+private fun EmptyActivity(connected: Boolean, onConnect: () -> Unit) {
+    Column(
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
+            .padding(16.dp),
+    ) {
+        Text(
+            stringResource(if (connected) R.string.activity_empty_connected else R.string.activity_empty),
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        if (connected) {
+            HelpLink(HelpEntry.HC_NOT_SYNCING)
+        } else {
+            Button(onClick = onConnect, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.activity_set_up)) }
         }
     }
 }

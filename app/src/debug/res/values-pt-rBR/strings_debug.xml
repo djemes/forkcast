@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Só em builds de debug (src/debug): ferramentas de desenvolvimento em Configurações › Avançado -->
+    <string name="debug_demo_data">Carregar dados de demonstração</string>
+    <string name="debug_demo_data_summary">Cerca de 60 dias de refeições, pesagens e água, mesclados neste celular (só em builds de debug)</string>
+    <string name="debug_demo_data_done">Dados de demonstração adicionados</string>
+</resources>

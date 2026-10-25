@@ -95,7 +95,10 @@ class WeightViewModel @Inject constructor(
 @Composable
 fun WeightRoute(onBack: () -> Unit, viewModel: WeightViewModel = hiltViewModel()) {
     val state by viewModel.state.collectAsStateWithLifecycle()
-    state?.let { WeightScreen(it, onBack, viewModel::add, viewModel::delete) }
+    // While loading, the title and Back are already there (no blank page).
+    val loaded = state
+    if (loaded != null) WeightScreen(loaded, onBack, viewModel::add, viewModel::delete)
+    else SettingsScaffold(title = stringResource(R.string.weight_log_title), onBack = onBack) {}
 }
 
 @Composable
@@ -119,6 +122,12 @@ fun WeightScreen(
                 Text(
                     stringResource(R.string.weight_trend_now, f.weight(state.trend.last().trendKg)),
                     style = MaterialTheme.typography.titleMedium,
+                )
+            } else {
+                // First run (roadmap 2.0 task 3.7): say what appears here and when.
+                Text(
+                    stringResource(if (state.entries.isEmpty()) R.string.weight_empty else R.string.weight_one),
+                    style = MaterialTheme.typography.bodyLarge,
                 )
             }
 

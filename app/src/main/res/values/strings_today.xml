@@ -79,6 +79,10 @@
     <string name="missing_keys_usda">USDA food database</string>
     <string name="missing_keys_add">Add keys</string>
     <string name="missing_keys_not_now">Not now</string>
+    <!-- First run (roadmap 2.0 task 3.7) -->
+    <string name="today_first_title">Start your log</string>
+    <string name="today_first_body">Log what you eat and the ring shows how much of today\'s budget is left. Search for a food, scan a barcode, or add calories quickly.</string>
+    <string name="today_first_log">Log a meal</string>
     <!-- Section for entries whose meal was deleted in Settings › Meals. -->
     <string name="meal_other">Other</string>
     <!-- Today's budget sheet, from a tap on the ring (owner, 2026-10-24) -->

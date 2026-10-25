@@ -18,6 +18,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import app.forkcast.ui.food.CustomFoodRoute
 import app.forkcast.ui.food.FoodDetailRoute
 import app.forkcast.ui.food.SearchRoute
@@ -46,6 +47,9 @@ import app.forkcast.ui.photo.PhotoMealRoute
 import app.forkcast.ui.photo.ReviewRoute
 import app.forkcast.ui.settings.GoalBudgetRoute
 import app.forkcast.ui.settings.ProfileRoute
+import app.forkcast.ui.settings.DebugTool
+import app.forkcast.ui.settings.DebugToolsEvent
+import app.forkcast.ui.settings.DebugToolsViewModel
 import app.forkcast.ui.settings.SettingsActions
 import app.forkcast.ui.settings.UnitsRoute
 import app.forkcast.ui.settings.WaterSettingsRoute
@@ -343,8 +347,12 @@ fun ForkcastNavHost(
             composable<SettingsDestination> {
                 val context = androidx.compose.ui.platform.LocalContext.current
                 val multilingual = androidx.compose.runtime.remember { app.forkcast.AppLanguage.available(context).size > 1 }
+                val debug: DebugToolsViewModel = hiltViewModel()
+                val debugState by debug.state.collectAsStateWithLifecycle()
                 SettingsScreen(
                     onBack = back,
+                    message = debugState.message,
+                    onMessageShown = { debug.onEvent(DebugToolsEvent.MessageShown) },
                     actions = SettingsActions(
                         profile = { navController.navigate(ProfileDestination) },
                         goalBudget = { navController.navigate(ProfileGoalsDestination) },
@@ -362,6 +370,7 @@ fun ForkcastNavHost(
                         updates = { navController.navigate(UpdatesDestination) }.takeIf { app.forkcast.Distribution.current.hasUpdater },
                         language = { navController.navigate(LanguageDestination) }.takeIf { multilingual },
                         help = { navController.navigate(HelpDestination()) },
+                        debugTools = debugState.tools.map { tool -> DebugTool(tool.label, tool.summary) { debug.onEvent(DebugToolsEvent.Run(tool)) } },
                     ),
                 )
             }
@@ -403,7 +412,7 @@ fun ForkcastNavHost(
             composable<MealsDestination> { MealsRoute(onBack = back) }
             composable<DailyTargetsDestination> { DailyTargetsRoute(onBack = back) }
             composable<HealthConnectDestination> { HealthConnectRoute(onBack = back) }
-            composable<ActivityDestination> { ActivityRoute(onBack = back) }
+            composable<ActivityDestination> { ActivityRoute(onBack = back, onConnect = { navController.navigate(HealthConnectDestination) }) }
             composable<WeeklyDestination> { WeeklyCheckInRoute(onBack = back) }
             composable<PhotoMealDestination> {
                 PhotoMealRoute(

@@ -6,7 +6,7 @@
     <string name="trends_month">Month</string>
     <string name="trends_quarter">3 months</string>
     <string name="trends_period_label">Period</string>
-    <string name="trends_nothing">Nothing logged in this period yet. Days you log show up here.</string>
+    <string name="trends_nothing">Nothing logged in this period yet. Log a meal on Today, and your days show up here.</string>
 
     <string name="trends_calories">Calories</string>
     <string name="trends_avg_eaten">Average eaten</string>

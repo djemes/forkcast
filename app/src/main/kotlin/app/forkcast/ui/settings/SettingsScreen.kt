@@ -20,7 +20,11 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
@@ -49,6 +53,8 @@ data class SettingsActions(
     val updates: (() -> Unit)? = null,
     val help: () -> Unit = {},
     val about: () -> Unit = {},
+    /** Debug builds' developer tools ("Load demo data"); empty in release builds. */
+    val debugTools: List<DebugTool> = emptyList(),
 )
 
 /**
@@ -58,8 +64,15 @@ data class SettingsActions(
  * entry says what's inside.
  */
 @Composable
-fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions) {
-    SettingsScaffold(title = stringResource(R.string.settings), onBack = onBack) {
+fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions, @StringRes message: Int? = null, onMessageShown: () -> Unit = {}) {
+    val snackbar = remember { SnackbarHostState() }
+    val resources = LocalResources.current
+    LaunchedEffect(message) {
+        val shown = message ?: return@LaunchedEffect
+        onMessageShown()
+        snackbar.showSnackbar(resources.getString(shown))
+    }
+    SettingsScaffold(title = stringResource(R.string.settings), onBack = onBack, snackbarHostState = snackbar) {
         Group(R.string.settings_group_you, divider = false)
         Item(R.string.settings_goal_budget, R.string.settings_goal_budget_summary, actions.goalBudget)
         Item(R.string.settings_profile, R.string.settings_profile_summary, actions.profile)
@@ -84,6 +97,7 @@ fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions) {
         AdvancedSection(Modifier.padding(top = 4.dp)) {
             Item(R.string.settings_daily_targets, R.string.settings_daily_targets_summary, actions.dailyTargets)
             Item(R.string.settings_food_databases, R.string.settings_food_databases_summary, actions.foodDatabases)
+            actions.debugTools.forEach { Item(it.label, it.summary, it.run) }
         }
     }
 }

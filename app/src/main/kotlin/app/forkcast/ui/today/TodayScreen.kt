@@ -411,6 +411,12 @@ fun TodayScreen(
                         item(key = "macros") { TodayItem("macros", macrosAt) { MacroBars(totals, targets, f) { showNutrients = true } } }
                     }
                     val last = day.lastLogged
+                    if (day.isToday && day.isEmptyDay && last == null) {
+                        val i = order++
+                        item(key = "first-day") {
+                            TodayItem("first-day", i) { FirstDayCard { logSheetMealId = day.defaultMealId ?: day.meals.firstOrNull()?.slot?.id } }
+                        }
+                    }
                     if (day.isEmptyDay && last != null) {
                         val i = order++
                         item(key = "last-logged") { TodayItem("last-logged", i) { LastLoggedRow(last, day.today) { onEvent(TodayEvent.PickDate(last.date)) } } }

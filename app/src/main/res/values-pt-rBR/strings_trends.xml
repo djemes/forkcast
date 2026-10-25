@@ -6,7 +6,7 @@
     <string name="trends_month">Mês</string>
     <string name="trends_quarter">3 meses</string>
     <string name="trends_period_label">Período</string>
-    <string name="trends_nothing">Nada registrado neste período ainda. Os dias que você registrar aparecem aqui.</string>
+    <string name="trends_nothing">Nada registrado neste período ainda. Registre uma refeição em Hoje, e os seus dias aparecem aqui.</string>
 
     <string name="trends_calories">Calorias</string>
     <string name="trends_avg_eaten">Média comida</string>

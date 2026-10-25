@@ -81,6 +81,10 @@
     <string name="missing_keys_usda">Banco de alimentos do USDA</string>
     <string name="missing_keys_add">Adicionar chaves</string>
     <string name="missing_keys_not_now">Agora não</string>
+    <!-- Primeiro uso (roadmap 2.0, tarefa 3.7) -->
+    <string name="today_first_title">Comece o seu registro</string>
+    <string name="today_first_body">Registre o que você come e o anel mostra quanto resta do orçamento de hoje. Busque um alimento, escaneie um código de barras ou adicione calorias rápido.</string>
+    <string name="today_first_log">Registrar uma refeição</string>
     <!-- Section for entries whose meal was deleted in Settings › Meals. -->
     <string name="meal_other">Outros</string>
     <!-- Orçamento de hoje, ao tocar no anel (dono, 2026-10-24) -->
