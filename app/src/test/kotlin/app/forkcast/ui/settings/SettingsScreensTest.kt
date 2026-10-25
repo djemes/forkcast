@@ -6,6 +6,8 @@ import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
+import app.forkcast.R
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
@@ -42,7 +44,8 @@ class SettingsScreensTest {
         assertThat(opened).isEqualTo("UAB")
     }
 
-    @Test fun settingsShowsBasicsWithAdvancedCollapsed() {
+    /** The owner's grouping (2026-10-25): everything shows; Advanced exists only for debug tools. */
+    @Test fun settingsShowsEveryEntryInItsGroup() {
         var opened = ""
         compose.setContent {
             ForkcastTheme {
@@ -52,15 +55,30 @@ class SettingsScreensTest {
                 )
             }
         }
-        compose.onNodeWithText("AI").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Help").performScrollTo().performClick()
-        // Per-nutrient targets and food databases wait under Advanced (roadmap 2.0 task 3.5).
-        compose.onNodeWithText("Daily targets").assertDoesNotExist()
-        compose.onNodeWithText("Food databases").assertDoesNotExist()
-        compose.onNodeWithText("Advanced").performScrollTo().performClick()
+        compose.onNodeWithText("Your goal and log").assertIsDisplayed()
         compose.onNodeWithText("Daily targets").performScrollTo().performClick()
+        compose.onNodeWithText("Data and connections").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("AI services").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Food databases").performScrollTo().performClick()
-        assertThat(opened).isEqualTo("HTF")
+        compose.onNodeWithText("Help").performScrollTo().performClick()
+        // No developer tools in this build, so no Advanced either.
+        compose.onNodeWithText("Advanced").assertDoesNotExist()
+        assertThat(opened).isEqualTo("TFH")
+    }
+
+    @Test fun debugToolsWaitUnderAdvanced() {
+        var ran = false
+        compose.setContent {
+            ForkcastTheme {
+                SettingsScreen(
+                    onBack = {},
+                    actions = SettingsActions(debugTools = listOf(DebugTool(R.string.settings_help, R.string.settings_help_summary) { ran = true })),
+                )
+            }
+        }
+        compose.onNodeWithText("Advanced").performScrollTo().performClick()
+        compose.onAllNodesWithText("Help")[1].performScrollTo().performClick()
+        assertThat(ran).isTrue()
     }
 
     @Test fun settingsInDarkThemeAtDoubleFontScaleKeepsEveryBasicReachable() {
@@ -70,7 +88,7 @@ class SettingsScreensTest {
                 ForkcastTheme(darkTheme = true) { SettingsScreen(onBack = {}, actions = SettingsActions(updates = {}, language = {})) }
             }
         }
-        listOf("Goal & budget", "Units", "Notifications", "Backup & data", "Updates", "Language", "Help", "About", "Advanced").forEach {
+        listOf("Goal & budget", "Daily targets", "Units", "AI services", "Food databases", "Backup & data", "Notifications", "Updates", "Language", "Help", "About").forEach {
             compose.onNodeWithText(it).performScrollTo().assertIsDisplayed()
         }
     }

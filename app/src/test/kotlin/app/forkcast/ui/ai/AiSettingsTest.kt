@@ -233,7 +233,7 @@ class AiSettingsTest {
         assertThat(res.aiErrorMessage(disabled, ProviderId.GEMINI)).contains("(HTTP 403 · SERVICE_DISABLED)")
         assertThat(res.aiErrorMessage(AiError.InvalidKey(AiError.NO_KEY), ProviderId.GEMINI)).isEqualTo("No API key saved for this AI service.")
         // Without a provider reply the classic message stays.
-        assertThat(res.aiErrorMessage(AiError.InvalidKey(), ProviderId.CLAUDE)).isEqualTo("Claude rejected the API key. Check it in Settings › AI.")
+        assertThat(res.aiErrorMessage(AiError.InvalidKey(), ProviderId.CLAUDE)).isEqualTo("Claude rejected the API key. Check it in Settings › AI services.")
     }
 
     @Test fun failedTestOnScreenShowsStatusCodeAndGoogleWords() {

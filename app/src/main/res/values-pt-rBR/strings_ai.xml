@@ -141,7 +141,7 @@
     <string name="ai_api_key_replacing">A chave salva continua até você salvar uma nova.</string>
 
     <!-- Error messages (DESIGN.md §6 tone) -->
-    <string name="ai_err_invalid_key">%1$s recusou a chave de API. Confira em Configurações › IA.</string>
+    <string name="ai_err_invalid_key">%1$s recusou a chave de API. Confira em Configurações › Serviços de IA.</string>
     <string name="ai_err_no_key">Nenhuma chave de API salva para este serviço de IA.</string>
     <string name="ai_err_provider_said">%1$s disse: %2$s</string>
     <string name="ai_err_key_status">%1$s recusou a chave de API (%2$s).</string>
@@ -154,7 +154,7 @@
     <string name="ai_err_hint_check_key">Confira a chave deste serviço de IA e teste de novo.</string>
     <string name="ai_err_rate_limited">%1$s está ocupado ou no limite. Tente de novo em um minuto.</string>
     <string name="ai_err_quota">%1$s atingiu o limite. Ele renova mais tarde.</string>
-    <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro em Configurações › IA, em Avançado.</string>
+    <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro em Configurações › Serviços de IA, em Avançado.</string>
     <string name="ai_err_refused">%1$s preferiu não estimar esta foto.</string>
     <string name="ai_err_bad_response">%1$s mandou uma resposta que o Forkcast não conseguiu ler. Tente de novo.</string>
     <string name="ai_err_request">%1$s recusou a requisição: %2$s</string>

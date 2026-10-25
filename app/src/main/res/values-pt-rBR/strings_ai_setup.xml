@@ -75,7 +75,7 @@
     <string name="setup_err_credit">A Anthropic aceitou a chave, mas a conta ainda não tem crédito. Adicione crédito em Billing e confira de novo.</string>
     <string name="setup_err_network">Sem conexão. Conecte-se ao Wi-Fi ou aos dados móveis e confira de novo.</string>
     <string name="setup_err_busy">O %1$s não respondeu direito agora. Espere um minuto e confira de novo.</string>
-    <string name="setup_err_model">O %1$s aceitou a chave, mas não oferece o modelo que o Forkcast usa (%2$s). Salve mesmo assim e escolha outro modelo em Configurações › IA.</string>
+    <string name="setup_err_model">O %1$s aceitou a chave, mas não oferece o modelo que o Forkcast usa (%2$s). Salve mesmo assim e escolha outro modelo em Configurações › Serviços de IA.</string>
     <string name="setup_err_other">Algo do lado do %1$s não funcionou. Confira de novo ou veja os Detalhes.</string>
     <string name="setup_details">Detalhes</string>
     <string name="setup_hide_details">Ocultar detalhes</string>
@@ -87,7 +87,7 @@
     <string name="setup_done_body">O Forkcast vai usar o %1$s para estimativas por foto e por descrição.</string>
     <string name="setup_done_backup">Também adicionamos um reserva: o %1$s, com a mesma chave. Ele entra quando o primeiro modelo chega ao limite do dia.</string>
     <string name="setup_done_busy">O %1$s aceitou a chave, mas está ocupado agora, então a sua primeira estimativa pode demorar um pouco.</string>
-    <string name="setup_done_unchecked">A chave foi salva, mas não foi conferida. Se as estimativas falharem, confira em Configurações › IA.</string>
+    <string name="setup_done_unchecked">A chave foi salva, mas não foi conferida. Se as estimativas falharem, confira em Configurações › Serviços de IA.</string>
     <string name="setup_done_try">Experimente: tire uma foto da sua próxima refeição. Toque em Registrar em Hoje e depois em Foto.</string>
     <string name="setup_done">Concluir</string>
 </resources>

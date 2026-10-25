@@ -25,7 +25,7 @@
     <string name="help_q_start">How do I start?</string>
     <string name="help_a_start">Log what you eat on Today: tap Add on a meal, then search, scan a barcode, or use Photo or Describe if AI is set up. The ring shows how much of today\'s budget is left. Weigh in when you can, from the weight card on Today, so Forkcast can follow your trend and, after a few weeks, learn your own maintenance.</string>
     <string name="help_q_without_ai">Do I need AI to use Forkcast?</string>
-    <string name="help_a_without_ai">No. Search, barcode scanning, quick add, recipes and saved meals all work without AI. AI adds Photo and Describe, which estimate a meal from a picture or a sentence. It needs a key from an AI service, which you can add any time in Settings › AI. The guide there walks you through it.</string>
+    <string name="help_a_without_ai">No. Search, barcode scanning, quick add, recipes and saved meals all work without AI. AI adds Photo and Describe, which estimate a meal from a picture or a sentence. It needs a key from an AI service, which you can add any time in Settings › AI services. The guide there walks you through it.</string>
     <string name="help_q_change_goal">How do I change my goal or budget?</string>
     <string name="help_a_change_goal">Open Settings › Goal &amp; budget to change your target weight and pace. Your budget updates as you change them, and the screen shows how it was worked out. Sex, age, height and activity level are in Settings › Profile.</string>
 
@@ -57,13 +57,13 @@
 
     <!-- AI -->
     <string name="help_q_ai_not_set_up">It says AI isn\'t set up, or is turned off</string>
-    <string name="help_a_ai_not_set_up">Photo and Describe need an AI service with your own key. Open Settings › AI and tap Add AI: the guide helps you get a free Gemini key or a paid Claude key and checks it before saving. If AI is set up but turned off, turn it on at the top of the same screen. If it says no key is saved, add the key again.</string>
+    <string name="help_a_ai_not_set_up">Photo and Describe need an AI service with your own key. Open Settings › AI services and tap Add AI: the guide helps you get a free Gemini key or a paid Claude key and checks it before saving. If AI is set up but turned off, turn it on at the top of the same screen. If it says no key is saved, add the key again.</string>
     <string name="help_q_ai_key">The AI service rejected my key</string>
     <string name="help_a_ai_key">Usually part of the key is missing or something extra was copied. Copy it again from the service\'s website, paste it, and tap Test. A brand-new Gemini key can take a few minutes to start working. A Claude key needs a workspace and credit on the account. If you deleted the key at the service, make a new one. An AI service whose key was rejected is skipped until a test passes.</string>
     <string name="help_q_ai_limits">It says the AI is busy or at its limit</string>
     <string name="help_a_ai_limits">Free Gemini keys have limits per minute and per day. The limits count per Google Cloud project and per model, so a second key in the same project doesn\'t add more, and the daily limits reset at midnight Pacific time. That\'s why the setup also adds Gemini Flash-Lite on the same key: it has its own free limit and takes over when the first model is out. An estimate that hits a limit waits and tries again on its own. Claude is paid per use: if it says the credit is used up, add credit in the Claude Console under Billing.</string>
     <string name="help_q_ai_model">It says the model isn\'t available</string>
-    <string name="help_a_ai_model">The service no longer offers the model this AI service uses, or your key can\'t use it. In Settings › AI, tap Edit on that AI service and pick another model. Or delete it and tap Add AI, which sets up the current recommended model.</string>
+    <string name="help_a_ai_model">The service no longer offers the model this AI service uses, or your key can\'t use it. In Settings › AI services, tap Edit on that AI service and pick another model. Or delete it and tap Add AI, which sets up the current recommended model.</string>
     <string name="help_q_ai_connection">No connection, slow answers, or a problem on the service\'s side</string>
     <string name="help_a_ai_connection">Estimates need the internet. Without a connection, Forkcast keeps the photo and sends it when you\'re back online. When a service is slow or has a problem, Forkcast tries again a few times and moves on to the next AI service in your list. If an estimate stops, open it and tap Retry now. Slow answers are more common on Gemini\'s free tier at busy times.</string>
     <string name="help_q_ai_odd">The AI declined, or sent an answer Forkcast couldn\'t read</string>
@@ -71,7 +71,7 @@
     <string name="help_q_ai_accuracy">How accurate are AI estimates?</string>
     <string name="help_a_ai_accuracy">They\'re estimates. Forkcast shows a range and the assumptions the AI made, and matches each part to a food in the databases where it can. Hidden ingredients like oil, butter and sauces are the hardest to see, so mention them in the note. Check the portions and correct anything that\'s off before saving. Describe uses the AI\'s own knowledge, not a web search.</string>
     <string name="help_q_ai_cost">What does AI cost?</string>
-    <string name="help_a_ai_cost">Gemini has a free tier with daily limits, and the setup uses it. Claude is paid per use, from credit you add at Anthropic. In Settings › AI, Usage under Advanced shows how many estimates each AI service ran this month and, where prices are known, about what they cost. Forkcast itself is free.</string>
+    <string name="help_a_ai_cost">Gemini has a free tier with daily limits, and the setup uses it. Claude is paid per use, from credit you add at Anthropic. In Settings › AI services, Usage under Advanced shows how many estimates each AI service ran this month and, where prices are known, about what they cost. Forkcast itself is free.</string>
 
     <!-- Health Connect -->
     <string name="help_q_hc_sync">Health Connect isn\'t syncing</string>
@@ -107,7 +107,7 @@
     <string name="help_q_privacy_data">Where is my data, and who can see it?</string>
     <string name="help_a_privacy_data">Everything stays on your phone, in Forkcast\'s private storage. There are no accounts and no analytics, and Forkcast has no servers of its own. Data leaves the phone only when you choose: a backup or file you save, a food search or barcode lookup (only the search text or barcode), what you allow in Health Connect, and the AI estimates you ask for.</string>
     <string name="help_q_privacy_ai">What does an AI service receive?</string>
-    <string name="help_a_privacy_ai">Only the meal photos and description you\'re estimating, with your key; never your weight, your log or your health data. Photos are re-encoded first, which removes their location and other hidden details, and Forkcast deletes them after 14 days unless you change that in Settings › AI. Each service\'s terms say what it does with what it receives: with a free Gemini key, Google may use it to improve its products.</string>
+    <string name="help_a_privacy_ai">Only the meal photos and description you\'re estimating, with your key; never your weight, your log or your health data. Photos are re-encoded first, which removes their location and other hidden details, and Forkcast deletes them after 14 days unless you change that in Settings › AI services. Each service\'s terms say what it does with what it receives: with a free Gemini key, Google may use it to improve its products.</string>
     <string name="help_q_privacy_crash">What happens when Forkcast crashes?</string>
     <string name="help_a_privacy_crash">Forkcast saves a short report on your phone: the app and Android versions, the phone model, and where in the code it stopped. Never your data, messages or keys, and nothing is sent. Today offers to save the report so you can share it if you want; it\'s deleted once saved or dismissed.</string>
 

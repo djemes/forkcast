@@ -80,7 +80,7 @@
     <string name="setup_err_credit">Anthropic accepted the key, but the account has no credit yet. Add credit under Billing, then check again.</string>
     <string name="setup_err_network">No connection. Connect to Wi-Fi or mobile data, then check again.</string>
     <string name="setup_err_busy">%1$s didn\'t answer properly just now. Wait a minute, then check again.</string>
-    <string name="setup_err_model">%1$s accepted the key but doesn\'t offer the model Forkcast uses (%2$s). Save it anyway and pick another model in Settings › AI.</string>
+    <string name="setup_err_model">%1$s accepted the key but doesn\'t offer the model Forkcast uses (%2$s). Save it anyway and pick another model in Settings › AI services.</string>
     <string name="setup_err_other">Something on %1$s\'s side didn\'t work. Check again, or see Details.</string>
     <string name="setup_details">Details</string>
     <string name="setup_hide_details">Hide details</string>
@@ -93,7 +93,7 @@
     <string name="setup_done_body">Forkcast will use %1$s for photo and description estimates.</string>
     <string name="setup_done_backup">Also added a backup: %1$s on the same key. It steps in when the first model reaches its daily limit.</string>
     <string name="setup_done_busy">%1$s accepted the key but is busy right now, so your first estimate may wait a little.</string>
-    <string name="setup_done_unchecked">The key is saved but wasn\'t checked. If estimates fail, check it in Settings › AI.</string>
+    <string name="setup_done_unchecked">The key is saved but wasn\'t checked. If estimates fail, check it in Settings › AI services.</string>
     <string name="setup_done_try">Try it: take a photo of your next meal. Tap Log on Today, then Photo.</string>
     <string name="setup_done">Done</string>
 </resources>

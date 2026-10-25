@@ -4,13 +4,13 @@ package app.forkcast.ui.settings
 // - "budget" (orçamento): the daily calorie target. Not "goal", "limit" or "allowance".
 // - "maintenance" (manutenção): what the body burns on a usual day; "TDEE" only in Help's glossary.
 // - "goal" (meta): target weight and pace. "Daily targets" (metas diárias): per-nutrient amounts.
-// - "AI service" (serviço de IA), or just "AI": one provider and model with its key. Never "profile"
+// - "AI service" (serviço de IA): one provider and model with its key; the screen is "AI services". Never "profile"
 //   in user text; "Profile" (Perfil) is the person (sex, age, height, activity).
 // - "estimate" (estimativa): anything the AI returns. Never "result", "analysis" or "calculation".
 // - "key" or "API key" (chave, chave de API); "token" only for GitHub's.
 // - "log" (registro) for what was eaten; "entry" for one line of it; "weigh-in" (pesagem).
 // - "backup" (backup): a .forkcast file. "Export" only for CSV files and the settings file.
-// - Paths: "Settings › AI" (Configurações › IA), with › and the screen's title.
+// - Paths: "Settings › AI services" (Configurações › Serviços de IA), with › and the screen's title.
 
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -58,10 +58,10 @@ data class SettingsActions(
 )
 
 /**
- * Settings, Basics and Advanced (roadmap 2.0 task 3.5, owner-approved): what most people use
- * shows by default, grouped as you and your log, reminders, AI and data, then the app itself.
- * Per-nutrient targets and the food databases wait under Advanced, which starts collapsed. Each
- * entry says what's inside.
+ * Settings (roadmap 2.0 task 3.5; groups rearranged by the owner, 2026-10-25): you and your log
+ * (with the per-nutrient daily targets), data and connections (AI services, Health Connect, food
+ * databases, backups), then the app itself (with notifications). Each entry says what's inside.
+ * Debug builds add their developer tools under a collapsed Advanced.
  */
 @Composable
 fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions, @StringRes message: Int? = null, onMessageShown: () -> Unit = {}) {
@@ -76,28 +76,30 @@ fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions, @StringRes mess
         Group(R.string.settings_group_you, divider = false)
         Item(R.string.settings_goal_budget, R.string.settings_goal_budget_summary, actions.goalBudget)
         Item(R.string.settings_profile, R.string.settings_profile_summary, actions.profile)
+        Item(R.string.settings_daily_targets, R.string.settings_daily_targets_summary, actions.dailyTargets)
         Item(R.string.settings_meals, R.string.settings_meals_summary, actions.meals)
         Item(R.string.settings_water, R.string.settings_water_summary, actions.water)
         Item(R.string.settings_units, R.string.settings_units_summary, actions.units)
 
         Group(R.string.settings_group_connections)
-        Item(R.string.settings_notifications, R.string.settings_notifications_summary, actions.notifications)
         Item(R.string.settings_ai, R.string.settings_ai_summary, actions.ai)
         Item(R.string.settings_health_connect, R.string.settings_health_connect_summary, actions.healthConnect)
+        Item(R.string.settings_food_databases, R.string.settings_food_databases_summary, actions.foodDatabases)
         Item(R.string.settings_backup_data, R.string.settings_backup_data_summary, actions.backup)
 
         Group(R.string.settings_group_app)
+        Item(R.string.settings_notifications, R.string.settings_notifications_summary, actions.notifications)
         actions.updates?.let { Item(R.string.settings_updates, R.string.settings_updates_summary, it) }
         Item(R.string.settings_appearance, R.string.settings_appearance_summary, actions.appearance)
         actions.language?.let { Item(R.string.settings_language, R.string.settings_language_summary, it) }
         Item(R.string.settings_help, R.string.settings_help_summary, actions.help)
         Item(R.string.settings_about, R.string.settings_about_summary, actions.about)
 
-        HorizontalDivider(Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
-        AdvancedSection(Modifier.padding(top = 4.dp)) {
-            Item(R.string.settings_daily_targets, R.string.settings_daily_targets_summary, actions.dailyTargets)
-            Item(R.string.settings_food_databases, R.string.settings_food_databases_summary, actions.foodDatabases)
-            actions.debugTools.forEach { Item(it.label, it.summary, it.run) }
+        if (actions.debugTools.isNotEmpty()) {
+            HorizontalDivider(Modifier.padding(top = 8.dp), color = MaterialTheme.colorScheme.outlineVariant)
+            AdvancedSection(Modifier.padding(top = 4.dp)) {
+                actions.debugTools.forEach { Item(it.label, it.summary, it.run) }
+            }
         }
     }
 }

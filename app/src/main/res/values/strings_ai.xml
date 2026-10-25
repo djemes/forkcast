@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <!-- Settings › AI (SPEC §4.7) -->
+    <!-- Settings › AI services (SPEC §4.7) -->
     <string name="ai_enabled">AI estimates</string>
     <string name="ai_enabled_body">Estimate a meal from a photo or a description, using your own AI key.</string>
     <string name="ai_profiles_title">Your AI services</string>
@@ -139,7 +139,7 @@
     <string name="ai_api_key_replacing">The saved key stays until you save a new one.</string>
 
     <!-- Error messages (DESIGN.md §6 tone) -->
-    <string name="ai_err_invalid_key">%1$s rejected the API key. Check it in Settings › AI.</string>
+    <string name="ai_err_invalid_key">%1$s rejected the API key. Check it in Settings › AI services.</string>
     <string name="ai_err_no_key">No API key saved for this AI service.</string>
     <string name="ai_err_provider_said">%1$s said: %2$s</string>
     <string name="ai_err_key_status">%1$s rejected the API key (%2$s).</string>
@@ -152,7 +152,7 @@
     <string name="ai_err_hint_check_key">Check this AI service\'s key, then test again.</string>
     <string name="ai_err_rate_limited">%1$s is busy or at its limit. Try again in a minute.</string>
     <string name="ai_err_quota">%1$s has reached its limit. It resets later.</string>
-    <string name="ai_err_model">%1$s doesn\'t have the model %2$s. Pick another in Settings › AI, under Advanced.</string>
+    <string name="ai_err_model">%1$s doesn\'t have the model %2$s. Pick another in Settings › AI services, under Advanced.</string>
     <string name="ai_err_refused">%1$s declined to estimate this photo.</string>
     <string name="ai_err_bad_response">%1$s sent an answer Forkcast couldn\'t read. Try again.</string>
     <string name="ai_err_request">%1$s rejected the request: %2$s</string>
