@@ -1,0 +1,77 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:CsvExporter.kt:safe.any { it == ',' || it == '"' || it == '\n' || it == '\r' }</ID>
+    <ID>ComplexCondition:EstimateWorker.kt:EstimateWorker$e.notified || notifier.appInForeground() || !prefs.estimateReadyEnabled || quiet</ID>
+    <ID>ComplexCondition:NotificationEngine.kt:NotificationEngine$s.eveningEnabled &amp;&amp; due(s.eveningMinute) &amp;&amp; (NotificationTypes.EVENING to 0) !in fired &amp;&amp; targets != null</ID>
+    <ID>ComplexCondition:NotificationEngine.kt:NotificationEngine$s.proteinEnabled &amp;&amp; due(s.proteinMinute) &amp;&amp; (NotificationTypes.PROTEIN to 0) !in fired &amp;&amp; targets != null</ID>
+    <ID>ComplexCondition:NotificationEngine.kt:NotificationEngine$s.weeklyEnabled &amp;&amp; today.dayOfWeek.value == s.weeklyDay &amp;&amp; due(s.weeklyMinute) &amp;&amp; (NotificationTypes.WEEKLY to 0) !in fired</ID>
+    <ID>CyclomaticComplexMethod:AiEstimateRepository.kt:DefaultAiEstimateRepository$private suspend fun runChain: RunOutcome</ID>
+    <ID>CyclomaticComplexMethod:AiRepository.kt:DefaultAiRepository$private suspend fun recordUsage</ID>
+    <ID>CyclomaticComplexMethod:HealthRepository.kt:HealthConnectRepository$override suspend fun sync</ID>
+    <ID>CyclomaticComplexMethod:HealthRepository.kt:HealthConnectRepository$private suspend fun syncActivity</ID>
+    <ID>CyclomaticComplexMethod:NotificationEngine.kt:NotificationEngine$suspend fun runReminders</ID>
+    <ID>CyclomaticComplexMethod:PhotoArchive.kt:PhotoArchive$suspend fun read: ArchiveContents</ID>
+    <ID>CyclomaticComplexMethod:PhotoStore.kt:PhotoStore.Companion$fun process: ByteArray</ID>
+    <ID>LongMethod:AiEstimateRepository.kt:DefaultAiEstimateRepository$private suspend fun runChain: RunOutcome</ID>
+    <ID>LongMethod:NotificationEngine.kt:NotificationEngine$suspend fun runReminders</ID>
+    <ID>LoopWithTooManyJumpStatements:BackupFolder.kt:SafBackupFolder$while</ID>
+    <ID>LoopWithTooManyJumpStatements:NotificationEngine.kt:NotificationEngine$for</ID>
+    <ID>MatchingDeclarationName:Channels.kt:Channel</ID>
+    <ID>MaxLineLength:AiEstimateRepository.kt:DefaultAiEstimateRepository$patch(id) { it.copy(status = EstimateStatus.PENDING, correction = text.trim(), errorCode = null, errorDetail = null, retryAfter = null, runStartedAt = clock.millis(), tries = 0) }</ID>
+    <ID>MaxLineLength:AiEstimateRepositoryTest.kt:AiEstimateRepositoryTest$val withWater = meal.copy(items = meal.items + EstimatedItem("Sparkling water", "Water, carbonated", "unknown", 355.0, 330.0, 500.0, 0.9, false, EstimatedNutrients(0.0, 0.0, 0.0, 0.0)))</ID>
+    <ID>MaxLineLength:BackupRepositoryTest.kt:BackupRepositoryTest$"logEntries"</ID>
+    <ID>MaxLineLength:HealthRepository.kt:HealthConnectRepository$is IllegalStateException -&gt; if (message.orEmpty().contains("quota", ignoreCase = true) || message.orEmpty().contains("rate", ignoreCase = true)) HealthError.RATE_LIMITED else HealthError.FAILED</ID>
+    <ID>MaxLineLength:MaintenanceRepository.kt:RoomMaintenanceRepository$AdaptiveTdee.DayLog(d, list.sumOf { it.nutrients[app.forkcast.core.model.NutrientKey.ENERGY_KCAL] ?: 0.0 }, list.map { it.mealSlotId }.distinct().size, statuses[d].toCompleteness())</ID>
+    <ID>MaxLineLength:NotificationEngine.kt:NotificationEngine$notifier.post(Channel.MEAL_REMINDER, ID_MEAL + Math.floorMod(slotId.hashCode(), 1000), slot.name, context.getString(R.string.notif_meal, slot.name), open = "today")</ID>
+    <ID>MaxLineLength:NotificationEngineTest.kt:NotificationEngineTest$listOf(LogEntry("", day, meal, null, "Food", null, 1.0, "meal", null, mapOf(NutrientKey.ENERGY_KCAL to kcal, NutrientKey.PROTEIN_G to protein), FoodSource.QUICK_ADD, null, clock.instant()))</ID>
+    <ID>MaxLineLength:NotificationEngineTest.kt:NotificationEngineTest$private</ID>
+    <ID>MaxLineLength:SettingsBackupTest.kt:SettingsBackupTest$a.db.backupDao().upsertAiProfiles(listOf(AiProfileEntity("o", "Ollama", ProviderId.OPENAI_COMPAT, "llava", "http://100.64.0.7:11434", TierLabel.FREE, 0, true, false, null, 1, 1)))</ID>
+    <ID>ReturnCount:ComponentMatcher.kt:ComponentMatcher$suspend fun match: ComponentMatch?</ID>
+    <ID>SwallowedException:BackupFile.kt:BackupFile$e: BackupDecryptException</ID>
+    <ID>SwallowedException:BackupRepository.kt:RoomBackupRepository$e: DateTimeException</ID>
+    <ID>SwallowedException:BackupRepository.kt:RoomBackupRepository$e: IllegalArgumentException</ID>
+    <ID>SwallowedException:ComponentMatcher.kt:ComponentMatcher$e: FoodApiError</ID>
+    <ID>SwallowedException:ConnectivityNetworkWaiter.kt:ConnectivityNetworkWaiter$e: RuntimeException</ID>
+    <ID>SwallowedException:FolderBackupRepository.kt:DefaultFolderBackupRepository$e: Exception</ID>
+    <ID>SwallowedException:FolderBackupRepository.kt:DefaultFolderBackupRepository$e: IOException</ID>
+    <ID>SwallowedException:FolderBackupRepository.kt:DefaultFolderBackupRepository$e: SecurityException</ID>
+    <ID>SwallowedException:HealthRepository.kt:HealthConnectRepository$e: IllegalArgumentException</ID>
+    <ID>SwallowedException:Notifier.kt:Notifier$e: SecurityException</ID>
+    <ID>SwallowedException:SecretStore.kt:SecretStore$e: java.security.GeneralSecurityException</ID>
+    <ID>SwallowedException:SettingsBackup.kt:SettingsBackupRepository$e: AEADBadTagException</ID>
+    <ID>SwallowedException:SettingsBackup.kt:SettingsBackupRepository$e: GeneralSecurityException</ID>
+    <ID>SwallowedException:SettingsBackup.kt:SettingsBackupRepository$e: IllegalArgumentException</ID>
+    <ID>ThrowsCount:BackupCrypto.kt:BackupCrypto$fun decrypt: InputStream</ID>
+    <ID>ThrowsCount:HealthRepository.kt:HealthConnectRepository$private suspend fun deleteEach</ID>
+    <ID>TooGenericExceptionCaught:AiEstimateRepository.kt:DefaultAiEstimateRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:ConnectivityNetworkWaiter.kt:ConnectivityNetworkWaiter$e: RuntimeException</ID>
+    <ID>TooGenericExceptionCaught:FolderBackupRepository.kt:DefaultFolderBackupRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:FoodRepository.kt:DefaultFoodRepository$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:HealthRepository.kt:HealthConnectRepository$e: Exception</ID>
+    <ID>TooManyFunctions:AiDao.kt:AiDao</ID>
+    <ID>TooManyFunctions:AiEstimateRepository.kt:AiEstimateRepository</ID>
+    <ID>TooManyFunctions:AiEstimateRepository.kt:DefaultAiEstimateRepository : AiEstimateRepository</ID>
+    <ID>TooManyFunctions:AiRepository.kt:AiRepository</ID>
+    <ID>TooManyFunctions:AiRepository.kt:DefaultAiRepository : AiRepository</ID>
+    <ID>TooManyFunctions:BackupDao.kt:BackupDao</ID>
+    <ID>TooManyFunctions:BackupRepository.kt:RoomBackupRepository : BackupRepository</ID>
+    <ID>TooManyFunctions:ClientHealthConnectSource.kt:ClientHealthConnectSource : HealthConnectSource</ID>
+    <ID>TooManyFunctions:Converters.kt:Converters</ID>
+    <ID>TooManyFunctions:Daos.kt:FoodDao</ID>
+    <ID>TooManyFunctions:Daos.kt:LogEntryDao</ID>
+    <ID>TooManyFunctions:DataModule.kt:DatabaseModule</ID>
+    <ID>TooManyFunctions:DataModule.kt:RepositoryModule</ID>
+    <ID>TooManyFunctions:FolderBackupRepository.kt:DefaultFolderBackupRepository : FolderBackupRepository</ID>
+    <ID>TooManyFunctions:FoodRepository.kt:DefaultFoodRepository : FoodRepository</ID>
+    <ID>TooManyFunctions:FoodRepository.kt:FoodRepository</ID>
+    <ID>TooManyFunctions:ForkcastDatabase.kt:ForkcastDatabase : RoomDatabase</ID>
+    <ID>TooManyFunctions:HealthConnectSource.kt:HealthConnectSource</ID>
+    <ID>TooManyFunctions:HealthDao.kt:HealthDao</ID>
+    <ID>TooManyFunctions:HealthRepository.kt:HealthConnectRepository : HealthRepository</ID>
+    <ID>TooManyFunctions:LogRepository.kt:LogRepository</ID>
+    <ID>TooManyFunctions:LogRepository.kt:RoomLogRepository : LogRepository</ID>
+    <ID>TooManyFunctions:SecretStore.kt:SecretStore</ID>
+  </CurrentIssues>
+</SmellBaseline>

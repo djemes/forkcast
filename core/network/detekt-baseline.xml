@@ -1,0 +1,41 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ConstructorParameterNaming:OffClient.kt:OffProduct$val product_name: String? = null</ID>
+    <ID>ConstructorParameterNaming:OffClient.kt:OffProduct$val product_name_en: String? = null</ID>
+    <ID>ConstructorParameterNaming:OffClient.kt:OffProduct$val serving_quantity: JsonElement? = null</ID>
+    <ID>ConstructorParameterNaming:OffClient.kt:OffProduct$val serving_size: String? = null</ID>
+    <ID>CyclomaticComplexMethod:AiChain.kt:AiChain$suspend fun run: Outcome</ID>
+    <ID>CyclomaticComplexMethod:ClaudeEstimator.kt:ClaudeEstimator$private fun checkStatus</ID>
+    <ID>CyclomaticComplexMethod:GeminiEstimator.kt:GeminiEstimator$private fun checkStatus</ID>
+    <ID>CyclomaticComplexMethod:GitHubReleases.kt:GitHubReleases$suspend fun download</ID>
+    <ID>CyclomaticComplexMethod:MealPrompt.kt:MealEstimateParser$fun validate: Parsed</ID>
+    <ID>CyclomaticComplexMethod:MealSchema.kt:MealSchema$private fun transform: JsonObject</ID>
+    <ID>CyclomaticComplexMethod:NutrientMaps.kt:UsdaNutrientMap$private fun convert: Double</ID>
+    <ID>CyclomaticComplexMethod:OffClient.kt:OffProduct$fun toFood: Food?</ID>
+    <ID>LoopWithTooManyJumpStatements:GitHubReleases.kt:GitHubReleases$while</ID>
+    <ID>MatchingDeclarationName:HttpsOnly.kt:InsecureRequestException : IllegalStateException</ID>
+    <ID>MaxLineLength:AiChainTest.kt:AiChainTest$assertThat(text).isEqualTo("Meal: Breakfast at 08:00. Units the user thinks in: metric.\nWrite every food and meal name in English.\nDescription: toast\nPersonal context: none")</ID>
+    <ID>ReturnCount:AiChain.kt:AiChain$suspend fun run: Outcome</ID>
+    <ID>SwallowedException:AiHttp.kt:e: ConnectTimeoutException</ID>
+    <ID>SwallowedException:AiHttp.kt:e: HttpRequestTimeoutException</ID>
+    <ID>SwallowedException:AiHttp.kt:e: SocketTimeoutException</ID>
+    <ID>SwallowedException:AiHttp.kt:e: java.io.IOException</ID>
+    <ID>SwallowedException:GitHubReleases.kt:GitHubReleases$e: java.io.IOException</ID>
+    <ID>SwallowedException:MealPrompt.kt:MealEstimateParser$e: IllegalArgumentException</ID>
+    <ID>SwallowedException:MealPrompt.kt:MealEstimateParser$e: SerializationException</ID>
+    <ID>SwallowedException:OffClient.kt:OffClient$e: java.io.IOException</ID>
+    <ID>SwallowedException:OpenAiCompatEstimator.kt:OpenAiCompatEstimator$e: AiError.InvalidRequest</ID>
+    <ID>SwallowedException:UsdaClient.kt:UsdaClient$e: java.io.IOException</ID>
+    <ID>ThrowsCount:AiHttp.kt:internal suspend fun timedCall: Timed</ID>
+    <ID>ThrowsCount:GitHubReleases.kt:GitHubReleases$private fun check</ID>
+    <ID>ThrowsCount:GitHubReleases.kt:GitHubReleases$suspend fun download</ID>
+    <ID>ThrowsCount:OffClient.kt:OffClient$private suspend fun call: HttpResponse</ID>
+    <ID>ThrowsCount:UsdaClient.kt:UsdaClient$private suspend fun call: HttpResponse</ID>
+    <ID>TooGenericExceptionCaught:AiHttp.kt:e: Exception</ID>
+    <ID>TooGenericExceptionCaught:OffClient.kt:OffClient$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:UsdaClient.kt:UsdaClient$e: Exception</ID>
+    <ID>TooManyFunctions:GeminiEstimator.kt:GeminiEstimator : MealEstimator</ID>
+  </CurrentIssues>
+</SmellBaseline>

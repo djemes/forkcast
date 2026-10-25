@@ -1,0 +1,85 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>ComplexCondition:ForkcastNavHost.kt:saved.wasNew &amp;&amp; meal != null &amp;&amp; date != null &amp;&amp; saved.foodId.isNotEmpty()</ID>
+    <ID>ComplexCondition:NotificationsScreen.kt:on &amp;&amp; Build.VERSION.SDK_INT &gt;= 33 &amp;&amp; !s.permissionAsked &amp;&amp; ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED</ID>
+    <ID>ComplexCondition:ReviewScreen.kt:offer != null &amp;&amp; (stage is EstimateStage.Failed || stage is EstimateStage.QuotaWaiting || stage is EstimateStage.RetryWaiting)</ID>
+    <ID>CyclomaticComplexMethod:AiProfileEditViewModel.kt:AiProfileEditViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:AiSettingsViewModel.kt:AiSettingsViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:AiText.kt:fun Resources.aiErrorMessage: String</ID>
+    <ID>CyclomaticComplexMethod:BackupViewModel.kt:BackupViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:EstimateStage.kt:EstimateStage.Companion$fun of: EstimateStage</ID>
+    <ID>CyclomaticComplexMethod:OnboardingViewModel.kt:OnboardingViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:OnboardingViewModel.kt:OnboardingViewModel$private fun isValid: Boolean</ID>
+    <ID>CyclomaticComplexMethod:ReviewViewModel.kt:ReviewViewModel$fun onEvent</ID>
+    <ID>CyclomaticComplexMethod:ReviewViewModel.kt:fun errorFromCode: Throwable?</ID>
+    <ID>CyclomaticComplexMethod:TodayViewModel.kt:TodayViewModel$fun onEvent</ID>
+    <ID>ExplicitItLambdaMultipleParameters:TodayScreen.kt:{ _, it -&gt; it.slot.id }</ID>
+    <ID>LongMethod:KeyGuide.kt:fun keyGuide: KeyGuide</ID>
+    <ID>LongMethod:ReviewViewModel.kt:ReviewViewModel$fun onEvent</ID>
+    <ID>LongMethod:TodayViewModel.kt:TodayViewModel$fun onEvent</ID>
+    <ID>MatchingDeclarationName:BackupNoticeCard.kt:BackupNoticeViewModel : ViewModel</ID>
+    <ID>MatchingDeclarationName:Color.kt:ForkcastColors</ID>
+    <ID>MatchingDeclarationName:CrashReportCard.kt:CrashReportViewModel : ViewModel</ID>
+    <ID>MatchingDeclarationName:FoodDatabasesScreen.kt:FoodDatabasesViewModel : ViewModel</ID>
+    <ID>MatchingDeclarationName:LogSheet.kt:LogSheetActions</ID>
+    <ID>MatchingDeclarationName:MatchSearch.kt:MatchSearchState</ID>
+    <ID>MatchingDeclarationName:SettingsScreen.kt:SettingsActions</ID>
+    <ID>MatchingDeclarationName:TodayScreen.kt:TodayActions</ID>
+    <ID>MaxLineLength:AiSettingsTest.kt:AiSettingsTest$state = AiProfileEditUiState(loaded = true, isNew = false, provider = ProviderId.CLAUDE, model = "claude-sonnet-5-5", name = "Claude", hasSavedKey = true, savedKey = SecretText("sk-ant-api03-secret-tail1234"))</ID>
+    <ID>MaxLineLength:AiSettingsTest.kt:AiSettingsTest$state = AiProfileEditUiState(loaded = true, isNew = false, provider = ProviderId.GEMINI, model = "gemini-3.8-flash", name = "Gemini 3.8 Flash", hasSavedKey = true, savedKey = SecretText("AQ.Ab8RN6Kq-new-format-key"), test = TestState.Failed(error))</ID>
+    <ID>MaxLineLength:AiSettingsTest.kt:AiSettingsTest$state = AiProfileEditUiState(loaded = true, provider = ProviderId.GEMINI, model = "gemini-3.8-flash", name = "Gemini 3.8 Flash", keyInput = "k", recommendedModel = "gemini-3.8-flash")</ID>
+    <ID>MaxLineLength:BodyCards.kt:usual == null -&gt; Text(stringResource(R.string.activity_usual_none, NutritionConstants.ACTIVITY_BASELINE_MIN_DAYS), style = MaterialTheme.typography.bodySmall, color = muted)</ID>
+    <ID>MaxLineLength:BudgetRing.kt:stringResource(R.string.ring_description_exercise, units.energy(totals.eatenKcal), units.energy(totals.allowanceKcal), units.energy(totals.exerciseKcal), "$bigNumber $label")</ID>
+    <ID>MaxLineLength:FoodDetailScreen.kt:suffix = state.serving.label.takeIf { it == "g" || it == "oz" || it == "ml" || it == "fl oz" } ?: "× ${app.forkcast.ui.today.servingLabel(state.serving.label)}"</ID>
+    <ID>MaxLineLength:FoodFlowViewModelTest.kt:FoodFlowViewModelTest$ai.saveProfile(app.forkcast.core.data.repository.AiProfileDraft(null, "Gemini", app.forkcast.core.model.ProviderId.GEMINI, "m", null, app.forkcast.core.model.TierLabel.FREE), "k")</ID>
+    <ID>MaxLineLength:FoodFlowViewModelTest.kt:FoodFlowViewModelTest$app.forkcast.core.model.SavedMealItem("i", null, "Oats", null, 1.0, "cup", 80.0, mapOf(app.forkcast.core.model.NutrientKey.ENERGY_KCAL to 300.0), app.forkcast.core.model.FoodSource.USDA)</ID>
+    <ID>MaxLineLength:ForkcastNavHost.kt:enterTransition = { slideInHorizontally(Motion.enter(Motion.LONG)) { axis } + fadeIn(Motion.enter(Motion.LONG - Motion.SHARED_AXIS_FADE_OUT, delay = Motion.SHARED_AXIS_FADE_OUT)) }</ID>
+    <ID>MaxLineLength:MatchSearch.kt:state.error != null &amp;&amp; state.results.isEmpty() -&gt; Text(stringResource(R.string.search_failed, stringResource(R.string.search_usda)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)</ID>
+    <ID>MaxLineLength:MatchSearch.kt:state.error is FoodApiError.Offline &amp;&amp; state.results.isEmpty() -&gt; Text(stringResource(R.string.search_offline), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)</ID>
+    <ID>MaxLineLength:PhotoFlowTest.kt:PhotoFlowTest$private val captureState = PhotoMealUiState(loaded = true, step = PhotoStep.CAPTURE, photos = listOf(photo), mealSlotId = "l", slots = FakeMealSlotRepository.DEFAULT, hasProfile = true)</ID>
+    <ID>MaxLineLength:PhotoFlowTest.kt:PhotoFlowTest$state = PhotoMealUiState(loaded = true, step = PhotoStep.CAPTURE, photos = listOf(photo, photo), mealSlotId = "l", slots = FakeMealSlotRepository.DEFAULT, hasProfile = true)</ID>
+    <ID>MaxLineLength:RecipeEditScreen.kt:Text(stringResource(R.string.macro_amount, stringResource(R.string.macro_carbs), f.grams(n[NutrientKey.CARBS_G] ?: 0.0)), color = c.carbs, style = MaterialTheme.typography.labelLarge)</ID>
+    <ID>MaxLineLength:RecipeEditScreen.kt:Text(stringResource(R.string.macro_amount, stringResource(R.string.macro_fat), f.grams(n[NutrientKey.FAT_G] ?: 0.0)), color = c.fat, style = MaterialTheme.typography.labelLarge)</ID>
+    <ID>MaxLineLength:RecipeEditScreen.kt:Text(stringResource(R.string.macro_amount, stringResource(R.string.macro_protein), f.grams(n[NutrientKey.PROTEIN_G] ?: 0.0)), color = c.protein, style = MaterialTheme.typography.labelLarge)</ID>
+    <ID>MaxLineLength:RecipeEditScreen.kt:Text(stringResource(R.string.recipe_per_serving_weight, f.grams(r.servingGrams)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:RecipeEditScreen.kt:Text(stringResource(R.string.recipe_whole, f.energy(r.total[NutrientKey.ENERGY_KCAL] ?: 0.0)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)</ID>
+    <ID>MaxLineLength:ReviewScreen.kt:Text(stringResource(R.string.review_warnings, e.warnings.map { warningText(it) }.joinToString(stringResource(R.string.list_separator))), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)</ID>
+    <ID>MaxLineLength:ReviewScreen.kt:val extra = listOfNotNull(a.httpStatus?.let { "HTTP $it" }, a.providerCode, a.quota, a.retryAfterMs?.let { res.getString(R.string.details_retry_after, elapsed(it)) })</ID>
+    <ID>MaxLineLength:SearchViewModel.kt:SearchViewModel$it.copy(off = if (offResult is RemoteResults.Done) RemoteResults.Done(offResult.foods.filter { f -&gt; f.barcode == null || f.barcode !in usdaBarcodes }) else offResult)</ID>
+    <ID>MaxLineLength:SettingsScreensTest.kt:SettingsScreensTest$private val release = Release("v1.6.0", "Forkcast 1.6.0", "Backups to a folder", "https://github.com/djemes/forkcast/releases/tag/v1.6.0", ReleaseAsset("Forkcast-v1.6.0.apk", "u", 1))</ID>
+    <ID>MaxLineLength:TodayBudgetSheetTest.kt:TodayBudgetSheetTest$meals = slots.map { slot -&gt; MealSection(slot, entries.filter { it.mealSlotId == slot.id }, entries.filter { it.mealSlotId == slot.id }.sumOf { it.nutrients[NutrientKey.ENERGY_KCAL]!! }) }</ID>
+    <ID>MaxLineLength:TodayBudgetSheetTest.kt:TodayBudgetSheetTest$private</ID>
+    <ID>MaxLineLength:TodayScreen.kt:defaultMinute = if (state.isToday) state.nowMinute else app.forkcast.core.domain.MealTimes.windowMiddle(slot?.startMinute, slot?.endMinute) ?: app.forkcast.core.domain.MealTimes.FALLBACK_MINUTE</ID>
+    <ID>MaxLineLength:TodayScreenTest.kt:TodayScreenTest$val water = WaterSummary(ml = 500.0, targetMl = 2500.0, containers = listOf(WaterContainer.GLASS to 250.0, WaterContainer.BOTTLE to 500.0), lastUsed = WaterContainer.BOTTLE)</ID>
+    <ID>MaxLineLength:TodayViewModelTest.kt:TodayViewModelTest$log.add(listOf(TestData.entry("A", "b", 100.0, date = TestData.TODAY.minusDays(3)), TestData.entry("B", "l", 100.0, date = TestData.TODAY.minusDays(1)), TestData.entry("C", "d", 100.0, date = TestData.TODAY.minusDays(1))))</ID>
+    <ID>MaxLineLength:TodayViewModelTest.kt:TodayViewModelTest$private fun vm</ID>
+    <ID>MaxLineLength:TodayViewModelTest.kt:TodayViewModelTest$val vm = TodayViewModel(FakeMealSlotRepository(), log, profiles, foods, saved, water, weights, FakeSettingsRepository(), estimates, health, maintenance, app.forkcast.fakes.FakeMissingKeysRepository(), moving)</ID>
+    <ID>MaxLineLength:TrendsScreen.kt:dv == null -&gt; stringResource(R.string.trends_nutrient_value, formatNutrient(line.key, line.avg, f), formatNutrient(line.key, line.target.amount, f), (line.ratio * 100).roundToInt())</ID>
+    <ID>MaxLineLength:TrendsScreen.kt:dvAmount == line.target.amount -&gt; stringResource(R.string.trends_nutrient_value_dv, formatNutrient(line.key, line.avg, f), formatNutrient(line.key, line.target.amount, f), dv)</ID>
+    <ID>MaxLineLength:TrendsScreen.kt:else -&gt; stringResource(R.string.trends_nutrient_value_target_dv, formatNutrient(line.key, line.avg, f), formatNutrient(line.key, line.target.amount, f), (line.ratio * 100).roundToInt(), dv)</ID>
+    <ID>MaxLineLength:TrendsScreenTest.kt:TrendsScreenTest$kcal?.let { mapOf(NutrientKey.ENERGY_KCAL to it, NutrientKey.PROTEIN_G to 120.0, NutrientKey.CARBS_G to 200.0, NutrientKey.FAT_G to 60.0, NutrientKey.FIBER_G to 15.0) }</ID>
+    <ID>MaxLineLength:TrendsScreenTest.kt:TrendsScreenTest$s.copy(days = s.days.map { it.copy(nutrients = null, complete = false) }, calories = null, macros = null, nutrients = emptyList(), hasWeighIns = false, weight = emptyList())</ID>
+    <ID>MaxLineLength:UpdatesScreen.kt:OutlinedButton(onClick = { uri.openUri("$GITHUB_URL/releases") }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_releases_open)) }</ID>
+    <ID>MaxLineLength:WaterCard.kt:enter = slideInVertically(Motion.enter(Motion.LONG)) { it / 3 } + fadeIn(Motion.enter(Motion.LONG)) + expandVertically(Motion.enter(Motion.LONG), expandFrom = Alignment.Bottom)</ID>
+    <ID>MaxLineLength:Widgets.kt:ActionButton(R.drawable.ic_photo_camera, context.getString(R.string.shortcut_photo), openApp(context, OPEN_PHOTO), palette, GlanceModifier.defaultWeight())</ID>
+    <ID>SwallowedException:BackupViewModel.kt:BackupViewModel$e: Exception</ID>
+    <ID>SwallowedException:BackupViewModel.kt:BackupViewModel$e: IOException</ID>
+    <ID>SwallowedException:BackupViewModel.kt:BackupViewModel$e: SecurityException</ID>
+    <ID>SwallowedException:PhotoMealViewModel.kt:PhotoMealViewModel$e: Exception</ID>
+    <ID>SwallowedException:SettingsTransfer.kt:SettingsTransferViewModel$e: IOException</ID>
+    <ID>SwallowedException:SettingsTransfer.kt:SettingsTransferViewModel$e: SecurityException</ID>
+    <ID>TooGenericExceptionCaught:AppInstaller.kt:AppInstaller$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:BackupViewModel.kt:BackupViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:PhotoMealViewModel.kt:PhotoMealViewModel$e: Exception</ID>
+    <ID>TooGenericExceptionCaught:SearchViewModel.kt:SearchViewModel$e: Exception</ID>
+    <ID>TooManyFunctions:AiSettingsScreen.kt:app.forkcast.ui.ai.AiSettingsScreen.kt</ID>
+    <ID>TooManyFunctions:AutoBackupSection.kt:AutoBackupViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:OnboardingViewModel.kt:OnboardingViewModel : ViewModel</ID>
+    <ID>TooManyFunctions:ReviewScreen.kt:app.forkcast.ui.photo.ReviewScreen.kt</ID>
+    <ID>TooManyFunctions:TodayScreen.kt:app.forkcast.ui.today.TodayScreen.kt</ID>
+    <ID>TooManyFunctions:TrendsScreen.kt:app.forkcast.ui.trends.TrendsScreen.kt</ID>
+    <ID>TooManyFunctions:Units.kt:UnitFormatter</ID>
+  </CurrentIssues>
+</SmellBaseline>

@@ -52,6 +52,8 @@ android {
     // No hardcoded user-facing text (roadmap 2.0, task 1.6): XML via HardcodedText, Kotlin via :lint-checks.
     lint {
         error += "HardcodedText"
+        // Every shipped language complete and well-formed, and no strings left behind (REVIEW-2 S8).
+        error += listOf("MissingTranslation", "ExtraTranslation", "MissingQuantity", "ImpliedQuantity", "StringFormatMatches", "StringFormatInvalid", "StringFormatCount", "UnusedResources")
     }
 
     namespace = "app.forkcast"

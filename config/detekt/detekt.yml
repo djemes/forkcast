@@ -1,0 +1,28 @@
+# Forkcast's detekt settings, on top of detekt's defaults (buildUponDefaultConfig).
+# Compose code reads better with these off or relaxed; everything else is detekt's default.
+naming:
+  FunctionNaming:
+    # @Composable functions are PascalCase.
+    ignoreAnnotated: ['Composable']
+  TopLevelPropertyNaming:
+    constantPattern: '[A-Z][A-Za-z0-9_]*'
+complexity:
+  LongParameterList:
+    # Composables take their state and callbacks as parameters.
+    ignoreAnnotated: ['Composable']
+  LongMethod:
+    ignoreAnnotated: ['Composable']
+  CyclomaticComplexMethod:
+    # A screen's branches are its states; ViewModels and logic are still checked.
+    ignoreAnnotated: ['Composable']
+style:
+  ReturnCount:
+    max: 4
+    excludeGuardClauses: true
+  MagicNumber:
+    # Layout sizes, nutrition constants and test data are numbers by nature.
+    active: false
+  MaxLineLength:
+    maxLineLength: 180
+  UnusedPrivateFunction:
+    ignoreAnnotated: ['Preview']

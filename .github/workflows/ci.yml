@@ -33,7 +33,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: Build, test, lint
-        run: ./gradlew assembleDebug testDebugUnitTest lintDebug --stacktrace
+        run: ./gradlew assembleDebug testDebugUnitTest lintDebug detekt --stacktrace
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v7

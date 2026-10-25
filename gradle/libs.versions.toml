@@ -2,6 +2,8 @@
 # Checked against Google Maven / Maven Central on 2026-10-18
 agp = "9.4.1"
 kotlin = "2.4.21"
+# Static analysis (REVIEW-2 S8). 2.0 is the line built for Kotlin 2.4; still an alpha. VERIFY: move to 2.0.0 when it ships.
+detekt = "2.0.0-alpha.6"
 ksp = "2.3.12"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
@@ -134,3 +136,4 @@ kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", versi
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 room = { id = "androidx.room", version.ref = "room" }
+detekt = { id = "dev.detekt", version.ref = "detekt" }

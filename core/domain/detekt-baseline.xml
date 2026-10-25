@@ -1,0 +1,11 @@
+<?xml version="1.0" ?>
+<SmellBaseline>
+  <ManuallySuppressedIssues/>
+  <CurrentIssues>
+    <ID>CyclomaticComplexMethod:NutritionLabelParser.kt:NutritionLabelParser$fun parse: ParsedLabel</ID>
+    <ID>LoopWithTooManyJumpStatements:NutritionLabelParser.kt:NutritionLabelParser$for</ID>
+    <ID>MaxLineLength:NutritionLabelParser.kt:NutritionLabelParser$if (rule.key == NutrientKey.FAT_G &amp;&amp; Regex("(sat|trans|poly|mono)", RegexOption.IGNORE_CASE).containsMatchIn(line.substring(0, m.range.first).takeLast(14))) continue</ID>
+    <ID>MayBeConstant:NutritionLabelParser.kt:NutritionLabelParser$private val number = "(\\d+(?:[.,]\\d+)?)"</ID>
+    <ID>TooManyFunctions:UnitConversions.kt:UnitConversions</ID>
+  </CurrentIssues>
+</SmellBaseline>
