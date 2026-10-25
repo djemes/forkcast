@@ -32,7 +32,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import app.forkcast.R
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.kcal
 import app.forkcast.core.network.FoodApiError
@@ -78,7 +82,7 @@ fun MatchSearchSheet(
                 .padding(horizontal = 16.dp)
                 .verticalScroll(rememberScrollState()),
         ) {
-            Text(stringResource(R.string.review_match_title, state.componentName), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.review_match_title, state.componentName), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             Text(stringResource(R.string.review_match_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(
                 value = text,
@@ -101,6 +105,7 @@ fun MatchSearchSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            state.error?.takeIf { !state.loading }?.let { HelpLink(HelpLinks.food(it)) }
             state.results.forEach { food ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

@@ -411,6 +411,12 @@ fun TodayScreen(
                         item(key = "macros") { TodayItem("macros", macrosAt) { MacroBars(totals, targets, f) { showNutrients = true } } }
                     }
                     val last = day.lastLogged
+                    if (day.isToday && day.isEmptyDay && last == null) {
+                        val i = order++
+                        item(key = "first-day") {
+                            TodayItem("first-day", i) { FirstDayCard { logSheetMealId = day.defaultMealId ?: day.meals.firstOrNull()?.slot?.id } }
+                        }
+                    }
                     if (day.isEmptyDay && last != null) {
                         val i = order++
                         item(key = "last-logged") { TodayItem("last-logged", i) { LastLoggedRow(last, day.today) { onEvent(TodayEvent.PickDate(last.date)) } } }
@@ -835,7 +841,8 @@ private fun MissingKeysCard(missing: List<app.forkcast.core.data.repository.Miss
             color = MaterialTheme.colorScheme.onTertiaryContainer,
             modifier = Modifier.padding(end = 8.dp),
         )
-        Row(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            app.forkcast.ui.help.HelpLink(app.forkcast.ui.help.HelpEntry.BACKUP_NEW_PHONE)
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.missing_keys_not_now)) }
             TextButton(onClick = onAdd) { Text(stringResource(R.string.missing_keys_add)) }
         }

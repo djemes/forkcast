@@ -22,9 +22,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import app.forkcast.core.data.backup.OpenedSettings
 import app.forkcast.core.data.backup.SettingsBackupRepository
 import app.forkcast.core.data.backup.SettingsCrypto
@@ -175,7 +179,7 @@ class SettingsTransferViewModel @Inject constructor(
 @Composable
 fun SettingsTransferSection(busy: Boolean, onExport: () -> Unit, onImport: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.settings_transfer_title), style = MaterialTheme.typography.titleMedium)
+        Text(stringResource(R.string.settings_transfer_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
         Text(stringResource(R.string.settings_transfer_body), style = MaterialTheme.typography.bodyMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(onClick = onExport, enabled = !busy) { Text(stringResource(R.string.settings_export)) }
@@ -219,6 +223,9 @@ fun SettingsTransferDialogs(
         }
         is SettingsTransferStep.Error -> AlertDialog(
             onDismissRequest = onDismiss,
+            dismissButton = {
+                HelpLink(if (step.error == SettingsImportError.WRONG_PASSPHRASE) HelpEntry.BACKUP_PASSWORD else HelpEntry.BACKUP_RESTORE_FAILED, onOpen = onDismiss)
+            },
             text = {
                 Text(
                     stringResource(

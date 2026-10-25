@@ -90,6 +90,9 @@ import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.kcal
 import app.forkcast.core.model.sumNutrients
 import app.forkcast.ui.ai.aiErrorMessage
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.ui.common.DiscardChangesDialog
 import app.forkcast.ui.common.keyboardAware
 import app.forkcast.ui.format.UnitFormatter
@@ -413,6 +416,7 @@ private fun StatusCard(stage: EstimateStage, e: AiEstimateEntity, now: Long) {
         sub?.let {
             Text(it, style = MaterialTheme.typography.bodyMedium, color = if (failed) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        stageHelp(stage)?.let { HelpLink(it, color = if (failed) MaterialTheme.colorScheme.onErrorContainer else Color.Unspecified) }
         stage.step?.let { step ->
             // Determinate: which of the three steps it's on, with the steps named under the line.
             LinearProgressIndicator(progress = { (step - 0.5f) / EstimateStage.STEPS }, modifier = Modifier.fillMaxWidth().padding(top = 4.dp))
@@ -440,6 +444,15 @@ private fun StatusCard(stage: EstimateStage, e: AiEstimateEntity, now: Long) {
             }
         }
     }
+}
+
+/** The help entry for a stage that's stuck or waiting, so its "Help" explains what to do. */
+private fun stageHelp(stage: EstimateStage): HelpEntry? = when (stage) {
+    is EstimateStage.Failed -> HelpLinks.aiCode(stage.code, stage.detail)
+    is EstimateStage.QuotaWaiting -> HelpEntry.AI_LIMITS
+    is EstimateStage.RetryWaiting -> HelpLinks.aiCode(stage.last?.result ?: stage.reason)
+    EstimateStage.Offline -> HelpEntry.AI_CONNECTION
+    else -> null
 }
 
 /** Headline and detail line for a stage, in plain words. */

@@ -25,6 +25,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.CrashReports
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -90,6 +92,7 @@ fun CrashReportCard(onSave: (Uri) -> Unit, onDiscard: () -> Unit) {
             modifier = Modifier.padding(end = 8.dp),
         )
         FlowRow(horizontalArrangement = Arrangement.End, modifier = Modifier.fillMaxWidth()) {
+            HelpLink(HelpEntry.PRIVACY_CRASH)
             TextButton(onClick = onDiscard) { Text(stringResource(R.string.crash_discard)) }
             TextButton(onClick = { picker.launch(fileName) }) { Text(stringResource(R.string.crash_save)) }
         }

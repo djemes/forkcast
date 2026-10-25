@@ -142,7 +142,7 @@
     <string name="targets_limit">Limit</string>
     <string name="targets_custom">custom</string>
     <string name="targets_default">Default %1$s</string>
-    <string name="targets_section_main">Calories and macros</string>
+    <string name="targets_section_main">Calories, protein, carbs and fat</string>
     <string name="targets_section_limits">Fiber and limits</string>
     <string name="targets_section_micros">Vitamins and minerals (US Daily Values)</string>
     <string name="targets_edit">%1$s target</string>

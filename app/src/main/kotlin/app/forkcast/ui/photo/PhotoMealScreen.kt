@@ -83,6 +83,8 @@ import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import app.forkcast.ui.ai.AiOptionalPage
 import app.forkcast.ui.scan.CameraViewfinder
 import app.forkcast.ui.scan.rememberCameraPermission
@@ -318,7 +320,8 @@ private fun BoxScope.CameraPreview(granted: Boolean, capture: ImageCapture, requ
     } else {
         Column(Modifier.align(Alignment.Center).padding(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(stringResource(R.string.photo_camera_needed), color = Color.White, style = MaterialTheme.typography.bodyLarge)
-            Button(onClick = request) { Text(stringResource(R.string.photo_allow_camera)) }
+            Button(onClick = request, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.photo_allow_camera)) }
+            HelpLink(HelpEntry.LOG_CAMERA, color = Color.White)
         }
     }
 }
@@ -474,6 +477,7 @@ private fun DetailsStep(
                     color = MaterialTheme.colorScheme.error,
                     modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite },
                 )
+                HelpLink(HelpEntry.LOG_PHOTO_TIPS)
             }
             Button(onClick = onEstimate, enabled = state.canEstimate, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                 Text(stringResource(if (state.describe) R.string.describe_estimate else R.string.photo_estimate))

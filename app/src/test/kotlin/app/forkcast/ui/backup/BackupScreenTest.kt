@@ -51,6 +51,9 @@ class BackupScreenTest {
         compose.onNodeWithText("No backup yet.").assertIsDisplayed()
         compose.onNodeWithText("Save a backup file…").performClick()
         compose.onNodeWithText("Restore from a backup…").performClick()
+        // Spreadsheets wait under Advanced, collapsed (roadmap 2.0 task 3.5).
+        compose.onNodeWithText("Food log (CSV)").assertDoesNotExist()
+        compose.onNodeWithText("Advanced").performScrollTo().performClick()
         compose.onNodeWithText("Food log (CSV)").performScrollTo().performClick()
         compose.onNodeWithText("Weights (CSV)").performScrollTo().performClick()
         assertThat(events).containsExactly(BackupEvent.AskSave)
@@ -166,6 +169,8 @@ class BackupScreenTest {
                 )
             }
         }
+        compose.onNodeWithText("Export settings…").assertDoesNotExist()
+        compose.onNodeWithText("Advanced").performScrollTo().performClick()
         compose.onNodeWithText("Export settings…").performScrollTo().assertExists()
     }
 

@@ -41,6 +41,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.GuideLinks
 import app.forkcast.core.data.repository.FoodDatabaseKeyRepository
 import app.forkcast.core.domain.ApiKeyFormat
@@ -234,8 +236,11 @@ private fun UsdaCheckFailed(check: UsdaKeyCheck.Failed, onSaveAnyway: () -> Unit
             color = MaterialTheme.colorScheme.error,
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
         )
-        if (check.canSaveAnyway) {
-            OutlinedButton(onClick = onSaveAnyway, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.setup_save_anyway)) }
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (check.canSaveAnyway) {
+                OutlinedButton(onClick = onSaveAnyway, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.setup_save_anyway)) }
+            }
+            HelpLink(HelpLinks.food(check.error))
         }
     }
 }

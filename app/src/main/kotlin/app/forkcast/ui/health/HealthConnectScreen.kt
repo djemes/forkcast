@@ -46,6 +46,9 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.data.health.HcAvailability
 import app.forkcast.core.data.health.HealthError
 import app.forkcast.core.data.health.HealthPermissions
@@ -101,6 +104,7 @@ fun HealthConnectScreen(
                     Button(onClick = { openStore(context) }, modifier = Modifier.heightIn(min = 48.dp)) {
                         Text(stringResource(if (update) R.string.hc_update else R.string.hc_get))
                     }
+                    HelpLink(HelpEntry.HC_UNAVAILABLE)
                 }
                 return@SettingsScaffold
             }
@@ -178,6 +182,7 @@ private fun StatusSection(state: HealthUiState, onSyncNow: () -> Unit, onRequest
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.error,
             )
+            HelpLink(HelpLinks.health(error))
         }
         val reads = status.settings.readWeight || status.settings.readActivity
         if (reads) {
@@ -196,6 +201,7 @@ private fun StatusSection(state: HealthUiState, onSyncNow: () -> Unit, onRequest
                 style = MaterialTheme.typography.bodyMedium,
             )
             Text(stringResource(R.string.hc_allow_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (status.lastError != HealthError.PERMISSION) HelpLink(HelpEntry.HC_PERMISSIONS)
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Button(onClick = onSyncNow, enabled = !state.syncing, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.hc_sync_now)) }

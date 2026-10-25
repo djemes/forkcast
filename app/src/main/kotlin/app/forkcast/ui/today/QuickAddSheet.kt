@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import app.forkcast.R
 import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.onboarding.NumberField
@@ -61,7 +63,7 @@ fun QuickAddSheet(
                 .imePadding()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            Text(stringResource(R.string.quick_add_title, mealName), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.quick_add_title, mealName), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             NumberField("", stringResource(R.string.quick_add_energy, f.energyUnitLabel), { energy = it }, suffix = f.energyUnitLabel, key = "qa-kcal")
             OutlinedTextField(
                 value = label,

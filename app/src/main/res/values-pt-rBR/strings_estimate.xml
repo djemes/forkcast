@@ -45,8 +45,8 @@
     <string name="stage_matching">Associando os alimentos ao USDA</string>
     <string name="stage_retry_waiting">Esperando para tentar de novo</string>
     <string name="stage_retry_when">Tentativas até agora: %1$d/%2$d. Próxima às %3$s.</string>
-    <string name="stage_quota">Cota de IA esgotada</string>
-    <string name="stage_quota_when">Todos os perfis estão sem cota. Próxima tentativa às %1$s, quando a cota renovar.</string>
+    <string name="stage_quota">Limite da IA atingido</string>
+    <string name="stage_quota_when">Todos os serviços de IA estão no limite. Próxima tentativa às %1$s, quando ele renovar.</string>
     <string name="stage_offline">Esperando conexão</string>
     <string name="stage_failed">Não foi possível estimar</string>
     <string name="stage_stopped">Esta estimativa demorou demais e foi parada. Tentar agora começa de novo.</string>
@@ -59,7 +59,7 @@
     <string name="attempt_ok">%1$s respondeu em %2$s</string>
     <string name="attempt_timeout">%1$s demorou demais (sem resposta em %2$s)</string>
     <string name="attempt_rate_limited">%1$s: requisições demais agora (limite por minuto ou ocupado)</string>
-    <string name="attempt_quota">%1$s: cota diária esgotada</string>
+    <string name="attempt_quota">%1$s: limite diário atingido</string>
     <string name="attempt_server">%1$s teve um problema (erro %2$d)</string>
     <string name="attempt_network">Sem conexão</string>
     <string name="attempt_key">%1$s recusou a chave de API</string>
@@ -70,15 +70,15 @@
 
     <!-- Ações -->
     <string name="action_retry_now">Tentar agora</string>
-    <string name="action_try_other_profile">Tentar com outro perfil</string>
+    <string name="action_try_other_profile">Tentar com outro serviço de IA</string>
     <string name="action_edit_description">Editar descrição e tentar</string>
     <string name="action_log_manually">Registrar manualmente</string>
 
     <!-- Modelo reserva -->
     <string name="backup_model_title">Adicionar um modelo reserva</string>
-    <string name="backup_model_body">%1$s na mesma chave de %2$s tem sua própria cota gratuita, então pode responder quando o primeiro estiver ocupado ou sem cota. Ele fica em segundo na ordem.</string>
+    <string name="backup_model_body">%1$s na mesma chave de %2$s tem o próprio limite grátis, então pode responder quando o primeiro estiver ocupado ou no limite. Ele fica em segundo na ordem.</string>
     <string name="backup_model_add">Adicionar modelo reserva</string>
-    <string name="backup_model_added">%1$s adicionado como perfil 2</string>
+    <string name="backup_model_added">%1$s adicionado como serviço de IA 2</string>
 
     <!-- Detalhes -->
     <string name="details_title">Detalhes</string>

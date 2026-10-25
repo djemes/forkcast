@@ -1,11 +1,14 @@
 package app.forkcast.ui.settings
 
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.unit.Density
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.model.AppearanceSettings
 import app.forkcast.core.model.ThemeMode
@@ -32,11 +35,44 @@ class SettingsScreensTest {
             }
         }
         compose.onNodeWithText("Goal & budget").assertIsDisplayed()
-        compose.onNodeWithText("You and your goal").assertIsDisplayed()
+        compose.onNodeWithText("Your goal and log").assertIsDisplayed()
         compose.onNodeWithText("Units").performScrollTo().performClick()
         compose.onNodeWithText("Appearance").performScrollTo().performClick()
         compose.onNodeWithText("About").performScrollTo().performClick()
         assertThat(opened).isEqualTo("UAB")
+    }
+
+    @Test fun settingsShowsBasicsWithAdvancedCollapsed() {
+        var opened = ""
+        compose.setContent {
+            ForkcastTheme {
+                SettingsScreen(
+                    onBack = {},
+                    actions = SettingsActions(help = { opened += "H" }, dailyTargets = { opened += "T" }, foodDatabases = { opened += "F" }),
+                )
+            }
+        }
+        compose.onNodeWithText("AI").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Help").performScrollTo().performClick()
+        // Per-nutrient targets and food databases wait under Advanced (roadmap 2.0 task 3.5).
+        compose.onNodeWithText("Daily targets").assertDoesNotExist()
+        compose.onNodeWithText("Food databases").assertDoesNotExist()
+        compose.onNodeWithText("Advanced").performScrollTo().performClick()
+        compose.onNodeWithText("Daily targets").performScrollTo().performClick()
+        compose.onNodeWithText("Food databases").performScrollTo().performClick()
+        assertThat(opened).isEqualTo("HTF")
+    }
+
+    @Test fun settingsInDarkThemeAtDoubleFontScaleKeepsEveryBasicReachable() {
+        compose.setContent {
+            val d = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(d.density, fontScale = 2f)) {
+                ForkcastTheme(darkTheme = true) { SettingsScreen(onBack = {}, actions = SettingsActions(updates = {}, language = {})) }
+            }
+        }
+        listOf("Goal & budget", "Units", "Notifications", "Backup & data", "Updates", "Language", "Help", "About", "Advanced").forEach {
+            compose.onNodeWithText(it).performScrollTo().assertIsDisplayed()
+        }
     }
 
     @Test fun appearanceReportsThemeChoice() {
@@ -128,7 +164,7 @@ class SettingsScreensTest {
 
     @Test fun refusedDownloadsSayWhyAndChangeNothing() {
         updates(UpdateUi.Refused(app.forkcast.core.data.update.ApkProblem.WRONG_CHECKSUM, null))
-        compose.onNodeWithText("doesn't match the release's checksum", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("doesn't match what the release lists", substring = true).assertIsDisplayed()
     }
 
     @Test fun automaticAndBetaSwitches() {

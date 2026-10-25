@@ -38,6 +38,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.BuildConfig
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.update.ApkProblem
 import app.forkcast.core.data.update.Download
@@ -47,6 +50,7 @@ import app.forkcast.core.model.UpdateSettings
 import app.forkcast.core.network.update.Release
 import app.forkcast.core.network.update.UpdateError
 import app.forkcast.di.GITHUB_URL
+import app.forkcast.ui.common.AdvancedSection
 import app.forkcast.ui.common.SavedKeyField
 import app.forkcast.ui.common.SecretText
 import app.forkcast.ui.common.ToggleRow
@@ -186,7 +190,6 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
         if (allowedNow && ready != null && state.installer !is AppInstaller.Status.Waiting) actions.install(ready)
         onPauseOrDispose {}
     }
-    var advanced by rememberSaveable { mutableStateOf(false) }
     SettingsScaffold(title = stringResource(R.string.update_title), onBack = onBack) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.update_from_github), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -197,6 +200,7 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
             statusText(state, canInstall)?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
+            updateHelp(state)?.let { HelpLink(it) }
 
             when (val ui = state.ui) {
                 is UpdateUi.Result -> when (val c = ui.check) {
@@ -235,12 +239,11 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
                 ToggleRow(stringResource(R.string.update_beta), stringResource(R.string.update_beta_detail), state.options.beta, actions.setBeta)
             }
 
-            TextButton(onClick = { advanced = !advanced }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(if (advanced) R.string.update_advanced_hide else R.string.update_advanced))
-            }
-            if (advanced) {
-                Text(stringResource(R.string.update_token_why), style = MaterialTheme.typography.bodyMedium)
-                TokenField(state.token, actions)
+            AdvancedSection {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.update_token_why), style = MaterialTheme.typography.bodyMedium)
+                    TokenField(state.token, actions)
+                }
             }
         }
     }
@@ -281,6 +284,19 @@ private fun statusText(state: UpdatesState, canInstall: Boolean): String? {
         }
         is UpdateUi.DownloadFailed -> errorText(ui.error)
     }
+}
+
+/** Help for a check, download or install that didn't work; null while things are fine. */
+private fun updateHelp(state: UpdatesState): HelpEntry? = when (val ui = state.ui) {
+    is UpdateUi.Result -> when (val c = ui.check) {
+        UpdateCheck.NeedsToken -> HelpEntry.UPDATE_CHECK_FAILED
+        is UpdateCheck.Failed -> HelpLinks.update(c.error)
+        is UpdateCheck.UpToDate, is UpdateCheck.Available -> null
+    }
+    is UpdateUi.DownloadFailed -> HelpLinks.update(ui.error)
+    is UpdateUi.Refused -> HelpEntry.UPDATE_INSTALL_FAILED
+    is UpdateUi.Ready -> HelpEntry.UPDATE_INSTALL_FAILED.takeIf { state.installer is AppInstaller.Status.Failed }
+    else -> null
 }
 
 @Composable

@@ -36,6 +36,8 @@
     <string name="weight_trend_up">trend ↑ %1$s/wk</string>
     <string name="weight_trend_flat">trend steady</string>
     <string name="weight_none">No weigh-ins yet. Tap to log one.</string>
+    <string name="weight_empty">No weigh-ins yet. Add your first one below; the trend line starts after the second.</string>
+    <string name="weight_one">The trend line starts after your second weigh-in.</string>
     <string name="weight_open">Open weight log</string>
 
     <!-- Activity card (SPEC §4.2 item 7) -->
@@ -44,6 +46,9 @@
     <string name="activity_active">%1$s active</string>
     <string name="activity_minutes">%1$d min</string>
     <string name="activity_none">No activity in Health Connect for this day.</string>
+    <string name="activity_empty">No activity yet. Connect Health Connect, and the steps, calories burned and workouts your phone or watch records show up here.</string>
+    <string name="activity_empty_connected">No activity from Health Connect in the last 14 days. Check that your phone or watch app shares steps and calories burned with Health Connect.</string>
+    <string name="activity_set_up">Set up Health Connect</string>
     <string name="activity_connect">See steps and workouts from Health Connect</string>
     <string name="activity_connect_action">Connect Health Connect</string>
     <string name="activity_usual">Usual: %1$s active a day</string>

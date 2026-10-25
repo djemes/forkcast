@@ -91,7 +91,7 @@ fun LogSheet(
             Text(
                 text = stringResource(R.string.log_sheet_title, selected?.name.orEmpty()),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.padding(horizontal = 16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp).semantics { heading() },
             )
             if (dayLabel != null) {
                 Text(

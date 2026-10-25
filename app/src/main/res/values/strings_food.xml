@@ -13,9 +13,9 @@
     <string name="search_no_results">No matches.</string>
     <string name="search_offline">No connection. Showing your own foods only.</string>
     <string name="search_rate_limited">%1$s is busy right now. Try again in a minute.</string>
-    <string name="search_invalid_key">USDA rejected the API key. Check it in Settings → Food databases.</string>
+    <string name="search_invalid_key">USDA rejected the API key. Check it in Settings › Food databases.</string>
     <string name="search_failed">%1$s didn\'t answer. Try again later.</string>
-    <string name="search_demo_key">Using USDA\'s shared demo key (10 searches an hour). Add your free key in Settings → Food databases.</string>
+    <string name="search_demo_key">Using USDA\'s shared demo key (10 searches an hour). Add your free key in Settings › Food databases.</string>
     <string name="search_create_food">Create a food</string>
     <string name="search_empty_start">Search by name or brand. Your recent and favorite foods appear here.</string>
     <string name="per_100g">per 100 g</string>

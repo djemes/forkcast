@@ -63,6 +63,7 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
 import app.forkcast.R
 import app.forkcast.ui.theme.Motion
 import app.forkcast.core.data.db.EstimateStatus
@@ -372,7 +373,7 @@ fun EditEntrySheet(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            Text(stringResource(R.string.edit_entry_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.edit_entry_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(entry.displayName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 SourceBadge(entry.source)

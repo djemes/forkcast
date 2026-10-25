@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Debug builds only (src/debug): developer tools under Settings › Advanced -->
+    <string name="debug_demo_data">Load demo data</string>
+    <string name="debug_demo_data_summary">About 60 days of meals, weigh-ins and water, merged into this phone (debug builds only)</string>
+    <string name="debug_demo_data_done">Demo data added</string>
+</resources>

@@ -26,6 +26,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.network.ai.AiError
 import app.forkcast.core.model.ProviderId
 
@@ -59,6 +62,7 @@ fun TestResult(test: TestState?, provider: ProviderId, modifier: Modifier = Modi
                     modifier = Modifier.padding(start = 28.dp),
                 )
             }
+            HelpLink(HelpLinks.ai(test.error), Modifier.padding(start = 16.dp))
         }
         TestState.Running -> Text(
             stringResource(R.string.ai_testing),
@@ -114,7 +118,16 @@ fun RoleLine(role: ProfileRole, pausedUntil: String?, modifier: Modifier = Modif
             MaterialTheme.colorScheme.tertiary,
         )
     }
-    IconLine(icon, text, color, modifier)
+    val help = when (role) {
+        ProfileRole.NO_KEY -> HelpEntry.AI_NOT_SET_UP
+        ProfileRole.KEY_REJECTED -> HelpEntry.AI_KEY_REJECTED
+        ProfileRole.PAUSED -> HelpEntry.AI_LIMITS
+        else -> null
+    }
+    Column(modifier) {
+        IconLine(icon, text, color)
+        help?.let { HelpLink(it, Modifier.padding(start = 16.dp)) }
+    }
 }
 
 /**

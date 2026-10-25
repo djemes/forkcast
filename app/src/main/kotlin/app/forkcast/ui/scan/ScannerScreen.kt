@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -55,9 +56,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.semantics
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import app.forkcast.core.network.FoodApiError
 import app.forkcast.ui.theme.ForkcastTheme
 
@@ -232,7 +237,10 @@ private fun ResultSheet(
                     OutlinedButton(onClick = { onEnterManually(state.gtin) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.scan_enter_manually))
                     }
-                    TextButton(onClick = onResume) { Text(stringResource(R.string.scan_keep_scanning)) }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onResume, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.scan_keep_scanning)) }
+                        HelpLink(HelpEntry.LOG_BARCODE)
+                    }
                 }
                 is ScanState.Failed -> {
                     Text(
@@ -245,7 +253,10 @@ private fun ResultSheet(
                     OutlinedButton(onClick = { onEnterManually(state.gtin) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.scan_enter_manually))
                     }
-                    TextButton(onClick = onResume) { Text(stringResource(R.string.scan_keep_scanning)) }
+                    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        TextButton(onClick = onResume, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.scan_keep_scanning)) }
+                        HelpLink(HelpEntry.LOG_BARCODE)
+                    }
                 }
                 ScanState.Scanning -> Unit
             }
@@ -282,9 +293,10 @@ private fun TypeBarcodeDialog(onSubmit: (String) -> Boolean, onDismiss: () -> Un
 fun PermissionExplainer(onAllow: () -> Unit, modifier: Modifier = Modifier) {
     Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surfaceContainerLow, modifier = modifier.padding(24.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.padding(24.dp)) {
-            Text(stringResource(R.string.camera_permission_title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(R.string.camera_permission_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             Text(stringResource(R.string.camera_permission_body), style = MaterialTheme.typography.bodyLarge)
             Button(onClick = onAllow, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.camera_permission_allow)) }
+            HelpLink(HelpEntry.LOG_CAMERA)
         }
     }
 }

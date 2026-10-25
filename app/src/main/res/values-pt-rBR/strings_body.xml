@@ -36,6 +36,8 @@
     <string name="weight_trend_up">tendência ↑ %1$s/sem</string>
     <string name="weight_trend_flat">tendência estável</string>
     <string name="weight_none">Nenhuma pesagem ainda. Toque para registrar uma.</string>
+    <string name="weight_empty">Nenhuma pesagem ainda. Adicione a primeira abaixo; a linha de tendência começa depois da segunda.</string>
+    <string name="weight_one">A linha de tendência começa depois da sua segunda pesagem.</string>
     <string name="weight_open">Abrir registro de peso</string>
 
     <!-- Activity card (SPEC §4.2 item 7) -->
@@ -44,6 +46,9 @@
     <string name="activity_active">%1$s ativas</string>
     <string name="activity_minutes">%1$d min</string>
     <string name="activity_none">Nenhuma atividade no Health Connect neste dia.</string>
+    <string name="activity_empty">Nenhuma atividade ainda. Conecte o Health Connect, e os passos, as calorias gastas e os treinos que o celular ou o relógio registram aparecem aqui.</string>
+    <string name="activity_empty_connected">Nenhuma atividade do Health Connect nos últimos 14 dias. Confira se o app do celular ou do relógio compartilha passos e calorias gastas com o Health Connect.</string>
+    <string name="activity_set_up">Configurar o Health Connect</string>
     <string name="activity_connect">Veja passos e treinos do Health Connect</string>
     <string name="activity_connect_action">Conectar o Health Connect</string>
     <string name="activity_usual">Habitual: %1$s ativas por dia</string>

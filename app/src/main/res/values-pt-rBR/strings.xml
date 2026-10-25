@@ -4,6 +4,10 @@
 
     <!-- Common -->
     <string name="action_back">Voltar</string>
+    <!-- Basics e Avançado nas configurações (roadmap 2.0, tarefa 3.5) -->
+    <string name="advanced">Avançado</string>
+    <string name="advanced_state_open">À mostra</string>
+    <string name="advanced_state_closed">Escondido</string>
 
     <!-- Today -->
     <string name="today">Hoje</string>
@@ -51,9 +55,8 @@
 
     <!-- Settings -->
     <string name="settings">Configurações</string>
-    <string name="settings_group_you">Você e sua meta</string>
-    <string name="settings_group_logging">Registro</string>
-    <string name="settings_group_connections">Serviços conectados</string>
+    <string name="settings_group_you">Sua meta e seu registro</string>
+    <string name="settings_group_connections">Lembretes, IA e dados</string>
     <string name="settings_group_app">App</string>
     <string name="settings_goal_budget">Meta e orçamento</string>
     <string name="settings_goal_budget_summary">Peso-alvo, ritmo, orçamento de calorias, manutenção, atividade</string>
@@ -75,7 +78,7 @@
     <string name="settings_daily_targets">Metas diárias</string>
     <string name="settings_meals">Refeições</string>
     <string name="settings_notifications">Notificações</string>
-    <string name="settings_ai">Estimativas por foto com IA</string>
+    <string name="settings_ai">IA</string>
     <string name="settings_food_databases">Bancos de alimentos</string>
     <string name="settings_health_connect">Health Connect</string>
     <string name="settings_updates">Atualizações</string>
@@ -127,5 +130,5 @@
     <string name="unit_l">L</string>
     <string name="unit_g">g</string>
     <string name="unit_quantity">%1$s\u2009%2$s</string>
-    <string name="import_ai_servers">Servidores de IA citados neste arquivo: %1$s. Os perfis que os usam chegam desativados; ative um em Configurações → IA só se você souber de quem é o servidor.</string>
+    <string name="import_ai_servers">Servidores de IA citados neste arquivo: %1$s. Os serviços de IA que os usam chegam desativados; ative um em Configurações › IA só se você souber de quem é o servidor.</string>
 </resources>

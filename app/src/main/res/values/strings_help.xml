@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Settings › Help (roadmap 2.0 task 3.4). Numbers come from the code: check it before changing one. -->
+    <string name="settings_help">Help</string>
+    <string name="settings_help_summary">Answers to common questions, and what the words mean</string>
+    <string name="help_title">Help</string>
+    <string name="help_search">Search help</string>
+    <string name="help_no_match">No answers match “%1$s”. Try fewer or other words.</string>
+    <string name="help_state_open">Answer shown</string>
+    <string name="help_state_closed">Answer hidden</string>
+    <string name="help_link">Help</string>
+    <string name="help_link_description">Help: %1$s</string>
+
+    <string name="help_topic_start">Getting started</string>
+    <string name="help_topic_logging">Logging food</string>
+    <string name="help_topic_budget">How your budget works</string>
+    <string name="help_topic_ai">AI estimates</string>
+    <string name="help_topic_health">Health Connect</string>
+    <string name="help_topic_backup">Backups and a new phone</string>
+    <string name="help_topic_updates">Updating the app</string>
+    <string name="help_topic_privacy">Privacy</string>
+    <string name="help_topic_glossary">What the words mean</string>
+
+    <!-- Getting started -->
+    <string name="help_q_start">How do I start?</string>
+    <string name="help_a_start">Log what you eat on Today: tap Add on a meal, then search, scan a barcode, or use Photo or Describe if AI is set up. The ring shows how much of today\'s budget is left. Weigh in when you can, from the weight card on Today, so Forkcast can follow your trend and, after a few weeks, learn your own maintenance.</string>
+    <string name="help_q_without_ai">Do I need AI to use Forkcast?</string>
+    <string name="help_a_without_ai">No. Search, barcode scanning, quick add, recipes and saved meals all work without AI. AI adds Photo and Describe, which estimate a meal from a picture or a sentence. It needs a key from an AI service, which you can add any time in Settings › AI. The guide there walks you through it.</string>
+    <string name="help_q_change_goal">How do I change my goal or budget?</string>
+    <string name="help_a_change_goal">Open Settings › Goal &amp; budget to change your target weight and pace. Your budget updates as you change them, and the screen shows how it was worked out. Sex, age, height and activity level are in Settings › Profile.</string>
+
+    <!-- Logging -->
+    <string name="help_q_log_ways">Photo, Describe, barcode or search: which should I use?</string>
+    <string name="help_a_log_ways">Barcode is the most exact for packaged food: it uses the maker\'s label data from Open Food Facts and USDA. Search suits foods you eat often, and your recent and favorite foods are there before you type. Photo is quickest for a plate of mixed food, and Describe works when there\'s no photo, for example “a chicken burrito with rice and beans”. Photo and Describe give estimates, so check the portions before saving. Quick add is for when you only know the calories.</string>
+    <string name="help_q_photo_tips">How do I get a better photo estimate?</string>
+    <string name="help_a_photo_tips">Fit the whole plate in the picture, in good light. A fork or a hand in the frame helps with size. You can add up to 3 photos and a short note such as “cooked in olive oil” or “1.5 cups of rice”: oil, butter and sauces are the hardest to see. If a photo can\'t be read, remove it and pick another; it may not be a picture, or it may be too large.</string>
+    <string name="help_q_search_failed">Search shows only my foods, or says a database didn\'t answer</string>
+    <string name="help_a_search_failed">Without a connection, search shows only the foods saved on your phone, which includes everything you\'ve logged before. The food databases come back when you\'re online. If Open Food Facts or USDA is busy or doesn\'t answer, wait a minute and search again. You can also create a food by hand from the search screen.</string>
+    <string name="help_q_usda_key">Do I need a USDA key, and what if it\'s rejected?</string>
+    <string name="help_a_usda_key">You don\'t need one. Without it, Forkcast uses USDA\'s shared demo key, which allows about 10 searches an hour. A free key of your own removes that limit: Settings › Food databases shows how to get one. If USDA rejects your key, copy it again from USDA\'s page or email, with nothing missing or extra, and paste it.</string>
+    <string name="help_q_barcode">A barcode isn\'t found, or the lookup fails</string>
+    <string name="help_a_barcode">Forkcast looks the barcode up in Open Food Facts and USDA and keeps the best match on your phone, so the next scan works offline. If neither has it, scan the nutrition label and Forkcast saves the food for next time, or enter it by hand. Without a connection, only barcodes you\'ve scanned before are found. If the databases don\'t answer, try again in a minute. You can also type the digits under the barcode.</string>
+    <string name="help_q_label">The label scan can\'t read the label</string>
+    <string name="help_a_label">Hold the phone straight over the Nutrition Facts panel, close enough that it fills the frame, with the package flat and in good light. Tilt it a little if shiny packaging reflects the light. If it still can\'t read the calories or the serving size, enter the values by hand. Reading happens on your phone. Check the values against the label before saving.</string>
+    <string name="help_q_camera">The camera doesn\'t open</string>
+    <string name="help_a_camera">Forkcast asks for the camera only when you scan or take a meal photo. If you said no, tap Allow camera. If Android no longer asks, the same button opens Forkcast\'s page in Android\'s settings, where you can allow the camera under Permissions. For meal photos you can also choose pictures from your gallery.</string>
+
+    <!-- Budget -->
+    <string name="help_q_budget_how">How is my daily budget worked out?</string>
+    <string name="help_a_budget_how">First Forkcast estimates your maintenance: what your body burns on a usual day. It uses your sex, age, height and weight in the Mifflin-St Jeor formula, times your activity level. Then it takes away a daily deficit to reach your target weight by your date, counting about 7,700 kcal per kilogram (3,500 kcal per pound) spread over the days left. To gain, it adds a surplus instead. Settings › Goal &amp; budget shows each step with your numbers.</string>
+    <string name="help_q_budget_adaptive">Why did my maintenance change?</string>
+    <string name="help_a_budget_adaptive">The formula is a starting point. Once the last 4 weeks have 14 fully logged days and weigh-ins on 6 days, Forkcast compares what you ate with how your weight trend moved, and works out what your body actually burns. It updates once a week and moves only part of the way, at most 150 kcal at a time, so one unusual week doesn\'t swing your budget. A day counts when it has at least 2 meals and 1,000 kcal, or when you mark it complete. To keep the formula, turn off “Use my estimated maintenance” in Settings › Goal &amp; budget.</string>
+    <string name="help_q_budget_activity">Why did my budget go up after a workout?</string>
+    <string name="help_a_budget_activity">With Health Connect, Forkcast reads your active calories. Your activity level already covers a usual day, so only activity above your usual adds budget: half of the extra, up to 500 kcal a day. Half, because watches and phones often overestimate what you burn. Your usual is your daily average over the 28 days before, and needs at least 3 days of activity. To keep a fixed budget, turn off “Add extra activity to my budget” in Settings › Goal &amp; budget.</string>
+    <string name="help_q_budget_warnings">Why does Forkcast warn me about my budget or pace?</string>
+    <string name="help_a_budget_warnings" formatted="false">Forkcast warns, but never stops you, when a goal means losing more than 1% of your body weight a week, or when the budget is below your resting energy or below 1,200 kcal (female) or 1,500 kcal (male). Forkcast gives estimates, not medical advice. For a very low budget, talk with a doctor or a dietitian.</string>
+
+    <!-- AI -->
+    <string name="help_q_ai_not_set_up">It says AI isn\'t set up, or is turned off</string>
+    <string name="help_a_ai_not_set_up">Photo and Describe need an AI service with your own key. Open Settings › AI and tap Add AI: the guide helps you get a free Gemini key or a paid Claude key and checks it before saving. If AI is set up but turned off, turn it on at the top of the same screen. If it says no key is saved, add the key again.</string>
+    <string name="help_q_ai_key">The AI service rejected my key</string>
+    <string name="help_a_ai_key">Usually part of the key is missing or something extra was copied. Copy it again from the service\'s website, paste it, and tap Test. A brand-new Gemini key can take a few minutes to start working. A Claude key needs a workspace and credit on the account. If you deleted the key at the service, make a new one. An AI service whose key was rejected is skipped until a test passes.</string>
+    <string name="help_q_ai_limits">It says the AI is busy or at its limit</string>
+    <string name="help_a_ai_limits">Free Gemini keys have limits per minute and per day. The limits count per Google Cloud project and per model, so a second key in the same project doesn\'t add more, and the daily limits reset at midnight Pacific time. That\'s why the setup also adds Gemini Flash-Lite on the same key: it has its own free limit and takes over when the first model is out. An estimate that hits a limit waits and tries again on its own. Claude is paid per use: if it says the credit is used up, add credit in the Claude Console under Billing.</string>
+    <string name="help_q_ai_model">It says the model isn\'t available</string>
+    <string name="help_a_ai_model">The service no longer offers the model this AI service uses, or your key can\'t use it. In Settings › AI, open Advanced, tap Edit on that AI service, and pick another model. Or delete it and tap Add AI, which sets up the current recommended model.</string>
+    <string name="help_q_ai_connection">No connection, slow answers, or a problem on the service\'s side</string>
+    <string name="help_a_ai_connection">Estimates need the internet. Without a connection, Forkcast keeps the photo and sends it when you\'re back online. When a service is slow or has a problem, Forkcast tries again a few times and moves on to the next AI service in your list. If an estimate stops, open it and tap Retry now. Slow answers are more common on Gemini\'s free tier at busy times.</string>
+    <string name="help_q_ai_odd">The AI declined, or sent an answer Forkcast couldn\'t read</string>
+    <string name="help_a_ai_odd">Sometimes a service declines a photo, or answers in a way Forkcast can\'t use. On the estimate, try again, edit the description, or try another AI service. With your own OpenAI-compatible server, check that its model accepts images. You can always log the meal by hand instead.</string>
+    <string name="help_q_ai_accuracy">How accurate are AI estimates?</string>
+    <string name="help_a_ai_accuracy">They\'re estimates. Forkcast shows a range and the assumptions the AI made, and matches each part to a food in the databases where it can. Hidden ingredients like oil, butter and sauces are the hardest to see, so mention them in the note. Check the portions and correct anything that\'s off before saving. Describe uses the AI\'s own knowledge, not a web search.</string>
+    <string name="help_q_ai_cost">What does AI cost?</string>
+    <string name="help_a_ai_cost">Gemini has a free tier with daily limits, and the setup uses it. Claude is paid per use, from credit you add at Anthropic. In Settings › AI, Usage under Advanced shows how many estimates each AI service ran this month and, where prices are known, about what they cost. Forkcast itself is free.</string>
+
+    <!-- Health Connect -->
+    <string name="help_q_hc_sync">Health Connect isn\'t syncing</string>
+    <string name="help_a_hc_sync">Open Settings › Health Connect: it shows the last sync and any problem, and Sync now tries right away. Forkcast syncs about once an hour while closed only if you allowed background reads in Health Connect; otherwise it syncs when you open Forkcast. Without access to past data, it reads only the last 30 days. Check that your scale or watch app also shares its data with Health Connect. If Health Connect asked Forkcast to slow down, it tries again later on its own.</string>
+    <string name="help_q_hc_permissions">Health Connect stopped Forkcast, or a permission is missing</string>
+    <string name="help_a_hc_permissions">Health Connect decides what each app may read and write. In Settings › Health Connect, tap Allow in Health Connect. If nothing opens, Health Connect has stopped asking: open Health Connect yourself, go to App permissions › Forkcast, and turn on what you want shared.</string>
+    <string name="help_q_hc_unavailable">Health Connect isn\'t available, or needs an update</string>
+    <string name="help_a_hc_unavailable">On Android 14 and later, Health Connect is part of Android. On earlier versions it\'s a separate app: Settings › Health Connect offers to get it or update it. If it says it isn\'t available right now, try again later. Forkcast works without Health Connect; you type your weigh-ins yourself.</string>
+
+    <!-- Backups -->
+    <string name="help_q_backup_how">How do I back up my data?</string>
+    <string name="help_a_backup_how">Backups are .forkcast files that stay where you put them. In Settings › Backup &amp; data, tap Save a backup file and pick a place in Android\'s file picker, such as a cloud drive. Or turn on automatic backup: choose a folder once, and Forkcast saves a backup there every week (or every day) and keeps the newest few. You can protect backups with a password and include meal photos. API keys are never in backups.</string>
+    <string name="help_q_backup_phone">How do I move to a new phone?</string>
+    <string name="help_a_backup_phone">On the old phone, save a backup to a place the new phone can reach, such as a cloud drive. For your API keys too, also tap Export settings: it makes a separate file locked with a passphrase you choose, the only file that can hold your keys. On the new phone, install Forkcast and go through the short setup. Then in Settings › Backup &amp; data, tap Restore from a backup, pick the file and choose Replace, and Import settings for the settings file. Android\'s own transfer to a new phone brings your data too, but never the keys.</string>
+    <string name="help_q_backup_restore">A backup won\'t import</string>
+    <string name="help_a_backup_restore">Forkcast checks a file before changing anything, so a refused file leaves your data as it was. If the backup was made by a newer version, update Forkcast first. Backups from versions before 1.2 can\'t be imported. A file that can\'t be read may be damaged or not a Forkcast backup: try another copy, such as an older automatic backup. Replace saves a safety copy first, so you can undo it from Backup &amp; data.</string>
+    <string name="help_q_backup_password">I forgot a backup password</string>
+    <string name="help_a_backup_password">Nobody can recover it, Forkcast included: the password is the only way to open that file. Try the passwords you use most, and make sure the file wasn\'t changed. For automatic backups the password is saved on this phone, so they keep working; if Forkcast says none is saved, turn the password off and on again to set it. Then save a new backup you can open.</string>
+    <string name="help_q_backup_auto">Automatic backup says there\'s a problem</string>
+    <string name="help_a_backup_auto">If the folder was moved or deleted, or its app was removed, Forkcast can\'t reach it: choose a folder again in Settings › Backup &amp; data. If saving failed, check that there\'s free space, or choose another folder. Forkcast lets you know when a scheduled backup fails twice in a row, and Back up now tries again right away.</string>
+    <string name="help_q_backup_save">Saving a backup or a file failed</string>
+    <string name="help_a_backup_save">The place you picked didn\'t accept the file. Try again and pick another place, such as Downloads, and check that there\'s free space. Some cloud apps need a connection to save.</string>
+
+    <!-- Updates -->
+    <string name="help_q_update_how">How do I update Forkcast?</string>
+    <string name="help_a_update_how">Updates come from Forkcast\'s releases on GitHub. Open Settings › Updates and tap Check for updates; when there\'s a new version, read what\'s new and tap Download and install. Your data stays. Turn on automatic checks to get a notice when one comes out. Android asks once before Forkcast may install its own updates.</string>
+    <string name="help_q_update_check">Checking for updates fails</string>
+    <string name="help_a_update_check">Check your connection and try again later; GitHub also limits how often one network can check. While Forkcast\'s GitHub project is private, checking needs a GitHub token, added under Advanced in Settings › Updates. If GitHub refuses the token, it may have expired. You can always download the newest APK from the Releases page on GitHub.</string>
+    <string name="help_q_update_install">The update won\'t install</string>
+    <string name="help_a_update_install">Forkcast checks every download first: it must be Forkcast, newer than this version, signed with the same key, and match what the release lists. If a check fails, nothing is changed. Try again; a new download fixes a file that was damaged on the way. An APK signed with a different key can\'t install over this one, which is Android protecting your data.</string>
+
+    <!-- Privacy -->
+    <string name="help_q_privacy_data">Where is my data, and who can see it?</string>
+    <string name="help_a_privacy_data">Everything stays on your phone, in Forkcast\'s private storage. There are no accounts and no analytics, and Forkcast has no servers of its own. Data leaves the phone only when you choose: a backup or file you save, a food search or barcode lookup (only the search text or barcode), what you allow in Health Connect, and the AI estimates you ask for.</string>
+    <string name="help_q_privacy_ai">What does an AI service receive?</string>
+    <string name="help_a_privacy_ai">Only the meal photos and description you\'re estimating, with your key; never your weight, your log or your health data. Photos are re-encoded first, which removes their location and other hidden details, and Forkcast deletes them after 14 days unless you change that in Settings › AI. Each service\'s terms say what it does with what it receives: with a free Gemini key, Google may use it to improve its products.</string>
+    <string name="help_q_privacy_crash">What happens when Forkcast crashes?</string>
+    <string name="help_a_privacy_crash">Forkcast saves a short report on your phone: the app and Android versions, the phone model, and where in the code it stopped. Never your data, messages or keys, and nothing is sent. Today offers to save the report so you can share it if you want; it\'s deleted once saved or dismissed.</string>
+
+    <!-- Glossary -->
+    <string name="help_term_kcal">kcal</string>
+    <string name="help_def_kcal">Kilocalories, the unit for food energy. What food labels call Calories are kcal. 1 kcal is about 4.2 kJ; you can switch to kJ in Settings › Units.</string>
+    <string name="help_term_macros">Macros</string>
+    <string name="help_def_macros">Short for macronutrients: protein, carbohydrates (carbs) and fat, the parts of food that give energy. Protein and carbs have about 4 kcal per gram, fat about 9.</string>
+    <string name="help_term_tdee">TDEE (maintenance)</string>
+    <string name="help_def_tdee">Total daily energy expenditure: everything your body burns in a day, resting and moving. Forkcast calls it maintenance, because eating that much keeps your weight about the same.</string>
+    <string name="help_term_dv" formatted="false">%DV (Daily Value)</string>
+    <string name="help_def_dv" formatted="false">How much of a nutrient\'s Daily Value a food or a day gives, as a percentage. The Daily Values are the amounts US food labels use for adults. Forkcast shows %DV for vitamins and minerals, for example “Vitamin C 45 mg · 50%”.</string>
+</resources>

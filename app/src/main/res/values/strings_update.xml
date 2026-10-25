@@ -48,11 +48,9 @@
     <string name="update_auto_detail">At most once a day. You\'ll get a notification when a new version is out; nothing installs by itself.</string>
     <string name="update_beta">Beta updates</string>
     <string name="update_beta_detail">Also offer early versions to try before they\'re final. They may have bugs.</string>
-    <string name="update_advanced">Advanced</string>
-    <string name="update_advanced_hide">Hide advanced</string>
     <string name="update_token_why">A GitHub token is needed only while Forkcast\'s GitHub project is private.</string>
     <string name="update_rate_limited">GitHub limits how often checks can come from one network. Try again in an hour.</string>
     <string name="update_rate_limited_until">GitHub limits how often checks can come from one network. Try again after %1$s.</string>
-    <string name="update_no_checksum">This release doesn\'t list a checksum, so Forkcast can\'t confirm the download is genuine. Nothing was changed. You can get the APK from the Releases page instead.</string>
-    <string name="update_wrong_checksum">The download doesn\'t match the release\'s checksum, so it may be damaged or changed on the way. Nothing was changed. Try again.</string>
+    <string name="update_no_checksum">This release is missing the information Forkcast uses to check a download, so it can\'t confirm the file is genuine. Nothing was changed. You can get the APK from the Releases page instead.</string>
+    <string name="update_wrong_checksum">The download doesn\'t match what the release lists, so it may be damaged or changed on the way. Nothing was changed. Try again.</string>
 </resources>

@@ -55,6 +55,8 @@ import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.GuideLinks
 import app.forkcast.R
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.domain.KeyCheck
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.network.ai.AiError
@@ -255,8 +257,11 @@ private fun SetupError(error: Throwable, state: AiSetupUiState, onEvent: (AiSetu
                 }
             }
         }
-        TextButton(onClick = { details = !details }, modifier = Modifier.heightIn(min = 48.dp)) {
-            Text(stringResource(if (details) R.string.setup_hide_details else R.string.setup_details))
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            TextButton(onClick = { details = !details }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(if (details) R.string.setup_hide_details else R.string.setup_details))
+            }
+            HelpLink(HelpLinks.ai(error), color = MaterialTheme.colorScheme.onErrorContainer)
         }
         if (details) {
             Text(resources.aiErrorMessage(error, state.provider), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onErrorContainer)

@@ -35,6 +35,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
+import app.forkcast.ui.help.LocalHelp
+import app.forkcast.ui.help.showError
+import app.forkcast.ui.common.AdvancedSection
 import app.forkcast.ui.common.ToggleRow
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.ImportMode
@@ -135,15 +141,20 @@ fun BackupScreen(
 ) {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val openHelp = LocalHelp.current
     LaunchedEffect(extraNotice) {
         val notice = extraNotice ?: return@LaunchedEffect
         onExtraNoticeShown()
-        snackbar.showSnackbar(resources.getString(notice))
+        // Settings transfer: only "Couldn't save the file" is a problem.
+        if (notice == R.string.settings_failed) snackbar.showError(resources.getString(notice), resources.getString(R.string.help_link)) { openHelp(HelpEntry.BACKUP_SAVE_FAILED) }
+        else snackbar.showSnackbar(resources.getString(notice))
     }
     LaunchedEffect(state.notice) {
         val notice = state.notice ?: return@LaunchedEffect
         onEvent(BackupEvent.NoticeShown)
-        snackbar.showSnackbar(resources.getString(notice.message()))
+        val message = resources.getString(notice.message())
+        if (notice == BackupNotice.ExportFailed) snackbar.showError(message, resources.getString(R.string.help_link)) { openHelp(HelpEntry.BACKUP_SAVE_FAILED) }
+        else snackbar.showSnackbar(message)
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -162,16 +173,6 @@ fun BackupScreen(
                 }
                 ToggleRow(stringResource(R.string.backup_reminder), stringResource(R.string.backup_reminder_detail), reminder, onReminder)
 
-                Column(Modifier.padding(top = 16.dp)) { autoSection() }
-
-                SectionTitle(R.string.backup_csv_title, Modifier.padding(top = 16.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OutlinedButton(onClick = actions.exportFoodLog, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_food_log)) }
-                    OutlinedButton(onClick = actions.exportWeights, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_weights)) }
-                }
-
-                Column(Modifier.padding(top = 16.dp)) { settingsSection() }
-
                 if (state.hasSafetyBackup) {
                     Text(
                         stringResource(R.string.backup_restore_safety_body),
@@ -180,6 +181,20 @@ fun BackupScreen(
                     )
                     OutlinedButton(onClick = { onEvent(BackupEvent.OpenSafetyBackup) }, enabled = !state.busy) {
                         Text(stringResource(R.string.backup_restore_safety))
+                    }
+                }
+
+                Column(Modifier.padding(top = 16.dp)) { autoSection() }
+
+                // Spreadsheets and moving settings between phones are for fewer people (roadmap 2.0 task 3.5).
+                AdvancedSection(Modifier.padding(top = 8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SectionTitle(R.string.backup_csv_title, Modifier.padding(top = 8.dp))
+                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            OutlinedButton(onClick = actions.exportFoodLog, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_food_log)) }
+                            OutlinedButton(onClick = actions.exportWeights, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_weights)) }
+                        }
+                        Column(Modifier.padding(top = 16.dp)) { settingsSection() }
                     }
                 }
             }
@@ -246,9 +261,12 @@ private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) 
                 },
             ),
             onDismiss = dismiss,
+            help = HelpLinks.restore(dialog.reason),
         )
-        BackupDialog.ReadFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_read_failed), dismiss)
-        BackupDialog.ImportFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_import_failed), dismiss)
+        BackupDialog.ReadFailed ->
+            MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_read_failed), dismiss, HelpEntry.BACKUP_RESTORE_FAILED)
+        BackupDialog.ImportFailed ->
+            MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_import_failed), dismiss, HelpEntry.BACKUP_RESTORE_FAILED)
     }
 }
 
@@ -291,13 +309,15 @@ internal fun AiServersNote(servers: List<String>) {
     )
 }
 
+/** [help]: the entry a refusal links to; its "Help" closes the dialog on the way. */
 @Composable
-private fun MessageDialog(title: String, body: String, onDismiss: () -> Unit) {
+private fun MessageDialog(title: String, body: String, onDismiss: () -> Unit, help: HelpEntry? = null) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(body) },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.ok)) } },
+        dismissButton = if (help != null) ({ HelpLink(help, onOpen = onDismiss) }) else null,
     )
 }
 

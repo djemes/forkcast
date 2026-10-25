@@ -79,6 +79,7 @@ fun TodayBudgetSheet(
             Text(
                 if (state.isToday) stringResource(R.string.budget_sheet_title) else stringResource(R.string.budget_sheet_title_day, shortDayLabel(state.date, state.today)),
                 style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.semantics { heading() },
             )
             Equation(equation, f)
             MealBars(state.meals.filter { it.kcal > 0 }, totals.allowanceKcal, f)

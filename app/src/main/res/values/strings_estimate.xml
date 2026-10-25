@@ -45,8 +45,8 @@
     <string name="stage_matching">Matching the foods to USDA</string>
     <string name="stage_retry_waiting">Waiting to retry</string>
     <string name="stage_retry_when">Tries so far: %1$d/%2$d. Next try at %3$s.</string>
-    <string name="stage_quota">Out of AI quota</string>
-    <string name="stage_quota_when">Every profile is out of quota. Next try at %1$s, when it resets.</string>
+    <string name="stage_quota">AI limit reached</string>
+    <string name="stage_quota_when">Every AI service is at its limit. Next try at %1$s, when it resets.</string>
     <string name="stage_offline">Waiting for a connection</string>
     <string name="stage_failed">Couldn\'t estimate</string>
     <string name="stage_stopped">This estimate ran too long and was stopped. Retry now starts it again.</string>
@@ -59,7 +59,7 @@
     <string name="attempt_ok">%1$s answered in %2$s</string>
     <string name="attempt_timeout">%1$s took too long (no answer in %2$s)</string>
     <string name="attempt_rate_limited">%1$s: too many requests for now (per-minute limit or busy)</string>
-    <string name="attempt_quota">%1$s: daily quota used up</string>
+    <string name="attempt_quota">%1$s: daily limit reached</string>
     <string name="attempt_server">%1$s had a problem (error %2$d)</string>
     <string name="attempt_network">No connection</string>
     <string name="attempt_key">%1$s rejected the API key</string>
@@ -70,15 +70,15 @@
 
     <!-- Actions -->
     <string name="action_retry_now">Retry now</string>
-    <string name="action_try_other_profile">Try with another profile</string>
+    <string name="action_try_other_profile">Try with another AI service</string>
     <string name="action_edit_description">Edit description and retry</string>
     <string name="action_log_manually">Log manually instead</string>
 
     <!-- Backup model -->
     <string name="backup_model_title">Add a backup model</string>
-    <string name="backup_model_body">%1$s on the same key as %2$s has its own free quota, so it can answer when the first is busy or out of quota. It goes second in the order.</string>
+    <string name="backup_model_body">%1$s on the same key as %2$s has its own free limit, so it can answer when the first is busy or at its limit. It goes second in the order.</string>
     <string name="backup_model_add">Add backup model</string>
-    <string name="backup_model_added">Added %1$s as profile 2</string>
+    <string name="backup_model_added">Added %1$s as AI service 2</string>
 
     <!-- Details -->
     <string name="details_title">Details</string>
