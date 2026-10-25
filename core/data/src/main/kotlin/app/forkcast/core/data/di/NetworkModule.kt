@@ -82,8 +82,17 @@ object UpdateModule {
     /** Its own client: no redirects followed (the token stays on api.github.com), long reads. */
     @Provides
     @Singleton
-    fun provideGitHubReleases(@Named(USER_AGENT) userAgent: String, @Named(GITHUB_REPO) repo: String): app.forkcast.core.network.update.GitHubReleases =
-        app.forkcast.core.network.update.GitHubReleases(app.forkcast.core.network.update.UpdateHttpClientFactory.create(userAgent), repo)
+    fun provideGitHubReleases(
+        @ApplicationContext context: Context,
+        @Named(USER_AGENT) userAgent: String,
+        @Named(GITHUB_REPO) repo: String,
+    ): app.forkcast.core.network.update.GitHubReleases =
+        app.forkcast.core.network.update.GitHubReleases(
+            app.forkcast.core.network.update.UpdateHttpClientFactory.create(userAgent),
+            repo,
+            // A local stand-in only in a debuggable build set up for it (ReleasesMock).
+            api = app.forkcast.core.data.update.ReleasesMock.baseUrl(context) ?: app.forkcast.core.network.update.GitHubReleases.API,
+        )
 }
 
 @Module

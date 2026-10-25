@@ -55,18 +55,18 @@ sealed class UpdateError(message: String) : Exception(message) {
  * [http] must not follow redirects: an asset download answers 302 to a signed storage URL, which
  * is fetched without the token (the token must only ever go to api.github.com).
  */
-class GitHubReleases(private val http: HttpClient, private val repo: String) {
+class GitHubReleases(private val http: HttpClient, private val repo: String, private val api: String = API) {
 
     /** The newest full release (GitHub's "latest" skips drafts and pre-releases). */
     suspend fun latest(token: String?): Release {
-        val r = call { http.get("$API/repos/$repo/releases/latest") { github(token) } }
+        val r = call { http.get("$api/repos/$repo/releases/latest") { github(token) } }
         check(r, token)
         return NetworkJson.decodeFromString(ReleaseJson.serializer(), r.bodyAsText()).toRelease()
     }
 
     /** The most recent releases, pre-releases included (drafts are only visible to maintainers and skipped). */
     suspend fun recent(token: String?): List<Release> {
-        val r = call { http.get("$API/repos/$repo/releases?per_page=$RECENT") { github(token) } }
+        val r = call { http.get("$api/repos/$repo/releases?per_page=$RECENT") { github(token) } }
         check(r, token)
         val list = NetworkJson.decodeFromString(kotlinx.serialization.builtins.ListSerializer(ReleaseJson.serializer()), r.bodyAsText())
         return list.filterNot { it.draft }.map { it.toRelease() }
