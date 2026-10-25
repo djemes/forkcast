@@ -46,7 +46,7 @@
     <string name="stage_retry_waiting">Waiting to retry</string>
     <string name="stage_retry_when">Tries so far: %1$d/%2$d. Next try at %3$s.</string>
     <string name="stage_quota">Out of AI quota</string>
-    <string name="stage_quota_when">Every profile is out of quota. Next try at %1$s, when it resets.</string>
+    <string name="stage_quota_when">Every AI service is out of quota. Next try at %1$s, when it resets.</string>
     <string name="stage_offline">Waiting for a connection</string>
     <string name="stage_failed">Couldn\'t estimate</string>
     <string name="stage_stopped">This estimate ran too long and was stopped. Retry now starts it again.</string>
@@ -70,7 +70,7 @@
 
     <!-- Actions -->
     <string name="action_retry_now">Retry now</string>
-    <string name="action_try_other_profile">Try with another profile</string>
+    <string name="action_try_other_profile">Try with another AI service</string>
     <string name="action_edit_description">Edit description and retry</string>
     <string name="action_log_manually">Log manually instead</string>
 
@@ -78,7 +78,7 @@
     <string name="backup_model_title">Add a backup model</string>
     <string name="backup_model_body">%1$s on the same key as %2$s has its own free quota, so it can answer when the first is busy or out of quota. It goes second in the order.</string>
     <string name="backup_model_add">Add backup model</string>
-    <string name="backup_model_added">Added %1$s as profile 2</string>
+    <string name="backup_model_added">Added %1$s as AI service 2</string>
 
     <!-- Details -->
     <string name="details_title">Details</string>

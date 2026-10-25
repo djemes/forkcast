@@ -59,8 +59,8 @@
     <string name="review_photo_close">Fechar foto</string>
     <string name="review_warnings">Ajustado: %1$s</string>
     <string name="review_photo">Foto da refeição %1$d</string>
-    <string name="review_no_profile">Nenhum perfil de IA pôde ser usado. Confira Configurações → IA.</string>
-    <string name="review_disabled">As estimativas por foto estão desligadas em Configurações → IA.</string>
+    <string name="review_no_profile">Nenhum serviço de IA pôde ser usado. Confira Configurações › IA.</string>
+    <string name="review_disabled">As estimativas com IA estão desligadas em Configurações › IA.</string>
     <!-- Validator warnings (roadmap 2.0, task 1.6: words from resources, not from the parser) -->
     <string name="review_warning_no_weight">\"%1$s\" deixado de fora: sem peso</string>
     <string name="review_warning_kcal_capped">\"%1$s\": as calorias pareciam impossíveis para o peso e foram reduzidas</string>

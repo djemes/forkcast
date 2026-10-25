@@ -231,9 +231,9 @@ class AiSettingsTest {
 
         val disabled = AiError.InvalidKey(reply = ProviderReply(403, "SERVICE_DISABLED", null))
         assertThat(res.aiErrorMessage(disabled, ProviderId.GEMINI)).contains("(HTTP 403 · SERVICE_DISABLED)")
-        assertThat(res.aiErrorMessage(AiError.InvalidKey(AiError.NO_KEY), ProviderId.GEMINI)).isEqualTo("No API key saved for this profile.")
+        assertThat(res.aiErrorMessage(AiError.InvalidKey(AiError.NO_KEY), ProviderId.GEMINI)).isEqualTo("No API key saved for this AI service.")
         // Without a provider reply the classic message stays.
-        assertThat(res.aiErrorMessage(AiError.InvalidKey(), ProviderId.CLAUDE)).isEqualTo("Claude rejected the API key. Check it in Settings → AI.")
+        assertThat(res.aiErrorMessage(AiError.InvalidKey(), ProviderId.CLAUDE)).isEqualTo("Claude rejected the API key. Check it in Settings › AI.")
     }
 
     @Test fun failedTestOnScreenShowsStatusCodeAndGoogleWords() {
@@ -401,7 +401,10 @@ class AiSettingsTest {
         }
         compose.onNodeWithText("Working: last test passed", substring = true).assertExists()
         compose.onNodeWithText("the key was rejected", substring = true).assertExists()
-        compose.onNodeWithContentDescription("Move A up").assertIsNotEnabled()
+        // The order is under Advanced, collapsed (roadmap 2.0 task 3.5).
+        compose.onNodeWithContentDescription("Move A up").assertDoesNotExist()
+        compose.onNodeWithText("Advanced").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Move A up").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithContentDescription("Move B up").performScrollTo().performClick()
         assertThat(events).contains(AiSettingsEvent.Move(1, 0))
     }

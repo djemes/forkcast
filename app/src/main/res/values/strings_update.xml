@@ -48,8 +48,6 @@
     <string name="update_auto_detail">At most once a day. You\'ll get a notification when a new version is out; nothing installs by itself.</string>
     <string name="update_beta">Beta updates</string>
     <string name="update_beta_detail">Also offer early versions to try before they\'re final. They may have bugs.</string>
-    <string name="update_advanced">Advanced</string>
-    <string name="update_advanced_hide">Hide advanced</string>
     <string name="update_token_why">A GitHub token is needed only while Forkcast\'s GitHub project is private.</string>
     <string name="update_rate_limited">GitHub limits how often checks can come from one network. Try again in an hour.</string>
     <string name="update_rate_limited_until">GitHub limits how often checks can come from one network. Try again after %1$s.</string>

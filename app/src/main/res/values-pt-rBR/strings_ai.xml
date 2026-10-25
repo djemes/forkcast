@@ -3,8 +3,9 @@
     <!-- Settings › AI (SPEC §4.7) -->
     <string name="ai_enabled">Estimativas por foto</string>
     <string name="ai_enabled_body">Estime uma refeição a partir de uma foto e uma descrição curta, usando a sua própria chave de IA.</string>
-    <string name="ai_profiles_title">Seus perfis de IA</string>
-    <string name="ai_order_explain">Um perfil é um serviço de IA e um modelo, com a chave dele. A foto vai primeiro para o número 1. Se ele não conseguir responder (sem cota, ocupado, um erro), o número 2 tenta, e assim por diante. Desligue um perfil para pulá-lo.</string>
+    <string name="ai_profiles_title">Seus serviços de IA</string>
+    <string name="ai_order_title">Qual IA vai primeiro</string>
+    <string name="ai_order_explain">Cada serviço de IA é um provedor e um modelo, com a chave dele. A foto vai primeiro para o número 1. Se ele não conseguir responder (sem cota, ocupado, um erro), o número 2 tenta, e assim por diante. Desligue um serviço de IA para pulá-lo.</string>
     <string name="ai_section_photos">Estimativas por foto</string>
     <string name="ai_move_up_named">Subir %1$s</string>
     <string name="ai_move_down_named">Descer %1$s</string>
@@ -16,15 +17,15 @@
     <string name="ai_check_why_model">o modelo não foi encontrado</string>
     <string name="ai_check_why_network">sem conexão</string>
     <string name="ai_check_why_other">o serviço respondeu com um erro</string>
-    <string name="ai_no_profiles">Nenhum perfil de IA ainda. Adicione um para começar a estimar refeições por foto.</string>
-    <string name="ai_add_profile">Adicionar perfil</string>
+    <string name="ai_no_profiles">Nenhum serviço de IA ainda. Adicione um para começar a estimar refeições.</string>
+    <string name="ai_add_profile">Adicionar um serviço de IA manualmente</string>
     <string name="ai_edit">Editar</string>
     <string name="ai_position">Número %1$d na ordem</string>
     <string name="ai_role_first">Usado primeiro</string>
     <string name="ai_role_backup">Reserva: usado quando os de cima não conseguem responder</string>
     <string name="ai_role_off">Desligado: pulado</string>
-    <string name="ai_role_no_key">Sem chave salva: pulado. Toque em Editar para adicionar uma.</string>
-    <string name="ai_role_key_rejected">Chave recusada na última tentativa: pulado. Corrija a chave e toque em Testar.</string>
+    <string name="ai_role_no_key">Sem chave salva: pulado. Adicione uma em Editar, em Avançado.</string>
+    <string name="ai_role_key_rejected">Chave recusada na última tentativa: pulado. Corrija em Editar, em Avançado, e toque em Testar.</string>
     <string name="ai_delete_title">Excluir %1$s?</string>
     <string name="ai_delete_body">A chave de API dele sai deste celular. Você pode desfazer logo em seguida.</string>
     <string name="ai_delete_body_moves_up">A chave de API dele sai deste celular, e %1$s sobe uma posição. Você pode desfazer logo em seguida.</string>
@@ -63,8 +64,8 @@
     <string name="ai_price_output">Saída: US$ por 1M de tokens</string>
 
     <!-- Profile editor -->
-    <string name="ai_profile_new">Novo perfil de IA</string>
-    <string name="ai_profile_edit">Editar perfil de IA</string>
+    <string name="ai_profile_new">Novo serviço de IA</string>
+    <string name="ai_profile_edit">Editar serviço de IA</string>
     <string name="ai_provider">Provedor</string>
     <string name="ai_provider_claude">Claude (Anthropic)</string>
     <string name="ai_provider_gemini">Gemini (Google)</string>
@@ -134,14 +135,14 @@
     <string name="ai_loading_models">Carregando modelos…</string>
     <string name="ai_recommended">Recomendado</string>
     <string name="ai_display_name">Nome na lista</string>
-    <string name="ai_delete_profile">Excluir perfil</string>
+    <string name="ai_delete_profile">Excluir serviço de IA</string>
     <string name="ai_save_and_test">Salvar e testar</string>
     <string name="ai_test_again">Testar de novo</string>
     <string name="ai_api_key_replacing">A chave salva continua até você salvar uma nova.</string>
 
     <!-- Error messages (DESIGN.md §6 tone) -->
-    <string name="ai_err_invalid_key">%1$s recusou a chave de API. Confira em Configurações → IA.</string>
-    <string name="ai_err_no_key">Nenhuma chave de API salva para este perfil.</string>
+    <string name="ai_err_invalid_key">%1$s recusou a chave de API. Confira em Configurações › IA.</string>
+    <string name="ai_err_no_key">Nenhuma chave de API salva para este serviço de IA.</string>
     <string name="ai_err_provider_said">%1$s disse: %2$s</string>
     <string name="ai_err_key_status">%1$s recusou a chave de API (%2$s).</string>
     <string name="ai_err_request_status">%1$s recusou a requisição (%2$s).</string>
@@ -150,10 +151,10 @@
     <string name="ai_err_hint_key_invalid">A chave não é válida. Confira se a chave inteira foi colada, sem nada a mais.</string>
     <string name="ai_err_hint_key_restricted">Esta chave tem restrições de API que bloqueiam a Gemini API. Confira as restrições da chave no Google Cloud Console.</string>
     <string name="ai_err_hint_permission">Esta chave não tem permissão para usar este modelo ou API.</string>
-    <string name="ai_err_hint_check_key">Confira a chave deste perfil e teste de novo.</string>
+    <string name="ai_err_hint_check_key">Confira a chave deste serviço de IA e teste de novo.</string>
     <string name="ai_err_rate_limited">%1$s está ocupado ou no limite. Tente de novo em um minuto.</string>
     <string name="ai_err_quota">A cota de %1$s acabou. Ela renova mais tarde.</string>
-    <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro no perfil.</string>
+    <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro em Configurações › IA, em Avançado.</string>
     <string name="ai_err_refused">%1$s preferiu não estimar esta foto.</string>
     <string name="ai_err_bad_response">%1$s mandou uma resposta que o Forkcast não conseguiu ler. Tente de novo.</string>
     <string name="ai_err_request">%1$s recusou a requisição: %2$s</string>

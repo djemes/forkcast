@@ -13,9 +13,9 @@
     <string name="search_no_results">Nada encontrado.</string>
     <string name="search_offline">Sem conexão. Mostrando só os seus alimentos.</string>
     <string name="search_rate_limited">%1$s está ocupado agora. Tente de novo em um minuto.</string>
-    <string name="search_invalid_key">O USDA recusou a chave de API. Confira em Configurações → Bancos de alimentos.</string>
+    <string name="search_invalid_key">O USDA recusou a chave de API. Confira em Configurações › Bancos de alimentos.</string>
     <string name="search_failed">%1$s não respondeu. Tente de novo mais tarde.</string>
-    <string name="search_demo_key">Usando a chave de demonstração compartilhada do USDA (10 buscas por hora). Adicione sua chave grátis em Configurações → Bancos de alimentos.</string>
+    <string name="search_demo_key">Usando a chave de demonstração compartilhada do USDA (10 buscas por hora). Adicione sua chave grátis em Configurações › Bancos de alimentos.</string>
     <string name="search_create_food">Criar um alimento</string>
     <string name="search_empty_start">Busque por nome ou marca. Seus alimentos recentes e favoritos aparecem aqui.</string>
     <string name="per_100g">por 100 g</string>

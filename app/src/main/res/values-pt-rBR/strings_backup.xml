@@ -19,7 +19,7 @@
     <string name="backup_preview_weights">Pesagens: %1$d</string>
     <string name="backup_preview_water">Registros de água: %1$d</string>
     <string name="backup_preview_ai_estimates">Estimativas por foto: %1$d</string>
-    <string name="backup_preview_ai_profiles">Perfis de IA (sem chaves): %1$d</string>
+    <string name="backup_preview_ai_profiles">Serviços de IA (sem chaves): %1$d</string>
     <string name="backup_preview_recipes">Receitas: %1$d</string>
     <string name="backup_preview_dates">Datas: %1$s a %2$s</string>
     <string name="backup_preview_no_profile">Nenhum perfil neste arquivo.</string>
@@ -49,7 +49,7 @@
 
     <!-- Settings export with API keys (SPEC §4.11) -->
     <string name="settings_transfer_title">Configurações e chaves</string>
-    <string name="settings_transfer_body">Um arquivo separado com todas as configurações, seus perfis de IA com as chaves de API e a chave do banco de alimentos. Ele fica protegido por uma senha que você escolhe. Use para configurar outro celular.</string>
+    <string name="settings_transfer_body">Um arquivo separado com todas as configurações, seus serviços de IA com as chaves de API e a chave do banco de alimentos. Ele fica protegido por uma senha que você escolhe. Use para configurar outro celular.</string>
     <string name="settings_export">Exportar configurações…</string>
     <string name="settings_import">Importar configurações…</string>
     <string name="settings_passphrase_title_export">Proteger com uma senha</string>
@@ -65,9 +65,9 @@
     <string name="settings_continue">Continuar</string>
     <string name="settings_preview_title">Substituir configurações e chaves?</string>
     <plurals name="settings_preview_body">
-        <item quantity="one">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os perfis de IA (%2$s) e %3$d chave salva. Seu registro de comida não é alterado.</item>
-        <item quantity="many">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os perfis de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
-        <item quantity="other">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os perfis de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
+        <item quantity="one">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os serviços de IA (%2$s) e %3$d chave salva. Seu registro de comida não é alterado.</item>
+        <item quantity="many">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os serviços de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
+        <item quantity="other">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os serviços de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
     </plurals>
     <string name="settings_preview_none">nenhum</string>
     <string name="settings_replace">Substituir</string>

@@ -50,6 +50,7 @@ import app.forkcast.core.model.UpdateSettings
 import app.forkcast.core.network.update.Release
 import app.forkcast.core.network.update.UpdateError
 import app.forkcast.di.GITHUB_URL
+import app.forkcast.ui.common.AdvancedSection
 import app.forkcast.ui.common.SavedKeyField
 import app.forkcast.ui.common.SecretText
 import app.forkcast.ui.common.ToggleRow
@@ -189,7 +190,6 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
         if (allowedNow && ready != null && state.installer !is AppInstaller.Status.Waiting) actions.install(ready)
         onPauseOrDispose {}
     }
-    var advanced by rememberSaveable { mutableStateOf(false) }
     SettingsScaffold(title = stringResource(R.string.update_title), onBack = onBack) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(stringResource(R.string.update_from_github), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -239,12 +239,11 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
                 ToggleRow(stringResource(R.string.update_beta), stringResource(R.string.update_beta_detail), state.options.beta, actions.setBeta)
             }
 
-            TextButton(onClick = { advanced = !advanced }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Text(stringResource(if (advanced) R.string.update_advanced_hide else R.string.update_advanced))
-            }
-            if (advanced) {
-                Text(stringResource(R.string.update_token_why), style = MaterialTheme.typography.bodyMedium)
-                TokenField(state.token, actions)
+            AdvancedSection {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.update_token_why), style = MaterialTheme.typography.bodyMedium)
+                    TokenField(state.token, actions)
+                }
             }
         }
     }

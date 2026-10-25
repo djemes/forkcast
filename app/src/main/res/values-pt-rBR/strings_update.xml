@@ -48,8 +48,6 @@
     <string name="update_auto_detail">No máximo uma vez por dia. Você recebe uma notificação quando sair uma versão nova; nada é instalado sozinho.</string>
     <string name="update_beta">Atualizações beta</string>
     <string name="update_beta_detail">Oferecer também versões antecipadas para testar antes da final. Podem ter erros.</string>
-    <string name="update_advanced">Avançado</string>
-    <string name="update_advanced_hide">Ocultar avançado</string>
     <string name="update_token_why">Um token do GitHub só é necessário enquanto o projeto do Forkcast no GitHub for privado.</string>
     <string name="update_rate_limited">O GitHub limita quantas verificações podem vir de uma mesma rede. Tente de novo em uma hora.</string>
     <string name="update_rate_limited_until">O GitHub limita quantas verificações podem vir de uma mesma rede. Tente de novo depois das %1$s.</string>

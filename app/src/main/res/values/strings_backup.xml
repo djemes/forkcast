@@ -19,7 +19,7 @@
     <string name="backup_preview_weights">Weigh-ins: %1$d</string>
     <string name="backup_preview_water">Water entries: %1$d</string>
     <string name="backup_preview_ai_estimates">Photo estimates: %1$d</string>
-    <string name="backup_preview_ai_profiles">AI profiles (without keys): %1$d</string>
+    <string name="backup_preview_ai_profiles">AI services (without keys): %1$d</string>
     <string name="backup_preview_recipes">Recipes: %1$d</string>
     <string name="backup_preview_dates">Dates: %1$s to %2$s</string>
     <string name="backup_preview_no_profile">No profile in this file.</string>
@@ -48,7 +48,7 @@
 
     <!-- Settings export with API keys (SPEC §4.11) -->
     <string name="settings_transfer_title">Settings and keys</string>
-    <string name="settings_transfer_body">A separate file with every setting, your AI profiles and their API keys, and the food database key. It\'s locked with a passphrase you choose. Use it to set up another phone.</string>
+    <string name="settings_transfer_body">A separate file with every setting, your AI services and their API keys, and the food database key. It\'s locked with a passphrase you choose. Use it to set up another phone.</string>
     <string name="settings_export">Export settings…</string>
     <string name="settings_import">Import settings…</string>
     <string name="settings_passphrase_title_export">Lock with a passphrase</string>
@@ -64,8 +64,8 @@
     <string name="settings_continue">Continue</string>
     <string name="settings_preview_title">Replace settings and keys?</string>
     <plurals name="settings_preview_body">
-        <item quantity="one">From a file made %1$s. This replaces this phone\'s settings, AI profiles (%2$s) and %3$d saved key. Your food log isn\'t touched.</item>
-        <item quantity="other">From a file made %1$s. This replaces this phone\'s settings, AI profiles (%2$s) and %3$d saved keys. Your food log isn\'t touched.</item>
+        <item quantity="one">From a file made %1$s. This replaces this phone\'s settings, AI services (%2$s) and %3$d saved key. Your food log isn\'t touched.</item>
+        <item quantity="other">From a file made %1$s. This replaces this phone\'s settings, AI services (%2$s) and %3$d saved keys. Your food log isn\'t touched.</item>
     </plurals>
     <string name="settings_preview_none">none</string>
     <string name="settings_replace">Replace</string>

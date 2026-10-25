@@ -7,21 +7,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarDuration
@@ -39,27 +34,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.common.AdvancedSection
 import app.forkcast.ui.help.HelpLink
 import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.data.repository.AiProfileStatus
-import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.model.CheckFailure
-import app.forkcast.core.model.ModelPrice
 import app.forkcast.core.model.ProfileCheck
 import app.forkcast.ui.settings.SettingsScaffold
-import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -110,8 +100,8 @@ private val RETENTION_CHOICES = listOf(7, 14, 30, 90, null)
 /**
  * Settings › AI (SPEC §4.7), reworked 2026-10-19 so each card answers four questions in order:
  * what it is (number, name, service · model), what it does (used first / backup / off), whether
- * it works (last test, kept across restarts) and what you can do (Test, Edit, Delete, move up/down
- * as visible buttons). The order is explained once at the top.
+ * it works (last test, kept across restarts) and what you can do (Test, Delete). Since roadmap
+ * 2.0 task 3.5 the order, Edit, manual setup and prices are under Advanced ([AiAdvanced]).
  */
 @Composable
 fun AiSettingsScreen(
@@ -133,12 +123,6 @@ fun AiSettingsScreen(
         HorizontalDivider()
 
         SectionTitle(R.string.ai_profiles_title)
-        Text(
-            stringResource(R.string.ai_order_explain),
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(horizontal = 16.dp),
-        )
         if (state.profiles.isEmpty()) {
             Text(
                 stringResource(R.string.ai_no_profiles),
@@ -155,9 +139,7 @@ fun AiSettingsScreen(
                             test = state.tests[item.profile.id],
                             check = s.lastChecks[item.profile.id],
                             index = index,
-                            count = state.profiles.size,
                             onEvent = onEvent,
-                            onEdit = { onEditProfile(item.profile.id) },
                             onDelete = { confirmDelete = item.profile.id },
                         )
                     }
@@ -177,10 +159,6 @@ fun AiSettingsScreen(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         ) {
             Button(onClick = onAddAi, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.ai_add)) }
-            OutlinedButton(onClick = { onEditProfile(null) }, modifier = Modifier.heightIn(min = 48.dp)) {
-                Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-                Text(stringResource(R.string.ai_add_profile), modifier = Modifier.padding(start = 8.dp))
-            }
         }
         HorizontalDivider(Modifier.padding(top = 16.dp))
 
@@ -192,7 +170,8 @@ fun AiSettingsScreen(
         RetentionPicker(s.photoRetentionDays) { onEvent(AiSettingsEvent.SetRetention(it)) }
         HorizontalDivider()
 
-        UsageSection(state.usage, s.priceOverrides, onEvent)
+        // Order, editing, manual setup and prices are for experts (roadmap 2.0 task 3.5).
+        AdvancedSection { AiAdvanced(state, onEvent, onEditProfile) }
     }
 
     confirmDelete?.let { id ->
@@ -212,7 +191,7 @@ fun AiSettingsScreen(
 }
 
 @Composable
-private fun SectionTitle(res: Int) {
+internal fun SectionTitle(res: Int) {
     Text(
         stringResource(res),
         style = MaterialTheme.typography.titleMedium,
@@ -252,15 +231,11 @@ private fun ProfileCard(
     test: TestState?,
     check: ProfileCheck?,
     index: Int,
-    count: Int,
     onEvent: (AiSettingsEvent) -> Unit,
-    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val p = item.profile
     val res = LocalResources.current
-    val moveUp = stringResource(R.string.ai_move_up_named, p.name)
-    val moveDown = stringResource(R.string.ai_move_down_named, p.name)
     Column(
         verticalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
@@ -295,15 +270,7 @@ private fun ProfileCard(
             TextButton(onClick = { onEvent(AiSettingsEvent.Test(p.id)) }, enabled = test !is TestState.Running) {
                 Text(stringResource(if (test is TestState.Running) R.string.ai_testing else R.string.ai_test))
             }
-            TextButton(onClick = onEdit) { Text(stringResource(R.string.ai_edit)) }
             TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
-            Spacer(Modifier.weight(1f))
-            IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index - 1)) }, enabled = index > 0) {
-                Icon(painterResource(R.drawable.ic_arrow_upward), moveUp)
-            }
-            IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index + 1)) }, enabled = index < count - 1) {
-                Icon(painterResource(R.drawable.ic_arrow_downward), moveDown)
-            }
         }
     }
 }
@@ -405,81 +372,4 @@ private fun RetentionPicker(days: Int?, onChange: (Int?) -> Unit) {
             confirmButton = { TextButton(onClick = { open = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
-}
-
-@Composable
-private fun UsageSection(usage: MonthUsage?, overrides: Map<String, ModelPrice>, onEvent: (AiSettingsEvent) -> Unit) {
-    SectionTitle(R.string.ai_usage_title)
-    val numbers = NumberFormat.getIntegerInstance()
-    val money = NumberFormat.getCurrencyInstance(Locale.US)
-    var editing by remember { mutableStateOf<String?>(null) }
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        if (usage == null || usage.models.isEmpty()) {
-            Text(stringResource(R.string.ai_usage_none), style = MaterialTheme.typography.bodyMedium)
-        } else {
-            Text(
-                pluralStringResource(
-                    R.plurals.ai_usage_summary,
-                    usage.estimates,
-                    usage.estimates,
-                    numbers.format(usage.inputTokens),
-                    numbers.format(usage.outputTokens),
-                    money.format(usage.costUsd),
-                ),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            for (m in usage.models) {
-                val cost = when {
-                    m.costUsd == null -> stringResource(R.string.ai_usage_no_price)
-                    m.costUsd == 0.0 && m.inputTokens > 0 -> stringResource(R.string.ai_usage_free)
-                    else -> money.format(m.costUsd)
-                }
-                Text(
-                    pluralStringResource(R.plurals.ai_usage_model, m.requests, m.model, m.requests, cost),
-                    style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp)
-                        .clickable { editing = m.model }
-                        .padding(vertical = 12.dp),
-                )
-            }
-        }
-    }
-    editing?.let { model ->
-        PriceDialog(model, overrides[model], onDismiss = { editing = null }) { price ->
-            onEvent(AiSettingsEvent.SetPrice(model, price))
-            editing = null
-        }
-    }
-}
-
-@Composable
-private fun PriceDialog(model: String, current: ModelPrice?, onDismiss: () -> Unit, onSave: (ModelPrice?) -> Unit) {
-    var input by remember { mutableStateOf(current?.inputPerM?.toString().orEmpty()) }
-    var output by remember { mutableStateOf(current?.outputPerM?.toString().orEmpty()) }
-    val inV = input.replace(',', '.').toDoubleOrNull()
-    val outV = output.replace(',', '.').toDoubleOrNull()
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.ai_edit_price, model)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    input, { input = it }, label = { Text(stringResource(R.string.ai_price_input)) },
-                    singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                )
-                OutlinedTextField(
-                    output, { output = it }, label = { Text(stringResource(R.string.ai_price_output)) },
-                    singleLine = true, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                )
-            }
-        },
-        confirmButton = {
-            TextButton(onClick = { onSave(if (inV != null && outV != null) ModelPrice(inV, outV) else null) }) {
-                Text(stringResource(R.string.action_save))
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.cancel)) } },
-    )
 }
