@@ -1,5 +1,5 @@
 [versions]
-# Checked against Google Maven / Maven Central on 2026-10-18
+# Checked against Google Maven / Maven Central on 2026-10-18; all re-checked 2026-10-25 (2.0 Phase 2)
 agp = "9.4.1"
 kotlin = "2.4.21"
 # Static analysis (REVIEW-2 S8). 2.0 is the line built for Kotlin 2.4; still an alpha. VERIFY: move to 2.0.0 when it ships.
@@ -14,8 +14,8 @@ navigationCompose = "2.10.2"
 hilt = "2.60.1"
 hiltAndroidx = "1.4.0"
 room = "2.8.5"
-datastore = "1.2.1"
-kotlinxSerialization = "1.11.0"
+datastore = "1.3.0"
+kotlinxSerialization = "1.12.0"
 coroutines = "1.11.0"
 junit4 = "4.13.2"
 truth = "1.4.5"
@@ -69,7 +69,6 @@ hilt-compiler = { module = "com.google.dagger:hilt-android-compiler", version.re
 hilt-lifecycle-viewmodel-compose = { module = "androidx.hilt:hilt-lifecycle-viewmodel-compose", version.ref = "hiltAndroidx" }
 
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "room" }
-room-ktx = { module = "androidx.room:room-ktx", version.ref = "room" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "room" }
 room-testing = { module = "androidx.room:room-testing", version.ref = "room" }
 
