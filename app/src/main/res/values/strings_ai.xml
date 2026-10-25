@@ -25,7 +25,7 @@
     <string name="ai_role_backup">Backup: used when the ones above can\'t answer</string>
     <string name="ai_role_off">Off: skipped</string>
     <string name="ai_role_no_key">No key saved: skipped. Add one with Edit, under Advanced.</string>
-    <string name="ai_role_key_rejected">Key rejected on the last try: skipped. Fix it with Edit, under Advanced, then Test.</string>
+    <string name="ai_role_key_rejected">Key rejected on the last try: skipped. Fix it with Edit, then Test.</string>
     <string name="ai_delete_title">Delete %1$s?</string>
     <string name="ai_delete_body">Its API key is removed from this phone. You can undo this right after.</string>
     <string name="ai_delete_body_moves_up">Its API key is removed from this phone, and %1$s moves up one place. You can undo this right after.</string>

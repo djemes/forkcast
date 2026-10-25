@@ -290,9 +290,17 @@ private fun Summary(r: app.forkcast.core.domain.RecipeMath.Result, f: UnitFormat
         Text(f.energy(n[NutrientKey.ENERGY_KCAL] ?: 0.0), style = MaterialTheme.typography.headlineSmall, color = MaterialTheme.colorScheme.primary)
         // Wraps whole items at large font sizes instead of breaking "0.2 g" across lines.
         FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Text(stringResource(R.string.macro_amount, stringResource(R.string.macro_protein), f.grams(n[NutrientKey.PROTEIN_G] ?: 0.0)), color = c.proteinText, style = MaterialTheme.typography.labelLarge)
-            Text(stringResource(R.string.macro_amount, stringResource(R.string.macro_carbs), f.grams(n[NutrientKey.CARBS_G] ?: 0.0)), color = c.carbsText, style = MaterialTheme.typography.labelLarge)
-            Text(stringResource(R.string.macro_amount, stringResource(R.string.macro_fat), f.grams(n[NutrientKey.FAT_G] ?: 0.0)), color = c.fatText, style = MaterialTheme.typography.labelLarge)
+            listOf(
+                Triple(R.string.macro_protein, NutrientKey.PROTEIN_G, c.proteinText),
+                Triple(R.string.macro_carbs, NutrientKey.CARBS_G, c.carbsText),
+                Triple(R.string.macro_fat, NutrientKey.FAT_G, c.fatText),
+            ).forEach { (label, key, color) ->
+                Text(
+                    stringResource(R.string.macro_amount, stringResource(label), f.grams(n[key] ?: 0.0)),
+                    color = color,
+                    style = MaterialTheme.typography.labelLarge,
+                )
+            }
         }
         Text(stringResource(R.string.recipe_per_serving_weight, f.grams(r.servingGrams)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(stringResource(R.string.recipe_whole, f.energy(r.total[NutrientKey.ENERGY_KCAL] ?: 0.0)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

@@ -52,9 +52,7 @@ internal fun AiAdvanced(state: AiSettingsUiState, onEvent: (AiSettingsEvent) -> 
     Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
         state.profiles.forEachIndexed { index, item ->
             key(item.profile.id) {
-                OrderRow(item.profile.name, index, state.profiles.size, first = state.roleAt(index) == ProfileRole.FIRST, onEvent) {
-                    onEditProfile(item.profile.id)
-                }
+                OrderRow(item.profile.name, index, state.profiles.size, first = state.roleAt(index) == ProfileRole.FIRST, onEvent)
             }
         }
     }
@@ -65,13 +63,12 @@ internal fun AiAdvanced(state: AiSettingsUiState, onEvent: (AiSettingsEvent) -> 
     UsageSection(state.usage, state.settings.priceOverrides, onEvent)
 }
 
-/** One AI service in the order: its number and name, Edit, and the arrows (named for screen readers). */
+/** One AI service in the order: its number and name, and the arrows (named for screen readers). Edit is on its card. */
 @Composable
-private fun OrderRow(name: String, index: Int, count: Int, first: Boolean, onEvent: (AiSettingsEvent) -> Unit, onEdit: () -> Unit) {
+private fun OrderRow(name: String, index: Int, count: Int, first: Boolean, onEvent: (AiSettingsEvent) -> Unit) {
     Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
         PositionBadge(index + 1, first)
         Text(name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f).padding(horizontal = 12.dp))
-        TextButton(onClick = onEdit) { Text(stringResource(R.string.ai_edit)) }
         IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index - 1)) }, enabled = index > 0) {
             Icon(painterResource(R.drawable.ic_arrow_upward), stringResource(R.string.ai_move_up_named, name))
         }

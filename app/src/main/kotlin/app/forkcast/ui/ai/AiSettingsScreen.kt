@@ -100,8 +100,9 @@ private val RETENTION_CHOICES = listOf(7, 14, 30, 90, null)
 /**
  * Settings › AI (SPEC §4.7), reworked 2026-10-19 so each card answers four questions in order:
  * what it is (number, name, service · model), what it does (used first / backup / off), whether
- * it works (last test, kept across restarts) and what you can do (Test, Delete). Since roadmap
- * 2.0 task 3.5 the order, Edit, manual setup and prices are under Advanced ([AiAdvanced]).
+ * it works (last test, kept across restarts) and what you can do (Test, Edit, Delete). Since
+ * roadmap 2.0 task 3.5 the order, manual setup and prices are under Advanced ([AiAdvanced]); Edit
+ * stays on the card because a rejected key is fixed there (replacing a key is everyday, not expert).
  */
 @Composable
 fun AiSettingsScreen(
@@ -140,6 +141,7 @@ fun AiSettingsScreen(
                             check = s.lastChecks[item.profile.id],
                             index = index,
                             onEvent = onEvent,
+                            onEdit = { onEditProfile(item.profile.id) },
                             onDelete = { confirmDelete = item.profile.id },
                         )
                     }
@@ -232,6 +234,7 @@ private fun ProfileCard(
     check: ProfileCheck?,
     index: Int,
     onEvent: (AiSettingsEvent) -> Unit,
+    onEdit: () -> Unit,
     onDelete: () -> Unit,
 ) {
     val p = item.profile
@@ -270,6 +273,7 @@ private fun ProfileCard(
             TextButton(onClick = { onEvent(AiSettingsEvent.Test(p.id)) }, enabled = test !is TestState.Running) {
                 Text(stringResource(if (test is TestState.Running) R.string.ai_testing else R.string.ai_test))
             }
+            TextButton(onClick = onEdit) { Text(stringResource(R.string.ai_edit)) }
             TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
         }
     }

@@ -4,6 +4,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -52,12 +54,13 @@ class AiSettingsAdvancedTest {
         compose.onNodeWithText("Gemini 3.8 Flash").assertIsDisplayed()
         compose.onNodeWithText("Add AI").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Personal context").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Edit").assertDoesNotExist()
+        // Replacing a rejected key is everyday, so Edit stays on the card.
+        compose.onAllNodesWithText("Edit").onFirst().performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Add an AI service manually").assertDoesNotExist()
         compose.onNodeWithText("Usage this month").assertDoesNotExist()
     }
 
-    @Test fun advancedHoldsTheOrderEditManualSetupAndUsage() {
+    @Test fun advancedHoldsTheOrderManualSetupAndUsage() {
         val edited = mutableListOf<String?>()
         show(edited)
         compose.onNodeWithText("Advanced").performScrollTo().performClick()
