@@ -97,6 +97,18 @@ class BackupRepositoryTest {
         assertThat(dao.logEntries().single { it.id == "e2" }.deletedAt).isEqualTo(50L)
     }
 
+    /** REVIEW-2 M1: a crafted backup can't point photo paths at other app files. */
+    @Test fun photoPathsOutsideThePhotoFolderAreDropped() = runTest {
+        seedEveryTable()
+        val json = repo.exportJson().replace("\"a1/0.jpg\"", "\"a1/0.jpg\", \"../databases/forkcast.db\", \"/data/x\", \"a1/../../secrets/store.bin\"")
+        val parsed = repo.parse(json) as ParsedBackup.Ok
+        assertThat(parsed.export.aiEstimates.single().photoPaths).containsExactly("a1/0.jpg")
+        val photos = app.forkcast.core.data.ai.PhotoStore(context)
+        assertThat(photos.file("../databases/forkcast.db").exists()).isFalse()
+        assertThat(photos.file("../databases/forkcast.db").canonicalPath).startsWith(photos.root.canonicalPath)
+        assertThat(photos.file("a1/0.jpg")).isEqualTo(File(photos.root, "a1/0.jpg"))
+    }
+
     @Test fun exportHasSchemaFieldsAndNoSecrets() = runTest {
         seedEveryTable()
         val json = repo.exportJson()

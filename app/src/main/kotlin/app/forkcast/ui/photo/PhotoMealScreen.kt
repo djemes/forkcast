@@ -76,6 +76,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -441,6 +442,14 @@ private fun DetailsStep(
                     Text(stringResource(R.string.photo_no_ai), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
                     OutlinedButton(onClick = onOpenAiSettings) { Text(stringResource(R.string.photo_open_ai_settings)) }
                 }
+            }
+            if (state.photoUnreadable) {
+                Text(
+                    stringResource(R.string.photo_unreadable),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.semantics { liveRegion = androidx.compose.ui.semantics.LiveRegionMode.Polite },
+                )
             }
             Button(onClick = onEstimate, enabled = state.canEstimate, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
                 Text(stringResource(if (state.describe) R.string.describe_estimate else R.string.photo_estimate))

@@ -41,6 +41,8 @@ data class PhotoMealUiState(
     val hasProfile: Boolean = false,
     val notificationPermissionAsked: Boolean = true,
     val submitting: Boolean = false,
+    /** A photo couldn't be read (not an image, or too large); cleared when the photos change. */
+    val photoUnreadable: Boolean = false,
     /** "Describe" (SPEC §4.6.2): no photo, the description is required. */
     val describe: Boolean = false,
     /** When it was eaten, minutes after midnight; null until the user picks one (then the default below). */
@@ -118,8 +120,8 @@ class PhotoMealViewModel @Inject constructor(
 
     fun onEvent(event: PhotoMealEvent) {
         when (event) {
-            is PhotoMealEvent.AddPhotos -> draft.update { it.copy(photos = (it.photos + event.uris).take(PhotoMealUiState.MAX_PHOTOS)) }
-            is PhotoMealEvent.RemovePhoto -> draft.update { s -> s.copy(photos = s.photos.filterIndexed { i, _ -> i != event.index }) }
+            is PhotoMealEvent.AddPhotos -> draft.update { it.copy(photos = (it.photos + event.uris).take(PhotoMealUiState.MAX_PHOTOS), photoUnreadable = false) }
+            is PhotoMealEvent.RemovePhoto -> draft.update { s -> s.copy(photos = s.photos.filterIndexed { i, _ -> i != event.index }, photoUnreadable = false) }
             PhotoMealEvent.Next -> draft.update { if (it.photos.isNotEmpty()) it.copy(step = PhotoStep.DETAILS) else it }
             PhotoMealEvent.BackToCamera -> draft.update { it.copy(step = PhotoStep.CAPTURE) }
             is PhotoMealEvent.SetDescription -> draft.update { it.copy(description = event.text.take(PhotoMealUiState.MAX_DESCRIPTION)) }
@@ -137,10 +139,18 @@ class PhotoMealViewModel @Inject constructor(
         if (!s.canEstimate) return
         draft.update { it.copy(submitting = true) }
         viewModelScope.launch {
-            if (s.describe) {
-                estimates.createDescribed(date, s.mealSlotId, s.description, s.minute)
-            } else {
-                estimates.create(date, s.mealSlotId, s.photos, s.description, s.minute)
+            try {
+                if (s.describe) {
+                    estimates.createDescribed(date, s.mealSlotId, s.description, s.minute)
+                } else {
+                    estimates.create(date, s.mealSlotId, s.photos, s.description, s.minute)
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // A picked file that isn't a readable image (or is far too large) is said, not a crash (REVIEW-2 S5).
+                draft.update { it.copy(submitting = false, photoUnreadable = true) }
+                return@launch
             }
             // Camera shots were copied (downscaled, EXIF-free) into app storage; drop the originals.
             withContext(Dispatchers.IO) { s.photos.filter { it.scheme == "file" }.forEach { uri -> uri.path?.let { java.io.File(it).delete() } } }

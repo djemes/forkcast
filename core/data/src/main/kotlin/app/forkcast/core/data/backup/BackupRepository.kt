@@ -154,7 +154,11 @@ class RoomBackupRepository @Inject constructor(
         } catch (e: DateTimeException) {
             return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         }
-        return ParsedBackup.Ok(export, preview(export))
+        // Photo paths are file names inside the photo folder; anything else never enters the database (REVIEW-2 M1).
+        val safe = export.copy(
+            aiEstimates = export.aiEstimates.map { e -> e.copy(photoPaths = e.photoPaths.filter(app.forkcast.core.data.ai.PhotoStore::isValidPath)) },
+        )
+        return ParsedBackup.Ok(safe, preview(safe))
     }
 
     override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = when (mode) {

@@ -14,6 +14,7 @@
     <string name="photo_description_hint">chicken thigh, ~1.5 cups white rice, cooked in olive oil</string>
     <string name="photo_meal_label">Meal</string>
     <string name="photo_estimate">Estimate</string>
+    <string name="photo_unreadable">One of the photos couldn\'t be read. It may not be a picture, or it\'s too large. Remove it and pick another.</string>
     <string name="photo_no_ai">Set up an AI profile first, then photos can be estimated.</string>
     <string name="photo_open_ai_settings">Open AI settings</string>
     <string name="photo_ai_off">Photo estimates are turned off in Settings → AI.</string>

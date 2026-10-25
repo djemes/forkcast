@@ -14,6 +14,7 @@
     <string name="photo_description_hint">sobrecoxa de frango, ~1 xícara e meia de arroz branco, feito no azeite</string>
     <string name="photo_meal_label">Refeição</string>
     <string name="photo_estimate">Estimar</string>
+    <string name="photo_unreadable">Uma das fotos não pôde ser lida. Talvez não seja uma imagem, ou é grande demais. Remova-a e escolha outra.</string>
     <string name="photo_no_ai">Configure um perfil de IA primeiro; depois as fotos podem ser estimadas.</string>
     <string name="photo_open_ai_settings">Abrir configurações de IA</string>
     <string name="photo_ai_off">As estimativas por foto estão desligadas em Configurações → IA.</string>

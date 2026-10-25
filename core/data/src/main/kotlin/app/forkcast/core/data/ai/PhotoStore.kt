@@ -28,7 +28,8 @@ class PhotoStore @Inject constructor(@ApplicationContext private val context: Co
 
     /** Processes [source] and stores it; returns the path relative to [root]. */
     suspend fun save(source: Uri, estimateId: String, index: Int, maxEdge: Int = 1568, quality: Int = 85): String = withContext(Dispatchers.IO) {
-        val bytes = context.contentResolver.openInputStream(source)?.use { it.readBytes() } ?: error("can't read photo")
+        // A picked file can be anything: past the limit it isn't read into memory at all (REVIEW-2 S5).
+        val bytes = context.contentResolver.openInputStream(source)?.use { readLimited(it, MAX_SOURCE_BYTES) } ?: error("can't read photo")
         val jpeg = process(bytes, maxEdge, quality)
         val rel = "$estimateId/$index.jpg"
         val file = File(root, rel)
@@ -37,12 +38,22 @@ class PhotoStore @Inject constructor(@ApplicationContext private val context: Co
         rel
     }
 
-    fun file(relativePath: String): File = File(root, relativePath)
+    /**
+     * The photo at [relativePath], which must be `<estimate>/<n>.jpg` inside [root]. Paths come from
+     * the database and so from imported backups: anything else (`../`, absolute paths) would
+     * reach other app files, which a retry would send to an AI provider and the clean-up would
+     * delete (REVIEW-2 M1). Those resolve to a file that never exists.
+     */
+    fun file(relativePath: String): File {
+        if (!isValidPath(relativePath)) return File(root, INVALID)
+        val f = File(root, relativePath)
+        return if (f.canonicalPath.startsWith(root.canonicalPath + File.separator)) f else File(root, INVALID)
+    }
 
     suspend fun read(relativePath: String): ByteArray = withContext(Dispatchers.IO) { file(relativePath).readBytes() }
 
     suspend fun delete(relativePaths: List<String>) = withContext(Dispatchers.IO) {
-        for (p in relativePaths) {
+        for (p in relativePaths.filter(::isValidPath)) {
             val f = file(p)
             f.delete()
             f.parentFile?.takeIf { it != root && it.list().isNullOrEmpty() }?.delete()
@@ -52,6 +63,30 @@ class PhotoStore @Inject constructor(@ApplicationContext private val context: Co
     companion object {
         /** Must match the exclusion in data_extraction_rules.xml / backup_rules.xml. */
         const val DIR = "photos"
+
+        /** What save() writes: one folder per estimate, numbered JPEGs. Nothing else is a photo path. */
+        private val PATH = Regex("""[A-Za-z0-9_-]{1,64}/\d{1,3}\.jpg""")
+
+        /** A name no saved photo can have (it fails [PATH]), for paths that aren't photos. */
+        private const val INVALID = "invalid/invalid"
+
+        fun isValidPath(relativePath: String): Boolean = PATH.matches(relativePath)
+
+        /** Phone photos are a few MB; 40 MB covers any real one and keeps a decode within memory. */
+        const val MAX_SOURCE_BYTES = 40 * 1024 * 1024
+
+        /** Reads [input] fully, or throws once it passes [max] bytes. */
+        internal fun readLimited(input: java.io.InputStream, max: Int): ByteArray {
+            val out = ByteArrayOutputStream()
+            val chunk = ByteArray(64 * 1024)
+            while (true) {
+                val n = input.read(chunk)
+                if (n < 0) break
+                out.write(chunk, 0, n)
+                if (out.size() > max) throw java.io.IOException("photo too large")
+            }
+            return out.toByteArray()
+        }
 
         /** Downscale + orientation + JPEG re-encode (no EXIF survives). */
         fun process(bytes: ByteArray, maxEdge: Int, quality: Int): ByteArray {

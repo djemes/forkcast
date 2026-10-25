@@ -169,7 +169,14 @@ class DefaultAiEstimateRepository @Inject constructor(
     override suspend fun create(date: LocalDate, mealSlotId: String, photos: List<Uri>, description: String?, eatenMinute: Int?): String {
         val id = UUID.randomUUID().toString()
         val defaults = ai.defaults
-        val paths = photos.take(defaults.maxImages).mapIndexed { i, uri -> this.photos.save(uri, id, i, defaults.maxImageEdgePx, defaults.jpegQuality) }
+        val paths = mutableListOf<String>()
+        try {
+            photos.take(defaults.maxImages).forEachIndexed { i, uri -> paths += this.photos.save(uri, id, i, defaults.maxImageEdgePx, defaults.jpegQuality) }
+        } catch (e: Exception) {
+            // One unreadable photo: the ones already copied go too, then the screen says so.
+            this.photos.delete(paths)
+            throw e
+        }
         insert(id, date, mealSlotId, paths, description, EstimateKind.PHOTO, eatenMinute)
         return id
     }
