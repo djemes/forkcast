@@ -45,7 +45,7 @@ Only services you use or set up, always over HTTPS:
 
 | Service | When | What is sent |
 |---|---|---|
-| Open Food Facts (`world.openfoodfacts.org`, `search.openfoodfacts.org`, and its image host) | Searching, scanning a barcode | The search text or barcode |
+| Open Food Facts (`world.openfoodfacts.org`, `search.openfoodfacts.org`) | Searching, scanning a barcode | The search text or barcode |
 | USDA FoodData Central (`api.nal.usda.gov`) | Only if you add your own USDA key | The search text, your key |
 | Your AI providers: Google Gemini (`generativelanguage.googleapis.com`), Anthropic Claude (`api.anthropic.com`), or an OpenAI-compatible server you enter | Only if you set up AI | The meal photo and description you're estimating, your key |
 | GitHub (`api.github.com` and GitHub's download storage) | When you check for updates, and the optional daily check | Nothing about you; the update file is downloaded and its checksum and signing certificate are verified before installing |
