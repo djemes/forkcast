@@ -120,4 +120,6 @@
     <string name="help_def_tdee">Gasto energético total diário (TDEE, na sigla em inglês): tudo o que o seu corpo gasta num dia, em repouso e em movimento. O Forkcast chama de manutenção, porque comer essa quantidade mantém o seu peso mais ou menos igual.</string>
     <string name="help_term_dv" formatted="false">%VD (Valor Diário)</string>
     <string name="help_def_dv" formatted="false">Quanto do Valor Diário de um nutriente um alimento ou um dia fornece, em porcentagem. Os Valores Diários são as quantidades que os rótulos dos EUA usam para adultos. O Forkcast mostra o %VD de vitaminas e minerais, por exemplo “Vitamina C 45 mg · 50%”.</string>
+    <string name="help_q_right_for_me">O Forkcast é para mim?</string>
+    <string name="help_a_right_for_me">O Forkcast é para adultos que querem estimar e acompanhar o que comem. Não use sem a orientação de um médico ou nutricionista se você tem menos de 18 anos, está grávida ou amamentando, tem ou já teve um transtorno alimentar, ou tem uma condição de saúde ou toma um remédio afetado pelo que você come, como diabetes ou doença renal. Se acompanhar o que come causar ansiedade, preocupação demais com comida ou mal-estar, pare de usar e converse com um profissional ou alguém de confiança. O Forkcast faz estimativas, não dá orientação médica.</string>
 </resources>

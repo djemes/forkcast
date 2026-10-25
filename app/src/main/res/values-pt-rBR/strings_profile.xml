@@ -105,7 +105,7 @@
     <string name="not_medical_advice">O Forkcast faz estimativas, não dá orientação médica.</string>
 
     <!-- Guardrails (warnings, never blocks) -->
-    <string name="guard_fast_loss">Este ritmo é mais rápido que 1%% do seu peso por semana (cerca de %1$s). Nesse ritmo você chegaria à meta por volta de %2$s.</string>
+    <string name="guard_fast_loss">Este ritmo é mais rápido que 1%% do seu peso por semana (cerca de %1$s). Nesse ritmo você chegaria à meta por volta de %2$s. Um ritmo mais lento é mais fácil de manter; converse com um médico ou nutricionista antes de ir tão rápido.</string>
     <string name="guard_low_budget">Este orçamento está abaixo de %1$s ou abaixo da sua energia em repouso (%2$s). Converse com um médico ou nutricionista antes de baixar mais.</string>
 
     <!-- Profile & goals (settings) -->

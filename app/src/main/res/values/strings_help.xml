@@ -120,4 +120,6 @@
     <string name="help_def_tdee">Total daily energy expenditure: everything your body burns in a day, resting and moving. Forkcast calls it maintenance, because eating that much keeps your weight about the same.</string>
     <string name="help_term_dv" formatted="false">%DV (Daily Value)</string>
     <string name="help_def_dv" formatted="false">How much of a nutrient\'s Daily Value a food or a day gives, as a percentage. The Daily Values are the amounts US food labels use for adults. Forkcast shows %DV for vitamins and minerals, for example “Vitamin C 45 mg · 50%”.</string>
+    <string name="help_q_right_for_me">Is Forkcast right for me?</string>
+    <string name="help_a_right_for_me">Forkcast is for adults who want to estimate and track what they eat. Don\'t use it without guidance from a doctor or dietitian if you\'re under 18, pregnant or breastfeeding, have or have had an eating disorder, or have a medical condition or take medication affected by what you eat, such as diabetes or kidney disease. If tracking makes you anxious, preoccupied with food or unwell, stop using it and talk to a professional or someone you trust. Forkcast gives estimates, not medical advice.</string>
 </resources>

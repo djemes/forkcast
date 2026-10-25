@@ -23,6 +23,7 @@ enum class HelpTopic(@StringRes val title: Int) {
  */
 enum class HelpEntry(val topic: HelpTopic, @StringRes val question: Int, @StringRes val answer: Int) {
     START_FIRST_STEPS(HelpTopic.GETTING_STARTED, R.string.help_q_start, R.string.help_a_start),
+    START_RIGHT_FOR_ME(HelpTopic.GETTING_STARTED, R.string.help_q_right_for_me, R.string.help_a_right_for_me),
     START_WITHOUT_AI(HelpTopic.GETTING_STARTED, R.string.help_q_without_ai, R.string.help_a_without_ai),
     START_CHANGE_GOAL(HelpTopic.GETTING_STARTED, R.string.help_q_change_goal, R.string.help_a_change_goal),
 

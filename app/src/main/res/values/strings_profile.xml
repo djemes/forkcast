@@ -105,7 +105,7 @@
     <string name="not_medical_advice">Forkcast gives estimates, not medical advice.</string>
 
     <!-- Guardrails (warnings, never blocks) -->
-    <string name="guard_fast_loss">This pace is faster than 1%% of your body weight per week (about %1$s). At that pace you\'d reach your goal around %2$s.</string>
+    <string name="guard_fast_loss">This pace is faster than 1%% of your body weight per week (about %1$s). At that pace you\'d reach your goal around %2$s. A slower pace is easier to keep up; talk to a doctor or dietitian before going this fast.</string>
     <string name="guard_low_budget">This budget is below %1$s or below your resting energy (%2$s). Talk to a doctor or dietitian before going lower.</string>
 
     <!-- Profile & goals (settings) -->
