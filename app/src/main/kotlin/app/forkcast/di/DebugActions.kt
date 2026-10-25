@@ -14,8 +14,7 @@ interface DebugAction {
     @get:StringRes val label: Int
     @get:StringRes val summary: Int
 
-    /** Does the work; returns the message to show when it's done. */
-    @StringRes
+    /** Does the work; returns the message to show when it's done (a string resource). */
     suspend fun run(): Int
 }
 
