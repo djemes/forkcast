@@ -77,7 +77,12 @@ class PhotoArchiveTest {
 
     @Test fun onlyForkcastPhotoNamesAreStaged() = runTest {
         photos.root.deleteRecursively()
-        val bytes = zip("forkcast.json" to "{}".toByteArray(), "photos/a1/0.jpg" to byteArrayOf(1), "photos/a1/deep/x.jpg" to byteArrayOf(2), "photos/odd name.jpg" to byteArrayOf(3))
+        val bytes = zip(
+            "forkcast.json" to "{}".toByteArray(),
+            "photos/a1/0.jpg" to byteArrayOf(1),
+            "photos/a1/deep/x.jpg" to byteArrayOf(2),
+            "photos/odd name.jpg" to byteArrayOf(3),
+        )
         assertThat(archive.read(bytes.inputStream()).photos).isEqualTo(1)
         archive.commitStaged()
         assertThat(photos.root.walkTopDown().filter { it.isFile }.map { it.relativeTo(photos.root).invariantSeparatorsPath }.toList()).containsExactly("a1/0.jpg")
