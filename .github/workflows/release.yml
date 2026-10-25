@@ -59,8 +59,8 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
           case "$VERSION" in *-*) PRERELEASE="--prerelease" ;; *) PRERELEASE="" ;; esac
-          # Notes for users, written in docs/release-notes/<tag>.md; the commit list otherwise.
-          NOTES="docs/release-notes/$GITHUB_REF_NAME.md"
+          # Notes for users, written in .github/release-notes/<tag>.md; the commit list otherwise.
+          NOTES=".github/release-notes/$GITHUB_REF_NAME.md"
           if [ -f "$NOTES" ]; then NOTES_ARGS=(--notes-file "$NOTES"); else NOTES_ARGS=(--generate-notes); fi
           gh release create "$GITHUB_REF_NAME" "Forkcast-$GITHUB_REF_NAME.apk" SHA256SUMS             --title "Forkcast $VERSION" "${NOTES_ARGS[@]}" $PRERELEASE
 

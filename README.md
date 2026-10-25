@@ -5,9 +5,9 @@
 A private, offline-first Android calorie and nutrition tracker. Log a meal by scanning a barcode, searching, taking a photo or describing it in a sentence. Forkcast tracks it against a daily budget built from your weight goal and your real maintenance calories.
 
 <p align="center">
-  <img src="docs/screenshots/today.png" width="240" alt="Today: calories left on the ring, macros and meals">
-  <img src="docs/screenshots/log.png" width="240" alt="Log sheet: Scan, Photo, Describe, Search">
-  <img src="docs/screenshots/trends.png" width="240" alt="Trends: calories against the budget and the weight trend">
+  <img src="assets/screenshots/today.png" width="240" alt="Today: calories left on the ring, macros and meals">
+  <img src="assets/screenshots/log.png" width="240" alt="Log sheet: Scan, Photo, Describe, Search">
+  <img src="assets/screenshots/trends.png" width="240" alt="Trends: calories against the budget and the weight trend">
 </p>
 
 ## What it does
@@ -29,7 +29,5 @@ A private, offline-first Android calorie and nutrition tracker. Log a meal by sc
 4. Tap **Log** on Today and pick Scan, Photo, Describe or Search. The ring shows what's left for the day.
 
 Android 10 or newer. English and Portuguese (Brazil).
-
-More detail: [Spec](docs/SPEC.md) · [AI providers](docs/AI_PROVIDERS.md) · [Design](docs/DESIGN.md) · [Setup](SETUP.md)
 
 Not medical advice. Estimates, especially from photos, can be well off; weigh food when accuracy matters.

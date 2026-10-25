@@ -25,7 +25,7 @@ import app.forkcast.core.model.AppSettings
 import kotlinx.serialization.Serializable
 
 /**
- * Export file (SPEC §6.3; JSON Schema in docs/export-schema-v7.json). Field names mirror the
+ * Export file (SPEC §6.3; JSON Schema in core/data/schemas/export/export-schema-v7.json). Field names mirror the
  * Room entities. Secrets are never included: API keys live in an encrypted file outside the
  * database and [AppSettings] holds no secrets (keys travel only in the separate,
  * passphrase-encrypted settings export).

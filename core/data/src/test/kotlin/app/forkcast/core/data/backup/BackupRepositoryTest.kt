@@ -112,11 +112,11 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
 
-    /** docs/export-schema-v6.json must list exactly the fields the app writes, and the same enum values. */
+    /** core/data/schemas/export/export-schema-v7.json must list exactly the fields the app writes, and the same enum values. */
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(findDoc("export-schema-v7.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(exportSchema("export-schema-v7.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -148,8 +148,11 @@ class BackupRepositoryTest {
         assertThat(enumOf("weight", "properties", "source")).containsExactlyElementsIn(WeightSource.entries.map { it.name })
     }
 
-    private fun findDoc(name: String): File =
-        generateSequence(File("").absoluteFile) { it.parentFile }.map { File(it, "docs/$name") }.first { it.exists() }
+    /** The JSON Schema files next to Room's schemas; tests run from the module or the project folder. */
+    private fun exportSchema(name: String): File =
+        generateSequence(File("").absoluteFile) { it.parentFile }
+            .flatMap { sequenceOf(File(it, "schemas/export/$name"), File(it, "core/data/schemas/export/$name")) }
+            .first { it.exists() }
 
     @Test fun previewCountsVisibleRowsAndDateRange() = runTest {
         seedEveryTable()

@@ -1,4 +1,4 @@
-"""Builds docs/export-schema-v7.json from v6 (1.4: log entries lose timeEstimated).
+"""Builds core/data/schemas/export/export-schema-v7.json from v6 (1.4: log entries lose timeEstimated).
 
 Run from the repository root: python -X utf8 tools/schema/make_export_schema_v7.py
 BackupRepositoryTest.schemaFileMatchesExport checks the result against a real export.
@@ -6,7 +6,7 @@ The next format change copies this script: read the current file, apply the chan
 """
 import json
 
-s = json.load(open('docs/export-schema-v6.json', encoding='utf8'))
+s = json.load(open('core/data/schemas/export/export-schema-v6.json', encoding='utf8'))
 d = s['$defs']
 
 s['$id'] = s['$id'].replace('v6', 'v7')
@@ -26,5 +26,5 @@ req = d['logEntry'].get('required')
 if req and 'timeEstimated' in req:
     req.remove('timeEstimated')
 
-json.dump(s, open('docs/export-schema-v7.json', 'w', encoding='utf8', newline='\n'), indent=2, ensure_ascii=False)
-open('docs/export-schema-v7.json', 'a', encoding='utf8', newline='\n').write('\n')
+json.dump(s, open('core/data/schemas/export/export-schema-v7.json', 'w', encoding='utf8', newline='\n'), indent=2, ensure_ascii=False)
+open('core/data/schemas/export/export-schema-v7.json', 'a', encoding='utf8', newline='\n').write('\n')
