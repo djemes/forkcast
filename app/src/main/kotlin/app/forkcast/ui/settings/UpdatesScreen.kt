@@ -171,8 +171,12 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
     val context = LocalContext.current
     // Re-read when coming back from Android's "Install unknown apps" screen.
     var canInstall by remember { mutableStateOf(AppInstaller.canInstall(context)) }
-    LifecycleResumeEffect(Unit) {
+    LifecycleResumeEffect(state.ui) {
+        val allowedNow = !canInstall && AppInstaller.canInstall(context)
         canInstall = AppInstaller.canInstall(context)
+        // Back from "Allow from this source" with the OK: go on to the install without another tap.
+        val ready = state.ui as? UpdateUi.Ready
+        if (allowedNow && ready != null && state.installer !is AppInstaller.Status.Waiting) actions.install(ready)
         onPauseOrDispose {}
     }
     var advanced by rememberSaveable { mutableStateOf(false) }
@@ -192,7 +196,7 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
                     is UpdateCheck.Available -> {
                         c.release.notes?.takeIf { it.isNotBlank() }?.let { notes ->
                             Heading(R.string.update_whats_new)
-                            Text(notes.lines().take(NOTES_LINES).joinToString("\n"), style = MaterialTheme.typography.bodyMedium)
+                            Text(plainNotes(notes), style = MaterialTheme.typography.bodyMedium)
                         }
                         Button(onClick = { actions.download(c.release) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_install)) }
                     }
@@ -326,3 +330,20 @@ private const val NOTES_LINES = 12
 
 /** GitHub's page for creating a fine-grained token. */
 private const val TOKEN_PAGE = "https://github.com/settings/personal-access-tokens/new"
+
+/**
+ * Release notes are Markdown on GitHub; shown here as plain text: no `**`, `#` or backticks, and
+ * "- " list items as bullets.
+ */
+internal fun plainNotes(markdown: String): String =
+    markdown.lines()
+        .map { line ->
+            line.trimEnd()
+                .replace("**", "").replace("__", "").replace("`", "")
+                .replace(Regex("""^#{1,6}\s+"""), "")
+                .replace(Regex("""^\s*[-*]\s+"""), "• ")
+        }
+        .dropWhile { it.isBlank() }
+        .take(NOTES_LINES)
+        .joinToString("\n")
+        .trimEnd()
