@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.Density
 import androidx.lifecycle.SavedStateHandle
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.model.UnitPrefs
+import app.forkcast.fakes.FakeConsentRepository
 import app.forkcast.fakes.FakeAiEstimateRepository
 import app.forkcast.fakes.FakeAiRepository
 import app.forkcast.fakes.FakeFoodRepository
@@ -146,7 +147,7 @@ class FirstRunTest {
     }
 
     @Test fun aiSettingsWithNoServiceOffersTheGuide() = runTest {
-        val state = AiSettingsViewModel(FakeAiRepository(), FakeSettingsRepository(), clock).state.first { it.loaded }
+        val state = AiSettingsViewModel(FakeAiRepository(), FakeSettingsRepository(), clock, FakeConsentRepository()).state.first { it.loaded }
         var added = false
         show { AiSettingsScreen(state, onEvent = {}, onBack = {}, onEditProfile = {}, onAddAi = { added = true }) }
         compose.onNodeWithText("No AI services yet. Add one to start estimating meals.").assertIsDisplayed()

@@ -13,6 +13,7 @@ import app.forkcast.core.data.repository.BackupOffer
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.AiError
+import app.forkcast.fakes.FakeConsentRepository
 import app.forkcast.fakes.FakeAiRepository
 import app.forkcast.fakes.FakeSettingsRepository
 import app.forkcast.ui.theme.ForkcastTheme
@@ -49,8 +50,8 @@ class AiSetupTest {
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
     @After fun tearDown() = Dispatchers.resetMain()
 
-    private fun vm(ai: FakeAiRepository, settings: FakeSettingsRepository = FakeSettingsRepository()) =
-        AiSetupViewModel(ai, settings, clock, SavedStateHandle())
+    private fun vm(ai: FakeAiRepository, settings: FakeSettingsRepository = FakeSettingsRepository(), consent: FakeConsentRepository = FakeConsentRepository()) =
+        AiSetupViewModel(ai, settings, clock, SavedStateHandle(), consent)
 
     @Test fun geminiPasteChecksSavesAndAddsTheBackup() = runTest(dispatcher) {
         val ai = FakeAiRepository().apply { offer = BackupOffer("p0", "Gemini 3.8 Flash", "gemini-3.5-flash-lite", "Gemini 3.5 Flash-Lite") }
@@ -137,7 +138,8 @@ class AiSetupTest {
 
     @Test fun walkThroughOnScreen() {
         val ai = FakeAiRepository()
-        val vm = vm(ai)
+        // A first-time user: "What this means" asks for the permission to send meals (roadmap 2.0 task 4.2).
+        val vm = vm(ai, consent = FakeConsentRepository(allowed = emptySet()))
         var closed = false
         compose.setContent {
             val state by vm.state.collectAsState()
@@ -145,7 +147,8 @@ class AiSetupTest {
         }
         compose.onNodeWithText("Gemini, free").performClick()
         compose.onNodeWithText("What gets sent").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Continue").performClick()
+        compose.onNodeWithText("Allow and continue").performClick()
+        dispatcher.scheduler.advanceUntilIdle()
         compose.onNodeWithText("Open Google AI Studio").assertIsDisplayed()
         compose.onNodeWithText("I have my key").performClick()
         compose.onNodeWithText("API key").performTextInput("sk-ant-api03-abcdefghijklmnopqrstuvwxyz")

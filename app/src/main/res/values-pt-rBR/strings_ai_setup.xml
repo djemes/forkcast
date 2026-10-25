@@ -19,7 +19,7 @@
     <string name="setup_about_title">O que isso significa</string>
     <string name="setup_about_key">Uma chave de API é como uma senha que deixa o Forkcast usar a sua conta no %1$s. Você a cria no site deles e cola aqui.</string>
     <string name="setup_about_sent_title">O que é enviado</string>
-    <string name="setup_about_sent">Só as fotos e descrições de refeições que você escolhe estimar. Nunca o seu peso, metas, idade ou outros dados do corpo.</string>
+    <string name="setup_about_sent">As fotos e descrições de refeições que você escolhe estimar, e o seu contexto pessoal, se você escrever um. Nunca o seu peso, metas, idade ou outros dados do corpo.</string>
     <string name="setup_about_cost_title">Custo</string>
     <string name="setup_about_privacy_title">Privacidade</string>
     <string name="setup_about_terms_title">Termos</string>

@@ -50,6 +50,7 @@ fun Resources.aiErrorMessage(error: Throwable?, provider: ProviderId?): String {
         is AiError.Network -> getString(R.string.ai_err_network)
         is AiError.Timeout -> getString(R.string.ai_err_timeout, who)
         is AiError.Server -> getString(R.string.ai_err_server, who, error.code)
+        is AiError.NoConsent -> getString(R.string.ai_err_no_consent, who)
         else -> getString(R.string.ai_err_bad_response, who)
     }
 }

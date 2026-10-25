@@ -7,10 +7,14 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.data.settings.AppSettingsSerializer
+import app.forkcast.core.data.settings.DevicePrefs
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.AiChain
 import app.forkcast.core.network.ai.AiDefaults
+import app.forkcast.core.network.ai.AiError
+import app.forkcast.core.network.ai.MealEstimateRequest
 import app.forkcast.core.network.ai.AiHttpClientFactory
 import app.forkcast.core.network.ai.MealEstimatorFactory
 import com.google.common.truth.Truth.assertThat
@@ -48,9 +52,12 @@ class AiRepositoryTest {
         DataStoreFactory.create(AppSettingsSerializer) { File(context.filesDir, "settings-ai-${System.nanoTime()}.json") },
     )
     private val defaults = AiDefaults.load()
-    private val http = AiHttpClientFactory.create("t", MockEngine { respond("{}") })
+    /** Every request that reached the "provider". */
+    private val sent = mutableListOf<String>()
+    private val http = AiHttpClientFactory.create("t", MockEngine { request -> sent += request.url.host; respond("{}") })
+    private val consent = DefaultConsentRepository(DevicePrefs(context), clock)
     private val repo = DefaultAiRepository(
-        db.aiDao(), secrets, MealEstimatorFactory(http, defaults) { secrets.aiKey(it) }, defaults, settings, clock,
+        db.aiDao(), secrets, MealEstimatorFactory(http, defaults) { secrets.aiKey(it) }, defaults, settings, clock, consent,
     )
 
     @After fun tearDown() = db.close()
@@ -61,10 +68,45 @@ class AiRepositoryTest {
     private suspend fun order() = repo.profilesNow().sortedBy { it.order }.map { it.name to it.order }
 
     /** After an app restart the store hasn't been read yet; the list must still know which keys exist. */
+    /** Roadmap 2.0 task 4.2: nothing goes to a provider before the user allows it, or after taking it back. */
+    @Test fun noRequestWithoutPermission() = runTest {
+        val gemini = AiRecipient.of(ProviderId.GEMINI, null)
+        consent.revokeAi(gemini)
+        val id = add("A", "AQ.key-a")
+        val profile = repo.profile(id)!!
+        val request = MealEstimateRequest(emptyList(), "toast", "Lunch", "12:00", "metric", null, null, null, profile.model)
+
+        assertThat(repo.test(id).exceptionOrNull()).isInstanceOf(AiError.NoConsent::class.java)
+        assertThat(repo.testKey(ProviderId.GEMINI, profile.model, "AQ.key").exceptionOrNull()).isInstanceOf(AiError.NoConsent::class.java)
+        assertThat(repo.listModels(ProviderId.GEMINI, null, id, null).exceptionOrNull()).isInstanceOf(AiError.NoConsent::class.java)
+        assertThat(repo.estimatorFor(profile).estimate(request).exceptionOrNull()).isInstanceOf(AiError.NoConsent::class.java)
+        assertThat(sent).isEmpty()
+
+        consent.allowAi(gemini)
+        repo.test(id)
+        repo.estimatorFor(profile).estimate(request)
+        assertThat(sent).hasSize(2)
+
+        consent.revokeAi(gemini)
+        repo.estimatorFor(profile, textOnly = true).estimate(request)
+        repo.listModels(ProviderId.GEMINI, null, id, null)
+        assertThat(sent).hasSize(2)
+    }
+
+    /** An OpenAI-compatible server is its own recipient: allowing OpenRouter doesn't allow another host. */
+    @Test fun permissionIsPerServer() = runTest {
+        consent.allowAi(AiRecipient.of(ProviderId.OPENAI_COMPAT, "https://openrouter.ai/api"))
+        assertThat(repo.listModels(ProviderId.OPENAI_COMPAT, "https://example.org/v1", null, "k").exceptionOrNull())
+            .isInstanceOf(AiError.NoConsent::class.java)
+        assertThat(sent).isEmpty()
+        repo.listModels(ProviderId.OPENAI_COMPAT, "https://openrouter.ai/api", null, "k")
+        assertThat(sent).containsExactly("openrouter.ai")
+    }
+
     @Test fun savedKeysShowAfterRestart() = runTest {
         val id = add("A", "AQ.key-a")
         val restarted = SecretStore(secretsFile, { XorAead() }, Dispatchers.Unconfined)
-        val repo2 = DefaultAiRepository(db.aiDao(), restarted, MealEstimatorFactory(http, defaults) { restarted.aiKey(it) }, defaults, settings, clock)
+        val repo2 = DefaultAiRepository(db.aiDao(), restarted, MealEstimatorFactory(http, defaults) { restarted.aiKey(it) }, defaults, settings, clock, consent)
         assertThat(repo2.profiles.first().single { it.profile.id == id }.hasKey).isTrue()
     }
 

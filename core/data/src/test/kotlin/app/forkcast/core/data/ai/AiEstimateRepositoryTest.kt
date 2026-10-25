@@ -15,6 +15,9 @@ import app.forkcast.core.data.repository.AiProfileStatus
 import app.forkcast.core.data.repository.DeletedAiProfile
 import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.DataStoreSettingsRepository
+import app.forkcast.core.data.repository.DefaultConsentRepository
+import app.forkcast.core.data.settings.DevicePrefs
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.data.repository.DefaultFoodRepository
 import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.data.repository.RoomLogRepository
@@ -92,10 +95,16 @@ class AiEstimateRepositoryTest {
         override suspend fun isScheduled(estimateId: String) = estimateId in live
     }
     private val photos = PhotoStore(context)
+    private val consent = DefaultConsentRepository(DevicePrefs(context), clock)
     private val repo = DefaultAiEstimateRepository(
         context, db.aiDao(), ai, photos, ComponentMatcher(usda, foods, db.aiDao(), clock), log,
-        RoomMealSlotRepository(db, db.mealSlotDao(), clock, context), settings, scheduler, clock, foods,
+        RoomMealSlotRepository(db, db.mealSlotDao(), clock, context), settings, scheduler, clock, foods, consent,
     )
+
+    // Most tests are about the chain, not permission (roadmap 2.0 task 4.2): every provider is allowed.
+    init {
+        ProviderId.entries.forEach { kotlinx.coroutines.runBlocking { consent.allowAi(AiRecipient.of(it, null)) } }
+    }
 
     @After fun tearDown() {
         db.close()
@@ -124,6 +133,32 @@ class AiEstimateRepositoryTest {
     )
 
     private fun result(json: MealEstimateJson = meal) = Result.success(MealEstimateResult(json, emptyList(), "{}", 3000, 600, 900, "gemini-3.8-flash"))
+
+    /** Roadmap 2.0 task 4.2: a service without the user's permission is never asked. */
+    @Test fun servicesWithoutPermissionAreSkipped() = runTest {
+        val slot = lunch()
+        consent.revokeAi(AiRecipient.of(ProviderId.GEMINI, null))
+        ai.add("g", ProviderId.GEMINI, result())
+        ai.add("c", ProviderId.CLAUDE, result())
+        val id = repo.createDescribed(day, slot, "chicken and rice")
+        assertThat(repo.run(id)).isInstanceOf(RunOutcome.Finished::class.java)
+        assertThat(ai.requests).containsExactly("c")
+    }
+
+    @Test fun noPermissionAtAllSendsNothingAndSaysSo() = runTest {
+        val slot = lunch()
+        ProviderId.entries.forEach { consent.revokeAi(AiRecipient.of(it, null)) }
+        ai.add("g", ProviderId.GEMINI, result())
+        val id = repo.createDescribed(day, slot, "chicken and rice")
+        assertThat(repo.run(id)).isInstanceOf(RunOutcome.Failed::class.java)
+        assertThat(ai.requests).isEmpty()
+        assertThat(db.aiDao().estimate(id)!!.errorCode).isEqualTo(AiErrorCodes.NO_CONSENT)
+        // Allowed again: Retry goes through.
+        consent.allowAi(AiRecipient.of(ProviderId.GEMINI, null))
+        repo.retry(id)
+        assertThat(repo.run(id)).isInstanceOf(RunOutcome.Finished::class.java)
+        assertThat(ai.requests).containsExactly("g")
+    }
 
     @Test fun pendingEstimateRunsAndAutoAcceptsIntoTheMeal() = runTest {
         val slot = lunch()

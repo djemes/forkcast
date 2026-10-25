@@ -125,6 +125,11 @@ fun PhotoMealScreen(
         AiOptionalPage(off = !state.aiEnabled, onSetUp = onSetUpAi, onTurnOn = { onEvent(PhotoMealEvent.TurnOnAi) }, onNotNow = onBack)
         return
     }
+    // Before the first meal goes anywhere: permission for the service that would receive it (roadmap 2.0 task 4.2).
+    state.askPermission?.let { p ->
+        app.forkcast.ui.ai.AiConsentPage(p.provider, p.baseUrl, onAllow = { onEvent(PhotoMealEvent.AllowAi) }, onNotNow = onBack)
+        return
+    }
     val context = LocalContext.current
     val pickOne = rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
         if (uri != null) onEvent(PhotoMealEvent.AddPhotos(listOf(uri)))

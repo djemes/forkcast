@@ -5,12 +5,15 @@ import app.forkcast.core.data.db.AiProfileEntity
 import app.forkcast.core.data.db.UsageRecordEntity
 import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.model.AiProfile
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.AiChain
 import app.forkcast.core.network.ai.AiDefaults
 import app.forkcast.core.network.ai.AiError
 import app.forkcast.core.network.ai.ConnectionReport
+import app.forkcast.core.network.ai.MealEstimateRequest
+import app.forkcast.core.network.ai.MealEstimateResult
 import app.forkcast.core.network.ai.MealEstimator
 import app.forkcast.core.network.ai.MealEstimatorFactory
 import app.forkcast.core.network.ai.ModelInfo
@@ -96,7 +99,10 @@ interface AiRepository {
     suspend fun testKey(provider: ProviderId, model: String, key: String): Result<ConnectionReport>
     /** Lists models with a saved profile's key, or with a key typed but not saved yet. */
     suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?): Result<List<ModelInfo>>
-    /** [textOnly]: for a described meal (shorter timeout, nothing to upload). */
+    /**
+     * [textOnly]: for a described meal (shorter timeout, nothing to upload). Without the user's
+     * permission for the profile's recipient, every call fails with [AiError.NoConsent] and sends nothing.
+     */
     fun estimatorFor(profile: AiProfile, textOnly: Boolean = false): MealEstimator
     /**
      * The one-tap backup (owner, 2026-10-23): with exactly one Gemini profile and no budget-model
@@ -118,7 +124,12 @@ class DefaultAiRepository @Inject constructor(
     override val defaults: AiDefaults,
     private val settings: SettingsRepository,
     private val clock: Clock,
+    private val consent: ConsentRepository,
 ) : AiRepository {
+
+    // Roadmap 2.0 task 4.2: nothing reaches a provider without the user's permission for it. Every
+    // network path below (estimates, tests, model lists) goes through here.
+    private fun allowed(provider: ProviderId, baseUrl: String?): Boolean = consent.hasAiConsent(AiRecipient.of(provider, baseUrl))
 
     // Deferred so the usage window is computed when a screen subscribes, not once per process.
     override val profiles: Flow<List<AiProfileStatus>> = flow {
@@ -216,6 +227,7 @@ class DefaultAiRepository @Inject constructor(
 
     override suspend fun test(id: String): Result<ConnectionReport> {
         val profile = profile(id) ?: return Result.failure(AiError.InvalidRequest("profile not found"))
+        if (!allowed(profile.provider, profile.baseUrl)) return Result.failure(AiError.NoConsent())
         val result = factory.create(profile).testConnection()
         val error = result.exceptionOrNull() as? AiError
         val now = clock.millis()
@@ -231,10 +243,13 @@ class DefaultAiRepository @Inject constructor(
         return result
     }
 
-    override suspend fun testKey(provider: ProviderId, model: String, key: String): Result<ConnectionReport> =
-        factory.create(draftProfile(provider, null, null).copy(model = model), keyOverride = key).testConnection()
+    override suspend fun testKey(provider: ProviderId, model: String, key: String): Result<ConnectionReport> {
+        if (!allowed(provider, null)) return Result.failure(AiError.NoConsent())
+        return factory.create(draftProfile(provider, null, null).copy(model = model), keyOverride = key).testConnection()
+    }
 
     override suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?): Result<List<ModelInfo>> {
+        if (!allowed(provider, baseUrl)) return Result.failure(AiError.NoConsent())
         val temp = draftProfile(provider, baseUrl, profileId)
         val estimator = if (draftKey != null) factory.create(temp, keyOverride = draftKey) else factory.create(temp)
         return estimator.listModels().map { list -> list.filter { it.supportsImages != false }.sortedBy { it.displayName } }
@@ -245,7 +260,8 @@ class DefaultAiRepository @Inject constructor(
         tierLabel = TierLabel.UNKNOWN, order = 0, enabled = true, needsAttention = false, cooldownUntil = null,
     )
 
-    override fun estimatorFor(profile: AiProfile, textOnly: Boolean): MealEstimator = factory.create(profile, textOnly = textOnly)
+    override fun estimatorFor(profile: AiProfile, textOnly: Boolean): MealEstimator =
+        if (allowed(profile.provider, profile.baseUrl)) factory.create(profile, textOnly = textOnly) else NotAllowed(profile.provider)
 
     override suspend fun backupOffer(): BackupOffer? {
         val all = dao.profiles()
@@ -326,6 +342,13 @@ class DefaultAiRepository @Inject constructor(
     /** "Used today" follows the provider's quota day: Pacific for Gemini, local otherwise. */
     private fun quotaDay(provider: ProviderId): LocalDate =
         if (provider == ProviderId.GEMINI) QuotaWindows.pacificDay(clock.instant()) else LocalDate.now(clock)
+}
+
+/** Stands in for a provider the user hasn't allowed: answers every call without sending anything. */
+private class NotAllowed(override val providerId: ProviderId) : MealEstimator {
+    override suspend fun listModels(): Result<List<ModelInfo>> = Result.failure(AiError.NoConsent())
+    override suspend fun testConnection(): Result<ConnectionReport> = Result.failure(AiError.NoConsent())
+    override suspend fun estimate(request: MealEstimateRequest): Result<MealEstimateResult> = Result.failure(AiError.NoConsent())
 }
 
 internal fun AiProfileEntity.toModel() = AiProfile(

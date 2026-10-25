@@ -49,7 +49,7 @@ class MissingKeysRepositoryTest {
     private val defaults = AiDefaults.load()
     private val ai = DefaultAiRepository(
         db.aiDao(), secrets, MealEstimatorFactory(AiHttpClientFactory.create("t", MockEngine { respond("{}") }), defaults) { secrets.aiKey(it) },
-        defaults, settings, clock,
+        defaults, settings, clock, DefaultConsentRepository(DevicePrefs(context), clock),
     )
     private val device = DevicePrefs(context).also { d -> d.update { it.copy(dismissedMissingKeys = emptySet()) } }
     private val repo = DefaultMissingKeysRepository(ai, secrets, settings, device)

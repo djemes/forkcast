@@ -47,6 +47,8 @@ import app.forkcast.ui.common.AdvancedSection
 import app.forkcast.ui.help.HelpLink
 import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.data.repository.AiProfileStatus
+import app.forkcast.core.model.AiProfile
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.CheckFailure
 import app.forkcast.core.model.ProfileCheck
 import app.forkcast.ui.settings.SettingsScaffold
@@ -114,6 +116,30 @@ fun AiSettingsScreen(
     snackbarHostState: SnackbarHostState? = null,
 ) {
     var confirmDelete by remember { mutableStateOf<String?>(null) }
+    // Roadmap 2.0 task 4.2: the permission sheet for a profile's recipient, and "Take back".
+    var askPermission by remember { mutableStateOf<AiProfile?>(null) }
+    var confirmRevoke by remember { mutableStateOf<String?>(null) }
+    askPermission?.let { p ->
+        AiConsentSheet(
+            p.provider, p.baseUrl,
+            onAllow = { askPermission = null; onEvent(AiSettingsEvent.AllowAi(AiRecipient.of(p))) },
+            onNotNow = { askPermission = null },
+        )
+    }
+    confirmRevoke?.let { recipient ->
+        val name = recipientName(recipient)
+        AlertDialog(
+            onDismissRequest = { confirmRevoke = null },
+            title = { Text(stringResource(R.string.consent_take_back_title, name)) },
+            text = { Text(stringResource(R.string.consent_take_back_body, name)) },
+            confirmButton = {
+                TextButton(onClick = { confirmRevoke = null; onEvent(AiSettingsEvent.RevokeAi(recipient)) }) {
+                    Text(stringResource(R.string.consent_take_back_confirm))
+                }
+            },
+            dismissButton = { TextButton(onClick = { confirmRevoke = null }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
     SettingsScaffold(title = stringResource(R.string.settings_ai), onBack = onBack, snackbarHostState = snackbarHostState) {
         if (!state.loaded) return@SettingsScaffold
         val s = state.settings
@@ -143,6 +169,7 @@ fun AiSettingsScreen(
                             onEvent = onEvent,
                             onEdit = { onEditProfile(item.profile.id) },
                             onDelete = { confirmDelete = item.profile.id },
+                            onAllow = { askPermission = item.profile }.takeUnless { state.allowed(item.profile) },
                         )
                     }
                 }
@@ -163,6 +190,9 @@ fun AiSettingsScreen(
             Button(onClick = onAddAi, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.ai_add)) }
         }
         HorizontalDivider(Modifier.padding(top = 16.dp))
+
+        Permissions(state.consents) { confirmRevoke = it }
+        HorizontalDivider()
 
         SectionTitle(R.string.ai_section_photos)
         PersonalContextField(s.personalContext) { onEvent(AiSettingsEvent.SetPersonalContext(it)) }
@@ -236,6 +266,8 @@ private fun ProfileCard(
     onEvent: (AiSettingsEvent) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
+    /** Set while its recipient isn't allowed to receive meals: Allow and Test open the permission sheet. */
+    onAllow: (() -> Unit)? = null,
 ) {
     val p = item.profile
     val res = LocalResources.current
@@ -270,11 +302,35 @@ private fun ProfileCard(
         )
         // What you can do
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            TextButton(onClick = { onEvent(AiSettingsEvent.Test(p.id)) }, enabled = test !is TestState.Running) {
+            if (onAllow != null) TextButton(onClick = onAllow) { Text(stringResource(R.string.ai_allow)) }
+            TextButton(onClick = { onAllow?.invoke() ?: onEvent(AiSettingsEvent.Test(p.id)) }, enabled = test !is TestState.Running) {
                 Text(stringResource(if (test is TestState.Running) R.string.ai_testing else R.string.ai_test))
             }
             TextButton(onClick = onEdit) { Text(stringResource(R.string.ai_edit)) }
             TextButton(onClick = onDelete) { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) }
+        }
+    }
+}
+
+/** Who may receive meals, since when, and Take back (roadmap 2.0 task 4.2). */
+@Composable
+private fun Permissions(consents: Map<String, Long>, onTakeBack: (String) -> Unit) {
+    SectionTitle(R.string.consent_section)
+    if (consents.isEmpty()) {
+        Text(stringResource(R.string.consent_none), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+        return
+    }
+    consents.entries.sortedBy { it.value }.forEach { (recipient, at) ->
+        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(start = 16.dp, end = 8.dp)) {
+            Column(Modifier.weight(1f)) {
+                Text(recipientName(recipient), style = MaterialTheme.typography.bodyLarge)
+                Text(
+                    stringResource(R.string.consent_since, formatDate(at)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            TextButton(onClick = { onTakeBack(recipient) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.consent_take_back)) }
         }
     }
 }
@@ -306,6 +362,10 @@ private fun CheckLine(check: ProfileCheck?) {
 
 private fun formatDateTime(epochMs: Long): String =
     DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withLocale(Locale.getDefault())
+        .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
+
+private fun formatDate(epochMs: Long): String =
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault())
         .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
 
 private fun formatTime(epochMs: Long): String =

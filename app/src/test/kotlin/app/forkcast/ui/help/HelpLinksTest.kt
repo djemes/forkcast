@@ -19,6 +19,7 @@ class HelpLinksTest {
         AiError.InvalidKey(), AiError.InvalidKey(AiError.NO_KEY), AiError.InvalidKey(AiError.NEEDS_WORKSPACE),
         AiError.RateLimited(null), AiError.QuotaExhausted(null), AiError.ModelNotFound("m"), AiError.ContentRefused(),
         AiError.BadResponse(null), AiError.InvalidRequest(null), AiError.Network(), AiError.Timeout(), AiError.Server(503),
+        AiError.NoConsent(),
     )
 
     private val foodErrors = listOf(

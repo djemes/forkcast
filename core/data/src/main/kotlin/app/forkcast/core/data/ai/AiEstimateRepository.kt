@@ -12,12 +12,14 @@ import app.forkcast.core.data.db.EstimateKind
 import app.forkcast.core.data.db.EstimatePhase
 import app.forkcast.core.data.db.EstimateStatus
 import app.forkcast.core.data.repository.AiRepository
+import app.forkcast.core.data.repository.ConsentRepository
 import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DrinkWater
 import app.forkcast.core.domain.MealTimes
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.EstimatedItem
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.FoodSource
@@ -83,6 +85,8 @@ object AiErrorCodes {
     /** Stuck in a version before 1.2 and stopped by the update: Retry starts it again. */
     const val STOPPED = "Stopped"
     const val OK = "OK"
+    /** No AI service that could be tried has the user's permission to receive meals (roadmap 2.0 task 4.2). */
+    const val NO_CONSENT = "NoConsent"
     /**
      * Explicit names, not `e::class.simpleName`: R8 renames classes in release builds, which
      * would store "c" and lose the specific message on the review screen.
@@ -98,6 +102,7 @@ object AiErrorCodes {
         is AiError.Network -> "Network"
         is AiError.Timeout -> "Timeout"
         is AiError.Server -> "Server"
+        is AiError.NoConsent -> NO_CONSENT
     }
 
     /** Errors where waiting and trying again usually works. */
@@ -159,6 +164,7 @@ class DefaultAiEstimateRepository @Inject constructor(
     private val scheduler: EstimateScheduler,
     private val clock: Clock,
     private val foods: FoodRepository,
+    private val consent: ConsentRepository,
 ) : AiEstimateRepository {
 
     override fun observeDay(date: LocalDate): Flow<List<AiEstimateEntity>> = dao.observeEstimatesForDay(date)
@@ -233,7 +239,11 @@ class DefaultAiEstimateRepository @Inject constructor(
         val id = e.id
         val images = requestImages(e)
         val mealName = mealSlots.observeMealSlots().first().firstOrNull { it.id == e.mealSlotId }?.name ?: "Meal"
-        val profiles = ai.profilesNow()
+        val all = ai.profilesNow()
+        // Only services the user allowed to receive meals (roadmap 2.0 task 4.2); the rest are skipped.
+        val profiles = all.filter { consent.hasAiConsent(AiRecipient.of(it)) }
+        val wanted = if (e.onlyProfileId != null) all.filter { it.id == e.onlyProfileId } else AiChain.usable(all, clock.instant(), ignoreCooldown = true)
+        val waitingForPermission = wanted.any { it !in profiles }
         val textOnly = e.kind == EstimateKind.TEXT
         val outcome = AiChain.run(
             profiles = profiles,
@@ -297,6 +307,9 @@ class DefaultAiEstimateRepository @Inject constructor(
                 )
                 val transient = err is AiError.Timeout || err is AiError.Server || err is AiError.RateLimited
                 when {
+                    // Nothing was sent: the services that could be asked aren't allowed yet. The review screen offers Allow.
+                    outcome.attempts.isEmpty() && retryAt == null && waitingForPermission ->
+                        fail(failed, AiErrorCodes.NO_CONSENT, null, keyProblem = false)
                     // Nothing could be tried: no profile, all off, or all keys rejected.
                     outcome.attempts.isEmpty() && retryAt == null ->
                         fail(failed, AiErrorCodes.NO_PROFILE, null, keyProblem = profiles.any { it.needsAttention })

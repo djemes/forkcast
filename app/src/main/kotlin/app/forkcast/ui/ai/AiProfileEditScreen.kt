@@ -81,6 +81,14 @@ fun AiProfileEditScreen(
         )
     var confirmDiscard by remember { mutableStateOf(false) }
     if (confirmDiscard) DiscardChangesDialog(onDiscard = { confirmDiscard = false; onBack() }, onKeepEditing = { confirmDiscard = false })
+    if (state.askPermissionFor != null) {
+        AiConsentSheet(
+            state.provider,
+            state.baseUrl.takeIf { it.isNotBlank() },
+            onAllow = { onEvent(AiProfileEditEvent.AllowAi) },
+            onNotNow = { onEvent(AiProfileEditEvent.NotNow) },
+        )
+    }
     SettingsScaffold(title = title, onBack = onBack, dirty = dirty) {
         if (!state.loaded) return@SettingsScaffold
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

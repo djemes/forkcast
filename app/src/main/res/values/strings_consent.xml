@@ -20,4 +20,37 @@
     <string name="about_privacy_policy">Privacy policy</string>
     <string name="terms_accepted">You accepted version %1$d on %2$s.</string>
     <string name="terms_not_accepted">Not accepted on this phone yet.</string>
+
+    <!-- AI permission, per recipient (task 4.2) -->
+    <string name="consent_title">Allow %1$s to receive your meals?</string>
+    <string name="consent_sent_title">What\'s sent</string>
+    <string name="consent_sent">The meal photos and descriptions you ask it to estimate, and your personal context if you wrote one. Photos go without their location.</string>
+    <string name="consent_never_title">Never sent</string>
+    <string name="consent_never">Your weight, goals, age, sex, health data and the rest of your log.</string>
+    <string name="consent_who_title">Who receives it</string>
+    <string name="consent_who_gemini">Google, through the Gemini API, straight from your phone.</string>
+    <string name="consent_who_claude">Anthropic, through the Claude API, straight from your phone.</string>
+    <string name="consent_who_server">The server at %1$s, straight from your phone.</string>
+    <string name="consent_terms_title">Their terms apply</string>
+    <string name="consent_terms">%1$s\'s terms and privacy policy cover what it receives.</string>
+    <string name="consent_terms_server">The terms and privacy policy of whoever runs that server cover what it receives.</string>
+    <string name="consent_cost_title">Cost</string>
+    <string name="consent_cost_server">Requests use your account with that server. Any charges are on that account.</string>
+    <string name="consent_revoke_note">You can take this back any time in Settings › AI services.</string>
+    <string name="consent_allow">Allow</string>
+    <string name="consent_not_now">Not now</string>
+    <string name="consent_allow_continue">Allow and continue</string>
+
+    <!-- Settings › AI services: permissions -->
+    <string name="ai_role_not_allowed">Not allowed to receive meals yet: skipped.</string>
+    <string name="ai_allow">Allow</string>
+    <string name="consent_section">Allowed to receive meals</string>
+    <string name="consent_none">No AI service is allowed yet. Forkcast asks the first time it would send a meal.</string>
+    <string name="consent_since">Allowed on %1$s</string>
+    <string name="consent_take_back">Take back</string>
+    <string name="consent_take_back_title">Take back permission for %1$s?</string>
+    <string name="consent_take_back_body">Forkcast won\'t send meals to %1$s until you allow it again. Its AI services stay saved.</string>
+    <string name="consent_take_back_confirm">Take back</string>
+    <string name="review_no_consent">Nothing was sent: no AI service is allowed to receive meals yet. Allow one in Settings › AI services, then tap Retry now.</string>
+    <string name="ai_err_no_consent">%1$s isn\'t allowed to receive meals yet. Allow it in Settings › AI services.</string>
 </resources>

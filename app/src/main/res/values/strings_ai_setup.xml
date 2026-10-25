@@ -21,7 +21,7 @@
     <string name="setup_about_title">What this means</string>
     <string name="setup_about_key">An API key is like a password that lets Forkcast use your account with %1$s. You create it on their website and paste it here.</string>
     <string name="setup_about_sent_title">What gets sent</string>
-    <string name="setup_about_sent">Only the meal photos and descriptions you choose to estimate. Never your weight, goals, age or other body data.</string>
+    <string name="setup_about_sent">The meal photos and descriptions you choose to estimate, and your personal context if you write one. Never your weight, goals, age or other body data.</string>
     <string name="setup_about_cost_title">Cost</string>
     <string name="setup_about_privacy_title">Privacy</string>
     <string name="setup_about_terms_title">Terms</string>

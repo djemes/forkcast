@@ -5,10 +5,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.core.data.repository.AiProfileDraft
 import app.forkcast.core.data.repository.AiRepository
+import app.forkcast.core.data.repository.ConsentRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.ApiKeyFormat
 import app.forkcast.core.domain.KeyCheck
 import app.forkcast.core.domain.KeyService
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.AiError
@@ -46,7 +48,11 @@ data class AiSetupUiState(
     val modelName: String = "",
     /** The free backup model added on the same key (Gemini), if any. */
     val backupName: String? = null,
+    /** Recipients the user allowed to receive meals (roadmap 2.0 task 4.2). */
+    val allowedRecipients: Set<String> = emptySet(),
 ) {
+    /** "What this means" doubles as the permission question: its button is "Allow and continue" until allowed. */
+    val allowed: Boolean get() = AiRecipient.of(provider, null) in allowedRecipients
     val service: KeyService get() = if (provider == ProviderId.CLAUDE) KeyService.CLAUDE else KeyService.GEMINI
     val keyCheck: KeyCheck get() = ApiKeyFormat.check(service, key)
     val canCheck: Boolean get() = keyCheck != KeyCheck.EMPTY && !checking
@@ -62,6 +68,8 @@ data class AiSetupUiState(
 sealed interface AiSetupEvent {
     data class Choose(val provider: ProviderId) : AiSetupEvent
     data object Next : AiSetupEvent
+    /** "Allow and continue" on "What this means": records the permission, then goes on. */
+    data object AllowAndNext : AiSetupEvent
     data object Back : AiSetupEvent
     data class SetKey(val key: String) : AiSetupEvent
     /** Paste fills the field and checks at once when the key looks usable. */
@@ -81,6 +89,7 @@ class AiSetupViewModel @Inject constructor(
     private val settings: SettingsRepository,
     private val clock: Clock,
     savedState: SavedStateHandle,
+    private val consent: ConsentRepository,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(
@@ -92,6 +101,7 @@ class AiSetupViewModel @Inject constructor(
     val state: StateFlow<AiSetupUiState> = _state.asStateFlow()
 
     init {
+        viewModelScope.launch { consent.aiConsents.collect { c -> _state.update { it.copy(allowedRecipients = c.keys) } } }
         // Only the step and the service survive a process restart; never the key.
         viewModelScope.launch {
             state.collect { s ->
@@ -112,6 +122,10 @@ class AiSetupViewModel @Inject constructor(
                     else -> s.step
                 }
                 s.copy(step = next)
+            }
+            AiSetupEvent.AllowAndNext -> viewModelScope.launch {
+                consent.allowAi(AiRecipient.of(_state.value.provider, null))
+                onEvent(AiSetupEvent.Next)
             }
             AiSetupEvent.Back -> _state.update { s ->
                 if (s.checking) s else s.copy(step = SetupStep.entries[(s.step.ordinal - 1).coerceAtLeast(0)], error = null)

@@ -31,6 +31,7 @@ import app.forkcast.core.model.NutrientKey
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.model.UnitPrefs
+import app.forkcast.fakes.FakeConsentRepository
 import app.forkcast.fakes.FakeAiEstimateRepository
 import app.forkcast.fakes.FakeAiRepository
 import app.forkcast.fakes.FakeMealSlotRepository
@@ -72,7 +73,7 @@ class PhotoFlowTest {
         val estimates = FakeAiEstimateRepository()
         val vm = PhotoMealViewModel(
             SavedStateHandle(mapOf("mealSlotId" to "l", "date" to TestData.TODAY.toString())),
-            estimates, ai, FakeMealSlotRepository(), FakeSettingsRepository(), clock,
+            estimates, ai, FakeMealSlotRepository(), FakeSettingsRepository(), clock, FakeConsentRepository(),
         )
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.state.collect {} }
         vm.onEvent(PhotoMealEvent.Next)

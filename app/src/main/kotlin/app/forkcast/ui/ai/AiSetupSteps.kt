@@ -92,12 +92,13 @@ private fun ServiceCard(title: String, body: String, badge: String?, onClick: ()
 }
 
 @Composable
-internal fun AboutStep(provider: ProviderId) {
+internal fun AboutStep(provider: ProviderId, askPermission: Boolean = false) {
     val gemini = provider == ProviderId.GEMINI
     val uri = LocalUriHandler.current
     Title(stringResource(R.string.setup_about_title), stringResource(if (gemini) R.string.setup_gemini_time else R.string.setup_claude_time))
     Text(stringResource(R.string.setup_about_key, serviceName(provider)), style = MaterialTheme.typography.bodyLarge)
     Fact(R.string.setup_about_sent_title, stringResource(R.string.setup_about_sent))
+    Fact(R.string.consent_who_title, stringResource(if (gemini) R.string.consent_who_gemini else R.string.consent_who_claude))
     Fact(R.string.setup_about_cost_title, stringResource(if (gemini) R.string.setup_gemini_cost else R.string.setup_claude_cost))
     Fact(R.string.setup_about_privacy_title, stringResource(if (gemini) R.string.setup_gemini_privacy else R.string.setup_claude_privacy))
     if (gemini) Text(stringResource(R.string.setup_gemini_region), style = MaterialTheme.typography.bodyMedium)
@@ -106,10 +107,14 @@ internal fun AboutStep(provider: ProviderId) {
         onClick = { uri.openUri(if (gemini) GuideLinks.GEMINI_TERMS else GuideLinks.CLAUDE_TERMS) },
         modifier = Modifier.heightIn(min = 48.dp),
     ) { Text(stringResource(if (gemini) R.string.setup_open_gemini_terms else R.string.setup_open_claude_terms)) }
+    // This step is also the permission to send meals (roadmap 2.0 task 4.2): its button says "Allow and continue".
+    if (askPermission) {
+        Text(stringResource(R.string.consent_revoke_note), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 @Composable
-private fun Fact(@StringRes title: Int, body: String) {
+internal fun Fact(@StringRes title: Int, body: String) {
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
         Text(stringResource(title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
         Text(body, style = MaterialTheme.typography.bodyMedium)

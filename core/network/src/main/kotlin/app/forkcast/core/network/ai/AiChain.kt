@@ -104,7 +104,7 @@ object AiChain {
                 is AiError.InvalidKey -> attempts += Attempt(profile, error, null, needsAttention = true, startedAtMs = at, durationMs = took)
                 is AiError.RateLimited, is AiError.QuotaExhausted ->
                     attempts += Attempt(profile, error, cooldownFor(profile, error, now), needsAttention = false, startedAtMs = at, durationMs = took)
-                is AiError.Server, is AiError.Timeout, is AiError.ModelNotFound, is AiError.InvalidRequest ->
+                is AiError.Server, is AiError.Timeout, is AiError.ModelNotFound, is AiError.InvalidRequest, is AiError.NoConsent ->
                     attempts += Attempt(profile, error, null, needsAttention = false, startedAtMs = at, durationMs = took)
                 // Offline: every profile would fail the same way. Wait for the network.
                 is AiError.Network -> {

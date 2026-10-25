@@ -111,6 +111,8 @@ sealed class AiError(message: String, val reply: ProviderReply? = null) : Except
     class Network : AiError("No connection")
     class Timeout : AiError("The provider took too long")
     class Server(val code: Int, reply: ProviderReply? = null) : AiError(text("Provider error $code", null, reply), reply)
+    /** The user hasn't allowed this recipient to receive meals (roadmap 2.0 task 4.2): nothing was sent. */
+    class NoConsent : AiError("Not allowed to send to this AI service")
 
     companion object {
         /** Detail of [InvalidKey] when the profile has no key at all. */

@@ -5,7 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.core.data.repository.AiProfileDraft
 import app.forkcast.core.data.repository.AiRepository
+import app.forkcast.core.data.repository.ConsentRepository
 import app.forkcast.core.model.AiProfile
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.ModelInfo
@@ -49,6 +51,8 @@ data class AiProfileEditUiState(
     val test: TestState? = null,
     /** Set when the profile is saved and its test passed: the screen closes. */
     val done: Boolean = false,
+    /** What waits for the permission sheet (roadmap 2.0 task 4.2): Load models, Save and test, or Test again. */
+    val askPermissionFor: AiProfileEditEvent? = null,
 ) {
     val keyReady: Boolean get() = keyInput.isNotBlank() || hasSavedKey || copyKeyFrom != null || provider == ProviderId.OPENAI_COMPAT
     /** Show the saved key read-only (masked) instead of the entry field. */
@@ -69,6 +73,9 @@ sealed interface AiProfileEditEvent {
     /** Re-runs the test on the saved profile: the same call as Test on the profile list. */
     data object TestAgain : AiProfileEditEvent
     data class ReplaceKey(val replacing: Boolean) : AiProfileEditEvent
+    /** The permission sheet's answers: Allow runs what was waiting, Not now drops it. */
+    data object AllowAi : AiProfileEditEvent
+    data object NotNow : AiProfileEditEvent
 }
 
 @HiltViewModel
@@ -77,6 +84,7 @@ class AiProfileEditViewModel @Inject constructor(
     savedState: SavedStateHandle,
     private val settings: app.forkcast.core.data.repository.SettingsRepository,
     private val clock: java.time.Clock,
+    private val consent: ConsentRepository,
 ) : ViewModel() {
 
     private val profileId: String? = savedState["profileId"]
@@ -135,9 +143,27 @@ class AiProfileEditViewModel @Inject constructor(
             is AiProfileEditEvent.SetKey -> _state.update { it.copy(keyInput = event.key.trim(), copyKeyFrom = null) }
             is AiProfileEditEvent.ReplaceKey -> _state.update { it.copy(replacingKey = event.replacing, keyInput = "") }
             is AiProfileEditEvent.UseKeyFrom -> _state.update { it.copy(copyKeyFrom = event.source, keyInput = "") }
+            // Each of these talks to the provider: first the permission for this recipient.
+            AiProfileEditEvent.LoadModels, AiProfileEditEvent.SaveAndTest, AiProfileEditEvent.TestAgain ->
+                if (consent.hasAiConsent(recipient())) run(event) else _state.update { it.copy(askPermissionFor = event) }
+            AiProfileEditEvent.AllowAi -> viewModelScope.launch {
+                val waiting = _state.value.askPermissionFor
+                consent.allowAi(recipient())
+                _state.update { it.copy(askPermissionFor = null) }
+                waiting?.let(::run)
+            }
+            AiProfileEditEvent.NotNow -> _state.update { it.copy(askPermissionFor = null) }
+        }
+    }
+
+    private fun recipient(): String = _state.value.let { AiRecipient.of(it.provider, it.baseUrl.takeIf { url -> url.isNotBlank() }) }
+
+    private fun run(event: AiProfileEditEvent) {
+        when (event) {
             AiProfileEditEvent.LoadModels -> loadModels()
             AiProfileEditEvent.SaveAndTest -> saveAndTest()
             AiProfileEditEvent.TestAgain -> testAgain()
+            else -> Unit
         }
     }
 

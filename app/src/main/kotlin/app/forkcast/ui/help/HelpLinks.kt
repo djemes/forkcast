@@ -22,6 +22,7 @@ object HelpLinks {
         is AiError.ModelNotFound -> HelpEntry.AI_MODEL
         is AiError.ContentRefused, is AiError.BadResponse, is AiError.InvalidRequest -> HelpEntry.AI_ODD_ANSWER
         is AiError.Network, is AiError.Timeout, is AiError.Server -> HelpEntry.AI_CONNECTION
+        is AiError.NoConsent -> HelpEntry.PRIVACY_AI
     }
 
     /** Any error a test or check returned; one that isn't an [AiError] is the provider answering oddly. */
@@ -35,6 +36,7 @@ object HelpLinks {
         AiErrorCodes.OK -> null
         AiErrorCodes.NO_PROFILE, AiErrorCodes.DISABLED -> HelpEntry.AI_NOT_SET_UP
         AiErrorCodes.STOPPED -> HelpEntry.AI_CONNECTION
+        AiErrorCodes.NO_CONSENT -> HelpEntry.PRIVACY_AI
         "InvalidKey" -> if (detail?.contains(AiError.NO_KEY) == true) HelpEntry.AI_NOT_SET_UP else HelpEntry.AI_KEY_REJECTED
         "RateLimited", "QuotaExhausted" -> HelpEntry.AI_LIMITS
         "ModelNotFound" -> HelpEntry.AI_MODEL

@@ -23,6 +23,7 @@ import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
 import app.forkcast.core.network.ai.AiError
 import app.forkcast.core.network.ai.ProviderReply
+import app.forkcast.fakes.FakeConsentRepository
 import app.forkcast.fakes.FakeAiRepository
 import app.forkcast.fakes.FakeSettingsRepository
 import app.forkcast.ui.common.SecretText
@@ -62,7 +63,7 @@ class AiSettingsTest {
 
     @Test fun failedTestKeepsEditorOpenWithReason() = runTest(dispatcher) {
         val ai = FakeAiRepository(testErrors = mapOf("p0" to AiError.InvalidKey()))
-        val vm = AiProfileEditViewModel(ai, SavedStateHandle(), FakeSettingsRepository(), clock)
+        val vm = AiProfileEditViewModel(ai, SavedStateHandle(), FakeSettingsRepository(), clock, FakeConsentRepository())
         advanceUntilIdle()
         vm.onEvent(AiProfileEditEvent.SetProvider(ProviderId.CLAUDE))
         assertThat(vm.state.value.model).isEqualTo("claude-sonnet-5-5")
@@ -76,7 +77,7 @@ class AiSettingsTest {
     }
 
     @Test fun openAiCompatibleNeedsUrlButNotKey() = runTest(dispatcher) {
-        val vm = AiProfileEditViewModel(FakeAiRepository(), SavedStateHandle(), FakeSettingsRepository(), clock)
+        val vm = AiProfileEditViewModel(FakeAiRepository(), SavedStateHandle(), FakeSettingsRepository(), clock, FakeConsentRepository())
         advanceUntilIdle()
         vm.onEvent(AiProfileEditEvent.SetProvider(ProviderId.OPENAI_COMPAT))
         vm.onEvent(AiProfileEditEvent.SetModel("llava"))
@@ -92,7 +93,7 @@ class AiSettingsTest {
         ai.saveProfile(AiProfileDraft(null, "A", ProviderId.GEMINI, "a", null, TierLabel.FREE), "k")
         ai.saveProfile(AiProfileDraft(null, "B", ProviderId.CLAUDE, "b", null, TierLabel.PAID), "k")
         val settings = FakeSettingsRepository()
-        val vm = AiSettingsViewModel(ai, settings, clock)
+        val vm = AiSettingsViewModel(ai, settings, clock, FakeConsentRepository())
         val job = backgroundScope.launch { vm.state.collect {} }
         advanceUntilIdle()
         vm.onEvent(AiSettingsEvent.Move(1, 0))
@@ -168,7 +169,10 @@ class AiSettingsTest {
         compose.setContent {
             ForkcastTheme {
                 AiSettingsScreen(
-                    state = AiSettingsUiState(loaded = true, profiles = statuses.map { it.copy(usedToday = 3) }, roles = listOf(ProfileRole.FIRST)),
+                    state = AiSettingsUiState(
+                        loaded = true, profiles = statuses.map { it.copy(usedToday = 3) }, roles = listOf(ProfileRole.FIRST),
+                        consents = mapOf("gemini" to 0L),
+                    ),
                     onEvent = { if (it is AiSettingsEvent.Test) tested = it.id },
                     onBack = {},
                     onEditProfile = {},
@@ -191,14 +195,14 @@ class AiSettingsTest {
     @Test fun saveAndTestAndListTestRunTheSameCall() = runTest(dispatcher) {
         val rejected = AiError.InvalidKey(reply = ProviderReply(401, "ACCESS_TOKEN_TYPE_UNSUPPORTED", "Request had invalid authentication credentials."))
         val ai = FakeAiRepository(testErrors = mapOf("p0" to rejected))
-        val editor = AiProfileEditViewModel(ai, SavedStateHandle(), FakeSettingsRepository(), clock)
+        val editor = AiProfileEditViewModel(ai, SavedStateHandle(), FakeSettingsRepository(), clock, FakeConsentRepository())
         advanceUntilIdle()
         editor.onEvent(AiProfileEditEvent.SetKey("AQ.Ab8RN6Kq-new-format-key"))
         editor.onEvent(AiProfileEditEvent.SaveAndTest)
         advanceUntilIdle()
         val fromEditor = editor.state.value.test
 
-        val list = AiSettingsViewModel(ai, FakeSettingsRepository(), clock)
+        val list = AiSettingsViewModel(ai, FakeSettingsRepository(), clock, FakeConsentRepository())
         val job = backgroundScope.launch { list.state.collect {} }
         list.onEvent(AiSettingsEvent.Test("p0"))
         advanceUntilIdle()
@@ -320,7 +324,7 @@ class AiSettingsTest {
     @Test fun deleteConfirmsThenUndoRestoresOrder() = runTest(dispatcher) {
         val ai = FakeAiRepository()
         for (n in listOf("A", "B", "C")) ai.saveProfile(AiProfileDraft(null, n, ProviderId.GEMINI, "m-$n", null, TierLabel.FREE), "key-$n")
-        val vm = AiSettingsViewModel(ai, FakeSettingsRepository(), clock)
+        val vm = AiSettingsViewModel(ai, FakeSettingsRepository(), clock, FakeConsentRepository())
         val job = backgroundScope.launch { vm.state.collect {} }
         val effects = mutableListOf<AiSettingsEffect>()
         val effectJob = backgroundScope.launch { vm.effects.collect { effects += it } }

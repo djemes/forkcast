@@ -4,9 +4,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.core.data.repository.AiProfileStatus
 import app.forkcast.core.data.repository.AiRepository
+import app.forkcast.core.data.repository.ConsentRepository
 import app.forkcast.core.data.repository.DeletedAiProfile
 import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.data.repository.SettingsRepository
+import app.forkcast.core.model.AiProfile
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.AiSettings
 import app.forkcast.core.model.CheckFailure
 import app.forkcast.core.model.ProfileCheck
@@ -74,16 +77,19 @@ enum class ProfileRole {
     KEY_REJECTED,
     /** Out of quota until its cooldown ends. */
     PAUSED,
+    /** The user hasn't allowed its recipient to receive meals (roadmap 2.0 task 4.2): skipped. */
+    NOT_ALLOWED,
 }
 
-/** Roles in list order. Mirrors AiChain.usable, plus "no key" (such a profile can't answer). */
-fun profileRoles(profiles: List<AiProfileStatus>, nowMs: Long): List<ProfileRole> {
+/** Roles in list order. Mirrors AiChain.usable, plus "no key" and "not allowed" (such a profile can't answer). */
+fun profileRoles(profiles: List<AiProfileStatus>, nowMs: Long, allowed: (AiProfile) -> Boolean = { true }): List<ProfileRole> {
     var firstTaken = false
     return profiles.map { s ->
         val p = s.profile
         when {
             !p.enabled -> ProfileRole.OFF
             !s.hasKey && p.provider != ProviderId.OPENAI_COMPAT -> ProfileRole.NO_KEY
+            !allowed(p) -> ProfileRole.NOT_ALLOWED
             p.needsAttention -> ProfileRole.KEY_REJECTED
             (p.cooldownUntil ?: 0) > nowMs -> ProfileRole.PAUSED
             !firstTaken -> ProfileRole.FIRST.also { firstTaken = true }
@@ -102,7 +108,11 @@ data class AiSettingsUiState(
     val tests: Map<String, TestState> = emptyMap(),
     /** "Add backup model" when there's only one Gemini profile (owner, 2026-10-23). */
     val backupOffer: app.forkcast.core.data.repository.BackupOffer? = null,
+    /** Recipients allowed to receive meals, with when (roadmap 2.0 task 4.2). */
+    val consents: Map<String, Long> = emptyMap(),
 ) {
+    fun allowed(profile: AiProfile): Boolean = AiRecipient.of(profile) in consents
+
     fun roleAt(index: Int): ProfileRole = roles.getOrElse(index) { ProfileRole.BACKUP }
 }
 
@@ -120,6 +130,9 @@ sealed interface AiSettingsEvent {
     data class SetRetention(val days: Int?) : AiSettingsEvent
     data class SetPrice(val model: String, val price: ModelPrice?) : AiSettingsEvent
     data object AddBackupModel : AiSettingsEvent
+    /** From the permission sheet, for a profile's recipient ([AiRecipient]). */
+    data class AllowAi(val recipient: String) : AiSettingsEvent
+    data class RevokeAi(val recipient: String) : AiSettingsEvent
 }
 
 sealed interface AiSettingsEffect {
@@ -133,6 +146,7 @@ class AiSettingsViewModel @Inject constructor(
     private val ai: AiRepository,
     private val settingsRepo: SettingsRepository,
     private val clock: Clock,
+    private val consent: ConsentRepository,
 ) : ViewModel() {
 
     private val tests = MutableStateFlow<Map<String, TestState>>(emptyMap())
@@ -146,17 +160,18 @@ class AiSettingsViewModel @Inject constructor(
         settingsRepo.settings.map { it.ai },
         ai.profiles,
         ai.monthUsage(YearMonth.now(clock)),
-        tests,
+        combine(tests, consent.aiConsents, ::Pair),
         ai.profiles.mapLatest { runCatching { ai.backupOffer() }.getOrNull() },
-    ) { settings, profiles, usage, t, offer ->
+    ) { settings, profiles, usage, (t, consents), offer ->
         AiSettingsUiState(
             loaded = true,
             settings = settings,
             profiles = profiles,
-            roles = profileRoles(profiles, clock.millis()),
+            roles = profileRoles(profiles, clock.millis()) { AiRecipient.of(it) in consents },
             usage = usage,
             tests = t,
             backupOffer = offer,
+            consents = consents,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AiSettingsUiState())
 
@@ -197,6 +212,8 @@ class AiSettingsViewModel @Inject constructor(
                     ai.addBackupModel() ?: return@launch
                     effectChannel.send(AiSettingsEffect.BackupAdded(name))
                 }
+                is AiSettingsEvent.AllowAi -> consent.allowAi(event.recipient)
+                is AiSettingsEvent.RevokeAi -> consent.revokeAi(event.recipient)
                 is AiSettingsEvent.SetPrice -> settingsRepo.updateAi {
                     it.copy(priceOverrides = if (event.price == null) it.priceOverrides - event.model else it.priceOverrides + (event.model to event.price))
                 }

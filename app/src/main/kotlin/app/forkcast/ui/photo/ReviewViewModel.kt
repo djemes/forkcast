@@ -246,6 +246,7 @@ fun errorFromCode(code: String?, detail: String?): Throwable? = when (code) {
     "Network" -> AiError.Network()
     "Timeout" -> AiError.Timeout()
     "Server" -> AiError.Server(detail?.filter { it.isDigit() }?.toIntOrNull() ?: 500)
+    AiErrorCodes.NO_CONSENT -> AiError.NoConsent()
     AiErrorCodes.NO_PROFILE, AiErrorCodes.DISABLED, AiErrorCodes.STOPPED -> null
     else -> AiError.BadResponse(null)
 }

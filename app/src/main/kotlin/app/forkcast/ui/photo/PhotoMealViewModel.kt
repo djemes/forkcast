@@ -6,9 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.core.data.ai.AiEstimateRepository
 import app.forkcast.core.data.repository.AiRepository
+import app.forkcast.core.data.repository.ConsentRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.MealTimes
+import app.forkcast.core.model.AiProfile
+import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.MealSlot
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -51,6 +54,11 @@ data class PhotoMealUiState(
     val defaultMinute: Int = 12 * 60,
     /** Now, on today: no later time can be picked. */
     val latestMinute: Int? = null,
+    /**
+     * No enabled AI service may receive meals yet: the first one in the order, whose permission is
+     * asked before the camera opens (roadmap 2.0 task 4.2).
+     */
+    val askPermission: AiProfile? = null,
 ) {
     val canAddPhoto: Boolean get() = photos.size < MAX_PHOTOS
     /** An AI can take this estimate; otherwise the screen explains AI instead (roadmap 2.0 task 3.1). */
@@ -76,6 +84,8 @@ sealed interface PhotoMealEvent {
     data object Estimate : PhotoMealEvent
     data object NotificationPermissionAsked : PhotoMealEvent
     data object TurnOnAi : PhotoMealEvent
+    /** "Allow" on the permission page, for [PhotoMealUiState.askPermission]'s recipient. */
+    data object AllowAi : PhotoMealEvent
 }
 
 sealed interface PhotoMealEffect {
@@ -90,6 +100,7 @@ class PhotoMealViewModel @Inject constructor(
     slots: MealSlotRepository,
     private val settings: SettingsRepository,
     private val clock: Clock,
+    private val consent: ConsentRepository,
 ) : ViewModel() {
 
     private val date: LocalDate = savedState.get<String>("date")?.let(LocalDate::parse) ?: LocalDate.now(clock)
@@ -105,7 +116,8 @@ class PhotoMealViewModel @Inject constructor(
     private val effects = Channel<PhotoMealEffect>(Channel.BUFFERED)
     val effect: Flow<PhotoMealEffect> = effects.receiveAsFlow()
 
-    val state: StateFlow<PhotoMealUiState> = combine(draft, slots.observeMealSlots(), ai.profiles, settings.settings) { d, s, profiles, app ->
+    val state: StateFlow<PhotoMealUiState> = combine(draft, slots.observeMealSlots(), ai.profiles, settings.settings, consent.aiConsents) { d, s, profiles, app, consents ->
+        val enabled = profiles.map { it.profile }.filter { it.enabled }.sortedBy { it.order }
         val mealId = d.mealSlotId.ifBlank { s.firstOrNull()?.id.orEmpty() }
         val slot = s.firstOrNull { it.id == mealId }
         val nowMinute = MealTimes.minuteOn(date, clock.instant(), clock.zone)
@@ -116,7 +128,8 @@ class PhotoMealViewModel @Inject constructor(
             defaultMinute = nowMinute ?: MealTimes.typicalMinute(slot?.startMinute, slot?.endMinute, date, clock.instant(), clock.zone),
             latestMinute = nowMinute,
             aiEnabled = app.ai.enabled,
-            hasProfile = profiles.any { it.profile.enabled },
+            hasProfile = enabled.isNotEmpty(),
+            askPermission = enabled.firstOrNull().takeIf { enabled.none { AiRecipient.of(it) in consents } },
             notificationPermissionAsked = app.notifications.permissionAsked,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), draft.value)
@@ -135,6 +148,7 @@ class PhotoMealViewModel @Inject constructor(
             }
             PhotoMealEvent.TurnOnAi -> viewModelScope.launch { settings.updateAi { it.copy(enabled = true) } }
             PhotoMealEvent.Estimate -> estimate()
+            PhotoMealEvent.AllowAi -> viewModelScope.launch { state.value.askPermission?.let { consent.allowAi(AiRecipient.of(it)) } }
         }
     }
 

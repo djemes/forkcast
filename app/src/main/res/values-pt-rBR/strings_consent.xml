@@ -18,4 +18,35 @@
     <string name="about_privacy_policy">Política de privacidade</string>
     <string name="terms_accepted">Você aceitou a versão %1$d em %2$s.</string>
     <string name="terms_not_accepted">Ainda não aceitos neste celular.</string>
+
+    <string name="consent_title">Permitir que %1$s receba suas refeições?</string>
+    <string name="consent_sent_title">O que é enviado</string>
+    <string name="consent_sent">As fotos e descrições das refeições que você pedir para estimar, e o seu contexto pessoal, se você escreveu um. As fotos vão sem a localização.</string>
+    <string name="consent_never_title">Nunca é enviado</string>
+    <string name="consent_never">Seu peso, metas, idade, sexo, dados de saúde e o resto do seu registro.</string>
+    <string name="consent_who_title">Quem recebe</string>
+    <string name="consent_who_gemini">O Google, pela API do Gemini, direto do seu celular.</string>
+    <string name="consent_who_claude">A Anthropic, pela API do Claude, direto do seu celular.</string>
+    <string name="consent_who_server">O servidor em %1$s, direto do seu celular.</string>
+    <string name="consent_terms_title">Os termos deles valem</string>
+    <string name="consent_terms">Os termos e a política de privacidade de %1$s cobrem o que ele recebe.</string>
+    <string name="consent_terms_server">Os termos e a política de privacidade de quem mantém esse servidor cobrem o que ele recebe.</string>
+    <string name="consent_cost_title">Custo</string>
+    <string name="consent_cost_server">Os pedidos usam a sua conta nesse servidor. Qualquer cobrança vai para essa conta.</string>
+    <string name="consent_revoke_note">Você pode desfazer isso quando quiser em Configurações › Serviços de IA.</string>
+    <string name="consent_allow">Permitir</string>
+    <string name="consent_not_now">Agora não</string>
+    <string name="consent_allow_continue">Permitir e continuar</string>
+
+    <string name="ai_role_not_allowed">Ainda sem permissão para receber refeições: pulado.</string>
+    <string name="ai_allow">Permitir</string>
+    <string name="consent_section">Com permissão para receber refeições</string>
+    <string name="consent_none">Nenhum serviço de IA tem permissão ainda. O Forkcast pergunta na primeira vez que for enviar uma refeição.</string>
+    <string name="consent_since">Permitido em %1$s</string>
+    <string name="consent_take_back">Retirar</string>
+    <string name="consent_take_back_title">Retirar a permissão de %1$s?</string>
+    <string name="consent_take_back_body">O Forkcast não vai enviar refeições para %1$s até você permitir de novo. Os serviços de IA dele continuam salvos.</string>
+    <string name="consent_take_back_confirm">Retirar</string>
+    <string name="review_no_consent">Nada foi enviado: nenhum serviço de IA tem permissão para receber refeições ainda. Permita um em Configurações › Serviços de IA e toque em Tentar agora.</string>
+    <string name="ai_err_no_consent">%1$s ainda não tem permissão para receber refeições. Permita em Configurações › Serviços de IA.</string>
 </resources>

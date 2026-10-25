@@ -482,6 +482,7 @@ private fun stageText(stage: EstimateStage, e: AiEstimateEntity, now: Long): Pai
         EstimateStage.Offline -> stringResource(R.string.stage_offline) to stringResource(R.string.stage_starting_body)
         is EstimateStage.Failed -> stringResource(R.string.stage_failed) to when (stage.code) {
             AiErrorCodes.NO_PROFILE -> stringResource(R.string.review_no_profile)
+            AiErrorCodes.NO_CONSENT -> stringResource(R.string.review_no_consent)
             AiErrorCodes.DISABLED -> stringResource(R.string.review_disabled)
             AiErrorCodes.STOPPED -> stringResource(R.string.stage_stopped)
             else -> res.aiErrorMessage(errorFromCode(stage.code, stage.detail), e.provider)

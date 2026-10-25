@@ -112,6 +112,7 @@ fun RoleLine(role: ProfileRole, pausedUntil: String?, modifier: Modifier = Modif
         ProfileRole.OFF -> Triple(R.drawable.ic_remove_circle, stringResource(R.string.ai_role_off), MaterialTheme.colorScheme.onSurfaceVariant)
         ProfileRole.NO_KEY -> Triple(R.drawable.ic_error, stringResource(R.string.ai_role_no_key), MaterialTheme.colorScheme.error)
         ProfileRole.KEY_REJECTED -> Triple(R.drawable.ic_error, stringResource(R.string.ai_role_key_rejected), MaterialTheme.colorScheme.error)
+        ProfileRole.NOT_ALLOWED -> Triple(R.drawable.ic_remove_circle, stringResource(R.string.ai_role_not_allowed), MaterialTheme.colorScheme.onSurfaceVariant)
         ProfileRole.PAUSED -> Triple(
             R.drawable.ic_pause_circle,
             stringResource(R.string.ai_cooling_down, pausedUntil.orEmpty()),
@@ -122,6 +123,7 @@ fun RoleLine(role: ProfileRole, pausedUntil: String?, modifier: Modifier = Modif
         ProfileRole.NO_KEY -> HelpEntry.AI_NOT_SET_UP
         ProfileRole.KEY_REJECTED -> HelpEntry.AI_KEY_REJECTED
         ProfileRole.PAUSED -> HelpEntry.AI_LIMITS
+        ProfileRole.NOT_ALLOWED -> HelpEntry.PRIVACY_AI
         else -> null
     }
     Column(modifier) {

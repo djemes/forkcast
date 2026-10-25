@@ -105,7 +105,7 @@ fun AiSetupScreen(state: AiSetupUiState, onEvent: (AiSetupEvent) -> Unit, onClos
             ) {
                 when (state.step) {
                     SetupStep.CHOOSE -> ChooseStep(onEvent, onAdvanced)
-                    SetupStep.ABOUT -> AboutStep(state.provider)
+                    SetupStep.ABOUT -> AboutStep(state.provider, askPermission = !state.allowed)
                     SetupStep.GET_KEY -> KeyStepsStep(state.provider)
                     SetupStep.PASTE -> PasteStep(state, onEvent)
                     SetupStep.DONE -> DoneStep(state)
@@ -113,7 +113,9 @@ fun AiSetupScreen(state: AiSetupUiState, onEvent: (AiSetupEvent) -> Unit, onClos
             }
             val bottom: Pair<Int, () -> Unit>? = when (state.step) {
                 SetupStep.CHOOSE, SetupStep.PASTE -> null
-                SetupStep.ABOUT -> R.string.setup_continue to { onEvent(AiSetupEvent.Next) }
+                SetupStep.ABOUT ->
+                    if (state.allowed) R.string.setup_continue to { onEvent(AiSetupEvent.Next) }
+                    else R.string.consent_allow_continue to { onEvent(AiSetupEvent.AllowAndNext) }
                 SetupStep.GET_KEY -> R.string.setup_have_key to { onEvent(AiSetupEvent.Next) }
                 SetupStep.DONE -> R.string.setup_done to onClose
             }
