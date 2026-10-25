@@ -140,6 +140,7 @@ fun BackupScreen(
 ) {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val openHelp = LocalHelp.current
     LaunchedEffect(extraNotice) {
         val notice = extraNotice ?: return@LaunchedEffect
         onExtraNoticeShown()
@@ -147,7 +148,6 @@ fun BackupScreen(
         if (notice == R.string.settings_failed) snackbar.showError(resources.getString(notice), resources.getString(R.string.help_link)) { openHelp(HelpEntry.BACKUP_SAVE_FAILED) }
         else snackbar.showSnackbar(resources.getString(notice))
     }
-    val openHelp = LocalHelp.current
     LaunchedEffect(state.notice) {
         val notice = state.notice ?: return@LaunchedEffect
         onEvent(BackupEvent.NoticeShown)
