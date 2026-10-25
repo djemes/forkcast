@@ -197,8 +197,12 @@ fun CaloriesChart(
             bottomAxis = HorizontalAxis.rememberBottom(
                 label = axisLabel(),
                 guideline = null,
+                // Counted from the first day rather than looked up: right after a switch to a shorter
+                // period the chart still lays out the old, longer model, and Vico refuses a blank
+                // label (the owner's crash, 2026-10-25: Trends › 3 months, then Week or Month).
                 valueFormatter = remember(dates, dayFormat) {
-                    CartesianValueFormatter { _, x, _ -> dates.getOrNull(x.roundToInt())?.format(dayFormat) ?: " " }
+                    val first = dates.firstOrNull() ?: today
+                    CartesianValueFormatter { _, x, _ -> first.plusDays(x.roundToInt().toLong()).format(dayFormat) }
                 },
                 itemPlacer = remember(spacing, days.size) {
                     HorizontalAxis.ItemPlacer.aligned(spacing = { spacing }, offset = { (days.size - 1) % spacing })

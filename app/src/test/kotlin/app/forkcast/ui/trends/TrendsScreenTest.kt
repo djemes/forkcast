@@ -1,5 +1,8 @@
 package app.forkcast.ui.trends
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -72,6 +75,24 @@ class TrendsScreenTest {
         compose.onNodeWithText("6 of 7", useUnmergedTree = true).performScrollTo()
         compose.onNodeWithText("Month").performScrollTo().performClick()
         assertThat(period).isEqualTo(Trends.Period.MONTH)
+    }
+
+    /** The owner's crash (2026-10-25): 3 months, then Week, laid out the old 90-day model with a blank label. */
+    @Test fun goingFromThreeMonthsToAWeekDoesNotCrash() {
+        val week = state()
+        val quarterDays = (89L downTo 0L).map { back -> week.days.last().copy(date = today.minusDays(back)) }
+        val quarter = week.copy(period = Trends.Period.QUARTER, days = quarterDays, calories = Trends.calories(quarterDays, today))
+        var shown by mutableStateOf(quarter)
+        compose.setContent { ForkcastTheme { TrendsScreen(shown, {}, {}, {}) } }
+        compose.waitForIdle()
+        shown = week
+        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.onNodeWithText("Tap a bar to see that day.").performScrollTo()
+        shown = week.copy(period = Trends.Period.MONTH, days = quarterDays.takeLast(30))
+        compose.waitForIdle()
+        compose.mainClock.advanceTimeBy(2_000)
+        compose.onNodeWithText("Tap a bar to see that day.").performScrollTo()
     }
 
     @Test fun emptyPeriodSaysSo() {
