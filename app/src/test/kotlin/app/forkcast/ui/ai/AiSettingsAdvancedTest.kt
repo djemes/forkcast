@@ -47,6 +47,7 @@ class AiSettingsAdvancedTest {
 
     @Test fun basicsShowServicesTestAndAddAiWithAdvancedCollapsed() {
         show()
+        compose.onNodeWithText("AI estimates").assertIsDisplayed()
         compose.onNodeWithText("Your AI services").assertIsDisplayed()
         compose.onNodeWithText("Gemini 3.8 Flash").assertIsDisplayed()
         compose.onNodeWithText("Add AI").performScrollTo().assertIsDisplayed()

@@ -18,7 +18,7 @@
     <string name="backup_preview_saved_meals">Saved meals: %1$d</string>
     <string name="backup_preview_weights">Weigh-ins: %1$d</string>
     <string name="backup_preview_water">Water entries: %1$d</string>
-    <string name="backup_preview_ai_estimates">Photo estimates: %1$d</string>
+    <string name="backup_preview_ai_estimates">AI estimates: %1$d</string>
     <string name="backup_preview_ai_profiles">AI services (without keys): %1$d</string>
     <string name="backup_preview_recipes">Recipes: %1$d</string>
     <string name="backup_preview_dates">Dates: %1$s to %2$s</string>
@@ -79,7 +79,7 @@
 
     <!-- Backups (roadmap 2.0, task 1.4) -->
     <string name="backup_title">Backups</string>
-    <string name="backup_body">A backup is one file with everything: food log, foods, recipes, saved meals, weight, water, activity, photo estimates, goals and settings. API keys are never in it. Keep one somewhere other than this phone.</string>
+    <string name="backup_body">A backup is one file with everything: food log, foods, recipes, saved meals, weight, water, activity, AI estimates, goals and settings. API keys are never in it. Keep one somewhere other than this phone.</string>
     <string name="backup_save">Save a backup file…</string>
     <string name="backup_restore">Restore from a backup…</string>
     <string name="backup_saved">Backup saved</string>

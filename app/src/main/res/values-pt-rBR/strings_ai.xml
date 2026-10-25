@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Settings › AI (SPEC §4.7) -->
-    <string name="ai_enabled">Estimativas por foto</string>
-    <string name="ai_enabled_body">Estime uma refeição a partir de uma foto e uma descrição curta, usando a sua própria chave de IA.</string>
+    <string name="ai_enabled">Estimativas com IA</string>
+    <string name="ai_enabled_body">Estime uma refeição a partir de uma foto ou de uma descrição, usando a sua própria chave de IA.</string>
     <string name="ai_profiles_title">Seus serviços de IA</string>
     <string name="ai_order_title">Qual IA vai primeiro</string>
     <string name="ai_order_explain">Cada serviço de IA é um provedor e um modelo, com a chave dele. A foto vai primeiro para o número 1. Se ele não conseguir responder (sem cota, ocupado, um erro), o número 2 tenta, e assim por diante. Desligue um serviço de IA para pulá-lo.</string>

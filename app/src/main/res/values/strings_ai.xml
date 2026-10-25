@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Settings › AI (SPEC §4.7) -->
-    <string name="ai_enabled">Photo estimates</string>
-    <string name="ai_enabled_body">Estimate a meal from a photo and a short description, using your own AI key.</string>
+    <string name="ai_enabled">AI estimates</string>
+    <string name="ai_enabled_body">Estimate a meal from a photo or a description, using your own AI key.</string>
     <string name="ai_profiles_title">Your AI services</string>
     <string name="ai_order_title">Which AI goes first</string>
     <string name="ai_order_explain">Each AI service is one provider and model with its key. A photo goes to number 1 first. If it can\'t answer (no quota, busy, an error), number 2 tries, and so on. Switch an AI service off to skip it.</string>
