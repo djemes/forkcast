@@ -16,6 +16,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -95,6 +96,11 @@ class UpdatesViewModel @Inject constructor(
 
     val installer = AppInstaller.status
 
+    /** Opening the page is asking for a check (owner, 2026-10-25): no second tap on "Check for updates". */
+    fun checkOnOpen() {
+        if (_ui.value == UpdateUi.Idle) check()
+    }
+
     fun check() = viewModelScope.launch {
         AppInstaller.reset()
         _ui.value = UpdateUi.Checking
@@ -127,6 +133,7 @@ fun UpdatesRoute(onBack: () -> Unit, viewModel: UpdatesViewModel = hiltViewModel
     val token by viewModel.token.collectAsStateWithLifecycle()
     val options by viewModel.options.collectAsStateWithLifecycle()
     val installer by viewModel.installer.collectAsStateWithLifecycle()
+    LaunchedEffect(Unit) { viewModel.checkOnOpen() }
     UpdatesScreen(
         versionName = BuildConfig.VERSION_NAME,
         onBack = onBack,
