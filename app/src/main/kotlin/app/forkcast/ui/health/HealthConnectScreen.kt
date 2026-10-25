@@ -283,7 +283,7 @@ private fun openStore(context: Context) {
     try {
         context.startActivity(Intent(Intent.ACTION_VIEW, uri).setPackage("com.android.vending"))
     } catch (_: ActivityNotFoundException) {
-        context.startActivity(Intent(Intent.ACTION_VIEW, "https://play.google.com/store/apps/details?id=$HEALTH_CONNECT_PACKAGE".toUri()))
+        context.startActivity(Intent(Intent.ACTION_VIEW, (app.forkcast.GuideLinks.HEALTH_CONNECT_STORE + HEALTH_CONNECT_PACKAGE).toUri()))
     }
 }
 

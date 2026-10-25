@@ -92,6 +92,8 @@ interface AiRepository {
     /** Same key in another profile (e.g. Flash-Lite on the free Gemini key). */
     suspend fun copyKey(fromId: String, toId: String)
     suspend fun test(id: String): Result<ConnectionReport>
+    /** Tests a key before anything is saved (the setup guide): nothing is stored or counted. */
+    suspend fun testKey(provider: ProviderId, model: String, key: String): Result<ConnectionReport>
     /** Lists models with a saved profile's key, or with a key typed but not saved yet. */
     suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?): Result<List<ModelInfo>>
     /** [textOnly]: for a described meal (shorter timeout, nothing to upload). */
@@ -229,14 +231,19 @@ class DefaultAiRepository @Inject constructor(
         return result
     }
 
+    override suspend fun testKey(provider: ProviderId, model: String, key: String): Result<ConnectionReport> =
+        factory.create(draftProfile(provider, null, null).copy(model = model), keyOverride = key).testConnection()
+
     override suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?): Result<List<ModelInfo>> {
-        val temp = AiProfile(
-            id = profileId ?: "draft", name = "", provider = provider, model = "", baseUrl = baseUrl,
-            tierLabel = TierLabel.UNKNOWN, order = 0, enabled = true, needsAttention = false, cooldownUntil = null,
-        )
+        val temp = draftProfile(provider, baseUrl, profileId)
         val estimator = if (draftKey != null) factory.create(temp, keyOverride = draftKey) else factory.create(temp)
         return estimator.listModels().map { list -> list.filter { it.supportsImages != false }.sortedBy { it.displayName } }
     }
+
+    private fun draftProfile(provider: ProviderId, baseUrl: String?, profileId: String?) = AiProfile(
+        id = profileId ?: "draft", name = "", provider = provider, model = "", baseUrl = baseUrl,
+        tierLabel = TierLabel.UNKNOWN, order = 0, enabled = true, needsAttention = false, cooldownUntil = null,
+    )
 
     override fun estimatorFor(profile: AiProfile, textOnly: Boolean): MealEstimator = factory.create(profile, textOnly = textOnly)
 

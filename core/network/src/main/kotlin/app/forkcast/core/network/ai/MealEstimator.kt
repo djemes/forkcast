@@ -90,6 +90,8 @@ sealed class AiError(message: String, val reply: ProviderReply? = null) : Except
     class InvalidKey(detail: String? = null, reply: ProviderReply? = null) : AiError(text("API key rejected", detail, reply), reply) {
         /** No key is saved for the profile: nothing was sent. */
         val missing: Boolean = detail == NO_KEY
+        /** A Claude key that isn't scoped to a workspace. */
+        val needsWorkspace: Boolean = detail == NEEDS_WORKSPACE
     }
     /**
      * Short window (per-minute limit, overload). [retryAfterMs] when the provider says; [quota] is
@@ -113,6 +115,8 @@ sealed class AiError(message: String, val reply: ProviderReply? = null) : Except
     companion object {
         /** Detail of [InvalidKey] when the profile has no key at all. */
         const val NO_KEY = "no key saved"
+        /** Detail of [InvalidKey] for a Claude key made without a workspace. */
+        const val NEEDS_WORKSPACE = "key has no workspace"
 
         /** "API key rejected (HTTP 401 · ACCESS_TOKEN_TYPE_UNSUPPORTED): Request had invalid…" */
         private fun text(base: String, detail: String?, reply: ProviderReply?): String {

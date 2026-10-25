@@ -32,6 +32,7 @@ import app.forkcast.ui.settings.DailyTargetsRoute
 import app.forkcast.ui.ai.AiProfileEditRoute
 import app.forkcast.ui.ai.AiProfileEditViewModel
 import app.forkcast.ui.ai.AiSettingsRoute
+import app.forkcast.ui.ai.AiSetupRoute
 import app.forkcast.ui.backup.BackupRoute
 import app.forkcast.ui.activity.ActivityRoute
 import app.forkcast.ui.weekly.WeeklyCheckInRoute
@@ -91,7 +92,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable data class ReviewDestination(val estimateId: String)
 
-/** Edit [profileId], or create a new profile (null). [preset] "free_gemini" = guided free setup. */
+/** The guided AI setup (roadmap 2.0 task 3.3). */
+@Serializable data object AiSetupDestination
+
+/** Edit [profileId], or create a new profile (null). [preset] "openai" = start on OpenAI-compatible (the setup guide's Advanced). */
 @Serializable data class AiProfileEditDestination(val profileId: String? = null, val preset: String? = null)
 
 /** Log into [mealSlotId] on [date] (ISO yyyy-MM-dd). */
@@ -352,7 +356,7 @@ fun ForkcastNavHost(
             AiSettingsRoute(
                 onBack = back,
                 onEditProfile = { id -> navController.navigate(AiProfileEditDestination(profileId = id)) },
-                onSetUpFreeGemini = { navController.navigate(AiProfileEditDestination(preset = AiProfileEditViewModel.FREE_GEMINI)) },
+                onAddAi = { navController.navigate(AiSetupDestination) },
                 deleteRequest = deleteRequest,
                 onDeleteHandled = { entry.savedStateHandle[DELETE_AI_PROFILE] = null },
             )
@@ -366,6 +370,16 @@ fun ForkcastNavHost(
                 },
             )
         }
+        composable<AiSetupDestination> {
+            AiSetupRoute(
+                onClose = back,
+                onAdvanced = {
+                    navController.navigate(AiProfileEditDestination(preset = AiProfileEditViewModel.OPENAI)) {
+                        popUpTo<AiSetupDestination> { inclusive = true }
+                    }
+                },
+            )
+        }
         composable<NotificationsDestination> { NotificationsRoute(onBack = back) }
         composable<MealsDestination> { MealsRoute(onBack = back) }
         composable<DailyTargetsDestination> { DailyTargetsRoute(onBack = back) }
@@ -376,10 +390,8 @@ fun ForkcastNavHost(
             PhotoMealRoute(
                 onBack = back,
                 onQueued = { navController.popBackStack<TodayDestination>(inclusive = false) },
-                // VERIFY: becomes the AI setup guide (task 3.3).
-                onSetUpAi = {
-                    navController.navigate(AiSettingsDestination) { popUpTo<PhotoMealDestination> { inclusive = true } }
-                },
+                // Over the photo screen, so finishing the guide lands on the camera.
+                onSetUpAi = { navController.navigate(AiSetupDestination) },
             )
         }
         composable<ReviewDestination> {

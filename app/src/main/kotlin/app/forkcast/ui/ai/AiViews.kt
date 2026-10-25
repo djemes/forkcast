@@ -53,7 +53,7 @@ fun TestResult(test: TestState?, provider: ProviderId, modifier: Modifier = Modi
             )
             aiErrorDetail(test.error)?.let { detail ->
                 Text(
-                    stringResource(R.string.ai_err_provider_said, provider.shortName(), detail),
+                    stringResource(R.string.ai_err_provider_said, provider.shortName(res), detail),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(start = 28.dp),

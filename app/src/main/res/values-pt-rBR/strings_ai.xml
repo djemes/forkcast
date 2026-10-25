@@ -17,7 +17,6 @@
     <string name="ai_check_why_network">sem conexão</string>
     <string name="ai_check_why_other">o serviço respondeu com um erro</string>
     <string name="ai_no_profiles">Nenhum perfil de IA ainda. Adicione um para começar a estimar refeições por foto.</string>
-    <string name="ai_setup_free">Configurar Gemini grátis</string>
     <string name="ai_add_profile">Adicionar perfil</string>
     <string name="ai_edit">Editar</string>
     <string name="ai_position">Número %1$d na ordem</string>
@@ -105,7 +104,7 @@
     <string name="key_guide_claude_1">Entre no Claude Console ou crie uma conta.</string>
     <string name="key_guide_claude_2">Adicione crédito em Settings › Billing. As requisições falham até a conta ter crédito.</string>
     <string name="key_guide_claude_3">Opcional: defina um limite mensal de gasto em Settings › Limits.</string>
-    <string name="key_guide_claude_4">Abra API keys e toque em Create key. Dê o nome Forkcast.</string>
+    <string name="key_guide_claude_4">Abra API keys e toque em Create key. Dê o nome Forkcast, escolha um workspace (o Default serve) e deixe a chave sem validade (Never).</string>
     <string name="key_guide_claude_5">Copie a chave (começa com sk-ant-). Ela só aparece uma vez. Volte aqui e toque em Colar.</string>
     <string name="key_guide_open_claude_console">Abrir Claude Console</string>
     <string name="key_guide_open_limits">Abrir Limits</string>
@@ -173,4 +172,11 @@
     <string name="ai_off_title">As estimativas por IA estão desligadas</string>
     <string name="ai_off_body">Você desligou as estimativas por IA. Ligue-as para estimar uma refeição por foto ou descrição.</string>
     <string name="ai_off_turn_on">Ligar</string>
+
+    <!-- Nomes curtos em frases -->
+    <string name="ai_name_claude">Claude</string>
+    <string name="ai_name_gemini">Gemini</string>
+    <string name="ai_name_server">O servidor de IA</string>
+    <string name="ai_name_unknown">O serviço de IA</string>
+    <string name="ai_add">Adicionar IA</string>
 </resources>

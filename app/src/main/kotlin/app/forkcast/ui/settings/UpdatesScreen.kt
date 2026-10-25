@@ -336,7 +336,7 @@ private fun Heading(title: Int) {
 private const val NOTES_LINES = 12
 
 /** GitHub's page for creating a fine-grained token. */
-private const val TOKEN_PAGE = "https://github.com/settings/personal-access-tokens/new"
+private const val TOKEN_PAGE = app.forkcast.GuideLinks.GITHUB_TOKEN_NEW
 
 /**
  * Release notes are Markdown on GitHub; shown here as plain text: no `**`, `#` or backticks, and

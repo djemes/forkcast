@@ -1,8 +1,6 @@
 package app.forkcast.ui.ai
 
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.assertIsNotEnabled
@@ -47,6 +45,8 @@ import org.junit.runner.RunWith
 import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 
 @OptIn(ExperimentalCoroutinesApi::class)
 @RunWith(AndroidJUnit4::class)
@@ -59,26 +59,6 @@ class AiSettingsTest {
 
     @Before fun setUp() = Dispatchers.setMain(dispatcher)
     @After fun tearDown() = Dispatchers.resetMain()
-
-    @Test fun guidedFreeGeminiSetupAddsFlashLiteOnSameKey() = runTest(dispatcher) {
-        val ai = FakeAiRepository()
-        val vm = AiProfileEditViewModel(ai, SavedStateHandle(mapOf("preset" to AiProfileEditViewModel.FREE_GEMINI)), FakeSettingsRepository(), clock)
-        advanceUntilIdle()
-        val s = vm.state.value
-        assertThat(s.provider).isEqualTo(ProviderId.GEMINI)
-        assertThat(s.model).isEqualTo("gemini-3.8-flash")
-        assertThat(s.canSave).isFalse()
-
-        vm.onEvent(AiProfileEditEvent.SetKey("  g-key  "))
-        vm.onEvent(AiProfileEditEvent.SaveAndTest)
-        advanceUntilIdle()
-
-        val profiles = ai.profilesNow()
-        assertThat(profiles.map { it.model }).containsExactly("gemini-3.8-flash", "gemini-3.5-flash-lite").inOrder()
-        assertThat(profiles.all { it.tierLabel == TierLabel.FREE }).isTrue()
-        assertThat(ai.keys.values.toSet()).containsExactly("g-key")
-        assertThat(vm.state.value.done).isTrue()
-    }
 
     @Test fun failedTestKeepsEditorOpenWithReason() = runTest(dispatcher) {
         val ai = FakeAiRepository(testErrors = mapOf("p0" to AiError.InvalidKey()))
@@ -192,7 +172,7 @@ class AiSettingsTest {
                     onEvent = { if (it is AiSettingsEvent.Test) tested = it.id },
                     onBack = {},
                     onEditProfile = {},
-                    onSetUpFreeGemini = {},
+                    onAddAi = {},
                 )
             }
         }
@@ -378,7 +358,7 @@ class AiSettingsTest {
                     onEvent = { events += it },
                     onBack = {},
                     onEditProfile = {},
-                    onSetUpFreeGemini = {},
+                    onAddAi = {},
                 )
             }
         }
@@ -415,7 +395,7 @@ class AiSettingsTest {
                     onEvent = { events += it },
                     onBack = {},
                     onEditProfile = {},
-                    onSetUpFreeGemini = {},
+                    onAddAi = {},
                 )
             }
         }

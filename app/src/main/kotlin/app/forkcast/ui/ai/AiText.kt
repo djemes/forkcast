@@ -13,12 +13,14 @@ fun ProviderId.label(): Int = when (this) {
     ProviderId.OPENAI_COMPAT -> R.string.ai_provider_openai
 }
 
-/** Short company name for messages ("Claude rejected the API key…"). */
-fun ProviderId.shortName(): String = when (this) {
-    ProviderId.CLAUDE -> "Claude"
-    ProviderId.GEMINI -> "Gemini"
-    ProviderId.OPENAI_COMPAT -> "The AI server"
-}
+/** Short service name for messages ("Claude rejected the API key…"). */
+fun ProviderId.shortName(res: Resources): String = res.getString(
+    when (this) {
+        ProviderId.CLAUDE -> R.string.ai_name_claude
+        ProviderId.GEMINI -> R.string.ai_name_gemini
+        ProviderId.OPENAI_COMPAT -> R.string.ai_name_server
+    },
+)
 
 
 /**
@@ -27,12 +29,13 @@ fun ProviderId.shortName(): String = when (this) {
  * ACCESS_TOKEN_TYPE_UNSUPPORTED") instead of a generic "rejected"; [aiErrorDetail] adds its words.
  */
 fun Resources.aiErrorMessage(error: Throwable?, provider: ProviderId?): String {
-    val who = provider?.shortName() ?: "The AI provider"
+    val who = provider?.shortName(this) ?: getString(R.string.ai_name_unknown)
     val reply = (error as? AiError)?.reply
     return when (error) {
         is AiError.InvalidKey -> when {
             // Saved estimate errors come back from their message text (see errorFromCode).
             error.missing || error.message?.contains(AiError.NO_KEY) == true -> getString(R.string.ai_err_no_key)
+            error.needsWorkspace || error.message?.contains(AiError.NEEDS_WORKSPACE) == true -> getString(R.string.setup_err_workspace)
             reply == null -> getString(R.string.ai_err_invalid_key, who)
             else -> getString(R.string.ai_err_key_status, who, reply.summary) + " " + keyHint(reply.code)
         }

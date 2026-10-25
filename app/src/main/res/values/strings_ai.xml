@@ -17,7 +17,6 @@
     <string name="ai_check_why_network">no connection</string>
     <string name="ai_check_why_other">the service returned an error</string>
     <string name="ai_no_profiles">No AI profiles yet. Add one to start estimating photo meals.</string>
-    <string name="ai_setup_free">Set up free Gemini</string>
     <string name="ai_add_profile">Add profile</string>
     <string name="ai_edit">Edit</string>
     <string name="ai_position">Number %1$d in the order</string>
@@ -103,7 +102,7 @@
     <string name="key_guide_claude_1">Sign in to the Claude Console, or create an account.</string>
     <string name="key_guide_claude_2">Add credit under Settings › Billing. Requests fail until the account has credit.</string>
     <string name="key_guide_claude_3">Optional: set a monthly spend limit under Settings › Limits.</string>
-    <string name="key_guide_claude_4">Open API keys and tap Create key. Name it Forkcast.</string>
+    <string name="key_guide_claude_4">Open API keys and tap Create key. Name it Forkcast, choose a workspace (Default is fine) and set it to never expire.</string>
     <string name="key_guide_claude_5">Copy the key (it starts with sk-ant-). It\'s shown only once. Come back here and tap Paste.</string>
     <string name="key_guide_open_claude_console">Open Claude Console</string>
     <string name="key_guide_open_limits">Open Limits</string>
@@ -171,4 +170,11 @@
     <string name="ai_off_title">AI estimates are off</string>
     <string name="ai_off_body">You turned off AI estimates. Turn them on to estimate a meal from a photo or a description.</string>
     <string name="ai_off_turn_on">Turn on</string>
+
+    <!-- Short service names in sentences ("Gemini rejected the key") -->
+    <string name="ai_name_claude">Claude</string>
+    <string name="ai_name_gemini">Gemini</string>
+    <string name="ai_name_server">The AI server</string>
+    <string name="ai_name_unknown">The AI service</string>
+    <string name="ai_add">Add AI</string>
 </resources>

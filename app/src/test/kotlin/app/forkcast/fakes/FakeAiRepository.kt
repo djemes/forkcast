@@ -70,6 +70,14 @@ class FakeAiRepository(
 
     override suspend fun savedKey(id: String): String? = keys[id]
 
+    /** Keys [testKey] rejects with their error; any other key passes. */
+    var keyErrors: Map<String, AiError> = emptyMap()
+    val testedKeys = mutableListOf<String>()
+    override suspend fun testKey(provider: ProviderId, model: String, key: String): Result<ConnectionReport> {
+        testedKeys += key
+        return keyErrors[key]?.let { Result.failure(it) } ?: Result.success(ConnectionReport(model, 300))
+    }
+
     override suspend fun reorder(idsInOrder: List<String>) = state.update { l ->
         idsInOrder.mapIndexedNotNull { i, id -> l.firstOrNull { it.profile.id == id }?.let { it.copy(profile = it.profile.copy(order = i)) } }
     }
@@ -92,7 +100,11 @@ class FakeAiRepository(
     override fun estimatorFor(profile: AiProfile, textOnly: Boolean): MealEstimator = estimator(profile)
     var offer: app.forkcast.core.data.repository.BackupOffer? = null
     override suspend fun backupOffer() = offer
-    override suspend fun addBackupModel(): String? = offer?.let { offer = null; "backup" }
+    override suspend fun addBackupModel(): String? {
+        val o = offer ?: return null
+        offer = null
+        return saveProfile(AiProfileDraft(null, o.name, ProviderId.GEMINI, o.model, null, app.forkcast.core.model.TierLabel.FREE), keys[o.fromProfileId])
+    }
     override suspend fun recordAttempts(attempts: List<AiChain.Attempt>) { recorded += attempts }
     override fun monthUsage(month: YearMonth): Flow<MonthUsage> = state.map { MonthUsage(month, emptyList()) }
 }

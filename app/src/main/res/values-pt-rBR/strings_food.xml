@@ -59,10 +59,9 @@
 
     <!-- Food databases settings -->
     <string name="fdb_usda_title">USDA FoodData Central</string>
-    <string name="fdb_usda_body">Chave grátis do Departamento de Agricultura dos EUA. Sem uma, o Forkcast usa uma chave de demonstração compartilhada, limitada a 10 buscas por hora.</string>
+    <string name="fdb_usda_body">Opcional. Uma chave gratuita do Departamento de Agricultura dos EUA dá mais buscas de alimentos. Sem ela, o Forkcast usa uma chave de demonstração compartilhada, limitada a 10 buscas por hora.</string>
     <string name="fdb_usda_key">Chave de API</string>
     <string name="fdb_paste">Colar</string>
-    <string name="fdb_get_key">Conseguir uma chave grátis</string>
     <string name="fdb_status_own">Usando a sua chave.</string>
     <string name="fdb_status_demo">Usando a chave de demonstração compartilhada.</string>
     <string name="fdb_remove_key">Remover chave</string>
@@ -73,4 +72,15 @@
     <!-- Serving labels Forkcast stores itself: quick adds and recipes ("serving"), photo estimates ("meal"). -->
     <string name="serving_label_serving">porção</string>
     <string name="serving_label_meal">refeição</string>
+    <string name="fdb_steps_title">Pegue uma chave gratuita em 3 passos</string>
+    <string name="fdb_step_1">Abra a página de cadastro do Departamento de Agricultura dos EUA (USDA).</string>
+    <string name="fdb_step_2">Informe o seu nome e e-mail e faça o cadastro.</string>
+    <string name="fdb_step_3">Copie a chave que você receber (ela também chega no seu e-mail), volte aqui e toque em Colar.</string>
+    <string name="fdb_open_signup">Abrir a página de cadastro</string>
+    <string name="fdb_save_check">Conferir e salvar</string>
+    <string name="fdb_checking">Conferindo a chave com o USDA…</string>
+    <string name="fdb_key_works">A chave funciona. As buscas de alimentos agora a usam.</string>
+    <string name="fdb_err_key">O USDA não aceitou esta chave. Confira se copiou a chave inteira e cole de novo.</string>
+    <string name="fdb_err_offline">Sem conexão. Conecte-se ao Wi-Fi ou aos dados móveis e tente de novo, ou salve a chave agora.</string>
+    <string name="fdb_err_server">O servidor do USDA não respondeu direito. Tente mais tarde, ou salve a chave agora.</string>
 </resources>

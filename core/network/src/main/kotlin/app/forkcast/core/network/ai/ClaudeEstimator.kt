@@ -139,6 +139,8 @@ class ClaudeEstimator(
             code == 529 || type == "overloaded_error" -> AiError.Server(code, reply)
             code >= 500 -> AiError.Server(code, reply)
             message?.contains("credit balance", ignoreCase = true) == true -> AiError.QuotaExhausted(null, reply = reply)
+            // A key made without a workspace needs a header we don't send: the fix is a key made for one (checked 2026-10-25).
+            message?.contains("anthropic-workspace-id", ignoreCase = true) == true -> AiError.InvalidKey(AiError.NEEDS_WORKSPACE, reply)
             else -> AiError.InvalidRequest(null, reply)
         }
     }

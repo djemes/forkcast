@@ -8,6 +8,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
@@ -64,6 +65,11 @@ class UsdaClient @Inject constructor(
             if (hit != null) return hit
         }
         return null
+    }
+
+    /** Checks [key] with the smallest request FDC offers (one food); throws [FoodApiError] when it fails. */
+    suspend fun testKey(key: String) {
+        call { http.get("$BASE/foods/list") { header(KEY_HEADER, key); parameter("pageSize", 1) } }
     }
 
     private suspend fun key() = keys.apiKey()?.takeIf { it.isNotBlank() } ?: DEMO_KEY

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- AI setup guide (roadmap 2.0 task 3.3). Steps checked against the providers' docs 2026-10-25. -->
+    <string name="setup_title">Add AI</string>
+    <string name="setup_step_of">Step %1$d of %2$d</string>
+    <string name="setup_continue">Continue</string>
+
+    <!-- Step 1: choose -->
+    <string name="setup_choose_title">Choose an AI service</string>
+    <string name="setup_choose_body">Forkcast uses it to estimate meals from a photo or a description. You can change it later.</string>
+    <string name="setup_gemini_title">Gemini, free</string>
+    <string name="setup_gemini_body">By Google. Free, with a daily limit. You need a Google account.</string>
+    <string name="setup_recommended">Recommended for most people</string>
+    <string name="setup_claude_title">Claude, paid</string>
+    <string name="setup_claude_body">By Anthropic. You pay per use, about $2 a month. You need a credit or debit card.</string>
+    <string name="setup_advanced_title">Advanced: OpenAI-compatible</string>
+    <string name="setup_advanced_body">For experts: OpenAI, OpenRouter or your own server. You enter the server, model and key yourself.</string>
+    <string name="setup_advanced_open">Set up manually</string>
+
+    <!-- Step 2: what this means -->
+    <string name="setup_about_title">What this means</string>
+    <string name="setup_about_key">An API key is like a password that lets Forkcast use your account with %1$s. You create it on their website and paste it here.</string>
+    <string name="setup_about_sent_title">What gets sent</string>
+    <string name="setup_about_sent">Only the meal photos and descriptions you choose to estimate. Never your weight, goals, age or other body data.</string>
+    <string name="setup_about_cost_title">Cost</string>
+    <string name="setup_about_privacy_title">Privacy</string>
+    <string name="setup_about_terms_title">Terms</string>
+    <string name="setup_gemini_time">You create a free Gemini API key with your Google account. It takes about 5 minutes.</string>
+    <string name="setup_gemini_cost">Free. Google limits how many estimates you get each day, and a normal day of meals fits. If you add billing to the key later, Google charges per use.</string>
+    <string name="setup_gemini_privacy">With a free key, Google may use what you send to improve its products, and people may review it. Don\'t put anything private in a description.</string>
+    <string name="setup_gemini_region">In the European Economic Area, the UK and Switzerland, Google\'s terms allow only paid keys: add billing to the key\'s project.</string>
+    <string name="setup_gemini_terms">Google\'s terms apply, and you must be 18 or older to use the Gemini API.</string>
+    <string name="setup_open_gemini_terms">Read Google\'s terms</string>
+    <string name="setup_claude_time">You create an account with Anthropic, the company behind Claude, add some credit with a card, and create an API key. It takes about 10 minutes.</string>
+    <string name="setup_claude_cost">Pay per use from credit you add first: about 1 cent per photo, or around $1.70 a month at 4 photos a day. This is separate from a Claude.ai subscription.</string>
+    <string name="setup_claude_privacy">By default, Anthropic doesn\'t use what you send to train its models.</string>
+    <string name="setup_claude_terms">Anthropic\'s terms apply.</string>
+    <string name="setup_open_claude_terms">Read Anthropic\'s terms</string>
+
+    <!-- Step 3: get a key -->
+    <string name="setup_key_title">Get your key</string>
+    <string name="setup_key_body">Follow these steps on the website, then come back to Forkcast.</string>
+    <string name="setup_have_key">I have my key</string>
+    <string name="setup_gemini_step_1">Open Google AI Studio and sign in with your Google account. If it asks, accept Google\'s terms.</string>
+    <string name="setup_gemini_step_2">Tap Create API key. If it asks for a project, pick one or let it create one.</string>
+    <string name="setup_gemini_step_3">Copy the key, then come back to Forkcast.</string>
+    <string name="setup_open_ai_studio">Open Google AI Studio</string>
+    <string name="setup_claude_step_1">Open the Claude Console and sign in, or create an account.</string>
+    <string name="setup_claude_step_2">Add credit under Billing. A small amount, like $5, lasts a long time.</string>
+    <string name="setup_claude_step_3">Optional: set a monthly spending limit under Limits.</string>
+    <string name="setup_claude_step_4">Open API keys and tap Create key. Name it Forkcast, choose a workspace (Default is fine) and set it to never expire.</string>
+    <string name="setup_claude_step_5">Copy the key. It starts with sk-ant- and is shown only once. Then come back to Forkcast.</string>
+    <string name="setup_open_console">Open the Claude Console</string>
+    <string name="setup_open_billing">Open Billing</string>
+    <string name="setup_open_limits">Open Limits</string>
+    <string name="setup_open_keys">Open API keys</string>
+
+    <!-- Step 4: paste and check -->
+    <string name="setup_paste_title">Paste your key</string>
+    <string name="setup_paste_body">Tap Paste. Forkcast checks the key with %1$s right away.</string>
+    <string name="setup_key_field">API key</string>
+    <string name="setup_paste">Paste</string>
+    <string name="setup_check">Check key</string>
+    <string name="setup_checking">Checking with %1$s…</string>
+    <string name="setup_key_stored">Your key is stored encrypted on this phone. It\'s never put in backups.</string>
+    <string name="setup_show_key">Show key</string>
+    <string name="setup_hide_key">Hide key</string>
+    <string name="key_check_space">There\'s a space in it. Copy only the key, without other text.</string>
+    <string name="key_check_short">This looks too short. Make sure you copied the whole key.</string>
+    <string name="key_check_not_key">This is a web or email address, not a key.</string>
+    <string name="key_check_gemini">This looks like a Gemini key, and this is for %1$s.</string>
+    <string name="key_check_claude">This looks like a Claude key, and this is for %1$s.</string>
+    <string name="key_check_openai">This looks like an OpenAI key. It works only with an OpenAI-compatible server (Advanced).</string>
+    <string name="key_check_claude_prefix">Claude keys start with sk-ant-. Check that you copied the key itself, not its name.</string>
+
+    <!-- Check results, in plain words with the fix -->
+    <string name="setup_err_title">That didn\'t work</string>
+    <string name="setup_err_key">%1$s didn\'t accept this key. Make sure you copied the whole key, then paste it again.</string>
+    <string name="setup_err_workspace">This key isn\'t tied to a workspace. In the Claude Console, create a new key and choose a workspace for it (Default is fine).</string>
+    <string name="setup_err_credit">Anthropic accepted the key, but the account has no credit yet. Add credit under Billing, then check again.</string>
+    <string name="setup_err_network">No connection. Connect to Wi-Fi or mobile data, then check again.</string>
+    <string name="setup_err_busy">%1$s didn\'t answer properly just now. Wait a minute, then check again.</string>
+    <string name="setup_err_model">%1$s accepted the key but doesn\'t offer the model Forkcast uses (%2$s). Save it anyway and pick another model in Settings › AI.</string>
+    <string name="setup_err_other">Something on %1$s\'s side didn\'t work. Check again, or see Details.</string>
+    <string name="setup_details">Details</string>
+    <string name="setup_hide_details">Hide details</string>
+    <string name="setup_try_again">Check again</string>
+    <string name="setup_save_anyway">Save anyway</string>
+    <string name="setup_other_key">Paste a different key</string>
+
+    <!-- Step 5: done -->
+    <string name="setup_done_title">%1$s is ready</string>
+    <string name="setup_done_body">Forkcast will use %1$s for photo and description estimates.</string>
+    <string name="setup_done_backup">Also added a backup: %1$s on the same key. It steps in when the first model reaches its daily limit.</string>
+    <string name="setup_done_busy">%1$s accepted the key but is busy right now, so your first estimate may wait a little.</string>
+    <string name="setup_done_unchecked">The key is saved but wasn\'t checked. If estimates fail, check it in Settings › AI.</string>
+    <string name="setup_done_try">Try it: take a photo of your next meal. Tap Log on Today, then Photo.</string>
+    <string name="setup_done">Done</string>
+</resources>

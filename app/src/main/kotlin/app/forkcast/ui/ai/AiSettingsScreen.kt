@@ -31,8 +31,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -58,7 +56,6 @@ import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.model.CheckFailure
 import app.forkcast.core.model.ModelPrice
 import app.forkcast.core.model.ProfileCheck
-import app.forkcast.core.model.ProviderId
 import app.forkcast.ui.settings.SettingsScaffold
 import java.text.NumberFormat
 import java.time.Instant
@@ -66,12 +63,14 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 
 @Composable
 fun AiSettingsRoute(
     onBack: () -> Unit,
     onEditProfile: (String?) -> Unit,
-    onSetUpFreeGemini: () -> Unit,
+    onAddAi: () -> Unit,
     /** A delete the profile editor already confirmed; this screen does it and offers Undo. */
     deleteRequest: String? = null,
     onDeleteHandled: () -> Unit = {},
@@ -101,7 +100,7 @@ fun AiSettingsRoute(
             }
         }
     }
-    AiSettingsScreen(state, viewModel::onEvent, onBack, onEditProfile, onSetUpFreeGemini, snackbar)
+    AiSettingsScreen(state, viewModel::onEvent, onBack, onEditProfile, onAddAi, snackbar)
 }
 
 private val RETENTION_CHOICES = listOf(7, 14, 30, 90, null)
@@ -118,7 +117,7 @@ fun AiSettingsScreen(
     onEvent: (AiSettingsEvent) -> Unit,
     onBack: () -> Unit,
     onEditProfile: (String?) -> Unit,
-    onSetUpFreeGemini: () -> Unit,
+    onAddAi: () -> Unit,
     snackbarHostState: SnackbarHostState? = null,
 ) {
     var confirmDelete by remember { mutableStateOf<String?>(null) }
@@ -169,15 +168,13 @@ fun AiSettingsScreen(
                 app.forkcast.ui.photo.BackupModelCard(offer.name, offer.fromProfileName) { onEvent(AiSettingsEvent.AddBackupModel) }
             }
         }
-        // Adding is always one obvious button; the free Gemini setup is offered until there's a Gemini profile.
+        // Adding is one obvious button: the setup guide. The full editor stays for experts.
         FlowRow(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
         ) {
-            if (state.profiles.none { it.profile.provider == ProviderId.GEMINI }) {
-                Button(onClick = onSetUpFreeGemini, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.ai_setup_free)) }
-            }
+            Button(onClick = onAddAi, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.ai_add)) }
             OutlinedButton(onClick = { onEditProfile(null) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Icon(painterResource(R.drawable.ic_add), contentDescription = null)
                 Text(stringResource(R.string.ai_add_profile), modifier = Modifier.padding(start = 8.dp))

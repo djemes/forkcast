@@ -59,10 +59,9 @@
 
     <!-- Food databases settings -->
     <string name="fdb_usda_title">USDA FoodData Central</string>
-    <string name="fdb_usda_body">Free key from the U.S. Department of Agriculture. Without one, Forkcast uses a shared demo key limited to 10 searches an hour.</string>
+    <string name="fdb_usda_body">Optional. A free key from the U.S. Department of Agriculture gives you more food searches. Without one, Forkcast uses a shared demo key limited to 10 searches an hour.</string>
     <string name="fdb_usda_key">API key</string>
     <string name="fdb_paste">Paste</string>
-    <string name="fdb_get_key">Get a free key</string>
     <string name="fdb_status_own">Using your key.</string>
     <string name="fdb_status_demo">Using the shared demo key.</string>
     <string name="fdb_remove_key">Remove key</string>
@@ -73,4 +72,15 @@
     <!-- Serving labels Forkcast stores itself: quick adds and recipes ("serving"), photo estimates ("meal"). -->
     <string name="serving_label_serving">serving</string>
     <string name="serving_label_meal">meal</string>
+    <string name="fdb_steps_title">Get a free key in 3 steps</string>
+    <string name="fdb_step_1">Open the sign-up page of the U.S. Department of Agriculture.</string>
+    <string name="fdb_step_2">Enter your name and email address, then sign up.</string>
+    <string name="fdb_step_3">Copy the key you get (it\'s also sent to your email), come back here and tap Paste.</string>
+    <string name="fdb_open_signup">Open the sign-up page</string>
+    <string name="fdb_save_check">Check and save</string>
+    <string name="fdb_checking">Checking the key with USDA…</string>
+    <string name="fdb_key_works">The key works. Food searches now use it.</string>
+    <string name="fdb_err_key">USDA didn\'t accept this key. Make sure you copied the whole key, then paste it again.</string>
+    <string name="fdb_err_offline">No connection. Connect to Wi-Fi or mobile data and try again, or save the key now.</string>
+    <string name="fdb_err_server">USDA\'s server didn\'t answer properly. Try again later, or save the key now.</string>
 </resources>

@@ -21,13 +21,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import app.forkcast.GuideLinks
 import app.forkcast.R
 import app.forkcast.core.model.ProviderId
 
 /**
  * "How to get an API key" in the profile editor: steps and links for the selected provider.
- * Links and steps were checked against each provider's docs on 2026-10-19 (DECISIONS.md);
- * re-check them when a provider changes its console.
+ * Links live in [GuideLinks]; steps were checked against each provider's docs on 2026-10-25
+ * (DECISIONS.md). Re-check them when a provider changes its console.
  */
 data class KeyGuide(
     @StringRes val title: Int,
@@ -58,7 +59,7 @@ fun keyGuide(provider: ProviderId): KeyGuide = when (provider) {
             GuideOption(
                 title = R.string.key_guide_gemini_studio,
                 steps = listOf(
-                    GuideStep(R.string.key_guide_gemini_studio_1, GuideLink(R.string.key_guide_open_ai_studio, "https://aistudio.google.com/apikey")),
+                    GuideStep(R.string.key_guide_gemini_studio_1, GuideLink(R.string.key_guide_open_ai_studio, GuideLinks.AI_STUDIO_KEYS)),
                     GuideStep(R.string.key_guide_gemini_studio_2),
                     GuideStep(R.string.key_guide_copy_paste),
                 ),
@@ -69,16 +70,16 @@ fun keyGuide(provider: ProviderId): KeyGuide = when (provider) {
                 steps = listOf(
                     GuideStep(
                         R.string.key_guide_gemini_cloud_1,
-                        GuideLink(R.string.key_guide_open_gemini_api, "https://console.cloud.google.com/apis/library/generativelanguage.googleapis.com"),
+                        GuideLink(R.string.key_guide_open_gemini_api, GuideLinks.GEMINI_API_LIBRARY),
                     ),
-                    GuideStep(R.string.key_guide_gemini_cloud_2, GuideLink(R.string.key_guide_open_credentials, "https://console.cloud.google.com/apis/credentials")),
+                    GuideStep(R.string.key_guide_gemini_cloud_2, GuideLink(R.string.key_guide_open_credentials, GuideLinks.GOOGLE_CLOUD_CREDENTIALS)),
                     GuideStep(R.string.key_guide_gemini_cloud_3),
                     GuideStep(R.string.key_guide_copy_paste),
                 ),
             ),
         ),
         footer = R.string.key_guide_gemini_billing,
-        footerLink = GuideLink(R.string.key_guide_open_billing, "https://console.cloud.google.com/billing"),
+        footerLink = GuideLink(R.string.key_guide_open_billing, GuideLinks.GOOGLE_CLOUD_BILLING),
     )
     ProviderId.CLAUDE -> KeyGuide(
         title = R.string.key_guide_claude_title,
@@ -87,10 +88,10 @@ fun keyGuide(provider: ProviderId): KeyGuide = when (provider) {
             GuideOption(
                 title = null,
                 steps = listOf(
-                    GuideStep(R.string.key_guide_claude_1, GuideLink(R.string.key_guide_open_claude_console, "https://platform.claude.com/")),
-                    GuideStep(R.string.key_guide_claude_2, GuideLink(R.string.key_guide_open_billing, "https://platform.claude.com/settings/billing")),
-                    GuideStep(R.string.key_guide_claude_3, GuideLink(R.string.key_guide_open_limits, "https://platform.claude.com/settings/limits")),
-                    GuideStep(R.string.key_guide_claude_4, GuideLink(R.string.key_guide_open_api_keys, "https://platform.claude.com/settings/keys")),
+                    GuideStep(R.string.key_guide_claude_1, GuideLink(R.string.key_guide_open_claude_console, GuideLinks.CLAUDE_CONSOLE)),
+                    GuideStep(R.string.key_guide_claude_2, GuideLink(R.string.key_guide_open_billing, GuideLinks.CLAUDE_BILLING)),
+                    GuideStep(R.string.key_guide_claude_3, GuideLink(R.string.key_guide_open_limits, GuideLinks.CLAUDE_LIMITS)),
+                    GuideStep(R.string.key_guide_claude_4, GuideLink(R.string.key_guide_open_api_keys, GuideLinks.CLAUDE_KEYS)),
                     GuideStep(R.string.key_guide_claude_5),
                 ),
             ),
@@ -103,27 +104,27 @@ fun keyGuide(provider: ProviderId): KeyGuide = when (provider) {
             GuideOption(
                 title = R.string.key_guide_openai_openai,
                 steps = listOf(
-                    GuideStep(R.string.key_guide_openai_1, GuideLink(R.string.key_guide_open_openai, "https://platform.openai.com/")),
-                    GuideStep(R.string.key_guide_openai_2, GuideLink(R.string.key_guide_open_billing, "https://platform.openai.com/settings/organization/billing/overview")),
-                    GuideStep(R.string.key_guide_openai_3, GuideLink(R.string.key_guide_open_api_keys, "https://platform.openai.com/api-keys")),
+                    GuideStep(R.string.key_guide_openai_1, GuideLink(R.string.key_guide_open_openai, GuideLinks.OPENAI_PLATFORM)),
+                    GuideStep(R.string.key_guide_openai_2, GuideLink(R.string.key_guide_open_billing, GuideLinks.OPENAI_BILLING)),
+                    GuideStep(R.string.key_guide_openai_3, GuideLink(R.string.key_guide_open_api_keys, GuideLinks.OPENAI_KEYS)),
                     GuideStep(R.string.key_guide_pick_vision_model),
                 ),
-                serverUrl = "https://api.openai.com",
+                serverUrl = GuideLinks.OPENAI_SERVER,
             ),
             GuideOption(
                 title = R.string.key_guide_openai_openrouter,
                 steps = listOf(
-                    GuideStep(R.string.key_guide_openrouter_1, GuideLink(R.string.key_guide_open_openrouter, "https://openrouter.ai/keys")),
-                    GuideStep(R.string.key_guide_openrouter_2, GuideLink(R.string.key_guide_open_credits, "https://openrouter.ai/settings/credits")),
+                    GuideStep(R.string.key_guide_openrouter_1, GuideLink(R.string.key_guide_open_openrouter, GuideLinks.OPENROUTER_KEYS)),
+                    GuideStep(R.string.key_guide_openrouter_2, GuideLink(R.string.key_guide_open_credits, GuideLinks.OPENROUTER_CREDITS)),
                     GuideStep(R.string.key_guide_pick_vision_model),
                 ),
-                serverUrl = "https://openrouter.ai/api",
+                serverUrl = GuideLinks.OPENROUTER_SERVER,
             ),
             GuideOption(
                 title = R.string.key_guide_openai_local,
                 steps = listOf(
-                    GuideStep(R.string.key_guide_local_1, GuideLink(R.string.key_guide_open_ollama, "https://ollama.com/download")),
-                    GuideStep(R.string.key_guide_local_2, GuideLink(R.string.key_guide_open_ollama_faq, "https://docs.ollama.com/faq")),
+                    GuideStep(R.string.key_guide_local_1, GuideLink(R.string.key_guide_open_ollama, GuideLinks.OLLAMA_DOWNLOAD)),
+                    GuideStep(R.string.key_guide_local_2, GuideLink(R.string.key_guide_open_ollama_faq, GuideLinks.OLLAMA_FAQ)),
                     GuideStep(R.string.key_guide_local_3),
                 ),
                 note = R.string.key_guide_local_note,

@@ -80,7 +80,7 @@ class AiProfileEditViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val profileId: String? = savedState["profileId"]
-    /** "free_gemini": the guided setup, which also adds Flash-Lite on the same key. */
+    /** "openai": a new profile that starts on OpenAI-compatible (the setup guide's Advanced). */
     private val preset: String? = savedState["preset"]
     private var savedId: String? = profileId
     /** The saved profile's id once it exists, for Delete (which the profile list carries out, with Undo). */
@@ -111,7 +111,7 @@ class AiProfileEditViewModel @Inject constructor(
                     savedKey = ai.savedKey(existing.id)?.let(::SecretText),
                 ).withProviderInfo()
             } else {
-                val provider = ProviderId.GEMINI
+                val provider = if (preset == OPENAI) ProviderId.OPENAI_COMPAT else ProviderId.GEMINI
                 _state.value = AiProfileEditUiState(loaded = true, provider = provider, tier = newTier(provider))
                     .withProviderInfo()
                     .let { s -> s.copy(model = s.recommendedModel.orEmpty(), name = ai.defaults.displayName(s.recommendedModel.orEmpty())) }
@@ -141,12 +141,8 @@ class AiProfileEditViewModel @Inject constructor(
         }
     }
 
-    /** The guided free setup is the only place that knows a key is free; Claude/OpenAI keys are paid. */
-    private fun newTier(provider: ProviderId): TierLabel = when {
-        provider != ProviderId.GEMINI -> TierLabel.PAID
-        preset == FREE_GEMINI -> TierLabel.FREE
-        else -> TierLabel.UNKNOWN
-    }
+    /** The setup guide is the only place that knows a key is free; Claude/OpenAI keys are paid. */
+    private fun newTier(provider: ProviderId): TierLabel = if (provider != ProviderId.GEMINI) TierLabel.PAID else TierLabel.UNKNOWN
 
     private fun AiProfileEditUiState.withProviderInfo(): AiProfileEditUiState {
         val d = ai.defaults.provider(provider)
@@ -180,7 +176,6 @@ class AiProfileEditViewModel @Inject constructor(
             val id = ai.saveProfile(draft, s.keyInput.takeIf { it.isNotBlank() })
             savedId = id
             s.copyKeyFrom?.let { ai.copyKey(it.id, id) }
-            if (preset == FREE_GEMINI && s.isNew && s.provider == ProviderId.GEMINI) addFlashLite(id, s.tier)
             val result = ai.runTest(id)
             settings.recordCheck(id, result, clock.millis())
             val key = ai.savedKey(id)?.let(::SecretText)
@@ -210,15 +205,7 @@ class AiProfileEditViewModel @Inject constructor(
         }
     }
 
-    /** The guided free setup adds the budget model on the same key: an independent free quota. */
-    private suspend fun addFlashLite(firstId: String, tier: TierLabel) {
-        val entry = ai.defaults.defaultChain.firstOrNull { it.sameKeyAsPrevious && it.provider == ProviderId.GEMINI } ?: return
-        if (allProfiles.any { it.model == entry.model }) return
-        val id = ai.saveProfile(AiProfileDraft(null, entry.name, ProviderId.GEMINI, entry.model, null, tier), key = null)
-        ai.copyKey(firstId, id)
-    }
-
     companion object {
-        const val FREE_GEMINI = "free_gemini"
+        const val OPENAI = "openai"
     }
 }

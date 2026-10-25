@@ -121,6 +121,12 @@ class EstimatorsTest {
             .isInstanceOf(AiError.InvalidKey::class.java)
     }
 
+    @Test fun claudeKeyWithoutWorkspaceIsAKeyProblem() = runTest {
+        val e = claude(HttpStatusCode.BadRequest, "claude_400_workspace.json").testConnection().exceptionOrNull()
+        assertThat(e).isInstanceOf(AiError.InvalidKey::class.java)
+        assertThat((e as AiError.InvalidKey).needsWorkspace).isTrue()
+    }
+
     @Test fun missingKeyFailsWithoutARequest() = runTest {
         val e = ClaudeEstimator(http(HttpStatusCode.OK, "{}"), { null }, "m").estimate(request("m")).exceptionOrNull()
         assertThat(e).isInstanceOf(AiError.InvalidKey::class.java)

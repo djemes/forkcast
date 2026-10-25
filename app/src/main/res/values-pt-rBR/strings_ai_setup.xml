@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Guia de configuração da IA -->
+    <string name="setup_title">Adicionar IA</string>
+    <string name="setup_step_of">Passo %1$d de %2$d</string>
+    <string name="setup_continue">Continuar</string>
+
+    <string name="setup_choose_title">Escolha um serviço de IA</string>
+    <string name="setup_choose_body">O Forkcast o usa para estimar refeições a partir de uma foto ou descrição. Dá para trocar depois.</string>
+    <string name="setup_gemini_title">Gemini, gratuito</string>
+    <string name="setup_gemini_body">Do Google. Gratuito, com limite diário. Você precisa de uma conta Google.</string>
+    <string name="setup_recommended">Recomendado para a maioria das pessoas</string>
+    <string name="setup_claude_title">Claude, pago</string>
+    <string name="setup_claude_body">Da Anthropic. Você paga pelo uso, cerca de US$ 2 por mês. Você precisa de um cartão de crédito ou débito.</string>
+    <string name="setup_advanced_title">Avançado: compatível com OpenAI</string>
+    <string name="setup_advanced_body">Para especialistas: OpenAI, OpenRouter ou o seu próprio servidor. Você informa servidor, modelo e chave.</string>
+    <string name="setup_advanced_open">Configurar manualmente</string>
+
+    <string name="setup_about_title">O que isso significa</string>
+    <string name="setup_about_key">Uma chave de API é como uma senha que deixa o Forkcast usar a sua conta no %1$s. Você a cria no site deles e cola aqui.</string>
+    <string name="setup_about_sent_title">O que é enviado</string>
+    <string name="setup_about_sent">Só as fotos e descrições de refeições que você escolhe estimar. Nunca o seu peso, metas, idade ou outros dados do corpo.</string>
+    <string name="setup_about_cost_title">Custo</string>
+    <string name="setup_about_privacy_title">Privacidade</string>
+    <string name="setup_about_terms_title">Termos</string>
+    <string name="setup_gemini_time">Você cria uma chave de API do Gemini gratuita com a sua conta Google. Leva uns 5 minutos.</string>
+    <string name="setup_gemini_cost">Gratuito. O Google limita quantas estimativas você recebe por dia, e um dia normal de refeições cabe nisso. Se você ativar o faturamento da chave depois, o Google cobra pelo uso.</string>
+    <string name="setup_gemini_privacy">Com uma chave gratuita, o Google pode usar o que você envia para melhorar os produtos dele, e pessoas podem revisar. Não coloque nada privado numa descrição.</string>
+    <string name="setup_gemini_region">No Espaço Econômico Europeu, no Reino Unido e na Suíça, os termos do Google só permitem chaves pagas: ative o faturamento no projeto da chave.</string>
+    <string name="setup_gemini_terms">Os termos do Google se aplicam, e é preciso ter 18 anos ou mais para usar a API do Gemini.</string>
+    <string name="setup_open_gemini_terms">Ler os termos do Google</string>
+    <string name="setup_claude_time">Você cria uma conta na Anthropic, a empresa do Claude, adiciona crédito com um cartão e cria uma chave de API. Leva uns 10 minutos.</string>
+    <string name="setup_claude_cost">Pagamento pelo uso, a partir de crédito que você adiciona antes: cerca de 1 centavo de dólar por foto, ou uns US$ 1,70 por mês com 4 fotos por dia. Isso é separado de uma assinatura do Claude.ai.</string>
+    <string name="setup_claude_privacy">Por padrão, a Anthropic não usa o que você envia para treinar os modelos dela.</string>
+    <string name="setup_claude_terms">Os termos da Anthropic se aplicam.</string>
+    <string name="setup_open_claude_terms">Ler os termos da Anthropic</string>
+
+    <string name="setup_key_title">Pegue a sua chave</string>
+    <string name="setup_key_body">Siga estes passos no site e depois volte para o Forkcast.</string>
+    <string name="setup_have_key">Já tenho a chave</string>
+    <string name="setup_gemini_step_1">Abra o Google AI Studio e entre com a sua conta Google. Se ele pedir, aceite os termos do Google.</string>
+    <string name="setup_gemini_step_2">Toque em Create API key (Criar chave de API). Se pedir um projeto, escolha um ou deixe que ele crie.</string>
+    <string name="setup_gemini_step_3">Copie a chave e volte para o Forkcast.</string>
+    <string name="setup_open_ai_studio">Abrir o Google AI Studio</string>
+    <string name="setup_claude_step_1">Abra o Claude Console e entre, ou crie uma conta.</string>
+    <string name="setup_claude_step_2">Adicione crédito em Billing (Faturamento). Um valor pequeno, como US$ 5, dura bastante.</string>
+    <string name="setup_claude_step_3">Opcional: defina um limite de gasto mensal em Limits (Limites).</string>
+    <string name="setup_claude_step_4">Abra API keys e toque em Create key. Dê o nome Forkcast, escolha um workspace (o Default serve) e deixe a chave sem validade (Never).</string>
+    <string name="setup_claude_step_5">Copie a chave. Ela começa com sk-ant- e só aparece uma vez. Depois volte para o Forkcast.</string>
+    <string name="setup_open_console">Abrir o Claude Console</string>
+    <string name="setup_open_billing">Abrir Billing</string>
+    <string name="setup_open_limits">Abrir Limits</string>
+    <string name="setup_open_keys">Abrir API keys</string>
+
+    <string name="setup_paste_title">Cole a sua chave</string>
+    <string name="setup_paste_body">Toque em Colar. O Forkcast confere a chave com o %1$s na hora.</string>
+    <string name="setup_key_field">Chave de API</string>
+    <string name="setup_paste">Colar</string>
+    <string name="setup_check">Conferir chave</string>
+    <string name="setup_checking">Conferindo com o %1$s…</string>
+    <string name="setup_key_stored">A sua chave fica guardada criptografada neste celular. Ela nunca vai para os backups.</string>
+    <string name="setup_show_key">Mostrar chave</string>
+    <string name="setup_hide_key">Ocultar chave</string>
+    <string name="key_check_space">Tem um espaço nela. Copie só a chave, sem outro texto.</string>
+    <string name="key_check_short">Parece curta demais. Confira se copiou a chave inteira.</string>
+    <string name="key_check_not_key">Isto é um endereço da web ou de e-mail, não uma chave.</string>
+    <string name="key_check_gemini">Isto parece uma chave do Gemini, e aqui é para o %1$s.</string>
+    <string name="key_check_claude">Isto parece uma chave do Claude, e aqui é para o %1$s.</string>
+    <string name="key_check_openai">Isto parece uma chave da OpenAI. Ela só funciona com um servidor compatível com OpenAI (Avançado).</string>
+    <string name="key_check_claude_prefix">As chaves do Claude começam com sk-ant-. Confira se copiou a chave em si, e não o nome dela.</string>
+
+    <string name="setup_err_title">Não deu certo</string>
+    <string name="setup_err_key">O %1$s não aceitou esta chave. Confira se copiou a chave inteira e cole de novo.</string>
+    <string name="setup_err_workspace">Esta chave não está ligada a um workspace. No Claude Console, crie uma chave nova e escolha um workspace para ela (o Default serve).</string>
+    <string name="setup_err_credit">A Anthropic aceitou a chave, mas a conta ainda não tem crédito. Adicione crédito em Billing e confira de novo.</string>
+    <string name="setup_err_network">Sem conexão. Conecte-se ao Wi-Fi ou aos dados móveis e confira de novo.</string>
+    <string name="setup_err_busy">O %1$s não respondeu direito agora. Espere um minuto e confira de novo.</string>
+    <string name="setup_err_model">O %1$s aceitou a chave, mas não oferece o modelo que o Forkcast usa (%2$s). Salve mesmo assim e escolha outro modelo em Configurações › IA.</string>
+    <string name="setup_err_other">Algo do lado do %1$s não funcionou. Confira de novo ou veja os Detalhes.</string>
+    <string name="setup_details">Detalhes</string>
+    <string name="setup_hide_details">Ocultar detalhes</string>
+    <string name="setup_try_again">Conferir de novo</string>
+    <string name="setup_save_anyway">Salvar mesmo assim</string>
+    <string name="setup_other_key">Colar outra chave</string>
+
+    <string name="setup_done_title">O %1$s está pronto</string>
+    <string name="setup_done_body">O Forkcast vai usar o %1$s para estimativas por foto e por descrição.</string>
+    <string name="setup_done_backup">Também adicionamos um reserva: o %1$s, com a mesma chave. Ele entra quando o primeiro modelo chega ao limite do dia.</string>
+    <string name="setup_done_busy">O %1$s aceitou a chave, mas está ocupado agora, então a sua primeira estimativa pode demorar um pouco.</string>
+    <string name="setup_done_unchecked">A chave foi salva, mas não foi conferida. Se as estimativas falharem, confira em Configurações › IA.</string>
+    <string name="setup_done_try">Experimente: tire uma foto da sua próxima refeição. Toque em Registrar em Hoje e depois em Foto.</string>
+    <string name="setup_done">Concluir</string>
+</resources>

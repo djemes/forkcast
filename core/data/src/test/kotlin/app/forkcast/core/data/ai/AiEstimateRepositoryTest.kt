@@ -461,6 +461,7 @@ class AiEstimateRepositoryTest {
         override suspend fun setEnabled(id: String, enabled: Boolean) = Unit
         override suspend fun copyKey(fromId: String, toId: String) = Unit
         override suspend fun test(id: String) = Result.success(ConnectionReport("m", 1))
+        override suspend fun testKey(provider: ProviderId, model: String, key: String) = Result.success(ConnectionReport(model, 1))
         override suspend fun listModels(provider: ProviderId, baseUrl: String?, profileId: String?, draftKey: String?) = Result.success(emptyList<ModelInfo>())
         override suspend fun backupOffer() = null
         override suspend fun addBackupModel(): String? = null

@@ -41,6 +41,8 @@ import app.forkcast.core.data.repository.RoomMealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.settings.AppSettingsSerializer
 import app.forkcast.core.model.AppSettings
+import app.forkcast.core.data.repository.DefaultFoodDatabaseKeyRepository
+import app.forkcast.core.data.repository.FoodDatabaseKeyRepository
 import dagger.Binds
 import dagger.Module
 import dagger.Provides
@@ -163,6 +165,9 @@ abstract class RepositoryModule {
 
     @Binds
     abstract fun bindTrendsRepository(impl: app.forkcast.core.data.repository.RoomTrendsRepository): app.forkcast.core.data.repository.TrendsRepository
+
+    @Binds
+    abstract fun bindFoodDatabaseKeyRepository(impl: DefaultFoodDatabaseKeyRepository): FoodDatabaseKeyRepository
 
     @Binds
     abstract fun bindMaintenanceRepository(impl: app.forkcast.core.data.repository.RoomMaintenanceRepository): app.forkcast.core.data.repository.MaintenanceRepository
