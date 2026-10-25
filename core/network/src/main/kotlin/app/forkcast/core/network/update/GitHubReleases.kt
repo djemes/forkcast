@@ -1,6 +1,8 @@
 package app.forkcast.core.network.update
 
 import app.forkcast.core.network.NetworkJson
+import app.forkcast.core.network.httpsOnly
+import app.forkcast.core.network.isLoopback
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.plugins.timeout
@@ -196,6 +198,8 @@ object UpdateHttpClientFactory {
     ): HttpClient = HttpClient(engine) {
         expectSuccess = false
         followRedirects = false
+        // GitHub over https only; loopback is the debug-only Releases stand-in (ReleasesMock).
+        install(httpsOnly(::isLoopback))
         install(io.ktor.client.plugins.HttpTimeout) {
             connectTimeoutMillis = 10_000
             requestTimeoutMillis = 30_000

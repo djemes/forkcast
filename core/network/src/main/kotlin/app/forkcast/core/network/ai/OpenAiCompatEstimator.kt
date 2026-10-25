@@ -2,6 +2,7 @@ package app.forkcast.core.network.ai
 
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.network.NetworkJson
+import app.forkcast.core.network.allowCleartext
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.get
@@ -118,8 +119,9 @@ class OpenAiCompatEstimator(
         return t
     }
 
-    /** Local servers (Ollama, LM Studio) often need no key. */
+    /** Local servers (Ollama, LM Studio) often need no key, and may be plain http (the editor warns). */
     private fun HttpRequestBuilder.auth(key: String?) {
+        allowCleartext()
         if (!key.isNullOrBlank()) header("Authorization", "Bearer $key")
     }
 

@@ -22,7 +22,8 @@ import kotlin.time.TimeSource
  * HTTP client for AI providers (SPEC §7): read timeout 60 s. A 429 is never retried here: the
  * fallback chain moves to the next profile instead, so a rate-limited key isn't hammered.
  * One quick retry on a 5xx/overload, two on a dropped connection, each after waiting (up to 10 s)
- * for the phone to be online again ([NetworkWaiter]). No logging of any kind.
+ * for the phone to be online again ([NetworkWaiter]). No logging of any kind. https only, except
+ * the user's own OpenAI-compatible server ([app.forkcast.core.network.allowCleartext]).
  */
 object AiHttpClientFactory {
     fun create(
@@ -31,6 +32,7 @@ object AiHttpClientFactory {
         network: NetworkWaiter = NetworkWaiter.None,
     ): HttpClient = HttpClient(engine) {
         expectSuccess = false
+        install(app.forkcast.core.network.httpsOnly())
         install(HttpTimeout) {
             connectTimeoutMillis = 10_000
             requestTimeoutMillis = 60_000

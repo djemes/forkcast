@@ -33,6 +33,8 @@ object HttpClientFactory {
         network: NetworkWaiter = NetworkWaiter.None,
     ): HttpClient = HttpClient(engine) {
         expectSuccess = false
+        // Food databases are https only.
+        install(httpsOnly())
         install(ContentNegotiation) { json(NetworkJson) }
         install(HttpTimeout) {
             connectTimeoutMillis = 10_000
