@@ -122,4 +122,8 @@
     <string name="list_separator">"; "</string>
     <!-- "Protein 12 g": a macro's name and its amount -->
     <string name="macro_amount">%1$s %2$s</string>
+    <!-- Units (roadmap 2.0, task 1.6): symbols, and how a quantity is written (number, thin space, unit) -->
+    <string name="unit_l">L</string>
+    <string name="unit_g">g</string>
+    <string name="unit_quantity">%1$s\u2009%2$s</string>
 </resources>

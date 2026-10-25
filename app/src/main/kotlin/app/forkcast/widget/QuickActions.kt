@@ -27,7 +27,7 @@ class AddWaterActivity : ComponentActivity() {
         lifecycleScope.launch {
             val added = runCatching { WidgetData.addWater(applicationContext) }
             val text = added.fold(
-                onSuccess = { ml -> getString(R.string.shortcut_water_done, WidgetData.today(applicationContext).format.waterServing(ml)) },
+                onSuccess = { ml -> getString(R.string.shortcut_water_done, WidgetData.today(applicationContext).format(this@AddWaterActivity).waterServing(ml)) },
                 onFailure = { getString(R.string.shortcut_water_failed) },
             )
             Toast.makeText(applicationContext, text, Toast.LENGTH_SHORT).show()

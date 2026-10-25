@@ -1,5 +1,6 @@
 package app.forkcast.ui.onboarding
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -242,7 +243,7 @@ fun HeightInput(heightCm: Double?, units: UnitPrefs, onChange: (Double?) -> Unit
 
 @Composable
 fun WeightInput(kg: Double?, units: UnitPrefs, onChange: (Double?) -> Unit, supporting: String? = null, key: String = "w") {
-    val f = UnitFormatter(units)
+    val f = UnitFormatter(units, labels = unitLabels())
     NumberField(
         initial = kg?.let { f.weightInput(it) }.orEmpty(),
         label = stringResource(R.string.field_weight, f.weightUnitLabel),

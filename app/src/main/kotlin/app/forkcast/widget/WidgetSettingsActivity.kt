@@ -200,7 +200,7 @@ private fun PreviewOn(style: WidgetStyle, wallpaperDark: Boolean, modifier: Modi
             val track = palette.ink.copy(alpha = WidgetArt.TRACK_ALPHA)
             // The same sample afternoon as the widget picker's preview, in the phone's units.
             val sample = remember { sampleSnapshot() }
-            val f = sample.format
+            val f = sample.format(androidx.compose.ui.platform.LocalContext.current)
             Canvas(Modifier.size(84.dp)) {
                 val stroke = size.minDimension * 0.085f
                 val arcSize = Size(size.width - stroke * 2, size.height - stroke * 2)

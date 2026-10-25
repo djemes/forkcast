@@ -1,5 +1,6 @@
 package app.forkcast.ui.activity
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -98,7 +99,8 @@ fun ActivityRoute(onBack: () -> Unit, viewModel: ActivityViewModel = hiltViewMod
  */
 @Composable
 fun ActivityScreen(state: ActivityUiState, onBack: () -> Unit) {
-    val f = remember(state.units) { UnitFormatter(state.units) }
+    val labels = unitLabels()
+    val f = remember(state.units, labels) { UnitFormatter(state.units, labels = labels) }
     SettingsScaffold(title = stringResource(R.string.activity_title), onBack = onBack) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(

@@ -1,5 +1,6 @@
 package app.forkcast.ui.settings
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -107,7 +108,7 @@ fun DailyTargetsScreen(state: DailyTargetsState?, onSet: (NutrientKey, Double?) 
     var editing by remember { mutableStateOf<TargetRow?>(null) }
     SettingsScaffold(title = stringResource(R.string.settings_daily_targets), onBack = onBack) {
         val s = state ?: return@SettingsScaffold
-        val f = UnitFormatter(s.units, LocalLocale.current.platformLocale)
+        val f = UnitFormatter(s.units, LocalLocale.current.platformLocale, labels = unitLabels())
         Text(stringResource(R.string.targets_body), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.padding(16.dp))
         Section(R.string.targets_section_main, s.main, f) { editing = it }
         Section(R.string.targets_section_limits, s.limits, f) { editing = it }
@@ -164,7 +165,7 @@ private fun TargetRowView(row: TargetRow, f: UnitFormatter, onClick: () -> Unit)
 /** Number entry in the nutrient's own unit (energy in the user's kcal/kJ). */
 @Composable
 private fun TargetDialog(row: TargetRow, units: UnitPrefs, onSave: (Double?) -> Unit, onDismiss: () -> Unit) {
-    val f = UnitFormatter(units, LocalLocale.current.platformLocale)
+    val f = UnitFormatter(units, LocalLocale.current.platformLocale, labels = unitLabels())
     val unit = when (row.key.unit) {
         NutrientUnit.KCAL -> f.energyUnitLabel
         NutrientUnit.G -> "g"

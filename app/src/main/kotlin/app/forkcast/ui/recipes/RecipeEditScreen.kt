@@ -1,5 +1,6 @@
 package app.forkcast.ui.recipes
 
+import app.forkcast.ui.format.unitLabels
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -132,7 +133,7 @@ fun RecipeEditScreen(
     snackbar: SnackbarHostState = remember { SnackbarHostState() },
     logAfterSave: Boolean = false,
 ) {
-    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
+    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale, labels = unitLabels())
     val d = state.draft
     var confirmDiscard by rememberSaveable { mutableStateOf(false) }
     var confirmDelete by rememberSaveable { mutableStateOf(false) }

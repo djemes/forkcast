@@ -1,5 +1,6 @@
 package app.forkcast.ui.food
 
+import app.forkcast.ui.format.unitLabels
 import android.text.format.DateFormat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
@@ -106,7 +107,7 @@ fun FoodDetailScreen(
     onCountsAsWater: (Boolean) -> Unit = {},
     onTime: (Int) -> Unit = {},
 ) {
-    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
+    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale, labels = unitLabels())
     val food = state.food
     var showAll by rememberSaveable { mutableStateOf(false) }
     val editable = food.source == FoodSource.CUSTOM || food.source == FoodSource.LABEL || food.source == FoodSource.RECIPE

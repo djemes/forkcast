@@ -1,5 +1,6 @@
 package app.forkcast.ui.onboarding
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +46,7 @@ fun BudgetSummary(
     /** The activity bonus is on (SPEC §5.2): say so under the math. */
     activityBonus: Boolean = false,
 ) {
-    val f = UnitFormatter(units)
+    val f = UnitFormatter(units, labels = unitLabels())
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Text(
             stringResource(R.string.budget_kcal_per_day, f.energy(targets.budgetKcal.toDouble())),

@@ -194,7 +194,7 @@ internal fun CaloriesContent(s: TodaySnapshot, style: WidgetStyle) {
     val context = LocalContext.current
     val palette = remember(style) { WidgetPalette(style) }
     val size = LocalSize.current
-    val f = s.format
+    val f = s.format(context)
     val totals = s.totals
     val over = totals?.state == BudgetState.OVER
     val number = totals?.let { f.energyNumber(if (over) it.overKcal else it.remainingKcal) } ?: "—"

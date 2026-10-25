@@ -1,5 +1,6 @@
 package app.forkcast.ui.trends
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -175,7 +176,7 @@ fun TrendsScreen(
 ) {
     SettingsScaffold(title = stringResource(R.string.trends_title), onBack = onBack) {
         val s = state ?: return@SettingsScaffold
-        val f = UnitFormatter(s.units, LocalLocale.current.platformLocale)
+        val f = UnitFormatter(s.units, LocalLocale.current.platformLocale, labels = unitLabels())
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             PeriodPicker(s.period, onPeriod)
             CaloriesCard(s, f, onOpenDay)

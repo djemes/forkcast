@@ -1,5 +1,6 @@
 package app.forkcast.ui.weekly
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -92,7 +93,8 @@ fun WeeklyCheckInScreen(state: WeeklyUiState?, onBack: () -> Unit, onPrevious: (
     SettingsScaffold(title = stringResource(R.string.weekly_title), onBack = onBack) {
         val s = state ?: return@SettingsScaffold
         val w = s.summary
-        val f = remember(s.units) { UnitFormatter(s.units) }
+        val labels = unitLabels()
+        val f = remember(s.units, labels) { UnitFormatter(s.units, labels = labels) }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().padding(horizontal = 4.dp)) {
             IconButton(onClick = onPrevious) { Icon(painterResource(R.drawable.ic_chevron_left), stringResource(R.string.weekly_previous)) }
             Text(

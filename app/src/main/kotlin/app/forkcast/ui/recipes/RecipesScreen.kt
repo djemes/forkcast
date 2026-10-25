@@ -1,5 +1,6 @@
 package app.forkcast.ui.recipes
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -85,7 +86,7 @@ fun RecipesScreen(
 ) {
     SettingsScaffold(title = stringResource(R.string.recipes_title), onBack = onBack) {
         val s = state ?: return@SettingsScaffold
-        val f = UnitFormatter(s.units, LocalLocale.current.platformLocale)
+        val f = UnitFormatter(s.units, LocalLocale.current.platformLocale, labels = unitLabels())
         Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (s.recipes.isEmpty()) {
                 Text(stringResource(R.string.recipes_empty), style = MaterialTheme.typography.bodyLarge)

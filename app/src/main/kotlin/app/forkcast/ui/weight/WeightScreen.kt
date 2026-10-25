@@ -1,5 +1,6 @@
 package app.forkcast.ui.weight
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -104,7 +105,7 @@ fun WeightScreen(
     onAdd: (kg: Double, bodyFat: Double?, date: LocalDate) -> Unit,
     onDelete: (String) -> Unit,
 ) {
-    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
+    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale, labels = unitLabels())
     var weight by rememberSaveable { mutableStateOf<Double?>(null) }
     var bodyFat by rememberSaveable { mutableStateOf<Double?>(null) }
     var date by rememberSaveable { mutableStateOf(state.today) }

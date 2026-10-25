@@ -1,5 +1,6 @@
 package app.forkcast.ui.today
 
+import app.forkcast.ui.format.unitLabels
 import android.text.format.DateFormat
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
@@ -211,7 +212,7 @@ fun TodayScreen(
     var copyRequest by remember { mutableStateOf<CopyRequest?>(null) }
     var saveRequest by remember { mutableStateOf<SaveRequest?>(null) }
     val snackbar = remember { SnackbarHostState() }
-    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
+    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale, labels = unitLabels())
     val resources = LocalResources.current
     val locale = LocalLocale.current.platformLocale
     val currentOnEvent by rememberUpdatedState(onEvent)

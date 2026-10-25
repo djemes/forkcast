@@ -1,5 +1,6 @@
 package app.forkcast.ui.food
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -58,7 +59,7 @@ fun CustomFoodRoute(
 
 @Composable
 private fun CustomFoodScreen(form: CustomFoodForm, vm: CustomFoodViewModel, onBack: () -> Unit) {
-    val f = UnitFormatter(form.units)
+    val f = UnitFormatter(form.units, labels = unitLabels())
     // What was there when the screen opened; any difference is an unsaved change.
     val initial = remember(form.existing?.id, form.seed) { form }
     val dirty = form.name != initial.name || form.brand != initial.brand || form.servingLabel != initial.servingLabel ||

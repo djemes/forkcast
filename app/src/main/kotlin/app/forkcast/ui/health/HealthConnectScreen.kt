@@ -1,5 +1,6 @@
 package app.forkcast.ui.health
 
+import app.forkcast.ui.format.unitLabels
 import androidx.core.net.toUri
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -208,7 +209,8 @@ private fun StatusSection(state: HealthUiState, onSyncNow: () -> Unit, onRequest
 
 @Composable
 private fun HeightCard(state: HealthUiState, cm: Double, onUseHeight: (Double) -> Unit) {
-    val units = remember(state.units) { UnitFormatter(state.units) }
+    val labels = unitLabels()
+    val units = remember(state.units, labels) { UnitFormatter(state.units, labels = labels) }
     val profile = state.profile ?: return
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainer),

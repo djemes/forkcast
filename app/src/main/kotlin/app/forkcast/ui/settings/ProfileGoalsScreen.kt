@@ -1,5 +1,6 @@
 package app.forkcast.ui.settings
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -97,7 +98,7 @@ enum class ProfilePart { PROFILE, GOAL }
 
 @Composable
 private fun ProfileGoalsContent(s: ProfileGoalsState, vm: ProfileGoalsViewModel, part: ProfilePart, onOpenWeekly: () -> Unit = {}) {
-    val f = UnitFormatter(s.units)
+    val f = UnitFormatter(s.units, labels = unitLabels())
     var editing by rememberSaveable { mutableStateOf<EditField?>(null) }
     val colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.background)
 
@@ -290,7 +291,7 @@ private fun EditDialog(field: EditField, s: ProfileGoalsState, vm: ProfileGoalsV
                     EditField.ACTIVITY -> ChoiceList(activityChoices(), activity) { activity = it }
                     EditField.GOAL -> GoalEditor(goal, s)
                     EditField.BUDGET -> {
-                        val f = UnitFormatter(s.units)
+                        val f = UnitFormatter(s.units, labels = unitLabels())
                         NumberField(
                             initial = UnitFormatter.trimNumber(f.energyValue(s.targets.budgetKcal.toDouble()), 0),
                             label = stringResource(R.string.profile_custom_budget_field, f.energyUnitLabel),
@@ -365,7 +366,7 @@ private class GoalEditState(s: ProfileGoalsState) {
 
 @Composable
 private fun GoalEditor(g: GoalEditState, s: ProfileGoalsState) {
-    val f = UnitFormatter(s.units)
+    val f = UnitFormatter(s.units, labels = unitLabels())
     ChoiceList(
         listOf(
             Choice(GoalType.LOSE, stringResource(R.string.goal_lose)),

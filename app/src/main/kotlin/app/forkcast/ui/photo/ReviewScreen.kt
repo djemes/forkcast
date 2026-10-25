@@ -1,5 +1,6 @@
 package app.forkcast.ui.photo
 
+import app.forkcast.ui.format.unitLabels
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -124,7 +125,7 @@ fun ReviewRoute(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: () -> Unit) {
-    val f = UnitFormatter(state.units ?: UnitFormatter.defaultsFor(LocalLocale.current.platformLocale), LocalLocale.current.platformLocale)
+    val f = UnitFormatter(state.units ?: UnitFormatter.defaultsFor(LocalLocale.current.platformLocale), LocalLocale.current.platformLocale, labels = unitLabels())
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDiscard by remember { mutableStateOf(false) }
     var enlarged by remember { mutableStateOf<File?>(null) }

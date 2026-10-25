@@ -1,5 +1,6 @@
 package app.forkcast.ui.onboarding
 
+import app.forkcast.ui.format.unitLabels
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -110,7 +111,7 @@ private fun Title(text: String, body: String? = null) {
 @Composable
 private fun StepContent(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
     val d = state.draft
-    val f = UnitFormatter(d.units)
+    val f = UnitFormatter(d.units, labels = unitLabels())
     when (state.step) {
         OnboardingStep.UNITS -> {
             Title(stringResource(R.string.onb_units_title), stringResource(R.string.onb_units_body))
@@ -193,7 +194,7 @@ fun pacePresetsKg(units: UnitPrefs, goalType: GoalType?): List<Double> {
 @Composable
 private fun PaceInput(state: OnboardingUiState, onEvent: (OnboardingEvent) -> Unit) {
     val d = state.draft
-    val f = UnitFormatter(d.units)
+    val f = UnitFormatter(d.units, labels = unitLabels())
     SegmentRow(
         label = null,
         options = listOf(PaceMode.WEEKLY_RATE to R.string.pace_by_rate, PaceMode.TARGET_DATE to R.string.pace_by_date),

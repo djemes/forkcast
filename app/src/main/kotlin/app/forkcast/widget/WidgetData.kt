@@ -59,7 +59,9 @@ data class TodaySnapshot(
     val fatTargetG: Double,
     val units: UnitPrefs,
 ) {
-    val format: UnitFormatter get() = UnitFormatter(units)
+    /** In the app's language (unit labels from [context]'s resources). */
+    fun format(context: Context): UnitFormatter =
+        UnitFormatter(units, context.resources.configuration.locales[0], app.forkcast.ui.format.UnitLabels.from(context.resources))
 }
 
 object WidgetData {

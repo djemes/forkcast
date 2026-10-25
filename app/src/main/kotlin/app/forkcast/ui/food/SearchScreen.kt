@@ -1,5 +1,6 @@
 package app.forkcast.ui.food
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -102,7 +103,7 @@ fun SearchScreen(
     onDescribe: ((query: String) -> Unit)? = null,
     onLogSavedMeal: (SavedMeal) -> Unit = {},
 ) {
-    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale)
+    val f = UnitFormatter(state.units, LocalLocale.current.platformLocale, labels = unitLabels())
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { focus.requestFocus() }
     // The typed text lives here, not in the ViewModel's combined flow: that one arrives a frame

@@ -1,5 +1,6 @@
 package app.forkcast.ui.settings
 
+import app.forkcast.ui.format.unitLabels
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.heightIn
@@ -98,7 +99,8 @@ fun WaterSettingsScreen(
 ) {
     SettingsScaffold(title = stringResource(R.string.settings_water), onBack = onBack) {
         val s = state ?: return@SettingsScaffold
-        val f = remember(s.units) { UnitFormatter(s.units) }
+        val labels = unitLabels()
+        val f = remember(s.units, labels) { UnitFormatter(s.units, labels = labels) }
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             NumberField(
                 initial = UnitFormatter.trimNumber(f.waterValue(s.effectiveMl), 0),
