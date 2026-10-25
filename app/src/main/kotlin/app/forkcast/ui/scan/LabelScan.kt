@@ -44,6 +44,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import app.forkcast.core.domain.NutritionLabelParser
 import app.forkcast.core.domain.ParsedLabel
 import com.google.mlkit.vision.common.InputImage
@@ -183,6 +185,7 @@ fun LabelScanRoute(
                     OutlinedButton(onClick = { onParsed(s.partial) }, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                         Text(stringResource(R.string.scan_enter_manually))
                     }
+                    HelpLink(HelpEntry.LOG_LABEL)
                 }
                 LabelState.Ready -> Button(
                     onClick = {

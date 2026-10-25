@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import app.forkcast.core.data.backup.OpenedSettings
 import app.forkcast.core.data.backup.SettingsBackupRepository
 import app.forkcast.core.data.backup.SettingsCrypto
@@ -219,6 +221,9 @@ fun SettingsTransferDialogs(
         }
         is SettingsTransferStep.Error -> AlertDialog(
             onDismissRequest = onDismiss,
+            dismissButton = {
+                HelpLink(if (step.error == SettingsImportError.WRONG_PASSPHRASE) HelpEntry.BACKUP_PASSWORD else HelpEntry.BACKUP_RESTORE_FAILED, onOpen = onDismiss)
+            },
             text = {
                 Text(
                     stringResource(

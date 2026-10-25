@@ -55,6 +55,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.forGrams
 import app.forkcast.core.model.kcal
@@ -323,14 +325,17 @@ private fun LazyListScope.remoteSection(
         }
         is RemoteResults.Failed -> item(key = "e$title") {
             val name = stringResource(title)
-            Hint(
-                when (results.error) {
-                    is FoodApiError.Offline -> stringResource(R.string.search_offline)
-                    is FoodApiError.RateLimited -> stringResource(R.string.search_rate_limited, name)
-                    is FoodApiError.InvalidKey -> stringResource(R.string.search_invalid_key)
-                    else -> stringResource(R.string.search_failed, name)
-                },
-            )
+            Column {
+                Hint(
+                    when (results.error) {
+                        is FoodApiError.Offline -> stringResource(R.string.search_offline)
+                        is FoodApiError.RateLimited -> stringResource(R.string.search_rate_limited, name)
+                        is FoodApiError.InvalidKey -> stringResource(R.string.search_invalid_key)
+                        else -> stringResource(R.string.search_failed, name)
+                    },
+                )
+                HelpLink(HelpLinks.food(results.error))
+            }
         }
         is RemoteResults.Done ->
             if (results.foods.isEmpty()) item(key = "n$title") { Hint(stringResource(R.string.search_no_results)) }

@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.kcal
 import app.forkcast.core.network.FoodApiError
@@ -101,6 +103,7 @@ fun MatchSearchSheet(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+            state.error?.takeIf { !state.loading }?.let { HelpLink(HelpLinks.food(it)) }
             state.results.forEach { food ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,

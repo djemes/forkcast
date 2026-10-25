@@ -21,6 +21,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
 import app.forkcast.ui.common.ToggleRow
 import app.forkcast.core.data.backup.SettingsCrypto
 
@@ -132,6 +134,7 @@ fun UnlockBackupDialog(wrong: Boolean, onUnlock: (String) -> Unit, onDismiss: ()
                     isError = wrong,
                     supportingText = if (wrong) ({ Text(stringResource(R.string.backup_unlock_wrong)) }) else null,
                 )
+                if (wrong) HelpLink(HelpEntry.BACKUP_PASSWORD, onOpen = onDismiss)
             }
         },
         confirmButton = { TextButton(onClick = { onUnlock(password) }, enabled = password.isNotEmpty()) { Text(stringResource(R.string.backup_unlock)) } },

@@ -51,6 +51,8 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.data.repository.AiProfileStatus
 import app.forkcast.core.data.repository.MonthUsage
 import app.forkcast.core.model.CheckFailure
@@ -327,6 +329,7 @@ private fun CheckLine(check: ProfileCheck?) {
             },
         )
         IconLine(R.drawable.ic_error, stringResource(R.string.ai_check_failed, time, why), MaterialTheme.colorScheme.error)
+        HelpLink(HelpLinks.check(check.failure))
     }
 }
 

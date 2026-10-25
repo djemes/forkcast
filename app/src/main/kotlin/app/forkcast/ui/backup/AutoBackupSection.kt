@@ -42,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.data.backup.folder.CleanupPlan
 import app.forkcast.core.data.backup.folder.CleanupResult
 import app.forkcast.core.data.backup.folder.FolderBackupRepository
@@ -234,7 +237,10 @@ fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
                 s.folderName?.let { stringResource(R.string.backup_auto_folder, it) } ?: stringResource(R.string.backup_auto_folder_unnamed),
                 style = MaterialTheme.typography.bodyMedium,
             )
-            s.lastProblem?.let { Text(stringResource(folderProblemText(it)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error) }
+            s.lastProblem?.takeIf { state.problem == null }?.let {
+                Text(stringResource(folderProblemText(it)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                HelpLink(HelpLinks.folder(it))
+            }
             ToggleRow(stringResource(R.string.backup_auto_switch), null, s.settings.auto, actions.setAuto)
             if (s.settings.auto) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -294,8 +300,12 @@ fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
         when {
             state.justBackedUp -> Text(stringResource(R.string.backup_backed_up), style = MaterialTheme.typography.bodyMedium, color = ForkcastTheme.colors.pine)
             state.cleanedUp != null -> Text(cleanupResultText(state.cleanedUp), style = MaterialTheme.typography.bodyMedium, color = ForkcastTheme.colors.pine)
-            state.problem != null -> Text(stringResource(folderProblemText(state.problem)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+            state.problem != null -> {
+                Text(stringResource(folderProblemText(state.problem)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                HelpLink(HelpLinks.folder(state.problem))
+            }
         }
+        if ((state.cleanedUp?.failed ?: 0) > 0) HelpLink(HelpEntry.BACKUP_AUTO_FAILED)
     }
 
     state.cleanup?.let { CleanupDialog(it, actions) }
@@ -400,13 +410,16 @@ private fun CleanupDialog(plan: CleanupPlan, actions: AutoBackupActions) {
             title = { Text(stringResource(R.string.backup_cleanup_first_title)) },
             text = {
                 val time = fileTime(plan.latest)
-                Text(
-                    when (plan.reason) {
-                        NotRestorable.OLD_FORMAT -> stringResource(R.string.backup_cleanup_old_format, time)
-                        NotRestorable.UNREADABLE -> stringResource(R.string.backup_cleanup_unreadable, time)
-                        NotRestorable.PASSWORD -> stringResource(R.string.backup_cleanup_password, time)
-                    },
-                )
+                Column {
+                    Text(
+                        when (plan.reason) {
+                            NotRestorable.OLD_FORMAT -> stringResource(R.string.backup_cleanup_old_format, time)
+                            NotRestorable.UNREADABLE -> stringResource(R.string.backup_cleanup_unreadable, time)
+                            NotRestorable.PASSWORD -> stringResource(R.string.backup_cleanup_password, time)
+                        },
+                    )
+                    HelpLink(if (plan.reason == NotRestorable.PASSWORD) HelpEntry.BACKUP_PASSWORD else HelpEntry.BACKUP_RESTORE_FAILED, onOpen = actions.closeCleanup)
+                }
             },
             confirmButton = { TextButton(onClick = actions.backupThenCleanup) { Text(stringResource(R.string.backup_now_to_folder)) } },
             dismissButton = { TextButton(onClick = actions.closeCleanup) { Text(stringResource(R.string.cancel)) } },

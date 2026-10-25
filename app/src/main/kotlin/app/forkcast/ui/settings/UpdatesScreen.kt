@@ -38,6 +38,9 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.BuildConfig
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.data.update.ApkProblem
 import app.forkcast.core.data.update.Download
@@ -197,6 +200,7 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
             statusText(state, canInstall)?.let {
                 Text(it, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             }
+            updateHelp(state)?.let { HelpLink(it) }
 
             when (val ui = state.ui) {
                 is UpdateUi.Result -> when (val c = ui.check) {
@@ -281,6 +285,19 @@ private fun statusText(state: UpdatesState, canInstall: Boolean): String? {
         }
         is UpdateUi.DownloadFailed -> errorText(ui.error)
     }
+}
+
+/** Help for a check, download or install that didn't work; null while things are fine. */
+private fun updateHelp(state: UpdatesState): HelpEntry? = when (val ui = state.ui) {
+    is UpdateUi.Result -> when (val c = ui.check) {
+        UpdateCheck.NeedsToken -> HelpEntry.UPDATE_CHECK_FAILED
+        is UpdateCheck.Failed -> HelpLinks.update(c.error)
+        is UpdateCheck.UpToDate, is UpdateCheck.Available -> null
+    }
+    is UpdateUi.DownloadFailed -> HelpLinks.update(ui.error)
+    is UpdateUi.Refused -> HelpEntry.UPDATE_INSTALL_FAILED
+    is UpdateUi.Ready -> HelpEntry.UPDATE_INSTALL_FAILED.takeIf { state.installer is AppInstaller.Status.Failed }
+    else -> null
 }
 
 @Composable

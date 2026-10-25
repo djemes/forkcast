@@ -34,6 +34,7 @@ data class SettingsActions(
     val backup: () -> Unit = {},
     /** Null in builds without the updater (the Play build). */
     val updates: (() -> Unit)? = null,
+    val help: () -> Unit = {},
     val about: () -> Unit = {},
 )
 
@@ -65,6 +66,7 @@ fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions) {
         actions.updates?.let { Item(R.string.settings_updates, R.string.settings_updates_summary, it) }
         Item(R.string.settings_appearance, R.string.settings_appearance_summary, actions.appearance)
         actions.language?.let { Item(R.string.settings_language, R.string.settings_language_summary, it) }
+        Item(R.string.settings_help, R.string.settings_help_summary, actions.help)
         Item(R.string.settings_about, R.string.settings_about_summary, actions.about)
     }
 }

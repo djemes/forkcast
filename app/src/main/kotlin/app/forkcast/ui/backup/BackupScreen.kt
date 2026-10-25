@@ -35,6 +35,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import app.forkcast.ui.help.HelpEntry
+import app.forkcast.ui.help.HelpLink
+import app.forkcast.ui.help.HelpLinks
+import app.forkcast.ui.help.LocalHelp
+import app.forkcast.ui.help.showError
 import app.forkcast.ui.common.ToggleRow
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.ImportMode
@@ -138,12 +143,17 @@ fun BackupScreen(
     LaunchedEffect(extraNotice) {
         val notice = extraNotice ?: return@LaunchedEffect
         onExtraNoticeShown()
-        snackbar.showSnackbar(resources.getString(notice))
+        // Settings transfer: only "Couldn't save the file" is a problem.
+        if (notice == R.string.settings_failed) snackbar.showError(resources.getString(notice), resources.getString(R.string.help_link)) { openHelp(HelpEntry.BACKUP_SAVE_FAILED) }
+        else snackbar.showSnackbar(resources.getString(notice))
     }
+    val openHelp = LocalHelp.current
     LaunchedEffect(state.notice) {
         val notice = state.notice ?: return@LaunchedEffect
         onEvent(BackupEvent.NoticeShown)
-        snackbar.showSnackbar(resources.getString(notice.message()))
+        val message = resources.getString(notice.message())
+        if (notice == BackupNotice.ExportFailed) snackbar.showError(message, resources.getString(R.string.help_link)) { openHelp(HelpEntry.BACKUP_SAVE_FAILED) }
+        else snackbar.showSnackbar(message)
     }
 
     Box(Modifier.fillMaxSize()) {
@@ -246,9 +256,12 @@ private fun BackupDialogs(dialog: BackupDialog, onEvent: (BackupEvent) -> Unit) 
                 },
             ),
             onDismiss = dismiss,
+            help = HelpLinks.restore(dialog.reason),
         )
-        BackupDialog.ReadFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_read_failed), dismiss)
-        BackupDialog.ImportFailed -> MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_import_failed), dismiss)
+        BackupDialog.ReadFailed ->
+            MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_read_failed), dismiss, HelpEntry.BACKUP_RESTORE_FAILED)
+        BackupDialog.ImportFailed ->
+            MessageDialog(stringResource(R.string.backup_rejected_title), stringResource(R.string.backup_import_failed), dismiss, HelpEntry.BACKUP_RESTORE_FAILED)
     }
 }
 
@@ -291,13 +304,15 @@ internal fun AiServersNote(servers: List<String>) {
     )
 }
 
+/** [help]: the entry a refusal links to; its "Help" closes the dialog on the way. */
 @Composable
-private fun MessageDialog(title: String, body: String, onDismiss: () -> Unit) {
+private fun MessageDialog(title: String, body: String, onDismiss: () -> Unit, help: HelpEntry? = null) {
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(title) },
         text = { Text(body) },
         confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.ok)) } },
+        dismissButton = if (help != null) ({ HelpLink(help, onOpen = onDismiss) }) else null,
     )
 }
 
