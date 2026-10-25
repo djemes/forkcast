@@ -73,6 +73,16 @@ import kotlin.math.roundToInt
  * glass strength and widget color, with a live preview on a light and a dark wallpaper.
  */
 class WidgetSettingsActivity : ComponentActivity() {
+    /**
+     * The screen is exported (Android starts it when a widget is added), so any app could open it
+     * with any widget id: only a Forkcast widget's id is acted on (REVIEW-2 S6).
+     */
+    internal fun isOurs(appWidgetId: Int): Boolean {
+        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) return false
+        val info = runCatching { AppWidgetManager.getInstance(this).getAppWidgetInfo(appWidgetId) }.getOrNull() ?: return false
+        return info.provider == android.content.ComponentName(this, CaloriesWidgetReceiver::class.java)
+    }
+
     // The app's own language on Android 10–12 (AppLanguage).
     override fun attachBaseContext(newBase: android.content.Context) = super.attachBaseContext(app.forkcast.AppLanguage.wrap(newBase))
 
@@ -84,7 +94,7 @@ class WidgetSettingsActivity : ComponentActivity() {
             ?: AppWidgetManager.INVALID_APPWIDGET_ID
         // Backing out keeps whatever the widget had.
         setResult(RESULT_CANCELED, Intent().putExtra(AppWidgetManager.EXTRA_APPWIDGET_ID, appWidgetId))
-        if (appWidgetId == AppWidgetManager.INVALID_APPWIDGET_ID) {
+        if (!isOurs(appWidgetId)) {
             finish()
             return
         }
