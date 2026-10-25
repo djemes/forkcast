@@ -205,7 +205,12 @@ fun SettingsTransferDialogs(
             AlertDialog(
                 onDismissRequest = onDismiss,
                 title = { Text(stringResource(R.string.settings_preview_title)) },
-                text = { Text(pluralStringResource(R.plurals.settings_preview_body, p.keyCount, made, profiles, p.keyCount)) },
+                text = {
+                    Column {
+                        Text(pluralStringResource(R.plurals.settings_preview_body, p.keyCount, made, profiles, p.keyCount))
+                        if (p.aiServers.isNotEmpty()) AiServersNote(p.aiServers)
+                    }
+                },
                 confirmButton = {
                     TextButton(onClick = onApply) { Text(stringResource(R.string.settings_replace), color = MaterialTheme.colorScheme.error) }
                 },

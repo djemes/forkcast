@@ -304,6 +304,33 @@ class BackupRepositoryTest {
         assertThat(saved.logEntries.map { it.id }).containsExactly("old")
     }
 
+    /** REVIEW-2 S4: a file can't quietly point AI estimates at someone else's server. */
+    @Test fun customAiServersAreNamedAndArriveTurnedOff() = runTest {
+        // This phone already has its own Ollama profile on the same server: it stays on.
+        dao.upsertAiProfiles(listOf(aiProfile("mine", "http://192.168.1.20:11434/v1/", updatedAt = 1)))
+        val incoming = export(
+            aiProfiles = listOf(
+                aiProfile("mine", "http://192.168.1.20:11434/v1", updatedAt = 5),
+                aiProfile("theirs", "https://collector.example:8443", updatedAt = 5),
+                aiProfile("openai", "https://api.openai.com", updatedAt = 5),
+                aiProfile("gemini", null, provider = ProviderId.GEMINI, updatedAt = 5),
+            ),
+        )
+        assertThat(repo.parse(BackupJson.encodeToString(ForkcastExport.serializer(), incoming)).let { (it as ParsedBackup.Ok).preview.aiServers })
+            .containsExactly("192.168.1.20:11434", "collector.example:8443").inOrder()
+
+        repo.import(incoming, ImportMode.MERGE)
+        val merged = dao.aiProfiles().associate { it.id to it.enabled }
+        assertThat(merged).containsExactly("mine", true, "theirs", false, "openai", true, "gemini", true)
+
+        // A replace with an existing profile moved to another server turns it off too.
+        repo.import(export(aiProfiles = listOf(aiProfile("mine", "http://203.0.113.9:11434", updatedAt = 9))), ImportMode.REPLACE)
+        assertThat(dao.aiProfiles().single().enabled).isFalse()
+    }
+
+    private fun aiProfile(id: String, baseUrl: String?, updatedAt: Long, provider: ProviderId = ProviderId.OPENAI_COMPAT) =
+        AiProfileEntity(id, id, provider, "m", baseUrl, TierLabel.FREE, 0, true, false, null, 1, updatedAt)
+
     private fun withoutExportedAt(json: String): JsonObject =
         JsonObject(BackupJson.parseToJsonElement(json).jsonObject - "exportedAt")
 
@@ -314,10 +341,11 @@ class BackupRepositoryTest {
         dayStatus: List<DayStatusEntity> = emptyList(),
         activityDays: List<ActivityDayEntity> = emptyList(),
         settings: AppSettings? = null,
+        aiProfiles: List<AiProfileEntity> = emptyList(),
     ) = ForkcastExport(
         appVersion = "0.1.0", exportedAt = "2026-10-18T16:00:00Z", timeZone = "America/New_York",
         mealSlots = mealSlots, goals = goals, logEntries = logEntries, dayStatus = dayStatus,
-        activityDays = activityDays, settings = settings,
+        activityDays = activityDays, settings = settings, aiProfiles = aiProfiles,
     )
 
     private fun slot(id: String, name: String) = MealSlotEntity(id, name, 0, null, null, 1, 1, null)

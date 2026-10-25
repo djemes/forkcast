@@ -124,4 +124,5 @@
     <string name="unit_l">L</string>
     <string name="unit_g">g</string>
     <string name="unit_quantity">%1$s\u2009%2$s</string>
+    <string name="import_ai_servers">AI servers named in this file: %1$s. Profiles that use them arrive turned off; turn one on in Settings → AI only if you know whose server it is.</string>
 </resources>

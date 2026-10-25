@@ -103,6 +103,21 @@ class SettingsBackupTest {
         assertThat(s.notifications.permissionAsked).isFalse()
     }
 
+    /** REVIEW-2 S4: a settings file's own AI server is named and arrives turned off on another phone. */
+    @Test fun customServerFromAnotherPhoneArrivesTurnedOff() = runTest {
+        a.db.backupDao().upsertAiProfiles(listOf(AiProfileEntity("o", "Ollama", ProviderId.OPENAI_COMPAT, "llava", "http://100.64.0.7:11434", TierLabel.FREE, 0, true, false, null, 1, 1)))
+        val file = a.repo.export("correct horse battery".toCharArray())
+
+        val opened = b.repo.open(file, "correct horse battery".toCharArray()) as OpenedSettings.Ok
+        assertThat(opened.preview.aiServers).containsExactly("100.64.0.7:11434")
+        b.repo.apply(opened.payload)
+        assertThat(b.db.backupDao().aiProfiles().single().enabled).isFalse()
+
+        // Back on the phone that made it, the same profile on the same server stays on.
+        a.repo.apply((a.repo.open(file, "correct horse battery".toCharArray()) as OpenedSettings.Ok).payload)
+        assertThat(a.db.backupDao().aiProfiles().single().enabled).isTrue()
+    }
+
     @Test fun wrongPassphraseAndTamperingFailCleanly() = runTest {
         seedA()
         val file = a.repo.export("correct horse battery".toCharArray())

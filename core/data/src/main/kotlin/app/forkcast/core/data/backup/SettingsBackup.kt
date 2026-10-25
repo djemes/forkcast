@@ -57,6 +57,8 @@ data class SettingsPreview(
     val profileNames: List<String>,
     val keyCount: Int,
     val hasFoodDatabaseKey: Boolean,
+    /** Servers the file's own AI profiles point at ([ImportedAiServers]); they arrive turned off. */
+    val aiServers: List<String> = emptyList(),
 )
 
 enum class SettingsImportError { UNREADABLE, NOT_FORKCAST, NEWER_VERSION, WRONG_PASSPHRASE }
@@ -205,6 +207,7 @@ class SettingsBackupRepository @Inject constructor(
                 profileNames = payload.aiProfiles.sortedBy { it.sortOrder }.map { it.name },
                 keyCount = payload.secrets.size,
                 hasFoodDatabaseKey = SecretName.USDA_API_KEY.name in payload.secrets,
+                aiServers = ImportedAiServers.names(payload.aiProfiles),
             ),
         )
     }
@@ -215,8 +218,12 @@ class SettingsBackupRepository @Inject constructor(
         val dao = db.backupDao()
         db.withTransaction {
             val incoming = payload.aiProfiles.map { it.id }.toSet()
-            dao.upsertAiProfiles(dao.aiProfiles().filter { it.id !in incoming && it.deletedAt == null }.map { it.copy(deletedAt = now, updatedAt = now) })
-            dao.upsertAiProfiles(payload.aiProfiles.map { it.copy(updatedAt = now, deletedAt = null, cooldownUntil = null, needsAttention = false) })
+            val local = dao.aiProfiles()
+            dao.upsertAiProfiles(local.filter { it.id !in incoming && it.deletedAt == null }.map { it.copy(deletedAt = now, updatedAt = now) })
+            dao.upsertAiProfiles(
+                ImportedAiServers.guard(payload.aiProfiles, local)
+                    .map { it.copy(updatedAt = now, deletedAt = null, cooldownUntil = null, needsAttention = false) },
+            )
         }
         settings.updateData { local ->
             payload.settings.copy(notifications = payload.settings.notifications.copy(permissionAsked = local.notifications.permissionAsked))

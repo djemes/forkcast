@@ -55,6 +55,8 @@ data class BackupPreview(
     /** First and last day with any logged food, water, or weight. */
     val firstDate: LocalDate?,
     val lastDate: LocalDate?,
+    /** Servers the file's own AI profiles point at ([ImportedAiServers]); they arrive turned off. */
+    val aiServers: List<String> = emptyList(),
 )
 
 sealed interface ParsedBackup {
@@ -173,6 +175,7 @@ class RoomBackupRepository @Inject constructor(
     private suspend fun replace(export: ForkcastExport): ImportSummary {
         writeSafetyBackup()
         db.withTransaction {
+            val aiProfiles = ImportedAiServers.guard(export.aiProfiles, dao.aiProfiles())
             dao.clearAll()
             export.profile?.let { dao.upsertProfiles(listOf(it)) }
             dao.upsertGoals(export.goals)
@@ -189,7 +192,7 @@ class RoomBackupRepository @Inject constructor(
             dao.upsertDayStatus(export.dayStatus)
             dao.upsertAiEstimates(export.aiEstimates)
             dao.upsertAiComponents(export.aiComponents)
-            dao.upsertAiProfiles(export.aiProfiles)
+            dao.upsertAiProfiles(aiProfiles)
             dao.upsertUsageRecords(export.usageRecords)
             dao.upsertNotificationLog(export.notificationLog)
             dao.upsertAiMatchCache(export.aiMatchCache)
@@ -226,7 +229,8 @@ class RoomBackupRepository @Inject constructor(
             val estimates = export.aiEstimates.map { it.copy(mealSlotId = slotIds[it.mealSlotId] ?: it.mealSlotId) }
             dao.upsertAiEstimates(newer(dao.aiEstimates(), estimates, { it.id }, { it.updatedAt }, tally))
             dao.upsertAiComponents(newer(dao.aiComponents(), export.aiComponents, { it.id }, { it.updatedAt }, tally))
-            dao.upsertAiProfiles(newer(dao.aiProfiles(), export.aiProfiles, { it.id }, { it.updatedAt }, tally))
+            val localProfiles = dao.aiProfiles()
+            dao.upsertAiProfiles(ImportedAiServers.guard(newer(localProfiles, export.aiProfiles, { it.id }, { it.updatedAt }, tally), localProfiles))
             dao.upsertUsageRecords(newer(dao.usageRecords(), export.usageRecords, { it.id }, { it.updatedAt }, tally))
             // One row per (date, type, threshold) (unique index): only add what this phone hasn't logged.
             val fired = dao.notificationLog().map { Triple(it.date, it.type, it.threshold) }.toSet()
@@ -352,6 +356,7 @@ internal fun preview(export: ForkcastExport): BackupPreview {
         ),
         firstDate = dates.minOrNull(),
         lastDate = dates.maxOrNull(),
+        aiServers = ImportedAiServers.names(export.aiProfiles),
     )
 }
 

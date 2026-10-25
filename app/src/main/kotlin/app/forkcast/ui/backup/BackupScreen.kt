@@ -272,12 +272,23 @@ private fun PreviewText(preview: BackupPreview, photos: Int) {
             if (recipes > 0) Text(stringResource(R.string.backup_preview_recipes, recipes))
             if (!hasProfile) Text(stringResource(R.string.backup_preview_no_profile))
         }
+        if (preview.aiServers.isNotEmpty()) AiServersNote(preview.aiServers)
         Text(if (photos > 0) stringResource(R.string.backup_preview_photos, photos) else stringResource(R.string.backup_preview_no_photos))
         if (preview.firstDate != null && preview.lastDate != null) {
             Text(stringResource(R.string.backup_preview_dates, dateFormat.format(preview.firstDate), dateFormat.format(preview.lastDate)))
         }
         Text(stringResource(R.string.backup_preview_choices), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 8.dp))
     }
+}
+
+/** Servers named by the file's AI profiles (REVIEW-2 S4): they arrive turned off. */
+@Composable
+internal fun AiServersNote(servers: List<String>) {
+    Text(
+        stringResource(R.string.import_ai_servers, servers.joinToString(", ")),
+        color = MaterialTheme.colorScheme.error,
+        modifier = Modifier.padding(top = 4.dp),
+    )
 }
 
 @Composable

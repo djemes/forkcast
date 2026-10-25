@@ -127,4 +127,5 @@
     <string name="unit_l">L</string>
     <string name="unit_g">g</string>
     <string name="unit_quantity">%1$s\u2009%2$s</string>
+    <string name="import_ai_servers">Servidores de IA citados neste arquivo: %1$s. Os perfis que os usam chegam desativados; ative um em Configurações → IA só se você souber de quem é o servidor.</string>
 </resources>
