@@ -905,6 +905,35 @@ private fun MealSectionView(
             .background(MaterialTheme.colorScheme.surfaceContainerLow, RoundedCornerShape(20.dp))
             .padding(start = 4.dp, end = 4.dp, top = 4.dp, bottom = 8.dp),
     ) {
+        // At large font sizes the subtotal moves under the name, so a long meal name never breaks mid-word.
+        val large = LocalDensity.current.fontScale > 1.3f
+        val subtotal = @Composable {
+            // The subtotal, and under it the meal's time. The whole block is the 48 dp target that
+            // changes the time for the whole meal (the time alone was too small to tap).
+            val minute = meal.mealMinute.takeIf { !meal.timePerItem }
+            val time = minute?.let { app.forkcast.ui.common.mealTimeText(it) }
+            val label = time?.let { stringResource(R.string.meal_time_set, name, it) }
+            Column(
+                horizontalAlignment = if (large) Alignment.Start else Alignment.End,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .heightIn(min = 48.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .then(
+                        if (label != null) {
+                            Modifier
+                                .clickable(onClickLabel = label, role = Role.Button) { editTime = true }
+                                .semantics(mergeDescendants = true) { contentDescription = label }
+                        } else {
+                            Modifier
+                        },
+                    )
+                    .padding(horizontal = 4.dp),
+            ) {
+                Text(f.energy(meal.kcal), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (time != null) Text(time, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+            }
+        }
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 48.dp).padding(start = 12.dp)) {
             Text(
                 text = name,
@@ -913,27 +942,7 @@ private fun MealSectionView(
                     .weight(1f)
                     .semantics { heading() },
             )
-            if (meal.entries.isNotEmpty()) {
-                // Right side: the subtotal, and under it the meal's time (tap to change it for the whole meal).
-                val minute = meal.mealMinute.takeIf { !meal.timePerItem }
-                Column(horizontalAlignment = Alignment.End) {
-                    Text(f.energy(meal.kcal), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    if (minute != null) {
-                        val time = app.forkcast.ui.common.mealTimeText(minute)
-                        val label = stringResource(R.string.meal_time_set, name, time)
-                        Text(
-                            time,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(8.dp))
-                                .clickable(onClickLabel = label, role = Role.Button) { editTime = true }
-                                .semantics { contentDescription = label }
-                                .padding(horizontal = 4.dp, vertical = 2.dp),
-                        )
-                    }
-                }
-            }
+            if (meal.entries.isNotEmpty() && !large) subtotal()
             TextButton(onClick = onAdd, modifier = Modifier.semantics { contentDescription = addDescription }) {
                 Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(4.dp))
@@ -956,6 +965,7 @@ private fun MealSectionView(
                 }
             }
         }
+        if (meal.entries.isNotEmpty() && large) Box(Modifier.padding(start = 8.dp)) { subtotal() }
         if (meal.entries.isEmpty() && meal.pending.isEmpty()) {
             val empty = @Composable { modifier: Modifier ->
                 Text(

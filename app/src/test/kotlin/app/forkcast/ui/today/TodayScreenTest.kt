@@ -3,6 +3,9 @@ package app.forkcast.ui.today
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.assertHeightIsAtLeast
 import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.filterToOne
 import androidx.compose.ui.test.hasClickAction
@@ -224,6 +227,22 @@ class TodayScreenTest {
         compose.onNodeWithContentDescription("Settings").assertIsDisplayed()
         compose.onNodeWithContentDescription("Log").assertIsDisplayed()
         row("Banana").assertIsDisplayed()
+    }
+
+    /** The meal's subtotal and time are one 48 dp target; at 200 % they move under the name. */
+    @Test fun mealTimeIsABigTargetAtDoubleFontScale() {
+        compose.setContent {
+            val d = LocalDensity.current
+            CompositionLocalProvider(LocalDensity provides Density(d.density, fontScale = 2f)) {
+                // Breakfast eaten at 7:30, so its header shows a time.
+                val timed = state.copy(meals = state.meals.map { m -> m.copy(entries = m.entries.map { it.copy(eatenMinute = 450) }) })
+                ForkcastTheme { TodayScreen(timed, onEvent = {}) }
+            }
+        }
+        compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasContentDescription("Change Breakfast's time", substring = true))
+        compose.onNode(hasContentDescription("Change Breakfast's time", substring = true) and hasClickAction())
+            .assertIsDisplayed()
+            .assertHeightIsAtLeast(48.dp)
     }
 
     @Test fun otherDayIsObviousAndTodayIsOneTapAway() {
