@@ -236,6 +236,8 @@ class DefaultAiEstimateRepository @Inject constructor(
                 MealEstimateRequest(
                     images = images, description = e.description, mealSlot = mealName, localTime = e.localTime,
                     unitsHint = e.unitsHint, personalContext = e.personalContext,
+                    // The app's language (per-app setting or the phone's), named in English for the prompt.
+                    language = context.resources.configuration.locales[0].getDisplayName(java.util.Locale.ENGLISH),
                     previous = e.result.takeIf { e.correction != null }, correction = e.correction, model = p.model,
                     onSent = {
                         launch { patch(id) { if (it.status == EstimateStatus.RUNNING) it.copy(phase = EstimatePhase.WAITING, phaseSince = clock.millis()) else it } }

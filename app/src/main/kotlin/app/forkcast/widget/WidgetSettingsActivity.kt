@@ -73,6 +73,9 @@ import kotlin.math.roundToInt
  * glass strength and widget color, with a live preview on a light and a dark wallpaper.
  */
 class WidgetSettingsActivity : ComponentActivity() {
+    // The app's own language on Android 10–12 (AppLanguage).
+    override fun attachBaseContext(newBase: android.content.Context) = super.attachBaseContext(app.forkcast.AppLanguage.wrap(newBase))
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -128,13 +131,14 @@ private fun WidgetSettingsScreen(initial: WidgetStyle, onBack: () -> Unit, onDon
             }
             Text(stringResource(R.string.widget_settings_background), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
             val percent = (background * 100).roundToInt()
+            val percentText = java.text.NumberFormat.getPercentInstance(androidx.compose.ui.platform.LocalLocale.current.platformLocale).format(percent / 100.0)
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Slider(
                     value = background,
                     onValueChange = { background = (it * 20).roundToInt() / 20f },
-                    modifier = Modifier.weight(1f).semantics { stateDescription = "$percent %" },
+                    modifier = Modifier.weight(1f).semantics { stateDescription = percentText },
                 )
-                Text("$percent %", style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 12.dp))
+                Text(percentText, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 12.dp))
             }
             Text(stringResource(R.string.widget_settings_background_hint), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(stringResource(R.string.widget_settings_text), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })

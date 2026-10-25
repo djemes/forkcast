@@ -23,6 +23,9 @@ import app.forkcast.ui.theme.ForkcastTheme
  * Android 13, and the VIEW_PERMISSION_USAGE alias from Android 14 (see AndroidManifest.xml).
  */
 class HealthPrivacyActivity : ComponentActivity() {
+    // The app's own language on Android 10–12 (AppLanguage).
+    override fun attachBaseContext(newBase: android.content.Context) = super.attachBaseContext(app.forkcast.AppLanguage.wrap(newBase))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()

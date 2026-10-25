@@ -44,6 +44,8 @@ data class MealEstimateRequest(
      * "Waiting for Gemini" (owner, 2026-10-23). Never part of what is sent.
      */
     val onSent: (() -> Unit)? = null,
+    /** The app's language in English ("English", "Portuguese (Brazil)"): food and meal names come back in it. */
+    val language: String = "English",
 ) {
     /** A described meal (SPEC §4.6.2): no photo, the description is all the model has. */
     val isTextOnly: Boolean get() = images.isEmpty()

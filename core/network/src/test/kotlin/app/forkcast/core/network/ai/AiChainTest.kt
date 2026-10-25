@@ -121,6 +121,8 @@ class AiChainTest {
             "images", "description", "mealSlot", "localTime", "unitsHint", "personalContext", "previous", "correction", "model",
             // A progress callback (1.2), never serialized: serializedRequestsHaveOnlyExpectedFields checks the bodies.
             "onSent",
+            // The app's language for names (2.0 task 1.6): not personal data.
+            "language",
         )
     }
 
@@ -159,7 +161,7 @@ class AiChainTest {
         }
         // The only free text besides the prompt is what the user typed for this meal.
         val text = MealPrompt.userText(r)
-        assertThat(text).isEqualTo("Meal: Breakfast at 08:00. Units the user thinks in: metric.\nDescription: toast\nPersonal context: none")
+        assertThat(text).isEqualTo("Meal: Breakfast at 08:00. Units the user thinks in: metric.\nWrite every food and meal name in English.\nDescription: toast\nPersonal context: none")
     }
 
     private fun allKeys(e: JsonElement): Set<String> = when (e) {

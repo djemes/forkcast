@@ -63,4 +63,7 @@
     <string name="review_photo">Meal photo %1$d</string>
     <string name="review_no_profile">No AI profile could be used. Check Settings → AI.</string>
     <string name="review_disabled">Photo estimates are turned off in Settings → AI.</string>
+    <!-- Validator warnings (roadmap 2.0, task 1.6: words from resources, not from the parser) -->
+    <string name="review_warning_no_weight">\"%1$s\" left out: no weight</string>
+    <string name="review_warning_kcal_capped">\"%1$s\": calories looked impossible for its weight and were lowered</string>
 </resources>

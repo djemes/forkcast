@@ -41,6 +41,8 @@ healthConnect = "1.1.0"
 benchmark = "1.5.0"
 profileinstaller = "1.4.1"
 uiautomator = "2.4.0"
+# 2.0 Phase 1, checked 2026-10-24 on Google Maven: lint = AGP 9.4.1 + 23 (32.4.1)
+lint = "32.4.1"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -116,6 +118,10 @@ androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstall
 androidx-benchmark-macro = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
 health-connect = { module = "androidx.health.connect:connect-client", version.ref = "healthConnect" }
+
+lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lint" }
+lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lint" }
+lint-tests = { module = "com.android.tools.lint:lint-tests", version.ref = "lint" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

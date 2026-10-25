@@ -19,6 +19,9 @@ import kotlinx.coroutines.launch
  * the app, confirms with a short message and closes (an invisible activity, because shortcuts can only start activities).
  */
 class AddWaterActivity : ComponentActivity() {
+    // The app's own language on Android 10–12 (AppLanguage).
+    override fun attachBaseContext(newBase: android.content.Context) = super.attachBaseContext(app.forkcast.AppLanguage.wrap(newBase))
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {

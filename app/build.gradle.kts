@@ -49,6 +49,11 @@ val hasReleaseKey = releaseStoreFile != null
 val playEnabled = providers.gradleProperty("forkcast.play").isPresent
 
 android {
+    // No hardcoded user-facing text (roadmap 2.0, task 1.6): XML via HardcodedText, Kotlin via :lint-checks.
+    lint {
+        error += "HardcodedText"
+    }
+
     namespace = "app.forkcast"
     compileSdk = 37
 
@@ -87,6 +92,8 @@ android {
 
     buildTypes {
         debug {
+            // en-XA (long, accented) and ar-XB (right-to-left) to check layouts (roadmap 2.0, task 1.6).
+            isPseudoLocalesEnabled = true
             // With the release key present (owner's PC), debug builds share its signature.
             // Without it (CI, other machines), the standard debug key is used.
             if (hasReleaseKey) signingConfig = signingConfigs.getByName("release")
@@ -125,7 +132,7 @@ android {
     // Only the app's languages: library strings in 80 others made resources.arsc 1 MB and could
     // show a system dialog in a language the app doesn't speak.
     androidResources {
-        localeFilters += listOf("en", "pt-rBR")
+        localeFilters += listOf("en", "pt-rBR", "en-rXA", "ar-rXB")
     }
 }
 
@@ -151,6 +158,7 @@ baselineProfile {
 }
 
 dependencies {
+    lintChecks(project(":lint-checks"))
     implementation(project(":core:model"))
     implementation(libs.androidx.profileinstaller)
     baselineProfile(project(":baselineprofile"))

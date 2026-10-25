@@ -29,6 +29,8 @@ data class SettingsActions(
     val foodDatabases: () -> Unit = {},
     val notifications: () -> Unit = {},
     val appearance: () -> Unit = {},
+    /** Null while Forkcast ships one language. */
+    val language: (() -> Unit)? = null,
     val backup: () -> Unit = {},
     /** Null in builds without the updater (the Play build). */
     val updates: (() -> Unit)? = null,
@@ -62,6 +64,7 @@ fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions) {
         Item(R.string.settings_backup_data, R.string.settings_backup_data_summary, actions.backup)
         actions.updates?.let { Item(R.string.settings_updates, R.string.settings_updates_summary, it) }
         Item(R.string.settings_appearance, R.string.settings_appearance_summary, actions.appearance)
+        actions.language?.let { Item(R.string.settings_language, R.string.settings_language_summary, it) }
         Item(R.string.settings_about, R.string.settings_about_summary, actions.about)
     }
 }

@@ -77,6 +77,9 @@
     <string name="settings_health_connect">Health Connect</string>
     <string name="settings_updates">Updates</string>
     <string name="settings_updates_summary">From GitHub: check now, automatic checks, betas</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_summary">English, Portuguese, or the phone\'s language</string>
+    <string name="language_device">The phone\'s language</string>
     <string name="settings_backup_data">Backup &amp; data</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_about">About</string>
@@ -112,4 +115,8 @@
     <string name="key_state_hidden">Key hidden</string>
     <string name="key_replace">Replace key</string>
     <string name="key_new">New key</string>
+    <!-- Pieces joined into a list ("a; b") -->
+    <string name="list_separator">"; "</string>
+    <!-- "Protein 12 g": a macro's name and its amount -->
+    <string name="macro_amount">%1$s %2$s</string>
 </resources>

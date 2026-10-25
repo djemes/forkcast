@@ -22,3 +22,11 @@ if (externalBuildRoot != null) {
         layout.buildDirectory.set(file("$externalBuildRoot/forkcast-build/$name"))
     }
 }
+
+// CI runs `testDebugUnitTest`, which only Android modules have: without this, the pure-Kotlin
+// modules' tests (:core:domain, :core:network, :lint-checks) never ran in CI.
+subprojects {
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        tasks.register("testDebugUnitTest") { dependsOn("test") }
+    }
+}

@@ -34,6 +34,9 @@ class MainActivity : ComponentActivity() {
 
     private val viewModel: MainViewModel by viewModels()
 
+    // The app's own language on Android 10–12 (AppLanguage).
+    override fun attachBaseContext(newBase: android.content.Context) = super.attachBaseContext(app.forkcast.AppLanguage.wrap(newBase))
+
     // Lazy and used off the main thread: the first frame shouldn't wait for Health Connect.
     @Inject lateinit var health: dagger.Lazy<HealthRepository>
     @Inject lateinit var maintenance: dagger.Lazy<MaintenanceRepository>

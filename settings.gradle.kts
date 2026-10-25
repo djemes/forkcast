@@ -27,6 +27,8 @@ include(":core:model")
 include(":core:domain")
 include(":core:data")
 include(":core:network")
+// Lint checks of our own (hardcoded user-facing text).
+include(":lint-checks")
 // Generates the Baseline Profile (app/src/githubRelease/generated/baselineProfiles/) on the emulator.
 include(":baselineprofile")
 

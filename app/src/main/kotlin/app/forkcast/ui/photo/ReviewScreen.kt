@@ -245,7 +245,7 @@ private fun ReviewBody(state: ReviewUiState, e: AiEstimateEntity, f: UnitFormatt
         Text(stringResource(R.string.review_by, name), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     if (e.warnings.isNotEmpty()) {
-        Text(stringResource(R.string.review_warnings, e.warnings.joinToString("; ")), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        Text(stringResource(R.string.review_warnings, e.warnings.map { warningText(it) }.joinToString(stringResource(R.string.list_separator))), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
     }
     e.result?.clarifyingQuestion?.takeIf { e.status == EstimateStatus.NEEDS_INPUT }?.let { q ->
         QuestionCard(q, onAnswer = { onEvent(ReviewEvent.Correct(it)) }, onAcceptAsIs = { onEvent(ReviewEvent.AcceptAsIs) })
@@ -836,4 +836,16 @@ private fun CorrectField(onSend: (String) -> Unit) {
         },
         modifier = Modifier.fillMaxWidth(),
     )
+}
+
+/** A validator warning ("<code>\t<item>") in words; text stored by 1.4 and earlier shows as it was. */
+@Composable
+private fun warningText(w: String): String {
+    val parts = w.split('\t', limit = 2)
+    val item = parts.getOrNull(1).orEmpty()
+    return when (parts[0]) {
+        app.forkcast.core.network.ai.MealEstimateParser.NO_WEIGHT -> stringResource(R.string.review_warning_no_weight, item)
+        app.forkcast.core.network.ai.MealEstimateParser.KCAL_CAPPED -> stringResource(R.string.review_warning_kcal_capped, item)
+        else -> w
+    }
 }

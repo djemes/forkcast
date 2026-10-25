@@ -71,6 +71,7 @@ import kotlinx.serialization.Serializable
 @Serializable data object AppearanceDestination
 @Serializable data object AboutDestination
 @Serializable data object UpdatesDestination
+@Serializable data object LanguageDestination
 @Serializable data object FoodDatabasesDestination
 @Serializable data object BackupDestination
 @Serializable data object WeightDestination
@@ -318,6 +319,8 @@ fun ForkcastNavHost(
             )
         }
         composable<SettingsDestination> {
+            val context = androidx.compose.ui.platform.LocalContext.current
+            val multilingual = androidx.compose.runtime.remember { app.forkcast.AppLanguage.available(context).size > 1 }
             SettingsScreen(
                 onBack = back,
                 actions = SettingsActions(
@@ -335,6 +338,7 @@ fun ForkcastNavHost(
                     backup = { navController.navigate(BackupDestination) },
                     about = { navController.navigate(AboutDestination) },
                     updates = { navController.navigate(UpdatesDestination) }.takeIf { app.forkcast.Distribution.current.hasUpdater },
+                    language = { navController.navigate(LanguageDestination) }.takeIf { multilingual },
                 ),
             )
         }
@@ -444,6 +448,7 @@ fun ForkcastNavHost(
         composable<AppearanceDestination> { AppearanceRoute(onBack = back) }
         composable<AboutDestination> { AboutRoute(onBack = back, onOpenUpdates = { navController.navigate(UpdatesDestination) }) }
         composable<UpdatesDestination> { app.forkcast.ui.settings.UpdatesRoute(onBack = back) }
+        composable<LanguageDestination> { app.forkcast.ui.settings.LanguageRoute(onBack = back) }
     }
 }
 

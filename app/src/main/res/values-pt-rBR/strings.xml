@@ -80,6 +80,9 @@
     <string name="settings_health_connect">Health Connect</string>
     <string name="settings_updates">Atualizações</string>
     <string name="settings_updates_summary">Do GitHub: verificar agora, automático, betas</string>
+    <string name="settings_language">Idioma</string>
+    <string name="settings_language_summary">Inglês, português ou o idioma do celular</string>
+    <string name="language_device">O idioma do celular</string>
     <string name="settings_backup_data">Backup e dados</string>
     <string name="settings_appearance">Aparência</string>
     <string name="settings_about">Sobre</string>
@@ -115,4 +118,8 @@
     <string name="key_state_hidden">Chave oculta</string>
     <string name="key_replace">Trocar chave</string>
     <string name="key_new">Nova chave</string>
+    <!-- Pieces joined into a list ("a; b") -->
+    <string name="list_separator">"; "</string>
+    <!-- "Protein 12 g": a macro's name and its amount -->
+    <string name="macro_amount">%1$s %2$s</string>
 </resources>

@@ -18,6 +18,7 @@ object MealPrompt {
     /** The text that follows the images in the user turn. */
     fun userText(r: MealEstimateRequest): String = buildString {
         append("Meal: ${r.mealSlot} at ${r.localTime}. Units the user thinks in: ${r.unitsHint}.\n")
+        append("Write every food and meal name in ${r.language}.\n")
         if (r.isTextOnly) append("No photo: estimate from the description alone.\n")
         append("Description: ${r.description?.takeIf { it.isNotBlank() }?.trim() ?: "none"}\n")
         append("Personal context: ${r.personalContext?.takeIf { it.isNotBlank() }?.trim() ?: "none"}")
@@ -39,7 +40,11 @@ object MealPrompt {
 object MealEstimateParser {
     private const val MAX_KCAL_PER_G = 9.5
 
+    /** [warnings] are "<code>\t<item name>" ([NO_WEIGHT], [KCAL_CAPPED]); the review screen words them. */
     data class Parsed(val json: MealEstimateJson, val warnings: List<String>)
+
+    const val NO_WEIGHT = "no_weight"
+    const val KCAL_CAPPED = "kcal_capped"
 
     fun parse(raw: String): Parsed {
         val text = stripFences(raw)
@@ -58,7 +63,7 @@ object MealEstimateParser {
         val items = input.items.mapNotNull { item ->
             val label = item.name.ifBlank { "item" }
             if (!(item.grams > 0) || item.grams.isNaN()) {
-                warnings += "Dropped \"$label\": no weight"
+                warnings += "$NO_WEIGHT\t$label"
                 return@mapNotNull null
             }
             var low = item.gramsLow.takeIf { it > 0 && it.isFinite() } ?: item.grams
@@ -69,7 +74,7 @@ object MealEstimateParser {
             var nutrients = item.nutrients
             if (nutrients.kcal < 0 || nutrients.kcal > item.grams * MAX_KCAL_PER_G) {
                 val capped = (item.grams * MAX_KCAL_PER_G).coerceAtLeast(0.0)
-                warnings += "\"$label\": calories looked impossible for its weight and were capped"
+                warnings += "$KCAL_CAPPED\t$label"
                 nutrients = nutrients.copy(kcal = nutrients.kcal.coerceIn(0.0, capped))
             }
             nutrients = nutrients.copy(
