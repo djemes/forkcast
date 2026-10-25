@@ -104,7 +104,8 @@
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
     <string name="key_saved_encrypted">Stored encrypted. Only the passphrase-protected settings export includes it.</string>
     <string name="key_copy">Copy key</string>
-    <string name="key_copied">Copied</string>
+    <string name="key_copied">Copied. The clipboard clears in a minute.</string>
+    <string name="key_clear_clipboard">Clear clipboard now</string>
     <string name="key_locked">Stored encrypted. Unlock with your fingerprint, face or screen lock to show or copy it.</string>
     <string name="key_unlock_title">Unlock to see the key</string>
     <string name="key_unlock_subtitle">%1$s</string>

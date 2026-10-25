@@ -101,9 +101,10 @@ fun SavedKeyField(label: String, secret: SecretText, modifier: Modifier = Modifi
     val shownState = stringResource(if (visible) R.string.key_state_shown else R.string.key_state_hidden)
     val unlockTitle = stringResource(R.string.key_unlock_title)
     val unlockSubtitle = stringResource(R.string.key_unlock_subtitle, label)
+    // "Copied, clears in a minute" with Clear now, for as long as the clipboard would hold it.
     LaunchedEffect(copied) {
         if (copied) {
-            delay(2_500)
+            delay(KeyClipboard.CLEAR_AFTER_MS)
             copied = false
         }
     }
@@ -126,6 +127,7 @@ fun SavedKeyField(label: String, secret: SecretText, modifier: Modifier = Modifi
         }
     }
     if (noLock) NoScreenLockDialog(onDismiss = { noLock = false })
+    SecureWhile(visible)
     OutlinedTextField(
         value = if (visible) secret.reveal() else secret.masked,
         onValueChange = {},
@@ -152,7 +154,15 @@ fun SavedKeyField(label: String, secret: SecretText, modifier: Modifier = Modifi
                         stringResource(if (visible) R.string.fdb_hide_key else R.string.fdb_show_key),
                     )
                 }
-                IconButton(onClick = { unlocked { scope.launch { clipboard.copySensitive(label, secret.reveal()); copied = true } } }) {
+                IconButton(onClick = {
+                    unlocked {
+                        scope.launch {
+                            clipboard.copySensitive(label, secret.reveal())
+                            KeyClipboard.clearSoon(context, secret.reveal())
+                            copied = true
+                        }
+                    }
+                }) {
                     Icon(painterResource(R.drawable.ic_content_copy), stringResource(R.string.key_copy))
                 }
             }
@@ -161,6 +171,11 @@ fun SavedKeyField(label: String, secret: SecretText, modifier: Modifier = Modifi
             .fillMaxWidth()
             .semantics { stateDescription = shownState },
     )
+    if (copied) {
+        TextButton(onClick = { KeyClipboard.clearNow(context, secret.reveal()); copied = false }) {
+            Text(stringResource(R.string.key_clear_clipboard))
+        }
+    }
 }
 
 /**
@@ -194,4 +209,28 @@ suspend fun Clipboard.copySensitive(label: String, text: String) {
     // ClipDescription.EXTRA_IS_SENSITIVE (API 33); older versions ignore the extra.
     clip.description.extras = PersistableBundle().apply { putBoolean("android.content.extra.IS_SENSITIVE", true) }
     setClipEntry(ClipEntry(clip))
+}
+
+/**
+ * A copied key doesn't stay on the clipboard (REVIEW-2 S2): [clearSoon] empties it after
+ * [CLEAR_AFTER_MS] if it still holds that key, and [clearNow] does it at once. Runs on the main
+ * looper, so leaving the screen doesn't cancel it.
+ */
+object KeyClipboard {
+    const val CLEAR_AFTER_MS = 60_000L
+    private val handler = android.os.Handler(android.os.Looper.getMainLooper())
+
+    fun clearSoon(context: android.content.Context, key: String) {
+        val app = context.applicationContext
+        handler.postDelayed({ clearIfStill(app, key) }, CLEAR_AFTER_MS)
+    }
+
+    fun clearNow(context: android.content.Context, key: String) = clearIfStill(context.applicationContext, key)
+
+    private fun clearIfStill(context: android.content.Context, key: String) {
+        val cm = context.getSystemService(android.content.ClipboardManager::class.java) ?: return
+        // Only our own copy: if the user copied something else since, it stays.
+        val current = runCatching { cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.text?.toString() }.getOrNull()
+        if (current == key) runCatching { cm.clearPrimaryClip() }
+    }
 }

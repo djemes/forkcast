@@ -237,6 +237,7 @@ private fun KeyField(state: AiProfileEditUiState, onEvent: (AiProfileEditEvent) 
             OutlinedButton(onClick = { onEvent(AiProfileEditEvent.ReplaceKey(true)) }) { Text(stringResource(R.string.key_replace)) }
         }
     } else if (state.copyKeyFrom == null) {
+        app.forkcast.ui.common.SecureWhile(visible && state.keyInput.isNotEmpty())
         OutlinedTextField(
             value = state.keyInput,
             onValueChange = { onEvent(AiProfileEditEvent.SetKey(it)) },

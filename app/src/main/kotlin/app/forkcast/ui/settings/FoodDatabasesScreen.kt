@@ -136,6 +136,7 @@ internal fun KeyEntry(label: String, onSave: (String) -> Unit, onCancel: (() -> 
     var visible by remember { mutableStateOf(false) }
     val clipboard = LocalClipboard.current
     val scope = rememberCoroutineScope()
+    app.forkcast.ui.common.SecureWhile(visible && key.isNotEmpty())
     OutlinedTextField(
         value = key,
         onValueChange = { key = it.trim() },

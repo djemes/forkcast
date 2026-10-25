@@ -107,7 +107,8 @@
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
     <string name="key_saved_encrypted">Guardada com criptografia. Só a exportação de configurações protegida por senha a inclui.</string>
     <string name="key_copy">Copiar chave</string>
-    <string name="key_copied">Copiada</string>
+    <string name="key_copied">Copiada. A área de transferência é limpa em um minuto.</string>
+    <string name="key_clear_clipboard">Limpar área de transferência agora</string>
     <string name="key_locked">Guardada com criptografia. Desbloqueie com a digital, o rosto ou o bloqueio de tela para mostrar ou copiar.</string>
     <string name="key_unlock_title">Desbloqueie para ver a chave</string>
     <string name="key_unlock_subtitle">%1$s</string>
