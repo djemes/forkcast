@@ -12,7 +12,7 @@
     <string name="hc_write_nutrition_body">Cada item como um registro de nutrição com a refeição. Edições e exclusões acompanham.</string>
     <string name="hc_write_hydration">Água</string>
     <string name="hc_write_hydration_body">Cada registro como hidratação.</string>
-    <string name="hc_privacy_note">Os dados de saúde ficam neste celular. O Forkcast nunca os envia ao seu provedor de IA nem a nenhum outro lugar.</string>
+    <string name="hc_privacy_note">Os dados de saúde ficam neste celular. O Forkcast nunca os envia ao seu serviço de IA nem a nenhum outro lugar.</string>
     <string name="hc_extra_note">O Forkcast também pede para ler seus dados antigos, para trazer pesagens anteriores, e para ler em segundo plano, para sincronizar com o app fechado. Você pode desligar qualquer um deles na próxima tela.</string>
     <string name="hc_connect">Conectar</string>
     <string name="hc_unavailable">O Health Connect não está disponível neste celular.</string>
@@ -58,6 +58,6 @@
 
     <!-- Opened from Health Connect's "privacy policy" link -->
     <string name="hc_privacy_title">O Forkcast e seus dados de saúde</string>
-    <string name="hc_privacy_body">O Forkcast lê peso, gordura corporal, altura, passos, calorias gastas e treinos do Health Connect para preencher seu registro de peso, mostrar sua atividade e ajustar seu orçamento de calorias. Ele grava sua comida e água para que outros apps possam vê-las.\n\nEsses dados ficam no seu celular. O Forkcast não tem servidor, contas, análises nem anúncios, e nunca envia dados de saúde a provedores de IA, bancos de alimentos ou qualquer outra pessoa. Seus próprios backups (arquivos que você salva, ou backups automáticos numa pasta que você escolhe) podem incluir seu registro de peso e de atividade.\n\nVocê pode mudar o que o Forkcast pode ler ou gravar a qualquer momento no Health Connect, ou desconectar em Configurações › Health Connect do Forkcast.</string>
+    <string name="hc_privacy_body">O Forkcast lê peso, gordura corporal, altura, passos, calorias gastas e treinos do Health Connect para preencher seu registro de peso, mostrar sua atividade e ajustar seu orçamento de calorias. Ele grava sua comida e água para que outros apps possam vê-las.\n\nEsses dados ficam no seu celular. O Forkcast não tem servidor, contas, análises nem anúncios, e nunca envia dados de saúde a serviços de IA, bancos de alimentos ou qualquer outra pessoa. Seus próprios backups (arquivos que você salva, ou backups automáticos numa pasta que você escolhe) podem incluir seu registro de peso e de atividade.\n\nVocê pode mudar o que o Forkcast pode ler ou gravar a qualquer momento no Health Connect, ou desconectar em Configurações › Health Connect do Forkcast.</string>
     <string name="hc_privacy_close">Fechar</string>
 </resources>

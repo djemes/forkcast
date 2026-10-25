@@ -12,7 +12,7 @@
     <string name="hc_write_nutrition_body">Each entry as a nutrition record with its meal. Edits and deletions follow.</string>
     <string name="hc_write_hydration">Water</string>
     <string name="hc_write_hydration_body">Each entry as hydration.</string>
-    <string name="hc_privacy_note">Health data stays on this phone. Forkcast never sends it to your AI provider or anywhere else.</string>
+    <string name="hc_privacy_note">Health data stays on this phone. Forkcast never sends it to your AI service or anywhere else.</string>
     <string name="hc_extra_note">Forkcast also asks to read your past data, so earlier weigh-ins come in, and to read in the background, so it can sync while closed. You can turn off any of these on the next screen.</string>
     <string name="hc_connect">Connect</string>
     <string name="hc_unavailable">Health Connect isn\'t available on this phone.</string>
@@ -58,6 +58,6 @@
 
     <!-- Opened from Health Connect's "privacy policy" link -->
     <string name="hc_privacy_title">Forkcast and your health data</string>
-    <string name="hc_privacy_body">Forkcast reads weight, body fat, height, steps, calories burned and workouts from Health Connect to fill your weight log, show your activity, and adjust your calorie budget. It writes your food and water so other apps can see them.\n\nThis data stays on your phone. Forkcast has no server, no accounts, no analytics and no ads, and it never sends health data to AI providers, food databases or anyone else. Your own backups (files you save, or automatic backups to a folder you choose) can include your weight and activity log.\n\nYou can change what Forkcast may read or write at any time in Health Connect, or disconnect in Forkcast\'s Settings › Health Connect.</string>
+    <string name="hc_privacy_body">Forkcast reads weight, body fat, height, steps, calories burned and workouts from Health Connect to fill your weight log, show your activity, and adjust your calorie budget. It writes your food and water so other apps can see them.\n\nThis data stays on your phone. Forkcast has no server, no accounts, no analytics and no ads, and it never sends health data to AI services, food databases or anyone else. Your own backups (files you save, or automatic backups to a folder you choose) can include your weight and activity log.\n\nYou can change what Forkcast may read or write at any time in Health Connect, or disconnect in Forkcast\'s Settings › Health Connect.</string>
     <string name="hc_privacy_close">Close</string>
 </resources>

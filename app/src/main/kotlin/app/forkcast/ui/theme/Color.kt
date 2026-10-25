@@ -23,6 +23,15 @@ data class ForkcastColors(
     val carbs: Color,
     val fat: Color,
     val fiber: Color,
+    /**
+     * The macro and apricot hues as text (roadmap 2.0 task 3.6): the light-theme bar colors fall
+     * below 4.5:1 on the light surfaces, so words and numbers use these darker shades (5:1 or more on
+     * porcelain, white and the containers). Bars and dots keep the brighter hues.
+     */
+    val proteinText: Color,
+    val carbsText: Color,
+    val fatText: Color,
+    val apricotText: Color,
 )
 
 val LightForkcastColors = ForkcastColors(
@@ -39,6 +48,10 @@ val LightForkcastColors = ForkcastColors(
     carbs = Color(0xFFD99A1E),
     fat = Color(0xFFD45D79),
     fiber = Color(0xFF3E9B62),
+    proteinText = Color(0xFF3B57D9),
+    carbsText = Color(0xFF8A5A00),
+    fatText = Color(0xFFA8324F),
+    apricotText = Color(0xFFA3500F),
 )
 
 val DarkForkcastColors = ForkcastColors(
@@ -55,6 +68,11 @@ val DarkForkcastColors = ForkcastColors(
     carbs = Color(0xFFF2C46B),
     fat = Color(0xFFF29AAE),
     fiber = Color(0xFF86D3A3),
+    // The dark-theme hues already read at 7:1 or more on the dark surfaces.
+    proteinText = Color(0xFF9DB0FF),
+    carbsText = Color(0xFFF2C46B),
+    fatText = Color(0xFFF29AAE),
+    apricotText = Color(0xFFFFB27A),
 )
 
 val LocalForkcastColors = staticCompositionLocalOf { LightForkcastColors }

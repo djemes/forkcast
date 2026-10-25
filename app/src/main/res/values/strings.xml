@@ -98,7 +98,7 @@
     <!-- About -->
     <string name="about_version">Version %1$s (%2$d)</string>
     <string name="about_privacy_title">Privacy</string>
-    <string name="about_privacy_body">Forkcast has no accounts, no analytics, no ads, and no server of its own. Your log stays on this phone. It only talks to services you set up yourself: food databases (USDA, Open Food Facts) for searches, and your AI provider for meal photos and their descriptions. It asks GitHub whether a newer Forkcast exists: when you check for updates, and at most once a day if automatic checks are on. Backups go only where you choose to save them. Health Connect data (weight, activity) stays on the phone and is never sent to AI providers.</string>
+    <string name="about_privacy_body">Forkcast has no accounts, no analytics, no ads, and no server of its own. Your log stays on this phone. It only talks to services you set up yourself: food databases (USDA, Open Food Facts) for searches, and your AI service for meal photos and their descriptions. It asks GitHub whether a newer Forkcast exists: when you check for updates, and at most once a day if automatic checks are on. Backups go only where you choose to save them. Health Connect data (weight, activity) stays on the phone and is never sent to AI services.</string>
     <string name="about_medical_title">Not medical advice</string>
     <string name="about_medical_body">Forkcast gives estimates, especially from photos. Weigh food when accuracy matters, and talk to a doctor or dietitian before big changes.</string>
     <string name="about_licenses_title">Licenses</string>

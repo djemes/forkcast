@@ -6,8 +6,8 @@
     <string name="ring_eaten_budget">Comido %1$s · Orçamento %2$s</string>
     <string name="ring_eaten_budget_exercise">Comido %1$s · Orçamento %2$s · +%3$s da atividade</string>
     <string name="ring_exercise_included">+%1$s da atividade</string>
-    <string name="ring_description_exercise">%1$s comidas de %2$s, incluindo %3$s da atividade. %4$s.</string>
-    <string name="ring_description">%1$s comidas de %2$s. %3$s.</string>
+    <string name="ring_description_exercise">%1$s consumidas de %2$s, incluindo %3$s da atividade. %4$s.</string>
+    <string name="ring_description">%1$s consumidas de %2$s. %3$s.</string>
     <!-- Forecast status line (DESIGN.md §5) -->
     <string name="forecast_on_course">No caminho</string>
     <string name="forecast_tight">Apertado</string>

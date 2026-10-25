@@ -51,8 +51,8 @@ class WritingRulesTest {
     }
 
     @Test fun plainWordsForAiLimitsAndServices() {
-        val jargon = Regex("\\b(quota|cota|AI profiles?|perfis de IA|perfil de IA)\\b", RegexOption.IGNORE_CASE)
+        val jargon = Regex("\\b(quota|cota|AI profiles?|perfis de IA|perfil de IA|AI providers?|provedor(es)? de IA)\\b", RegexOption.IGNORE_CASE)
         val found = strings().filterValues { jargon.containsMatchIn(it) }
-        assertWithMessage("strings with \"quota\" or \"AI profile\"").that(found.keys).isEmpty()
+        assertWithMessage("strings with \"quota\", \"AI profile\" or \"AI provider\"").that(found.keys).isEmpty()
     }
 }

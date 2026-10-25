@@ -486,7 +486,7 @@ private const val PARTIAL_COVERAGE = 0.6
 private fun NutrientRow(line: Trends.NutrientLine, f: UnitFormatter) {
     val c = ForkcastTheme.colors
     val (word, color) = when (line.standing) {
-        Trends.Standing.UNDER -> stringResource(R.string.trends_nutrient_under) to c.apricot
+        Trends.Standing.UNDER -> stringResource(R.string.trends_nutrient_under) to c.apricotText
         Trends.Standing.OVER -> stringResource(R.string.trends_nutrient_over) to c.plum
         Trends.Standing.ON_TARGET -> stringResource(R.string.trends_nutrient_ok) to c.pine
         Trends.Standing.NO_DATA -> stringResource(R.string.trends_nutrient_no_data) to MaterialTheme.colorScheme.onSurfaceVariant

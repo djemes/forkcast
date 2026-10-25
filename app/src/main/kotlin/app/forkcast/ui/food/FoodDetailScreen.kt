@@ -207,9 +207,9 @@ fun FoodDetailScreen(
             val n = state.preview
             Row(horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
                 Big(f.energyNumber(n[NutrientKey.ENERGY_KCAL] ?: 0.0), f.energyUnitLabel, MaterialTheme.colorScheme.primary)
-                Big(f.number(n[NutrientKey.PROTEIN_G] ?: 0.0), stringResource(R.string.macro_protein), ForkcastTheme.colors.protein)
-                Big(f.number(n[NutrientKey.CARBS_G] ?: 0.0), stringResource(R.string.macro_carbs), ForkcastTheme.colors.carbs)
-                Big(f.number(n[NutrientKey.FAT_G] ?: 0.0), stringResource(R.string.macro_fat), ForkcastTheme.colors.fat)
+                Big(f.number(n[NutrientKey.PROTEIN_G] ?: 0.0), stringResource(R.string.macro_protein), ForkcastTheme.colors.proteinText)
+                Big(f.number(n[NutrientKey.CARBS_G] ?: 0.0), stringResource(R.string.macro_carbs), ForkcastTheme.colors.carbsText)
+                Big(f.number(n[NutrientKey.FAT_G] ?: 0.0), stringResource(R.string.macro_fat), ForkcastTheme.colors.fatText)
             }
 
             TextButton(onClick = { showAll = !showAll }) {

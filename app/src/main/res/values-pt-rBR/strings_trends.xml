@@ -29,7 +29,7 @@
         <item quantity="many">Nenhum dia completo ainda, então as médias usam os %d dias registrados. Um dia completo tem 2 refeições e 1.000 kcal, ou você o marca em Hoje.</item>
         <item quantity="other">Nenhum dia completo ainda, então as médias usam os %d dias registrados. Um dia completo tem 2 refeições e 1.000 kcal, ou você o marca em Hoje.</item>
     </plurals>
-    <string name="trends_calories_chart">Calorias comidas a cada dia, em barras, com seu orçamento como linha tracejada. Média %1$s, orçamento %2$s.</string>
+    <string name="trends_calories_chart">Calorias consumidas a cada dia, em barras, com seu orçamento como linha tracejada. Média %1$s, orçamento %2$s.</string>
     <string name="trends_tap_bar">Toque em uma barra para ver aquele dia.</string>
     <string name="trends_day_value">%1$s de %2$s</string>
     <string name="trends_day_empty">Nada registrado</string>
