@@ -142,7 +142,9 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
             if (d.meals.isEmpty()) {
                 page.text(res.getString(R.string.report_nothing_logged), size = 10f, gray = true)
             } else {
-                page.text(MealReport.KEY_NUTRIENTS.joinToString(" · ") { k -> nutrientLine(k, d.nutrients[k], d.targets[k]) }, size = 9f, gray = true)
+                // A nutrient no logged food reported is left out, not shown as 0 (the spreadsheet leaves its cell empty).
+                val known = MealReport.KEY_NUTRIENTS.mapNotNull { k -> d.nutrients[k]?.let { nutrientLine(k, it, d.targets[k]) } }
+                page.text(known.joinToString(" · "), size = 9f, gray = true)
             }
             val extras = listOfNotNull(
                 d.waterMl?.takeIf { options.water }?.let { res.getString(R.string.report_water_line, f.waterLiters(it)) },
@@ -171,9 +173,9 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
 
     private fun grams(g: Double) = UnitFormatter.trimNumber(g, if (g < 10) 1 else 0) + " g"
 
-    private fun nutrientLine(k: NutrientKey, value: Double?, target: Double?): String {
+    private fun nutrientLine(k: NutrientKey, value: Double, target: Double?): String {
         val unit = if (k.unit == NutrientUnit.MG) "mg" else "g"
-        val v = UnitFormatter.trimNumber(value ?: 0.0, 0)
+        val v = UnitFormatter.trimNumber(value, 0)
         val amount = target?.let { "$v / ${UnitFormatter.trimNumber(it, 0)} $unit" } ?: "$v $unit"
         return res.getString(R.string.report_nutrient_amount, res.getString(nutrientNameRes(k)), amount)
     }

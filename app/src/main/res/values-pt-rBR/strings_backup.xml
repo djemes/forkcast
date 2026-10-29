@@ -43,8 +43,8 @@
     <string name="backup_import_failed">A importação não terminou, então nada foi alterado.</string>
 
     <!-- Settings export with API keys (SPEC §4.11) -->
-    <string name="settings_transfer_title">Configurações e chaves</string>
-    <string name="settings_transfer_body">Um arquivo separado com todas as configurações, seus serviços de IA com as chaves de API e a chave do banco de alimentos. Ele fica protegido por uma senha que você escolhe. Use para configurar outro celular.</string>
+    <string name="settings_transfer_title">Arquivos de configurações</string>
+    <string name="settings_transfer_body">Um arquivo de configurações salvo com uma versão anterior do Forkcast ainda pode ser importado aqui, com a senha dele. Os backups agora levam suas configurações e chaves.</string>
     <string name="settings_import">Importar configurações…</string>
     <string name="settings_passphrase_title_export">Proteger com uma senha</string>
     <string name="settings_passphrase_body_export">Quem tiver este arquivo e a senha pode usar suas chaves de API. Não há como recuperar uma senha esquecida.</string>

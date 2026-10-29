@@ -42,8 +42,8 @@
     <string name="backup_import_failed">The import didn\'t finish, so nothing was changed.</string>
 
     <!-- Settings export with API keys (SPEC §4.11) -->
-    <string name="settings_transfer_title">Settings and keys</string>
-    <string name="settings_transfer_body">A separate file with every setting, your AI services and their API keys, and the food database key. It\'s locked with a passphrase you choose. Use it to set up another phone.</string>
+    <string name="settings_transfer_title">Settings files</string>
+    <string name="settings_transfer_body">A settings file saved with an earlier version of Forkcast still imports here, with its passphrase. Backups now carry your settings and keys.</string>
     <string name="settings_import">Import settings…</string>
     <string name="settings_passphrase_title_export">Lock with a passphrase</string>
     <string name="settings_passphrase_body_export">Anyone with this file and the passphrase can use your API keys. There is no way to recover a forgotten passphrase.</string>

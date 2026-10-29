@@ -55,7 +55,6 @@ import app.forkcast.ui.help.HelpLinks
 import app.forkcast.ui.help.LocalHelp
 import app.forkcast.ui.help.showError
 import app.forkcast.ui.common.AdvancedSection
-import app.forkcast.ui.common.ToggleRow
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.RejectReason
@@ -133,8 +132,6 @@ fun BackupRoute(
         hasPassword = autoState.status.hasPassword,
         last = autoState.status.last,
         exampleName = viewModel.suggestedName(),
-        reminder = autoState.status.settings.reminder,
-        onReminder = auto::setReminder,
         passwordSection = { snackbar ->
             BackupPasswordSectionRoute(auto, autoState, ask = askPassword, onAsk = { askPassword = it }, snackbar = snackbar)
         },
@@ -177,8 +174,6 @@ fun BackupScreen(
     last: LastBackup? = null,
     /** A file name as backups get it, for the naming note. */
     exampleName: String = "",
-    reminder: Boolean = true,
-    onReminder: (Boolean) -> Unit = {},
     passwordSection: @Composable (SnackbarHostState) -> Unit = {},
     /** Automatic backup to a chosen folder. */
     autoSection: @Composable () -> Unit = {},
@@ -245,7 +240,6 @@ fun BackupScreen(
                         Text(stringResource(R.string.backup_restore_safety))
                     }
                 }
-                ToggleRow(stringResource(R.string.backup_reminder), stringResource(R.string.backup_reminder_detail), reminder, onReminder)
 
                 Column(Modifier.padding(top = 16.dp)) { reportSection(snackbar) }
 

@@ -174,7 +174,6 @@ class AutoBackupViewModel @Inject constructor(
     fun setCustom(recent: Int?, months: Int?, years: Int?) = update {
         it.copy(customRecent = recent ?: it.customRecent, customMonths = months ?: it.customMonths, customYears = years ?: it.customYears)
     }
-    fun setReminder(on: Boolean) = update { it.copy(reminder = on) }
 
     /** The first backup password; [thenAuto] when it was asked for by the automatic-backup switch. */
     fun setPassword(password: String, thenAuto: Boolean = false) = viewModelScope.launch {

@@ -64,8 +64,7 @@ class BackupScreenTest {
         compose.onNodeWithText("Undo the last replace").assertDoesNotExist()
     }
 
-    @Test fun lastBackupAndReminder() {
-        var reminder: Boolean? = null
+    @Test fun lastBackup() {
         compose.setContent {
             ForkcastTheme {
                 BackupScreen(
@@ -74,14 +73,12 @@ class BackupScreenTest {
                     noActions,
                     onBack = {},
                     last = LastBackup(1_761_462_000_000, "2025-10-26_0300_forkcast-backup.forkcast", "Backups", null),
-                    reminder = true,
-                    onReminder = { reminder = it },
                 )
             }
         }
         compose.onNodeWithText("Last backup:", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Remind me to back up").performScrollTo().performClick()
-        assertThat(reminder).isFalse()
+        // The reminder switch moved to Settings › Notifications (owner, 2026-10-29).
+        compose.onNodeWithText("Remind me to back up").assertDoesNotExist()
     }
 
     @Test fun withAPasswordBothBackupButtonsWork() {
