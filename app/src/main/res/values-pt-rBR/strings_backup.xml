@@ -218,4 +218,45 @@
     <string name="backup_ret_years">Anos, um de cada</string>
     <string name="backup_ret_note">Só backups do Forkcast nesta pasta são apagados, e só depois que um backup novo foi conferido.</string>
     <string name="backup_restore_title">Restaurar</string>
+
+    <!-- Meal report for a health professional (owner, 2026-10-29) -->
+    <string name="report_section_title">Relatório de refeições</string>
+    <string name="report_section_body">Suas refeições de alguns dias, em PDF para imprimir ou em planilha, para mostrar a um médico ou nutricionista.</string>
+    <string name="report_make">Fazer um relatório de refeições…</string>
+    <string name="report_from">De</string>
+    <string name="report_to">Até</string>
+    <string name="report_format_pdf">PDF</string>
+    <string name="report_format_sheet">Planilha</string>
+    <string name="report_include_weight">Incluir peso</string>
+    <string name="report_include_water">Incluir água</string>
+    <string name="report_contents">Cada refeição com horário, alimentos, quantidades, calorias e macros, e os totais de cada dia comparados às suas metas. Sem fotos.</string>
+    <string name="report_continue">Continuar</string>
+    <string name="report_unlock">Para salvar seus dados de saúde num arquivo</string>
+    <string name="report_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de salvar seus dados de saúde num arquivo.</string>
+    <string name="report_saved">Relatório de refeições salvo</string>
+    <string name="report_title">Relatório de refeições</string>
+    <string name="report_range">%1$s a %2$s</string>
+    <string name="report_note">Feito com o Forkcast. Os alimentos e as quantidades foram registrados pela própria pessoa; os nutrientes são estimativas, e os itens marcados como \"estimativa\" foram estimados a partir de uma foto ou descrição.</string>
+    <string name="report_summary">Dias registrados: %1$d de %2$d · média de %3$s por dia</string>
+    <string name="report_day_total_target">%1$s de %2$s</string>
+    <string name="report_nothing_logged">Nada registrado</string>
+    <string name="report_nutrient_amount">%1$s %2$s</string>
+    <string name="report_estimate">estimativa</string>
+    <string name="report_water">Água</string>
+    <string name="report_weight">Peso</string>
+    <string name="report_water_line">Água %1$s</string>
+    <string name="report_weight_line">Peso %1$s</string>
+    <string name="report_page">Página %1$d</string>
+    <string name="report_sheet_items">Itens</string>
+    <string name="report_sheet_days">Totais por dia</string>
+    <string name="report_col_date">Data</string>
+    <string name="report_col_time">Horário</string>
+    <string name="report_col_meal">Refeição</string>
+    <string name="report_col_food">Alimento</string>
+    <string name="report_col_amount">Quantidade</string>
+    <string name="report_col_grams">Gramas</string>
+    <string name="report_col_with_unit">%1$s (%2$s)</string>
+    <string name="report_col_target_energy">Meta (%1$s)</string>
+    <string name="report_col_estimate">Estimativa</string>
+    <string name="report_yes">Sim</string>
 </resources>

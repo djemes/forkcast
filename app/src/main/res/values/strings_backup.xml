@@ -212,4 +212,45 @@
     <string name="backup_ret_years">Years, one each</string>
     <string name="backup_ret_note">Only Forkcast backups in this folder are deleted, and only after a new backup has been checked.</string>
     <string name="backup_restore_title">Restore</string>
+
+    <!-- Meal report for a health professional (owner, 2026-10-29) -->
+    <string name="report_section_title">Meal report</string>
+    <string name="report_section_body">Your meals over a few days, as a PDF to print or a spreadsheet, to share with a doctor or dietitian.</string>
+    <string name="report_make">Make a meal report…</string>
+    <string name="report_from">From</string>
+    <string name="report_to">To</string>
+    <string name="report_format_pdf">PDF</string>
+    <string name="report_format_sheet">Spreadsheet</string>
+    <string name="report_include_weight">Include weight</string>
+    <string name="report_include_water">Include water</string>
+    <string name="report_contents">Each meal with its time, foods, amounts, calories and macros, and each day\'s totals against your targets. No photos.</string>
+    <string name="report_continue">Continue</string>
+    <string name="report_unlock">To save your health data in a file</string>
+    <string name="report_no_lock">Set a screen lock on this phone first. Forkcast asks for it before saving your health data in a file.</string>
+    <string name="report_saved">Meal report saved</string>
+    <string name="report_title">Meal report</string>
+    <string name="report_range">%1$s to %2$s</string>
+    <string name="report_note">Made with Forkcast. Foods and amounts were logged by the person; nutrients are estimates, and items marked \"estimate\" were estimated from a photo or a description.</string>
+    <string name="report_summary">Days logged: %1$d of %2$d · average %3$s a day</string>
+    <string name="report_day_total_target">%1$s of %2$s</string>
+    <string name="report_nothing_logged">Nothing logged</string>
+    <string name="report_nutrient_amount">%1$s %2$s</string>
+    <string name="report_estimate">estimate</string>
+    <string name="report_water">Water</string>
+    <string name="report_weight">Weight</string>
+    <string name="report_water_line">Water %1$s</string>
+    <string name="report_weight_line">Weight %1$s</string>
+    <string name="report_page">Page %1$d</string>
+    <string name="report_sheet_items">Items</string>
+    <string name="report_sheet_days">Daily totals</string>
+    <string name="report_col_date">Date</string>
+    <string name="report_col_time">Time</string>
+    <string name="report_col_meal">Meal</string>
+    <string name="report_col_food">Food</string>
+    <string name="report_col_amount">Amount</string>
+    <string name="report_col_grams">Grams</string>
+    <string name="report_col_with_unit">%1$s (%2$s)</string>
+    <string name="report_col_target_energy">Target (%1$s)</string>
+    <string name="report_col_estimate">Estimate</string>
+    <string name="report_yes">Yes</string>
 </resources>

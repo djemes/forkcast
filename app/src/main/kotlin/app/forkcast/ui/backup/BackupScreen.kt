@@ -147,6 +147,7 @@ fun BackupRoute(
             BackupPasswordSectionRoute(auto, autoState, ask = askPassword, onAsk = { askPassword = it }, snackbar = snackbar)
         },
         autoSection = { AutoBackupSectionRoute(auto, autoState, needPassword = { askPassword = PasswordAsk.NEW_THEN_AUTO }) },
+        reportSection = { snackbar -> app.forkcast.ui.report.MealReportSectionRoute(snackbar) },
         settingsSection = {
             SettingsTransferSection(
                 busy = state.busy || transferState.busy,
@@ -191,6 +192,8 @@ fun BackupScreen(
     passwordSection: @Composable (SnackbarHostState) -> Unit = {},
     /** Automatic backup to a chosen folder. */
     autoSection: @Composable () -> Unit = {},
+    /** The meal report for a health professional. */
+    reportSection: @Composable (SnackbarHostState) -> Unit = {},
     settingsSection: @Composable () -> Unit = {},
     extraNotice: Int? = null,
     onExtraNoticeShown: () -> Unit = {},
@@ -253,6 +256,8 @@ fun BackupScreen(
                     }
                 }
                 ToggleRow(stringResource(R.string.backup_reminder), stringResource(R.string.backup_reminder_detail), reminder, onReminder)
+
+                Column(Modifier.padding(top = 16.dp)) { reportSection(snackbar) }
 
                 // A copy anyone could read: set apart, in red, behind a warning and the phone's unlock.
                 OutlinedButton(

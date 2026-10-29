@@ -1,5 +1,6 @@
 package app.forkcast.ui.today
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -45,7 +46,11 @@ import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.theme.ForkcastTheme
 
 @Composable
-fun nutrientName(key: NutrientKey): String = stringResource(
+fun nutrientName(key: NutrientKey): String = stringResource(nutrientNameRes(key))
+
+/** The nutrient's name as a string resource, for text written outside Compose (the meal report). */
+@StringRes
+fun nutrientNameRes(key: NutrientKey): Int = (
     when (key) {
         NutrientKey.ENERGY_KCAL -> R.string.n_energy
         NutrientKey.PROTEIN_G -> R.string.n_protein
@@ -71,7 +76,7 @@ fun nutrientName(key: NutrientKey): String = stringResource(
         NutrientKey.CAFFEINE_MG -> R.string.n_caffeine
         NutrientKey.ALCOHOL_G -> R.string.n_alcohol
         NutrientKey.WATER_G -> R.string.n_water
-    },
+    }
 )
 
 /** Formats an amount in the nutrient's own unit ("32 g", "410 mg", "2.4 µg", energy in the user's unit). */
