@@ -25,11 +25,11 @@
 
     <!-- How much did you eat? -->
     <string name="portion_title">How much did you eat?</string>
-    <string name="portion_all">All</string>
     <string name="portion_custom">Custom</string>
     <string name="portion_custom_value">%1$d%%</string>
     <string name="portion_percent">Share of the plate</string>
-    <string name="portion_summary">You ate %1$s: %2$s of the %3$s estimated.</string>
+    <string name="portion_percent_entry">Share of the amount logged</string>
+    <string name="portion_summary">%1$s: %2$s instead of the %3$s estimated.</string>
 
     <!-- Status: one at a time -->
     <string name="stage_step_send">Send</string>

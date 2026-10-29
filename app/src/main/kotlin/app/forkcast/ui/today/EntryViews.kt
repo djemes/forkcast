@@ -31,6 +31,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.TextButton
 import app.forkcast.ui.common.MealTimeField
+import app.forkcast.ui.common.PortionChips
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -50,6 +51,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -339,6 +341,7 @@ fun EditEntrySheet(
 ) {
     var quantity by rememberSaveable(entry.id) { mutableStateOf<Double?>(entry.quantity) }
     var servingLabel by rememberSaveable(entry.id) { mutableStateOf(entry.servingLabel) }
+    var reseed by rememberSaveable(entry.id) { mutableIntStateOf(0) }
     val serving = servings.firstOrNull { it.label == servingLabel }
     var mealId by rememberSaveable(entry.id) { mutableStateOf(entry.mealSlotId) }
     var countsWater by rememberSaveable(entry.id) { mutableStateOf(entry.waterMl != null) }
@@ -404,13 +407,24 @@ fun EditEntrySheet(
                     }
                 }
             }
+            // "How much did you eat?" on every entry (owner, 2026-10-29): a share or multiple of what was logged.
+            Text(stringResource(R.string.portion_title), style = MaterialTheme.typography.titleSmall)
+            PortionChips(
+                portion = quantity?.takeIf { servingLabel == entry.servingLabel && entry.quantity > 0 }?.let { it / entry.quantity },
+                percentLabel = R.string.portion_percent_entry,
+                onPick = { p ->
+                    servingLabel = entry.servingLabel
+                    quantity = UnitFormatter.trimNumber(entry.quantity * p, 2).toDouble()
+                    reseed++
+                },
+            )
             NumberField(
                 initial = UnitFormatter.trimNumber(quantity ?: entry.quantity, 2),
                 label = stringResource(R.string.edit_quantity),
                 suffix = if (servingLabel in setOf("g", "oz", "ml", "fl oz")) servingLabel else "× ${servingLabel(servingLabel)}",
                 onValue = { quantity = it },
-                // Re-seed when the serving changes the number.
-                key = "${entry.id}|$servingLabel",
+                // Re-seed when the serving or a portion chip changes the number.
+                key = "${entry.id}|$servingLabel|$reseed",
             )
             val q = quantity
             if (q != null && q > 0 && entry.quantity > 0) {
