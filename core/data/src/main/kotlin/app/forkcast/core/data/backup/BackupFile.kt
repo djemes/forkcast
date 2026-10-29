@@ -75,8 +75,8 @@ class BackupFile @Inject constructor(
     @Named(APP_VERSION) private val appVersion: String,
     private val clock: Clock,
 ) {
-    /** How backup passwords become keys; tests use lighter settings. */
-    internal var kdf = Kdf()
+    /** How backup passwords become keys; tests (here and in the app module) use lighter settings. */
+    var kdf = Kdf()
 
     /** Writes a complete backup (encrypted with [password], or readable when null) to [out] and closes it; returns the bytes written. */
     suspend fun write(out: OutputStream, password: CharArray?): Long = withContext(Dispatchers.IO) {
@@ -93,8 +93,8 @@ class BackupFile @Inject constructor(
         try {
             val target = if (password != null) BackupCrypto.encrypt(counted, password, kdf) else counted
             archive.write(target, json, BackupJson.encodeToString(BackupManifest.serializer(), manifest), includePhotos = true, secrets = BackupSecrets.encode(keys))
-        } catch (e: Throwable) {
-            // A failure before the zip took over the stream (the encryption header) would leave the file open.
+        } catch (@Suppress("TooGenericExceptionCaught") e: Throwable) {
+            // Any failure before the zip took over the stream (the encryption header) would leave the file open; rethrown.
             runCatching { out.close() }
             throw e
         }

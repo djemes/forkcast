@@ -101,9 +101,20 @@ class FakeFolderBackupRepository : app.forkcast.core.data.backup.folder.FolderBa
     override suspend fun recordSaved(name: String, sizeBytes: Long?) { saved += name to sizeBytes }
     override suspend fun updateSettings(transform: (app.forkcast.core.model.BackupSettings) -> app.forkcast.core.model.BackupSettings) =
         state.update { it.copy(settings = transform(it.settings)) }
-    override suspend fun setPassword(password: String?) {
+    override suspend fun setPassword(password: String) {
         this.password = password
-        state.update { it.copy(hasPassword = password != null) }
+        state.update { it.copy(hasPassword = true) }
+    }
+    override suspend fun password(): String? = password
+    var changedTo: String? = null
+    override suspend fun changePassword(password: String): app.forkcast.core.data.backup.folder.ReencryptResult {
+        changedTo = password
+        this.password = password
+        return app.forkcast.core.data.backup.folder.ReencryptResult(2, listOf("2026-10-12_0300_forkcast-backup.forkcast"))
+    }
+    override suspend fun removePassword() {
+        password = null
+        state.update { it.copy(hasPassword = false, settings = it.settings.copy(auto = false)) }
     }
     var plan: app.forkcast.core.data.backup.folder.CleanupPlan = app.forkcast.core.data.backup.folder.CleanupPlan.NothingToDelete(null)
     val deleted = mutableListOf<String>()

@@ -50,7 +50,6 @@
     <!-- Settings export with API keys (SPEC §4.11) -->
     <string name="settings_transfer_title">Configurações e chaves</string>
     <string name="settings_transfer_body">Um arquivo separado com todas as configurações, seus serviços de IA com as chaves de API e a chave do banco de alimentos. Ele fica protegido por uma senha que você escolhe. Use para configurar outro celular.</string>
-    <string name="settings_export">Exportar configurações…</string>
     <string name="settings_import">Importar configurações…</string>
     <string name="settings_passphrase_title_export">Proteger com uma senha</string>
     <string name="settings_passphrase_body_export">Quem tiver este arquivo e a senha pode usar suas chaves de API. Não há como recuperar uma senha esquecida.</string>
@@ -71,7 +70,6 @@
     </plurals>
     <string name="settings_preview_none">nenhum</string>
     <string name="settings_replace">Substituir</string>
-    <string name="settings_saved">Arquivo de configurações salvo</string>
     <string name="settings_imported">Configurações e chaves importadas</string>
     <string name="settings_wrong_passphrase">Senha errada, ou o arquivo foi alterado.</string>
     <string name="settings_not_forkcast">Este não é um arquivo de configurações do Forkcast.</string>
@@ -81,8 +79,6 @@
 
     <!-- Backups (roadmap 2.0, task 1.4) -->
     <string name="backup_title">Backups</string>
-    <string name="backup_body">Um backup é um arquivo com tudo: registro de alimentos, alimentos, receitas, refeições salvas, peso, água, atividade, estimativas com IA, metas e configurações. Chaves de API nunca vão nele. Guarde um em algum lugar fora deste celular.</string>
-    <string name="backup_save">Salvar um arquivo de backup…</string>
     <string name="backup_restore">Restaurar de um backup…</string>
     <string name="backup_saved">Backup salvo</string>
     <string name="backup_none_yet">Nenhum backup ainda.</string>
@@ -93,16 +89,8 @@
     <string name="backup_reminder_detail">Em Hoje, depois de 14 dias sem backup</string>
     <string name="backup_preview_photos">Fotos de refeições: %1$d</string>
     <string name="backup_preview_no_photos">Sem fotos de refeições neste arquivo.</string>
-    <string name="backup_photos_detail">Fotos deixam o arquivo bem maior. Seu registro mantém todas as entradas de qualquer jeito.</string>
 
-    <string name="backup_save_title">Salvar um arquivo de backup</string>
-    <string name="backup_save_body">Em seguida, escolha onde salvar: neste celular, num cartão SD ou num app de nuvem como Google Drive ou OneDrive.</string>
-    <string name="backup_save_photos">Incluir fotos das refeições</string>
-    <string name="backup_save_password">Proteger com senha</string>
-    <string name="backup_password_warning">Se você esquecer esta senha, o backup não pode ser restaurado. Ninguém consegue recuperá-la.</string>
     <string name="backup_password">Senha</string>
-    <string name="backup_password_again">Senha de novo</string>
-    <string name="backup_save_choose">Escolher onde salvar</string>
     <string name="backup_unlock_title">Este backup tem senha</string>
     <string name="backup_unlock_body">Digite a senha com que ele foi salvo.</string>
     <string name="backup_unlock_wrong">Senha errada, ou o arquivo foi alterado.</string>
@@ -115,20 +103,6 @@
     <string name="backup_auto_folder">Salvando em: %1$s</string>
     <string name="backup_auto_folder_unnamed">Salvando na pasta que você escolheu</string>
     <string name="backup_auto_switch">Fazer backup automaticamente</string>
-    <string name="backup_weekly">Toda semana</string>
-    <string name="backup_daily">Todo dia</string>
-    <string name="backup_weekly_on">%1$s, por volta das 3h</string>
-    <string name="backup_daily_at">Por volta das 3h</string>
-    <string name="backup_keep_title">Backups a manter</string>
-    <plurals name="backup_keep_choice">
-        <item quantity="one">%1$d mais recente</item>
-        <item quantity="many">%1$d mais recentes</item>
-        <item quantity="other">%1$d mais recentes</item>
-    </plurals>
-    <string name="backup_auto_photos">Incluir fotos das refeições</string>
-    <string name="backup_auto_password">Proteger com senha</string>
-    <string name="backup_auto_password_detail">Salva neste celular para os backups rodarem sozinhos</string>
-    <string name="backup_auto_password_body">Os backups automáticos serão protegidos com esta senha. Ela fica salva neste celular (criptografada) para os backups rodarem sem você. Para restaurar em outro celular você vai precisar digitá-la, e se esquecer, esses backups não podem ser restaurados.</string>
     <string name="backup_now_to_folder">Fazer backup agora</string>
     <string name="backup_backed_up">Backup feito.</string>
     <string name="backup_auto_change">Trocar pasta</string>
@@ -243,4 +217,5 @@
     <string name="backup_ret_months">Meses, um de cada</string>
     <string name="backup_ret_years">Anos, um de cada</string>
     <string name="backup_ret_note">Só backups do Forkcast nesta pasta são apagados, e só depois que um backup novo foi conferido.</string>
+    <string name="backup_restore_title">Restaurar</string>
 </resources>

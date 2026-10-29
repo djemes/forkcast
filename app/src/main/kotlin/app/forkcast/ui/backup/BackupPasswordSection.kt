@@ -30,9 +30,6 @@ import app.forkcast.ui.common.DeviceAuth
 import app.forkcast.ui.common.NoScreenLockDialog
 import kotlinx.coroutines.launch
 
-/** Which password dialog is open: a first one (and then turn automatic backup on), or a change. */
-enum class PasswordAsk { NEW, NEW_THEN_AUTO, CHANGE }
-
 /**
  * The backup password (owner, 2026-10-29): set once, kept until changed or removed. Showing,
  * copying, changing and removing it ask for the phone's unlock first (the same prompt as saved

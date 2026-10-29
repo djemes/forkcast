@@ -40,6 +40,7 @@ interface BackupFolder {
     fun rename(file: String, name: String): String? = null
 }
 
+@Suppress("TooManyFunctions") // One per document operation the folder needs.
 @Singleton
 class SafBackupFolder @Inject constructor(@ApplicationContext private val context: Context) : BackupFolder {
     private val resolver get() = context.contentResolver

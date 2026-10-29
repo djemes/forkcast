@@ -306,7 +306,6 @@ fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
                 )
                 RetentionChoice(s.settings, actions)
             }
-            LastBackupLine(s.last)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedButton(onClick = actions.cleanup, enabled = idle, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.backup_cleanup))
@@ -350,7 +349,8 @@ private fun DayCircles(days: Set<Int>, onToggle: (Int) -> Unit) {
     val locale = LocalLocale.current.platformLocale
     val first = remember(locale) { WeekFields.of(locale).firstDayOfWeek }
     Row(modifier = Modifier.fillMaxWidth()) {
-        (0L until 7L).map { first.plus(it) }.forEach { day ->
+        for (offset in 0L until 7L) {
+            val day = first.plus(offset)
             val selected = day.value in days
             val name = day.getDisplayName(TextStyle.FULL, locale).replaceFirstChar { it.titlecase(locale) }
             val description = stringResource(if (selected) R.string.backup_auto_day_on else R.string.backup_auto_day_off, name)

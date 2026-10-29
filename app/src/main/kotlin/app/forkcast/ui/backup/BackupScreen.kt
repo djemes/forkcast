@@ -89,7 +89,10 @@ fun BackupRoute(
     LaunchedEffect(state.share) {
         val uri = state.share ?: return@LaunchedEffect
         onEvent(BackupEvent.Shared)
-        val send = Intent(Intent.ACTION_SEND).setType(ExportKind.BACKUP.mimeType).putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        val send = Intent(Intent.ACTION_SEND)
+            .setType(ExportKind.BACKUP.mimeType)
+            .putExtra(Intent.EXTRA_STREAM, uri)
+            .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         context.startActivity(Intent.createChooser(send, shareTitle))
     }
     val importSettings = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> transfer.picked(uri) }
@@ -130,6 +133,7 @@ fun BackupRoute(
         ),
         onBack = onBack,
         hasPassword = autoState.status.hasPassword,
+        last = autoState.status.last,
         exampleName = viewModel.suggestedName(ExportKind.BACKUP),
         reminder = autoState.status.settings.reminder,
         onReminder = auto::setReminder,
@@ -152,6 +156,9 @@ fun BackupRoute(
     }
 }
 
+/** Which password dialog is open: a first one (and then turn automatic backup on), or a change. */
+enum class PasswordAsk { NEW, NEW_THEN_AUTO, CHANGE }
+
 /** System file pickers, launched from the route so the screen stays previewable and testable. */
 data class BackupActions(
     val exportFoodLog: () -> Unit = {},
@@ -170,6 +177,7 @@ fun BackupScreen(
     actions: BackupActions,
     onBack: () -> Unit,
     hasPassword: Boolean = false,
+    last: LastBackup? = null,
     /** A file name as backups get it, for the naming note. */
     exampleName: String = "",
     reminder: Boolean = true,
@@ -221,6 +229,7 @@ fun BackupScreen(
                     NeedsPasswordButton(R.string.backup_now, hasPassword, enabled = !state.busy, filled = true) { encrypted(BackupEvent.BackUpNow) }
                     NeedsPasswordButton(R.string.backup_share, hasPassword, enabled = !state.busy, filled = false) { encrypted(BackupEvent.BackUpAndShare) }
                 }
+                LastBackupLine(last)
                 Text(
                     stringResource(R.string.backup_naming, exampleName),
                     style = MaterialTheme.typography.bodySmall,
@@ -229,7 +238,7 @@ fun BackupScreen(
 
                 Column(Modifier.padding(top = 16.dp)) { autoSection() }
 
-                SectionTitle(R.string.backup_restore, Modifier.padding(top = 16.dp))
+                SectionTitle(R.string.backup_restore_title, Modifier.padding(top = 16.dp))
                 OutlinedButton(onClick = actions.restore, enabled = !state.busy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.backup_restore)) }
                 if (state.hasSafetyBackup) {
                     Text(stringResource(R.string.backup_restore_safety_body), style = MaterialTheme.typography.bodyMedium)

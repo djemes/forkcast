@@ -92,6 +92,7 @@ data class CleanupResult(val deleted: Int, val failed: Int, val kept: FolderFile
  * backups thinned out by the retention preset ([BackupRetention]) once the new one reads back
  * cleanly. Never touches files Forkcast didn't name.
  */
+@Suppress("TooManyFunctions") // The folder, the password and the cleanup belong together.
 interface FolderBackupRepository {
     val status: Flow<FolderStatus>
     /** Today's backup card: the no-backup reminder. */

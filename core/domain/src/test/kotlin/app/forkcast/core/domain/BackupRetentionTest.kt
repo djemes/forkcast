@@ -53,7 +53,8 @@ class BackupRetentionTest {
     }
 
     @Test fun `next run is the next chosen day at the chosen time`() {
-        val sundayNoon = ZonedDateTime.of(2026, 10, 25, 12, 0, 0, 0, zone)
+        // A zone without a clock change in that week, so a week is exactly 7 days.
+        val sundayNoon = ZonedDateTime.of(2026, 10, 25, 12, 0, 0, 0, ZoneId.of("UTC"))
         // Monday and Thursday at 3 am: Monday 3 am is next.
         assertThat(BackupRetention.delayUntilNext(sundayNoon, setOf(1, 4), 180)).isEqualTo(Duration.ofHours(15))
         // Sunday at 1 pm: later today.

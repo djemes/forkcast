@@ -15,7 +15,11 @@ import app.forkcast.core.data.backup.folder.FolderFile
 import app.forkcast.core.data.backup.folder.FolderProblem
 import app.forkcast.core.data.backup.folder.FolderStatus
 import app.forkcast.core.data.settings.LastBackup
-import app.forkcast.core.model.BackupFrequency
+import app.forkcast.core.model.RetentionPreset
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.onNodeWithContentDescription
 import app.forkcast.core.model.BackupSettings
 import app.forkcast.fakes.FakeBackupRepository
 import app.forkcast.ui.theme.ForkcastTheme
@@ -49,14 +53,17 @@ class BackupScreenTest {
             }
         }
         compose.onNodeWithText("No backup yet.").assertIsDisplayed()
-        compose.onNodeWithText("Save a backup file…").performClick()
-        compose.onNodeWithText("Restore from a backup…").performClick()
+        // No password yet: Back up now says why instead of backing up.
+        compose.onNodeWithText("Back up now").performClick()
+        compose.onNodeWithText("Set a backup password first. Backups are always encrypted with it.").assertIsDisplayed()
+        compose.onNodeWithText("Restore from a backup…").performScrollTo().performClick()
+        compose.onNodeWithText("Back up without encryption").performScrollTo().performClick()
         // Spreadsheets wait under Advanced, collapsed (roadmap 2.0 task 3.5).
         compose.onNodeWithText("Food log (CSV)").assertDoesNotExist()
         compose.onNodeWithText("Advanced").performScrollTo().performClick()
         compose.onNodeWithText("Food log (CSV)").performScrollTo().performClick()
         compose.onNodeWithText("Weights (CSV)").performScrollTo().performClick()
-        assertThat(events).containsExactly(BackupEvent.AskSave)
+        assertThat(events).containsExactly(BackupEvent.AskUnencrypted)
         assertThat(launched).containsExactly("restore", "log", "weights").inOrder()
         compose.onNodeWithText("Undo the last replace").assertDoesNotExist()
     }
@@ -70,32 +77,75 @@ class BackupScreenTest {
                     {},
                     noActions,
                     onBack = {},
-                    last = LastBackup(1_761_462_000_000, "forkcast-backup-2025-10-26.forkcast", "Backups", null),
+                    last = LastBackup(1_761_462_000_000, "2025-10-26_0300_forkcast-backup.forkcast", "Backups", null),
                     reminder = true,
                     onReminder = { reminder = it },
                 )
             }
         }
         compose.onNodeWithText("Last backup:", substring = true).assertIsDisplayed()
-        compose.onNodeWithText("Remind me to back up").performClick()
+        compose.onNodeWithText("Remind me to back up").performScrollTo().performClick()
         assertThat(reminder).isFalse()
     }
 
-    @Test fun saveOptionsNeedAMatchingPasswordWhenProtected() {
-        var chosen: Pair<Boolean, String?>? = null
+    @Test fun withAPasswordBothBackupButtonsWork() {
+        val events = mutableListOf<BackupEvent>()
         compose.setContent {
-            ForkcastTheme { SaveOptionsDialog(onContinue = { photos, password -> chosen = photos to password }, onDismiss = {}) }
+            ForkcastTheme { BackupScreen(BackupUiState(), { events += it }, noActions, onBack = {}, hasPassword = true, exampleName = "2026-10-29_0300_forkcast-backup.forkcast") }
         }
-        compose.onNodeWithText("Include meal photos").performClick()
-        compose.onNodeWithText("Protect with a password").performClick()
-        compose.onNodeWithText("Choose where to save").assertIsNotEnabled()
-        compose.onNodeWithText("Password").performTextInput("a long backup password")
-        compose.onNodeWithText("Password again").performTextInput("a long backup passwor")
+        compose.onNodeWithText("Back up now").performClick()
+        compose.onNodeWithText("Back up and share").performClick()
+        compose.onNodeWithText("for example 2026-10-29_0300_forkcast-backup.forkcast", substring = true).assertExists()
+        assertThat(events).containsExactly(BackupEvent.BackUpNow, BackupEvent.BackUpAndShare).inOrder()
+    }
+
+    @Test fun theUnencryptedWarningNamesWhatsInside() {
+        var continued = false
+        compose.setContent {
+            ForkcastTheme { BackupScreen(BackupUiState(dialog = BackupDialog.UnencryptedWarning), {}, noActions, onBack = {}, onUnencryptedContinue = { continued = true }) }
+        }
+        compose.onNodeWithText("It includes your API keys", substring = true).assertIsDisplayed()
+        compose.onNodeWithText("I understand, continue").performClick()
+        assertThat(continued).isTrue()
+    }
+
+    @Test fun aNewPasswordNeedsTenCharactersTwiceOrAGeneratedOne() {
+        var saved: String? = null
+        compose.setContent { ForkcastTheme { NewPasswordDialog("Set a backup password", null, onDone = { saved = it }, onDismiss = {}, onCopy = {}) } }
+        compose.onNodeWithText("Password").performTextInput("short")
+        compose.onNodeWithText("At least 10 characters").assertExists()
+        compose.onNodeWithText("Save").assertIsNotEnabled()
+        compose.onNodeWithText("Password").performTextInput(" horse battery")
+        compose.onNodeWithText("Type it again").performTextInput("short horse batter")
         compose.onNodeWithText("The two don't match").assertExists()
-        compose.onNodeWithText("Choose where to save").assertIsNotEnabled()
-        compose.onNodeWithText("Password again").performTextInput("d")
-        compose.onNodeWithText("Choose where to save").assertIsEnabled().performClick()
-        assertThat(chosen).isEqualTo(false to "a long backup password")
+        compose.onNodeWithText("Save").assertIsNotEnabled()
+        compose.onNodeWithText("Type it again").performTextInput("y")
+        compose.onNodeWithText("Save").assertIsEnabled().performClick()
+        assertThat(saved).isEqualTo("short horse battery")
+        compose.onNodeWithText("Save it in your password manager", substring = true).assertExists()
+    }
+
+    @Test fun aGeneratedPasswordFillsBothFields() {
+        var saved: String? = null
+        compose.setContent { ForkcastTheme { NewPasswordDialog("Set a backup password", null, onDone = { saved = it }, onDismiss = {}, onCopy = {}) } }
+        compose.onNodeWithText("Generate a strong password").performClick()
+        compose.onNodeWithText("Strong").assertExists()
+        compose.onNodeWithText("Save").assertIsEnabled().performClick()
+        assertThat(saved).matches("[a-zA-Z2-9]{4}(-[a-zA-Z2-9]{4}){4}")
+    }
+
+    @Test fun thePasswordSectionOffersWhatFits() {
+        val log = mutableListOf<String>()
+        var has by mutableStateOf(false)
+        compose.setContent {
+            ForkcastTheme { BackupPasswordSection(has, working = false, { log += "set" }, { log += "show" }, { log += "change" }, { log += "remove" }) }
+        }
+        compose.onNodeWithText("Set a backup password").performClick()
+        has = true
+        compose.onNodeWithText("Show").performClick()
+        compose.onNodeWithText("Change").performClick()
+        compose.onNodeWithText("Remove").performClick()
+        assertThat(log).containsExactly("set", "show", "change", "remove").inOrder()
     }
 
     @Test fun previewShowsCountsPhotosAndMerges() {
@@ -142,22 +192,7 @@ class BackupScreenTest {
         assertThat(events).containsExactly(BackupEvent.OpenSafetyBackup)
     }
 
-    @Test fun passphraseMustMatchAndBeLongEnough() {
-        var result: CharArray? = null
-        compose.setContent { ForkcastTheme { PassphraseDialog(confirm = true, onDone = { result = it }, onDismiss = {}) } }
-        compose.onNodeWithText("Passphrase").performTextInput("short")
-        compose.onNodeWithText("At least 8 characters").assertExists()
-        compose.onNodeWithText("Continue").assertIsNotEnabled()
-        compose.onNodeWithText("Passphrase").performTextInput(" horse battery")
-        compose.onNodeWithText("Passphrase again").performTextInput("short horse batter")
-        compose.onNodeWithText("The two don't match").assertExists()
-        compose.onNodeWithText("Continue").assertIsNotEnabled()
-        compose.onNodeWithText("Passphrase again").performTextInput("y")
-        compose.onNodeWithText("Continue").assertIsEnabled().performClick()
-        assertThat(String(result!!)).isEqualTo("short horse battery")
-    }
-
-    @Test fun settingsExportIsStillOffered() {
+    @Test fun oldSettingsFilesCanStillBeImported() {
         compose.setContent {
             ForkcastTheme {
                 BackupScreen(
@@ -165,13 +200,13 @@ class BackupScreenTest {
                     onEvent = {},
                     actions = noActions,
                     onBack = {},
-                    settingsSection = { SettingsTransferSection(busy = false, onExport = {}, onImport = {}) },
+                    settingsSection = { SettingsTransferSection(busy = false, onImport = {}) },
                 )
             }
         }
-        compose.onNodeWithText("Export settings…").assertDoesNotExist()
         compose.onNodeWithText("Advanced").performScrollTo().performClick()
-        compose.onNodeWithText("Export settings…").performScrollTo().assertExists()
+        compose.onNodeWithText("Export settings…").assertDoesNotExist()
+        compose.onNodeWithText("Import settings…").performScrollTo().assertExists()
     }
 
     @androidx.compose.runtime.Composable
@@ -180,8 +215,8 @@ class BackupScreenTest {
             androidx.compose.ui.Modifier.verticalScroll(androidx.compose.foundation.rememberScrollState()),
         ) { content() }
 
-    private fun status(chosen: Boolean, settings: BackupSettings = BackupSettings(), problem: FolderProblem? = null) =
-        FolderStatus(if (chosen) "content://tree/1" else null, if (chosen) "Backups" else null, settings, null, problem, hasPassword = false)
+    private fun status(chosen: Boolean, settings: BackupSettings = BackupSettings(), problem: FolderProblem? = null, hasPassword: Boolean = true) =
+        FolderStatus(if (chosen) "content://tree/1" else null, if (chosen) "Backups" else null, settings, null, problem, hasPassword = hasPassword)
 
     @Test fun noFolderYetOffersToChooseOne() {
         var chose = false
@@ -194,45 +229,47 @@ class BackupScreenTest {
         compose.onNodeWithText("Back up now").assertDoesNotExist()
     }
 
-    @Test fun folderChosenShowsScheduleKeepAndActions() {
+    @Test fun folderChosenShowsDaysTimeRetentionAndCleanup() {
         val log = mutableListOf<String>()
         compose.setContent {
             ForkcastTheme {
                 Scrolling {
-                AutoBackupSection(
-                    AutoBackupUiState(status(chosen = true)),
-                    AutoBackupActions(
-                        backupNow = { log += "now" },
-                        cleanup = { log += "cleanup" },
-                        setFrequency = { log += "freq $it" },
-                        setKeep = { log += "keep $it" },
-                        setPhotos = { log += "photos $it" },
-                    ),
-                )
+                    AutoBackupSection(
+                        AutoBackupUiState(status(chosen = true)),
+                        AutoBackupActions(
+                            cleanup = { log += "cleanup" },
+                            toggleDay = { log += "day $it" },
+                            setRetention = { log += "keep $it" },
+                        ),
+                    )
                 }
             }
         }
         compose.onNodeWithText("Saving to: Backups").assertIsDisplayed()
-        compose.onNodeWithText("On Monday, around 3 am").assertIsDisplayed()
-        compose.onNodeWithText("Every day").performScrollTo().performClick()
-        compose.onNodeWithText("Newest 16").performScrollTo().performClick()
-        compose.onNodeWithText("Include meal photos").performScrollTo().performClick()
-        compose.onNodeWithText("Back up now").performScrollTo().performClick()
+        // Monday is on by default (1.5 to 1.8.1's weekly setting).
+        compose.onNodeWithContentDescription("Monday, on").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Wednesday, off").performClick()
+        compose.onNodeWithText("Android may move background work a little", substring = true).performScrollTo().assertExists()
+        compose.onNodeWithText("The last 7, plus one a month for 6 months.").performScrollTo().assertExists()
+        compose.onNodeWithText("Long-term").performScrollTo().performClick()
         compose.onNodeWithText("Delete old backups").performScrollTo().performClick()
-        assertThat(log).containsExactly("freq ${BackupFrequency.DAILY}", "keep 16", "photos true", "now", "cleanup").inOrder()
+        assertThat(log).containsExactly("day 3", "keep ${RetentionPreset.LONG_TERM}", "cleanup").inOrder()
     }
 
-    @Test fun passwordSwitchAsksForAPasswordFirst() {
-        var set: String? = "unset"
+    @Test fun theSwitchAsksForAPasswordWhenThereIsNone() {
+        val log = mutableListOf<String>()
         compose.setContent {
-            ForkcastTheme { AutoBackupSection(AutoBackupUiState(status(chosen = true)), AutoBackupActions(setPassword = { set = it })) }
+            ForkcastTheme {
+                AutoBackupSection(
+                    AutoBackupUiState(status(chosen = true, hasPassword = false)),
+                    AutoBackupActions(needPassword = { log += "ask" }, setAuto = { log += "auto $it" }),
+                )
+            }
         }
-        compose.onNodeWithText("Protect with a password").performClick()
-        assertThat(set).isEqualTo("unset")
-        compose.onNodeWithText("Password").performTextInput("a long backup password")
-        compose.onNodeWithText("Password again").performTextInput("a long backup password")
-        compose.onNodeWithText("Continue").performClick()
-        assertThat(set).isEqualTo("a long backup password")
+        compose.onNodeWithText("Needs a backup password").assertIsDisplayed()
+        compose.onNodeWithText("Back up automatically").performClick()
+        assertThat(log).containsExactly("ask")
+        compose.onNodeWithContentDescription("Monday, on").assertDoesNotExist()
     }
 
     @Test fun aLostFolderSaysWhatToDo() {
