@@ -41,7 +41,9 @@ val localSigning = Properties().apply {
 fun signingValue(propKey: String, envKey: String): String? =
     localSigning.getProperty(propKey)?.takeIf { it.isNotBlank() } ?: System.getenv(envKey)?.takeIf { it.isNotBlank() }
 
-val releaseStoreFile: File? = signingValue("storeFile", "FORKCAST_KEYSTORE_FILE")?.let { File(it) }?.takeIf { it.isFile }
+// A stored path that no longer exists (the project folder moved) falls back to the same file name in keys/.
+val releaseStoreFile: File? = signingValue("storeFile", "FORKCAST_KEYSTORE_FILE")?.let { File(it) }
+    ?.let { f -> f.takeIf { it.isFile } ?: rootProject.file("keys/${f.name}").takeIf { it.isFile } }
 val hasReleaseKey = releaseStoreFile != null
 
 // ---- Distribution (roadmap 2.0, task 1.2): `github` is the only channel that ships. `play` is
