@@ -20,8 +20,6 @@ class FakeBackupRepository : BackupRepository {
     var failImport = false
 
     override suspend fun exportJson() = "{json}"
-    override suspend fun foodLogCsv() = "food,csv"
-    override suspend fun weightsCsv() = "weights,csv"
 
     private val aliases = mutableMapOf<String, String>()
 

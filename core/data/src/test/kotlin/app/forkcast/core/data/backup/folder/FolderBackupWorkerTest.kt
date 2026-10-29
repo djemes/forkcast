@@ -55,7 +55,10 @@ class FolderBackupWorkerTest {
         }
         override suspend fun recordSaved(name: String, sizeBytes: Long?) = Unit
         override suspend fun updateSettings(transform: (BackupSettings) -> BackupSettings) = Unit
-        override suspend fun setPassword(password: String?) = Unit
+        override suspend fun setPassword(password: String) = Unit
+        override suspend fun password(): String? = null
+        override suspend fun changePassword(password: String) = ReencryptResult(0, emptyList())
+        override suspend fun removePassword() = Unit
         override suspend fun cleanupPlan(): CleanupPlan = CleanupPlan.NothingToDelete(null)
         override suspend fun deleteOld(plan: CleanupPlan.Ready): CleanupResult = error("unused")
     }
@@ -63,6 +66,8 @@ class FolderBackupWorkerTest {
     private val repo = Scripted()
 
     @Before fun channelsAndPermission() {
+        // Every day, so the run is never skipped as an off day.
+        kotlinx.coroutines.runBlocking { settings.update { it.copy(backup = it.backup.copy(days = (1..7).toSet())) } }
         Channel.createAll(context)
         shadowOf(context as android.app.Application).grantPermissions(android.Manifest.permission.POST_NOTIFICATIONS)
     }
@@ -72,7 +77,7 @@ class FolderBackupWorkerTest {
             .setRunAttemptCount(attempt)
             .setWorkerFactory(object : WorkerFactory() {
                 override fun createWorker(appContext: Context, workerClassName: String, workerParameters: WorkerParameters) =
-                    FolderBackupWorker(appContext, workerParameters, repo, device, FolderProblemNotifier(appContext, Notifier(appContext), settings, clock))
+                    FolderBackupWorker(appContext, workerParameters, repo, device, FolderProblemNotifier(appContext, Notifier(appContext), settings, clock), settings, clock)
             })
             .build()
             .doWork()

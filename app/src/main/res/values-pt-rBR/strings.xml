@@ -74,7 +74,7 @@
     <string name="settings_ai_summary">Serviços de IA e chaves, a ordem deles, fotos das refeições</string>
     <string name="settings_food_databases_summary">Chave do USDA e Open Food Facts</string>
     <string name="settings_notifications_summary">Orçamento, lembretes, horário de silêncio</string>
-    <string name="settings_backup_data_summary">Backups, restauração, planilhas e transferência de configurações</string>
+    <string name="settings_backup_data_summary">Senha dos backups, backups, restauração e relatório de refeições</string>
     <string name="settings_appearance_summary">Claro, escuro e cores</string>
     <string name="settings_about_summary">Versão, atualizações, privacidade e licenças</string>
     <string name="settings_daily_targets">Metas diárias</string>
@@ -125,7 +125,7 @@
     <string name="about_not_affiliated">O Forkcast não é afiliado nem endossado por Google, Anthropic, OpenAI, USDA, Open Food Facts ou Samsung. Os nomes de produtos pertencem aos seus donos.</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
-    <string name="key_saved_encrypted">Guardada com criptografia. Só a exportação de configurações protegida por senha a inclui.</string>
+    <string name="key_saved_encrypted">Guardada com criptografia. Os backups a incluem, criptografada com a senha dos backups.</string>
     <string name="key_copy">Copiar chave</string>
     <string name="key_copied">Copiada. A área de transferência é limpa em um minuto.</string>
     <string name="key_clear_clipboard">Limpar área de transferência agora</string>

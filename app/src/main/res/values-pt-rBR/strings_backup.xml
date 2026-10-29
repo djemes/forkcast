@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="backup_csv_title">Para planilhas</string>
-    <string name="backup_csv_food_log">Registro de comida (CSV)</string>
-    <string name="backup_csv_weights">Pesos (CSV)</string>
     <string name="backup_restore_safety">Desfazer a última substituição</string>
     <string name="backup_restore_safety_body">O Forkcast salvou uma cópia dos seus dados antes da última substituição. Abri-la mostra as mesmas opções de importação.</string>
     <string name="backup_working">Trabalhando…</string>
-    <string name="backup_saved_food_log">Registro de comida salvo</string>
-    <string name="backup_saved_weights">Pesos salvos</string>
     <string name="backup_save_failed">Não foi possível salvar o arquivo. Tente outro local.</string>
 
     <string name="backup_preview_title">Importar este backup?</string>
@@ -48,9 +43,8 @@
     <string name="backup_import_failed">A importação não terminou, então nada foi alterado.</string>
 
     <!-- Settings export with API keys (SPEC §4.11) -->
-    <string name="settings_transfer_title">Configurações e chaves</string>
-    <string name="settings_transfer_body">Um arquivo separado com todas as configurações, seus serviços de IA com as chaves de API e a chave do banco de alimentos. Ele fica protegido por uma senha que você escolhe. Use para configurar outro celular.</string>
-    <string name="settings_export">Exportar configurações…</string>
+    <string name="settings_transfer_title">Arquivos de configurações</string>
+    <string name="settings_transfer_body">Um arquivo de configurações salvo com uma versão anterior do Forkcast ainda pode ser importado aqui, com a senha dele. Os backups agora levam suas configurações e chaves.</string>
     <string name="settings_import">Importar configurações…</string>
     <string name="settings_passphrase_title_export">Proteger com uma senha</string>
     <string name="settings_passphrase_body_export">Quem tiver este arquivo e a senha pode usar suas chaves de API. Não há como recuperar uma senha esquecida.</string>
@@ -71,7 +65,6 @@
     </plurals>
     <string name="settings_preview_none">nenhum</string>
     <string name="settings_replace">Substituir</string>
-    <string name="settings_saved">Arquivo de configurações salvo</string>
     <string name="settings_imported">Configurações e chaves importadas</string>
     <string name="settings_wrong_passphrase">Senha errada, ou o arquivo foi alterado.</string>
     <string name="settings_not_forkcast">Este não é um arquivo de configurações do Forkcast.</string>
@@ -81,8 +74,6 @@
 
     <!-- Backups (roadmap 2.0, task 1.4) -->
     <string name="backup_title">Backups</string>
-    <string name="backup_body">Um backup é um arquivo com tudo: registro de alimentos, alimentos, receitas, refeições salvas, peso, água, atividade, estimativas com IA, metas e configurações. Chaves de API nunca vão nele. Guarde um em algum lugar fora deste celular.</string>
-    <string name="backup_save">Salvar um arquivo de backup…</string>
     <string name="backup_restore">Restaurar de um backup…</string>
     <string name="backup_saved">Backup salvo</string>
     <string name="backup_none_yet">Nenhum backup ainda.</string>
@@ -93,16 +84,8 @@
     <string name="backup_reminder_detail">Em Hoje, depois de 14 dias sem backup</string>
     <string name="backup_preview_photos">Fotos de refeições: %1$d</string>
     <string name="backup_preview_no_photos">Sem fotos de refeições neste arquivo.</string>
-    <string name="backup_photos_detail">Fotos deixam o arquivo bem maior. Seu registro mantém todas as entradas de qualquer jeito.</string>
 
-    <string name="backup_save_title">Salvar um arquivo de backup</string>
-    <string name="backup_save_body">Em seguida, escolha onde salvar: neste celular, num cartão SD ou num app de nuvem como Google Drive ou OneDrive.</string>
-    <string name="backup_save_photos">Incluir fotos das refeições</string>
-    <string name="backup_save_password">Proteger com senha</string>
-    <string name="backup_password_warning">Se você esquecer esta senha, o backup não pode ser restaurado. Ninguém consegue recuperá-la.</string>
     <string name="backup_password">Senha</string>
-    <string name="backup_password_again">Senha de novo</string>
-    <string name="backup_save_choose">Escolher onde salvar</string>
     <string name="backup_unlock_title">Este backup tem senha</string>
     <string name="backup_unlock_body">Digite a senha com que ele foi salvo.</string>
     <string name="backup_unlock_wrong">Senha errada, ou o arquivo foi alterado.</string>
@@ -110,25 +93,11 @@
 
     <!-- Automatic backup to a folder -->
     <string name="backup_auto_title">Backup automático</string>
-    <string name="backup_auto_intro">Escolha uma pasta uma vez e o Forkcast salva um backup nela toda semana. Pode ser neste celular, num cartão SD ou na pasta de um app de nuvem (Google Drive, OneDrive e outros). O Forkcast só vê essa pasta.</string>
+    <string name="backup_auto_intro">Escolha uma pasta uma vez e o Forkcast salva nela um backup criptografado nos dias que você escolher. Pode ser neste celular, num cartão SD ou na pasta de um app de nuvem (Google Drive, OneDrive e outros). O Forkcast só vê essa pasta.</string>
     <string name="backup_auto_choose">Escolher uma pasta</string>
     <string name="backup_auto_folder">Salvando em: %1$s</string>
     <string name="backup_auto_folder_unnamed">Salvando na pasta que você escolheu</string>
     <string name="backup_auto_switch">Fazer backup automaticamente</string>
-    <string name="backup_weekly">Toda semana</string>
-    <string name="backup_daily">Todo dia</string>
-    <string name="backup_weekly_on">%1$s, por volta das 3h</string>
-    <string name="backup_daily_at">Por volta das 3h</string>
-    <string name="backup_keep_title">Backups a manter</string>
-    <plurals name="backup_keep_choice">
-        <item quantity="one">%1$d mais recente</item>
-        <item quantity="many">%1$d mais recentes</item>
-        <item quantity="other">%1$d mais recentes</item>
-    </plurals>
-    <string name="backup_auto_photos">Incluir fotos das refeições</string>
-    <string name="backup_auto_password">Proteger com senha</string>
-    <string name="backup_auto_password_detail">Salva neste celular para os backups rodarem sozinhos</string>
-    <string name="backup_auto_password_body">Os backups automáticos serão protegidos com esta senha. Ela fica salva neste celular (criptografada) para os backups rodarem sem você. Para restaurar em outro celular você vai precisar digitá-la, e se esquecer, esses backups não podem ser restaurados.</string>
     <string name="backup_now_to_folder">Fazer backup agora</string>
     <string name="backup_backed_up">Backup feito.</string>
     <string name="backup_auto_change">Trocar pasta</string>
@@ -171,4 +140,118 @@
         <item quantity="many">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Mantido %3$s.</item>
         <item quantity="other">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Mantido %3$s.</item>
     </plurals>
+
+    <!-- Backup password, buttons, schedule and retention (owner, 2026-10-29) -->
+    <string name="bpw_title">Senha dos backups</string>
+    <string name="bpw_none">Não definida. Os backups precisam de uma senha: ela os criptografa, então só você consegue abri-los.</string>
+    <string name="bpw_is_set">Definida. Todo backup é criptografado com ela.</string>
+    <string name="bpw_set">Definir uma senha</string>
+    <string name="bpw_show">Mostrar</string>
+    <string name="bpw_change">Trocar</string>
+    <string name="bpw_remove">Remover</string>
+    <string name="bpw_copy">Copiar</string>
+    <string name="bpw_copied">Senha copiada</string>
+    <string name="bpw_unlock_title">Confirme que é você</string>
+    <string name="bpw_unlock_subtitle">Para ver ou trocar a senha dos backups</string>
+    <string name="bpw_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de mostrar ou trocar a senha dos backups.</string>
+    <string name="bpw_dialog_new">Definir a senha dos backups</string>
+    <string name="bpw_dialog_change">Trocar a senha dos backups</string>
+    <string name="bpw_dialog_show">Sua senha dos backups</string>
+    <string name="bpw_field">Senha</string>
+    <string name="bpw_field_again">Digite de novo</string>
+    <string name="bpw_generate">Gerar uma senha forte</string>
+    <string name="bpw_save_note">Guarde-a no seu gerenciador de senhas. Se você perder este celular, ela é a única forma de abrir seus backups.</string>
+    <string name="bpw_min">Pelo menos %1$d caracteres</string>
+    <string name="bpw_mismatch">As duas não são iguais</string>
+    <string name="bpw_strength_weak">Fraca</string>
+    <string name="bpw_strength_fair">Razoável</string>
+    <string name="bpw_strength_good">Boa</string>
+    <string name="bpw_strength_strong">Forte</string>
+    <string name="bpw_strength_label">Força da senha: %1$s</string>
+    <string name="bpw_change_body">Os backups da pasta de backups são criptografados de novo com a nova senha. Cópias salvas em outros lugares continuam com a antiga.</string>
+    <plurals name="bpw_changed">
+        <item quantity="one">Senha trocada. %1$d backup da pasta agora usa a nova.</item>
+        <item quantity="many">Senha trocada. %1$d backups da pasta agora usam a nova.</item>
+        <item quantity="other">Senha trocada. %1$d backups da pasta agora usam a nova.</item>
+    </plurals>
+    <string name="bpw_change_failed">Estes backups não puderam ser atualizados e ainda abrem com a senha antiga: %1$s</string>
+    <string name="bpw_change_folder_lost">O Forkcast não consegue acessar a pasta de backups, então a senha não foi trocada. Escolha a pasta de novo e tente outra vez.</string>
+    <string name="bpw_remove_title">Remover a senha dos backups?</string>
+    <string name="bpw_remove_body">Os backups automáticos são desligados e Fazer backup agora deixa de funcionar até você definir uma senha de novo. Os backups que você já tem continuam abrindo com a senha com que foram feitos.</string>
+    <string name="bpw_keep_title">Usar esta senha neste celular?</string>
+    <string name="bpw_keep_body">Os backups que este celular fizer serão criptografados com a senha que você acabou de digitar.</string>
+    <string name="bpw_keep_yes">Usar</string>
+    <string name="backup_now">Fazer backup agora</string>
+    <string name="backup_share">Fazer backup e compartilhar</string>
+    <string name="backup_needs_password">Defina primeiro uma senha dos backups. Os backups são sempre criptografados com ela.</string>
+    <string name="backup_share_title">Compartilhar um backup</string>
+    <string name="backup_unencrypted">Fazer backup sem criptografia</string>
+    <string name="backup_unencrypted_title">Fazer backup sem criptografia?</string>
+    <string name="backup_unencrypted_body">Este arquivo não é criptografado. Ele inclui suas chaves de API e todos os seus dados de saúde de forma legível: registro de alimentos, pesos, água, atividade, metas e perfil, configurações, serviços de IA e fotos das refeições. Qualquer pessoa com o arquivo pode ver e usar tudo isso.</string>
+    <string name="backup_unencrypted_continue">Entendi, continuar</string>
+    <string name="backup_unencrypted_unlock">Para salvar um backup sem criptografia</string>
+    <string name="backup_unencrypted_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de salvar um backup que qualquer pessoa poderia ler.</string>
+    <string name="backup_contents">Todo backup guarda tudo: seu registro e alimentos, configurações, serviços de IA e suas chaves, e fotos das refeições.</string>
+    <string name="backup_naming">Os arquivos de backup têm a data e a hora no nome, por exemplo %1$s. Cópias sem criptografia terminam em _unencrypted.</string>
+    <string name="backup_auto_needs_password">Precisa de uma senha dos backups</string>
+    <string name="backup_auto_days">Dias</string>
+    <string name="backup_auto_time">Horário</string>
+    <string name="backup_auto_around">Por volta das %1$s. O Android pode mudar um pouco o horário de tarefas em segundo plano.</string>
+    <string name="backup_auto_day_on">%1$s, ligado</string>
+    <string name="backup_auto_day_off">%1$s, desligado</string>
+    <string name="backup_ret_title">Backups a manter</string>
+    <string name="backup_ret_simple">Simples</string>
+    <string name="backup_ret_balanced">Equilibrado</string>
+    <string name="backup_ret_long">Longo prazo</string>
+    <string name="backup_ret_custom">Personalizado</string>
+    <string name="backup_ret_simple_body">Os 5 últimos backups.</string>
+    <string name="backup_ret_balanced_body">Os 7 últimos, mais um por mês durante 6 meses.</string>
+    <string name="backup_ret_long_body">Os 14 últimos, um por mês durante 12 meses e um por ano.</string>
+    <string name="backup_ret_custom_body">Escolha quantos de cada manter.</string>
+    <string name="backup_ret_recent">Últimos</string>
+    <string name="backup_ret_months">Meses, um de cada</string>
+    <string name="backup_ret_years">Anos, um de cada</string>
+    <string name="backup_ret_note">Só backups do Forkcast nesta pasta são apagados, e só depois que um backup novo foi conferido.</string>
+    <string name="backup_restore_title">Restaurar</string>
+
+    <!-- Meal report for a health professional (owner, 2026-10-29) -->
+    <string name="report_section_title">Relatório de refeições</string>
+    <string name="report_section_body">Suas refeições de alguns dias, em PDF para imprimir ou em planilha, para mostrar a um médico ou nutricionista.</string>
+    <string name="report_make">Fazer um relatório de refeições…</string>
+    <string name="report_from">De</string>
+    <string name="report_to">Até</string>
+    <string name="report_format_pdf">PDF</string>
+    <string name="report_format_sheet">Planilha</string>
+    <string name="report_include_weight">Incluir peso</string>
+    <string name="report_include_water">Incluir água</string>
+    <string name="report_contents">Cada refeição com horário, alimentos, quantidades, calorias e macros, e os totais de cada dia comparados às suas metas. Sem fotos.</string>
+    <string name="report_continue">Continuar</string>
+    <string name="report_unlock">Para salvar seus dados de saúde num arquivo</string>
+    <string name="report_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de salvar seus dados de saúde num arquivo.</string>
+    <string name="report_saved">Relatório de refeições salvo</string>
+    <string name="report_title">Relatório de refeições</string>
+    <string name="report_range">%1$s a %2$s</string>
+    <string name="report_note">Feito com o Forkcast. Os alimentos e as quantidades foram registrados pela própria pessoa; os nutrientes são estimativas, e os itens marcados como \"estimativa\" foram estimados a partir de uma foto ou descrição.</string>
+    <string name="report_summary">Dias registrados: %1$d de %2$d · média de %3$s por dia</string>
+    <string name="report_day_total_target">%1$s de %2$s</string>
+    <string name="report_nothing_logged">Nada registrado</string>
+    <string name="report_nutrient_amount">%1$s %2$s</string>
+    <string name="report_estimate">estimativa</string>
+    <string name="report_water">Água</string>
+    <string name="report_weight">Peso</string>
+    <string name="report_water_line">Água %1$s</string>
+    <string name="report_weight_line">Peso %1$s</string>
+    <string name="report_page">Página %1$d</string>
+    <string name="report_sheet_items">Itens</string>
+    <string name="report_sheet_days">Totais por dia</string>
+    <string name="report_col_date">Data</string>
+    <string name="report_col_time">Horário</string>
+    <string name="report_col_meal">Refeição</string>
+    <string name="report_col_food">Alimento</string>
+    <string name="report_col_amount">Quantidade</string>
+    <string name="report_col_grams">Gramas</string>
+    <string name="report_col_with_unit">%1$s (%2$s)</string>
+    <string name="report_col_target_energy">Meta (%1$s)</string>
+    <string name="report_col_estimate">Estimativa</string>
+    <string name="report_yes">Sim</string>
 </resources>

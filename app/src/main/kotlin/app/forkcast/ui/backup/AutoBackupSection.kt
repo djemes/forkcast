@@ -53,7 +53,21 @@ import app.forkcast.core.data.backup.folder.FolderProblem
 import app.forkcast.core.data.backup.folder.FolderStatus
 import app.forkcast.core.data.backup.folder.NotRestorable
 import app.forkcast.core.data.settings.LastBackup
-import app.forkcast.core.model.BackupFrequency
+import app.forkcast.core.model.RetentionPreset
+import app.forkcast.core.data.backup.folder.ReencryptResult
+import app.forkcast.ui.common.MealTimeField
+import app.forkcast.ui.common.mealTimeText
+import app.forkcast.ui.onboarding.NumberField
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.remember
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.contentDescription
+import java.time.temporal.WeekFields
 import app.forkcast.core.model.BackupSettings
 import app.forkcast.ui.common.DeviceAuth
 import app.forkcast.ui.common.ToggleRow
@@ -85,6 +99,10 @@ data class AutoBackupUiState(
     val cleanup: CleanupPlan? = null,
     /** How the last cleanup went, until the message is shown. */
     val cleanedUp: CleanupResult? = null,
+    /** After a password change, until the message is shown. */
+    val reencrypted: ReencryptResult? = null,
+    /** The backup password, shown after the phone's unlock until the dialog closes. */
+    val shownPassword: String? = null,
 )
 
 @HiltViewModel
@@ -139,21 +157,46 @@ class AutoBackupViewModel @Inject constructor(
         else -> { local.update { it.copy(cleanup = p) }; null }
     }
 
-    fun setAuto(on: Boolean) = update { it.copy(auto = on) }
-    fun setFrequency(f: BackupFrequency) = update { it.copy(frequency = f) }
-    fun setKeep(n: Int) = update { it.copy(keep = n) }
-    fun setPhotos(on: Boolean) = update { it.copy(photos = on) }
-    fun setReminder(on: Boolean) = update { it.copy(reminder = on) }
+    fun setAuto(on: Boolean) = update { it.copy(auto = on, days = it.scheduleDays) }
 
-    /** Turns the password on with [password], or off (null), which also removes the saved one. */
-    fun setPassword(password: String?) = viewModelScope.launch {
-        backups.setPassword(password)
-        backups.updateSettings { it.copy(password = password != null) }
+    /** A day circle: deselecting the last day turns automatic backup off and keeps that day for next time. */
+    fun toggleDay(day: Int) = update { s ->
+        val days = s.scheduleDays
+        when {
+            day !in days -> s.copy(days = days + day)
+            days.size == 1 -> s.copy(auto = false, days = days)
+            else -> s.copy(days = days - day)
+        }
     }
+
+    fun setMinute(minute: Int) = update { it.copy(minute = minute, days = it.scheduleDays) }
+    fun setRetention(preset: RetentionPreset) = update { it.copy(retention = preset) }
+    fun setCustom(recent: Int?, months: Int?, years: Int?) = update {
+        it.copy(customRecent = recent ?: it.customRecent, customMonths = months ?: it.customMonths, customYears = years ?: it.customYears)
+    }
+
+    /** The first backup password; [thenAuto] when it was asked for by the automatic-backup switch. */
+    fun setPassword(password: String, thenAuto: Boolean = false) = viewModelScope.launch {
+        backups.setPassword(password)
+        if (thenAuto) backups.updateSettings { it.copy(auto = true, days = it.scheduleDays) }
+    }
+
+    /** After the unlock. */
+    fun showPassword() = viewModelScope.launch { local.update { it.copy(shownPassword = backups.password()) } }
+    fun hidePassword() = local.update { it.copy(shownPassword = null) }
+
+    /** Re-encrypts the folder's backups, then reports what happened. */
+    fun changePassword(password: String) = run(FolderWork.BACKING_UP) {
+        val result = backups.changePassword(password)
+        local.update { it.copy(reencrypted = result) }
+        null
+    }
+
+    fun removePassword() = viewModelScope.launch { backups.removePassword() }
 
     private fun update(transform: (BackupSettings) -> BackupSettings) = viewModelScope.launch { backups.updateSettings(transform) }
 
-    fun messageShown() = local.update { it.copy(problem = null, justBackedUp = false, cleanedUp = null) }
+    fun messageShown() = local.update { it.copy(problem = null, justBackedUp = false, cleanedUp = null, reencrypted = null) }
 
     private fun run(work: FolderWork, block: suspend () -> FolderProblem?) {
         if (local.value.working != null) return
@@ -176,15 +219,17 @@ data class AutoBackupActions(
     val backupThenCleanup: () -> Unit = {},
     val closeCleanup: () -> Unit = {},
     val setAuto: (Boolean) -> Unit = {},
-    val setFrequency: (BackupFrequency) -> Unit = {},
-    val setKeep: (Int) -> Unit = {},
-    val setPhotos: (Boolean) -> Unit = {},
-    val setPassword: (String?) -> Unit = {},
+    /** The switch was turned on with no backup password: ask for one first. */
+    val needPassword: () -> Unit = {},
+    val toggleDay: (Int) -> Unit = {},
+    val setMinute: (Int) -> Unit = {},
+    val setRetention: (RetentionPreset) -> Unit = {},
+    val setCustom: (recent: Int?, months: Int?, years: Int?) -> Unit = { _, _, _ -> },
 )
 
 /** Wires the section to its ViewModel, the folder picker and the unlock prompt. */
 @Composable
-fun AutoBackupSectionRoute(viewModel: AutoBackupViewModel, state: AutoBackupUiState) {
+fun AutoBackupSectionRoute(viewModel: AutoBackupViewModel, state: AutoBackupUiState, needPassword: () -> Unit) {
     val pickFolder = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { viewModel.folderChosen(it) }
     // Deleting backups asks the same unlock prompt as showing a saved key (owner, 2026-10-24).
     val context = LocalContext.current
@@ -206,23 +251,24 @@ fun AutoBackupSectionRoute(viewModel: AutoBackupViewModel, state: AutoBackupUiSt
             backupThenCleanup = viewModel::backupThenCheckCleanup,
             closeCleanup = viewModel::closeCleanup,
             setAuto = viewModel::setAuto,
-            setFrequency = viewModel::setFrequency,
-            setKeep = viewModel::setKeep,
-            setPhotos = viewModel::setPhotos,
-            setPassword = viewModel::setPassword,
+            needPassword = needPassword,
+            toggleDay = viewModel::toggleDay,
+            setMinute = viewModel::setMinute,
+            setRetention = viewModel::setRetention,
+            setCustom = viewModel::setCustom,
         ),
     )
 }
 
 /**
- * Automatic backup (roadmap 2.0, task 1.4): pick a folder once (on the phone, an SD card, or a
- * cloud app's folder), then a `.forkcast` file every week or day, keeping the newest few.
+ * Automatic backup (owner, 2026-10-29): pick a folder once (on the phone, an SD card, or a cloud
+ * app's folder), then an encrypted `.forkcast` file on the chosen days around the chosen time,
+ * thinned out by the retention preset. Needs the backup password.
  */
 @Composable
 fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
     val s = state.status
     var confirmForget by rememberSaveable { mutableStateOf(false) }
-    var askPassword by rememberSaveable { mutableStateOf(false) }
     val idle = state.working == null
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(R.string.backup_auto_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
@@ -241,49 +287,25 @@ fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
                 Text(stringResource(folderProblemText(it)), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
                 HelpLink(HelpLinks.folder(it))
             }
-            ToggleRow(stringResource(R.string.backup_auto_switch), null, s.settings.auto, actions.setAuto)
-            if (s.settings.auto) {
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = s.settings.frequency == BackupFrequency.WEEKLY,
-                        onClick = { actions.setFrequency(BackupFrequency.WEEKLY) },
-                        label = { Text(stringResource(R.string.backup_weekly)) },
-                    )
-                    FilterChip(
-                        selected = s.settings.frequency == BackupFrequency.DAILY,
-                        onClick = { actions.setFrequency(BackupFrequency.DAILY) },
-                        label = { Text(stringResource(R.string.backup_daily)) },
-                    )
-                }
-                val whenText = if (s.settings.frequency == BackupFrequency.WEEKLY) {
-                    val day = DayOfWeek.of(s.settings.weekday.coerceIn(1, 7)).getDisplayName(TextStyle.FULL, LocalLocale.current.platformLocale)
-                    stringResource(R.string.backup_weekly_on, day.replaceFirstChar { it.titlecase() })
-                } else {
-                    stringResource(R.string.backup_daily_at)
-                }
-                Text(whenText, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(stringResource(R.string.backup_keep_title), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(top = 8.dp))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    BackupSettings.KEEP_CHOICES.forEach { n ->
-                        FilterChip(
-                            selected = s.settings.keep == n,
-                            onClick = { actions.setKeep(n) },
-                            label = { Text(pluralStringResource(R.plurals.backup_keep_choice, n, n)) },
-                        )
-                    }
-                }
-                ToggleRow(stringResource(R.string.backup_auto_photos), stringResource(R.string.backup_photos_detail), s.settings.photos, actions.setPhotos)
-                ToggleRow(
-                    stringResource(R.string.backup_auto_password),
-                    stringResource(R.string.backup_auto_password_detail),
-                    s.settings.password && s.hasPassword,
-                    { on -> if (on) askPassword = true else actions.setPassword(null) },
+            val on = s.settings.auto && s.hasPassword
+            ToggleRow(
+                stringResource(R.string.backup_auto_switch),
+                if (s.hasPassword) null else stringResource(R.string.backup_auto_needs_password),
+                on,
+                { want -> if (want && !s.hasPassword) actions.needPassword() else actions.setAuto(want) },
+            )
+            if (on) {
+                Text(stringResource(R.string.backup_auto_days), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 4.dp))
+                DayCircles(s.settings.scheduleDays, actions.toggleDay)
+                MealTimeField(s.settings.minute, actions.setMinute, label = stringResource(R.string.backup_auto_time))
+                Text(
+                    stringResource(R.string.backup_auto_around, mealTimeText(s.settings.minute)),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
+                RetentionChoice(s.settings, actions)
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = actions.backupNow, enabled = idle, modifier = Modifier.heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.backup_now_to_folder))
-                }
                 OutlinedButton(onClick = actions.cleanup, enabled = idle, modifier = Modifier.heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.backup_cleanup))
                 }
@@ -309,14 +331,6 @@ fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
     }
 
     state.cleanup?.let { CleanupDialog(it, actions) }
-    if (askPassword) {
-        NewPasswordDialog(
-            title = stringResource(R.string.backup_auto_password),
-            body = stringResource(R.string.backup_auto_password_body),
-            onDone = { askPassword = false; actions.setPassword(it) },
-            onDismiss = { askPassword = false },
-        )
-    }
     if (confirmForget) {
         AlertDialog(
             onDismissRequest = { confirmForget = false },
@@ -326,6 +340,79 @@ fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
             dismissButton = { TextButton(onClick = { confirmForget = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
+}
+
+/** S M T W T F S, the week as the phone's locale starts it; each circle a 48 dp toggle with the day's full name. */
+@Composable
+private fun DayCircles(days: Set<Int>, onToggle: (Int) -> Unit) {
+    val locale = LocalLocale.current.platformLocale
+    val first = remember(locale) { WeekFields.of(locale).firstDayOfWeek }
+    Row(modifier = Modifier.fillMaxWidth()) {
+        for (offset in 0L until 7L) {
+            val day = first.plus(offset)
+            val selected = day.value in days
+            val name = day.getDisplayName(TextStyle.FULL, locale).replaceFirstChar { it.titlecase(locale) }
+            val description = stringResource(if (selected) R.string.backup_auto_day_on else R.string.backup_auto_day_off, name)
+            // The whole seventh of the row is the touch target (48 dp tall); the circle sits inside it.
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .weight(1f)
+                    .heightIn(min = 48.dp)
+                    .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onToggle(day.value) })
+                    .semantics { contentDescription = description },
+            ) {
+                Box(
+                    contentAlignment = Alignment.Center,
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainerHigh)
+                        .border(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline, CircleShape),
+                ) {
+                    Text(
+                        day.getDisplayName(TextStyle.NARROW, locale),
+                        style = MaterialTheme.typography.titleSmall,
+                        color = if (selected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
+                    )
+                }
+            }
+        }
+    }
+}
+
+/** Simple · Balanced · Long-term · Custom, with what each keeps; Custom shows its three numbers. */
+@Composable
+private fun RetentionChoice(settings: BackupSettings, actions: AutoBackupActions) {
+    Text(stringResource(R.string.backup_ret_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 8.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        RetentionPreset.entries.forEach { p ->
+            FilterChip(selected = settings.retention == p, onClick = { actions.setRetention(p) }, label = { Text(stringResource(retentionName(p))) })
+        }
+    }
+    Text(stringResource(retentionBody(settings.retention)), style = MaterialTheme.typography.bodyMedium)
+    if (settings.retention == RetentionPreset.CUSTOM) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            NumberField(settings.customRecent.toString(), stringResource(R.string.backup_ret_recent), { actions.setCustom(it?.toInt(), null, null) }, Modifier.weight(1f))
+            NumberField(settings.customMonths.toString(), stringResource(R.string.backup_ret_months), { actions.setCustom(null, it?.toInt(), null) }, Modifier.weight(1f))
+            NumberField(settings.customYears.toString(), stringResource(R.string.backup_ret_years), { actions.setCustom(null, null, it?.toInt()) }, Modifier.weight(1f))
+        }
+    }
+    Text(stringResource(R.string.backup_ret_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+private fun retentionName(p: RetentionPreset): Int = when (p) {
+    RetentionPreset.SIMPLE -> R.string.backup_ret_simple
+    RetentionPreset.BALANCED -> R.string.backup_ret_balanced
+    RetentionPreset.LONG_TERM -> R.string.backup_ret_long
+    RetentionPreset.CUSTOM -> R.string.backup_ret_custom
+}
+
+private fun retentionBody(p: RetentionPreset): Int = when (p) {
+    RetentionPreset.SIMPLE -> R.string.backup_ret_simple_body
+    RetentionPreset.BALANCED -> R.string.backup_ret_balanced_body
+    RetentionPreset.LONG_TERM -> R.string.backup_ret_long_body
+    RetentionPreset.CUSTOM -> R.string.backup_ret_custom_body
 }
 
 /** "Last backup: Oct 24, 3:00 AM · Backups · 1.2 MB", or that there's none yet. */

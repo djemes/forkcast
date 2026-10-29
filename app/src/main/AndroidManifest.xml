@@ -155,6 +155,17 @@
             android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
             tools:node="remove" />
 
+        <!-- "Back up and share" hands the encrypted backup to the share sheet (BackupShares). -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.files"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
+
         <!-- WorkManager is started by ForkcastApplication (Hilt worker factory), not by App Startup. -->
         <provider
             android:name="androidx.startup.InitializationProvider"

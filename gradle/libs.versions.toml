@@ -26,6 +26,8 @@ androidxTestCore = "1.7.0"
 ktor = "3.6.0"
 javaxInject = "1"
 tink = "1.24.0"
+# Argon2id for backup passwords (owner, 2026-10-29); checked 2026-10-29 on Maven Central: 1.86 of 2026-09-11 is the newest
+bouncycastle = "1.86"
 camerax = "1.6.2"
 mlkitBarcode = "17.3.0"
 mlkitText = "16.0.1"
@@ -95,6 +97,7 @@ ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx
 ktor-client-mock = { module = "io.ktor:ktor-client-mock", version.ref = "ktor" }
 javax-inject = { module = "javax.inject:javax.inject", version.ref = "javaxInject" }
 tink-android = { module = "com.google.crypto.tink:tink-android", version.ref = "tink" }
+bouncycastle-prov = { module = "org.bouncycastle:bcprov-jdk18on", version.ref = "bouncycastle" }
 
 camera-core = { module = "androidx.camera:camera-core", version.ref = "camerax" }
 camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "camerax" }

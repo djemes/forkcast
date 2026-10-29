@@ -116,6 +116,7 @@ class SettingsScreensTest {
 
     @Test fun notificationsToggleAndThresholds() {
         var settings = app.forkcast.core.model.NotificationSettings(permissionAsked = true)
+        var backupReminder: Boolean? = null
         compose.setContent {
             ForkcastTheme {
                 NotificationsScreen(
@@ -125,6 +126,7 @@ class SettingsScreensTest {
                     onMeal = { _, _ -> },
                     onMealCategory = {},
                     onBack = {},
+                    onBackupReminder = { backupReminder = it },
                 )
             }
         }
@@ -132,6 +134,9 @@ class SettingsScreensTest {
         assertThat(settings.eveningEnabled).isTrue()
         compose.onNodeWithText("110%").performClick()
         assertThat(settings.budgetThresholds).containsExactly(80, 100, 110).inOrder()
+        // Moved here from Backup & data (owner, 2026-10-29); on by default.
+        compose.onNodeWithText("Remind me to back up").performScrollTo().performClick()
+        assertThat(backupReminder).isFalse()
     }
 
     @Test fun aboutShowsVersion() {

@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="backup_csv_title">For spreadsheets</string>
-    <string name="backup_csv_food_log">Food log (CSV)</string>
-    <string name="backup_csv_weights">Weights (CSV)</string>
     <string name="backup_restore_safety">Undo the last replace</string>
     <string name="backup_restore_safety_body">Forkcast saved a copy of your data before the last replace. Opening it shows the same import choices.</string>
     <string name="backup_working">Working…</string>
-    <string name="backup_saved_food_log">Food log saved</string>
-    <string name="backup_saved_weights">Weights saved</string>
     <string name="backup_save_failed">Couldn\'t save the file. Try another location.</string>
 
     <string name="backup_preview_title">Import this backup?</string>
@@ -47,9 +42,8 @@
     <string name="backup_import_failed">The import didn\'t finish, so nothing was changed.</string>
 
     <!-- Settings export with API keys (SPEC §4.11) -->
-    <string name="settings_transfer_title">Settings and keys</string>
-    <string name="settings_transfer_body">A separate file with every setting, your AI services and their API keys, and the food database key. It\'s locked with a passphrase you choose. Use it to set up another phone.</string>
-    <string name="settings_export">Export settings…</string>
+    <string name="settings_transfer_title">Settings files</string>
+    <string name="settings_transfer_body">A settings file saved with an earlier version of Forkcast still imports here, with its passphrase. Backups now carry your settings and keys.</string>
     <string name="settings_import">Import settings…</string>
     <string name="settings_passphrase_title_export">Lock with a passphrase</string>
     <string name="settings_passphrase_body_export">Anyone with this file and the passphrase can use your API keys. There is no way to recover a forgotten passphrase.</string>
@@ -69,7 +63,6 @@
     </plurals>
     <string name="settings_preview_none">none</string>
     <string name="settings_replace">Replace</string>
-    <string name="settings_saved">Settings file saved</string>
     <string name="settings_imported">Settings and keys imported</string>
     <string name="settings_wrong_passphrase">Wrong passphrase, or the file was changed.</string>
     <string name="settings_not_forkcast">This isn\'t a Forkcast settings file.</string>
@@ -79,8 +72,6 @@
 
     <!-- Backups (roadmap 2.0, task 1.4) -->
     <string name="backup_title">Backups</string>
-    <string name="backup_body">A backup is one file with everything: food log, foods, recipes, saved meals, weight, water, activity, AI estimates, goals and settings. API keys are never in it. Keep one somewhere other than this phone.</string>
-    <string name="backup_save">Save a backup file…</string>
     <string name="backup_restore">Restore from a backup…</string>
     <string name="backup_saved">Backup saved</string>
     <string name="backup_none_yet">No backup yet.</string>
@@ -91,16 +82,8 @@
     <string name="backup_reminder_detail">On Today, after 14 days without a backup</string>
     <string name="backup_preview_photos">Meal photos: %1$d</string>
     <string name="backup_preview_no_photos">No meal photos in this file.</string>
-    <string name="backup_photos_detail">Photos make the file much bigger. Your log keeps every entry either way.</string>
 
-    <string name="backup_save_title">Save a backup file</string>
-    <string name="backup_save_body">Next, choose where to save it: this phone, an SD card, or a cloud app like Google Drive or OneDrive.</string>
-    <string name="backup_save_photos">Include meal photos</string>
-    <string name="backup_save_password">Protect with a password</string>
-    <string name="backup_password_warning">If you forget this password, the backup can\'t be restored. Nobody can recover it.</string>
     <string name="backup_password">Password</string>
-    <string name="backup_password_again">Password again</string>
-    <string name="backup_save_choose">Choose where to save</string>
     <string name="backup_unlock_title">This backup has a password</string>
     <string name="backup_unlock_body">Type the password it was saved with.</string>
     <string name="backup_unlock_wrong">Wrong password, or the file was changed.</string>
@@ -108,24 +91,11 @@
 
     <!-- Automatic backup to a folder -->
     <string name="backup_auto_title">Automatic backup</string>
-    <string name="backup_auto_intro">Pick a folder once and Forkcast saves a backup there every week. It can be on this phone, an SD card, or a cloud app\'s folder (Google Drive, OneDrive and others). Forkcast only sees that folder.</string>
+    <string name="backup_auto_intro">Pick a folder once and Forkcast saves an encrypted backup there on the days you choose. It can be on this phone, an SD card, or a cloud app\'s folder (Google Drive, OneDrive and others). Forkcast only sees that folder.</string>
     <string name="backup_auto_choose">Choose a folder</string>
     <string name="backup_auto_folder">Saving to: %1$s</string>
     <string name="backup_auto_folder_unnamed">Saving to the folder you chose</string>
     <string name="backup_auto_switch">Back up automatically</string>
-    <string name="backup_weekly">Every week</string>
-    <string name="backup_daily">Every day</string>
-    <string name="backup_weekly_on">On %1$s, around 3 am</string>
-    <string name="backup_daily_at">Around 3 am</string>
-    <string name="backup_keep_title">Backups to keep</string>
-    <plurals name="backup_keep_choice">
-        <item quantity="one">Newest %1$d</item>
-        <item quantity="other">Newest %1$d</item>
-    </plurals>
-    <string name="backup_auto_photos">Include meal photos</string>
-    <string name="backup_auto_password">Protect with a password</string>
-    <string name="backup_auto_password_detail">Saved on this phone so backups can run on their own</string>
-    <string name="backup_auto_password_body">Automatic backups will be locked with this password. It\'s saved on this phone (encrypted) so backups can run without you. To restore on another phone you\'ll need to type it, and if you forget it, those backups can\'t be restored.</string>
     <string name="backup_now_to_folder">Back up now</string>
     <string name="backup_backed_up">Backed up.</string>
     <string name="backup_auto_change">Change folder</string>
@@ -165,4 +135,117 @@
         <item quantity="one">Deleted %1$d backup; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
         <item quantity="other">Deleted %1$d backups; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
     </plurals>
+
+    <!-- Backup password, buttons, schedule and retention (owner, 2026-10-29) -->
+    <string name="bpw_title">Backup password</string>
+    <string name="bpw_none">Not set. Backups need a password: it encrypts them, so only you can open them.</string>
+    <string name="bpw_is_set">Set. Every backup is encrypted with it.</string>
+    <string name="bpw_set">Set a backup password</string>
+    <string name="bpw_show">Show</string>
+    <string name="bpw_change">Change</string>
+    <string name="bpw_remove">Remove</string>
+    <string name="bpw_copy">Copy</string>
+    <string name="bpw_copied">Password copied</string>
+    <string name="bpw_unlock_title">Confirm it\'s you</string>
+    <string name="bpw_unlock_subtitle">To see or change your backup password</string>
+    <string name="bpw_no_lock">Set a screen lock on this phone first. Forkcast asks for it before showing or changing your backup password.</string>
+    <string name="bpw_dialog_new">Set a backup password</string>
+    <string name="bpw_dialog_change">Change the backup password</string>
+    <string name="bpw_dialog_show">Your backup password</string>
+    <string name="bpw_field">Password</string>
+    <string name="bpw_field_again">Type it again</string>
+    <string name="bpw_generate">Generate a strong password</string>
+    <string name="bpw_save_note">Save it in your password manager. If you lose this phone, it\'s the only way to open your backups.</string>
+    <string name="bpw_min">At least %1$d characters</string>
+    <string name="bpw_mismatch">The two don\'t match</string>
+    <string name="bpw_strength_weak">Weak</string>
+    <string name="bpw_strength_fair">Fair</string>
+    <string name="bpw_strength_good">Good</string>
+    <string name="bpw_strength_strong">Strong</string>
+    <string name="bpw_strength_label">Password strength: %1$s</string>
+    <string name="bpw_change_body">Your backups in the backup folder are encrypted again with the new password. Copies saved anywhere else keep the old one.</string>
+    <plurals name="bpw_changed">
+        <item quantity="one">Password changed. %1$d backup in the folder now uses it.</item>
+        <item quantity="other">Password changed. %1$d backups in the folder now use it.</item>
+    </plurals>
+    <string name="bpw_change_failed">These backups couldn\'t be updated and still open with the old password: %1$s</string>
+    <string name="bpw_change_folder_lost">Forkcast can\'t reach the backup folder, so the password wasn\'t changed. Choose the folder again, then try once more.</string>
+    <string name="bpw_remove_title">Remove the backup password?</string>
+    <string name="bpw_remove_body">Automatic backups turn off, and Back up now stops working until you set a password again. Backups you already have still open with the password they were made with.</string>
+    <string name="bpw_keep_title">Use this password on this phone?</string>
+    <string name="bpw_keep_body">Backups this phone makes will be encrypted with the password you just typed.</string>
+    <string name="bpw_keep_yes">Use it</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_share">Back up and share</string>
+    <string name="backup_needs_password">Set a backup password first. Backups are always encrypted with it.</string>
+    <string name="backup_share_title">Share a backup</string>
+    <string name="backup_unencrypted">Back up without encryption</string>
+    <string name="backup_unencrypted_title">Back up without encryption?</string>
+    <string name="backup_unencrypted_body">This file is not encrypted. It includes your API keys and all your health data in readable form: food log, weights, water, activity, goals and profile, settings, AI services and meal photos. Anyone with the file can see and use them.</string>
+    <string name="backup_unencrypted_continue">I understand, continue</string>
+    <string name="backup_unencrypted_unlock">To save a backup without encryption</string>
+    <string name="backup_unencrypted_no_lock">Set a screen lock on this phone first. Forkcast asks for it before saving a backup anyone could read.</string>
+    <string name="backup_contents">Every backup holds everything: your log and foods, settings, AI services and their keys, and meal photos.</string>
+    <string name="backup_naming">Backup files are named by date and time, for example %1$s. Copies without encryption end in _unencrypted.</string>
+    <string name="backup_auto_needs_password">Needs a backup password</string>
+    <string name="backup_auto_days">Days</string>
+    <string name="backup_auto_time">Time</string>
+    <string name="backup_auto_around">Around %1$s. Android may move background work a little.</string>
+    <string name="backup_auto_day_on">%1$s, on</string>
+    <string name="backup_auto_day_off">%1$s, off</string>
+    <string name="backup_ret_title">Backups to keep</string>
+    <string name="backup_ret_simple">Simple</string>
+    <string name="backup_ret_balanced">Balanced</string>
+    <string name="backup_ret_long">Long-term</string>
+    <string name="backup_ret_custom">Custom</string>
+    <string name="backup_ret_simple_body">The last 5 backups.</string>
+    <string name="backup_ret_balanced_body">The last 7, plus one a month for 6 months.</string>
+    <string name="backup_ret_long_body">The last 14, one a month for 12 months, and one a year.</string>
+    <string name="backup_ret_custom_body">Choose how many of each to keep.</string>
+    <string name="backup_ret_recent">Latest</string>
+    <string name="backup_ret_months">Months, one each</string>
+    <string name="backup_ret_years">Years, one each</string>
+    <string name="backup_ret_note">Only Forkcast backups in this folder are deleted, and only after a new backup has been checked.</string>
+    <string name="backup_restore_title">Restore</string>
+
+    <!-- Meal report for a health professional (owner, 2026-10-29) -->
+    <string name="report_section_title">Meal report</string>
+    <string name="report_section_body">Your meals over a few days, as a PDF to print or a spreadsheet, to share with a doctor or dietitian.</string>
+    <string name="report_make">Make a meal report…</string>
+    <string name="report_from">From</string>
+    <string name="report_to">To</string>
+    <string name="report_format_pdf">PDF</string>
+    <string name="report_format_sheet">Spreadsheet</string>
+    <string name="report_include_weight">Include weight</string>
+    <string name="report_include_water">Include water</string>
+    <string name="report_contents">Each meal with its time, foods, amounts, calories and macros, and each day\'s totals against your targets. No photos.</string>
+    <string name="report_continue">Continue</string>
+    <string name="report_unlock">To save your health data in a file</string>
+    <string name="report_no_lock">Set a screen lock on this phone first. Forkcast asks for it before saving your health data in a file.</string>
+    <string name="report_saved">Meal report saved</string>
+    <string name="report_title">Meal report</string>
+    <string name="report_range">%1$s to %2$s</string>
+    <string name="report_note">Made with Forkcast. Foods and amounts were logged by the person; nutrients are estimates, and items marked \"estimate\" were estimated from a photo or a description.</string>
+    <string name="report_summary">Days logged: %1$d of %2$d · average %3$s a day</string>
+    <string name="report_day_total_target">%1$s of %2$s</string>
+    <string name="report_nothing_logged">Nothing logged</string>
+    <string name="report_nutrient_amount">%1$s %2$s</string>
+    <string name="report_estimate">estimate</string>
+    <string name="report_water">Water</string>
+    <string name="report_weight">Weight</string>
+    <string name="report_water_line">Water %1$s</string>
+    <string name="report_weight_line">Weight %1$s</string>
+    <string name="report_page">Page %1$d</string>
+    <string name="report_sheet_items">Items</string>
+    <string name="report_sheet_days">Daily totals</string>
+    <string name="report_col_date">Date</string>
+    <string name="report_col_time">Time</string>
+    <string name="report_col_meal">Meal</string>
+    <string name="report_col_food">Food</string>
+    <string name="report_col_amount">Amount</string>
+    <string name="report_col_grams">Grams</string>
+    <string name="report_col_with_unit">%1$s (%2$s)</string>
+    <string name="report_col_target_energy">Target (%1$s)</string>
+    <string name="report_col_estimate">Estimate</string>
+    <string name="report_yes">Yes</string>
 </resources>

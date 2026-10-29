@@ -2,7 +2,6 @@
 <SmellBaseline>
   <ManuallySuppressedIssues/>
   <CurrentIssues>
-    <ID>ComplexCondition:CsvExporter.kt:safe.any { it == ',' || it == '"' || it == '\n' || it == '\r' }</ID>
     <ID>ComplexCondition:EstimateWorker.kt:EstimateWorker$e.notified || notifier.appInForeground() || !prefs.estimateReadyEnabled || quiet</ID>
     <ID>ComplexCondition:NotificationEngine.kt:NotificationEngine$s.eveningEnabled &amp;&amp; due(s.eveningMinute) &amp;&amp; (NotificationTypes.EVENING to 0) !in fired &amp;&amp; targets != null</ID>
     <ID>ComplexCondition:NotificationEngine.kt:NotificationEngine$s.proteinEnabled &amp;&amp; due(s.proteinMinute) &amp;&amp; (NotificationTypes.PROTEIN to 0) !in fired &amp;&amp; targets != null</ID>

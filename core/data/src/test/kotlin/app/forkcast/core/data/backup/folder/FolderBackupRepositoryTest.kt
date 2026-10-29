@@ -5,6 +5,9 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.data.ai.PhotoStore
 import app.forkcast.core.data.backup.BackupFile
+import app.forkcast.core.data.backup.BackupSecrets
+import app.forkcast.core.data.backup.Kdf
+import app.forkcast.core.model.RetentionPreset
 import app.forkcast.core.data.backup.BackupRepository
 import app.forkcast.core.data.backup.ForkcastExport
 import app.forkcast.core.data.backup.ImportMode
@@ -51,41 +54,77 @@ class FolderBackupRepositoryTest {
     private val folder = DirFolder(File(context.cacheDir, "folder-${System.nanoTime()}").apply { mkdirs() })
     private val archive = PhotoArchive(context, PhotoStore(context))
     private val exports = FakeExports()
-    private val backupFile = BackupFile(exports, archive, "1.5.0", clock)
+    private val backupFile = BackupFile(exports, archive, BackupSecrets(secrets), "1.5.0", clock).apply { kdf = Kdf(8 * 1024, 1, 1) }
     private val repo = DefaultFolderBackupRepository(folder, backupFile, exports, archive, device, settings, secrets, clock)
 
-    private suspend fun chosen() = assertThat(repo.chooseFolder(DirFolder.TREE)).isNull()
+    /** A folder and a backup password: what every automatic backup needs. */
+    private suspend fun chosen() {
+        assertThat(repo.chooseFolder(DirFolder.TREE)).isNull()
+        repo.setPassword(PASSWORD)
+    }
+
+    private suspend fun encryptedBackup(password: String): ByteArray =
+        java.io.ByteArrayOutputStream().also { backupFile.write(it, password.toCharArray()) }.toByteArray()
+
+    private fun names() = folder.list(DirFolder.TREE).map { it.name }
 
     @Test fun backupWritesAForkcastFileAndRemembersIt() = runTest {
         chosen()
         assertThat(repo.backupNow()).isNull()
         val files = folder.list(DirFolder.TREE)
-        assertThat(files.map { it.name }).containsExactly("forkcast-backup-2026-10-26-0300.forkcast")
+        assertThat(files.map { it.name }).containsExactly(NEW)
         val status = repo.status.first()
         assertThat(status.folderName).isEqualTo("Backups")
-        assertThat(status.last?.name).isEqualTo("forkcast-backup-2026-10-26-0300.forkcast")
+        assertThat(status.last?.name).isEqualTo(NEW)
         assertThat(status.last?.place).isEqualTo("Backups")
         assertThat(status.last?.sizeBytes).isEqualTo(files.single().sizeBytes)
-        val opened = folder.openInput(files.single().uri).use { backupFile.open(it, null) } as OpenedBackupFile.Ok
+        // Always encrypted with the backup password.
+        assertThat(folder.openInput(files.single().uri).use { backupFile.open(it, null) }).isEqualTo(OpenedBackupFile.NeedsPassword)
+        val opened = folder.openInput(files.single().uri).use { backupFile.open(it, PASSWORD.toCharArray()) } as OpenedBackupFile.Ok
         assertThat(opened.json).isEqualTo(exports.json)
     }
 
-    @Test fun keepsTheNewestAndNeverTouchesOtherFiles() = runTest {
+    @Test fun simpleKeepsFiveAndNeverTouchesOtherFiles() = runTest {
         chosen()
         repeat(10) { folder.put("forkcast-backup-2026-10-${"%02d".format(it + 1)}.forkcast", modified = it + 1L) }
         folder.put("holiday.jpg", modified = 0)
         folder.put("forkcast-20261019-0300.json.gz", modified = 0)
-        repo.updateSettings { it.copy(keep = 4) }
+        repo.updateSettings { it.copy(retention = RetentionPreset.SIMPLE) }
         assertThat(repo.backupNow()).isNull()
-        val names = folder.list(DirFolder.TREE).map { it.name }
-        assertThat(names).containsExactly(
-            "forkcast-backup-2026-10-26-0300.forkcast",
+        assertThat(names()).containsExactly(
+            NEW,
             "forkcast-backup-2026-10-10.forkcast",
             "forkcast-backup-2026-10-09.forkcast",
             "forkcast-backup-2026-10-08.forkcast",
+            "forkcast-backup-2026-10-07.forkcast",
             "holiday.jpg",
             "forkcast-20261019-0300.json.gz",
         )
+    }
+
+    @Test fun balancedKeepsSevenAndOnePerMonthForSixMonths() = runTest {
+        chosen()
+        // Weekly backups from January, named the 1.8.2 way; the file times say nothing.
+        var day = java.time.LocalDate.of(2026, 1, 5)
+        while (day.isBefore(java.time.LocalDate.of(2026, 10, 26))) {
+            folder.put("${day}_0300_forkcast-backup.forkcast", modified = 1)
+            day = day.plusWeeks(1)
+        }
+        assertThat(repo.backupNow()).isNull()
+        val kept = names()
+        assertThat(kept).hasSize(11)
+        assertThat(kept).contains("2026-08-31_0300_forkcast-backup.forkcast")
+        assertThat(kept).contains("2026-05-25_0300_forkcast-backup.forkcast")
+        assertThat(kept).doesNotContain("2026-04-27_0300_forkcast-backup.forkcast")
+    }
+
+    @Test fun nothingIsPrunedWhenTheNewBackupDoesntReadBack() = runTest {
+        chosen()
+        repeat(10) { folder.put("forkcast-backup-2026-10-${"%02d".format(it + 1)}.forkcast", modified = it + 1L) }
+        repo.updateSettings { it.copy(retention = RetentionPreset.SIMPLE) }
+        exports.json = "not an export"
+        assertThat(repo.backupNow()).isNull()
+        assertThat(names()).hasSize(11)
     }
 
     @Test fun aLostFolderIsReportedAndCounted() = runTest {
@@ -112,20 +151,50 @@ class FolderBackupRepositoryTest {
         assertThat(repo.backupNow()).isEqualTo(FolderProblem.NO_FOLDER)
     }
 
-    @Test fun passwordBackupsUseTheSavedPassword() = runTest {
-        chosen()
-        repo.updateSettings { it.copy(password = true) }
+    @Test fun noBackupWithoutAPassword() = runTest {
+        assertThat(repo.chooseFolder(DirFolder.TREE)).isNull()
         assertThat(repo.backupNow()).isEqualTo(FolderProblem.PASSWORD_MISSING)
-        repo.setPassword("a long backup password")
+        assertThat(names()).isEmpty()
+        repo.setPassword(PASSWORD)
         assertThat(repo.status.first().hasPassword).isTrue()
         assertThat(repo.backupNow()).isNull()
-        val f = folder.list(DirFolder.TREE).single()
-        assertThat(folder.openInput(f.uri).use { backupFile.open(it, null) }).isEqualTo(OpenedBackupFile.NeedsPassword)
-        assertThat(folder.openInput(f.uri).use { backupFile.open(it, "a long backup password".toCharArray()) }).isInstanceOf(OpenedBackupFile.Ok::class.java)
         // The cleanup check opens it with the saved password.
         folder.put("forkcast-backup-2026-10-01.forkcast", modified = 1)
         assertThat(repo.cleanupPlan()).isInstanceOf(CleanupPlan.Ready::class.java)
-        assertThat(secrets.get(SecretName.BACKUP_PASSWORD)).isEqualTo("a long backup password")
+    }
+
+    @Test fun changingThePasswordReencryptsTheFolderAndNamesWhatCouldntBe() = runTest {
+        chosen()
+        assertThat(repo.backupNow()).isNull()
+        folder.put("2026-10-19_0300_forkcast-backup.forkcast", modified = 1, bytes = encryptedBackup(PASSWORD))
+        folder.put("2026-10-12_0300_forkcast-backup.forkcast", modified = 1, bytes = encryptedBackup("someone else's password"))
+        folder.put("2026-10-05_0300_forkcast-backup_unencrypted.forkcast", modified = 1)
+        folder.put("notes.txt", modified = 1)
+        val result = repo.changePassword("a brand new password")
+        assertThat(result.updated).isEqualTo(2)
+        assertThat(result.failed).containsExactly("2026-10-12_0300_forkcast-backup.forkcast")
+        assertThat(repo.password()).isEqualTo("a brand new password")
+        // Same names; the two updated open with the new password only.
+        assertThat(names()).containsExactly(
+            NEW,
+            "2026-10-19_0300_forkcast-backup.forkcast",
+            "2026-10-12_0300_forkcast-backup.forkcast",
+            "2026-10-05_0300_forkcast-backup_unencrypted.forkcast",
+            "notes.txt",
+        )
+        for (name in listOf(NEW, "2026-10-19_0300_forkcast-backup.forkcast")) {
+            assertThat(folder.openInput(name).use { backupFile.open(it, PASSWORD.toCharArray()) }).isEqualTo(OpenedBackupFile.WrongPassword)
+            assertThat(folder.openInput(name).use { backupFile.open(it, "a brand new password".toCharArray()) }).isInstanceOf(OpenedBackupFile.Ok::class.java)
+        }
+    }
+
+    @Test fun removingThePasswordTurnsAutomaticBackupOff() = runTest {
+        chosen()
+        repo.updateSettings { it.copy(auto = true) }
+        repo.removePassword()
+        assertThat(repo.password()).isNull()
+        assertThat(repo.status.first().settings.auto).isFalse()
+        assertThat(repo.backupNow()).isEqualTo(FolderProblem.PASSWORD_MISSING)
     }
 
     @Test fun cleanupChecksTheNewestThenDeletesOnlyThePlannedBackups() = runTest {
@@ -133,7 +202,7 @@ class FolderBackupRepositoryTest {
         repeat(3) { folder.put("forkcast-backup-2026-10-0${it + 1}.forkcast", modified = it + 1L) }
         assertThat(repo.backupNow()).isNull()
         val plan = repo.cleanupPlan() as CleanupPlan.Ready
-        assertThat(plan.keep.name).isEqualTo("forkcast-backup-2026-10-26-0300.forkcast")
+        assertThat(plan.keep.name).isEqualTo(NEW)
         assertThat(plan.delete.map { it.name }).containsExactly(
             "forkcast-backup-2026-10-03.forkcast",
             "forkcast-backup-2026-10-02.forkcast",
@@ -145,7 +214,7 @@ class FolderBackupRepositoryTest {
         val result = repo.deleteOld(plan)
         assertThat(result.deleted).isEqualTo(2)
         assertThat(result.failed).isEqualTo(0)
-        assertThat(folder.list(DirFolder.TREE).map { it.name }).containsExactly("forkcast-backup-2026-10-26-0300.forkcast", "notes.txt")
+        assertThat(names()).containsExactly(NEW, "notes.txt")
     }
 
     @Test fun cleanupRefusesWhenTheNewestCantBeRestored() = runTest {
@@ -171,7 +240,7 @@ class FolderBackupRepositoryTest {
     }
 
     @Test fun aBackupSavedWithThePickerCountsAsTheLast() = runTest {
-        repo.recordSaved("forkcast-backup-2026-10-26-0300.forkcast", 1234)
+        repo.recordSaved(NEW, 1234)
         val last = repo.status.first().last!!
         assertThat(last.at).isEqualTo(clock.millis())
         assertThat(last.place).isNull()
@@ -215,11 +284,15 @@ class FolderBackupRepositoryTest {
         }
         override fun create(tree: String, name: String, mimeType: String): FolderFile {
             if (revoked) throw SecurityException()
-            val f = File(dir, name)
+            // Like document providers: a taken name gets " (1)".
+            val f = generateSequence(0) { it + 1 }
+                .map { n -> File(dir, if (n == 0) name else name.replace(".forkcast", " ($n).forkcast")) }
+                .first { !it.exists() }
+            val shown = f.name
             f.writeBytes(ByteArray(0))
             // Newer than anything put() made.
             f.setLastModified(Instant.parse("2026-10-26T07:00:00Z").toEpochMilli() + clockTick++)
-            return FolderFile(name, name, null, null)
+            return FolderFile(shown, shown, null, null)
         }
         override fun openOutput(file: String): OutputStream {
             val out = File(dir, file).outputStream()
@@ -231,6 +304,7 @@ class FolderBackupRepositoryTest {
         }
         override fun openInput(file: String): InputStream = File(dir, file).inputStream()
         override fun delete(file: String) = File(dir, file).delete()
+        override fun rename(file: String, name: String): String? = name.takeIf { File(dir, file).renameTo(File(dir, name)) }
 
         companion object {
             const val TREE = "content://folder/tree/1"
@@ -250,8 +324,6 @@ class FolderBackupRepositoryTest {
     private class FakeExports : BackupRepository {
         var json = """{"app":"Forkcast","schemaVersion":${ForkcastExport.SCHEMA_VERSION}}"""
         override suspend fun exportJson() = json
-        override suspend fun foodLogCsv() = ""
-        override suspend fun weightsCsv() = ""
         /** Reads only the version: older than the oldest import is too old, no version is unreadable. */
         override fun parse(text: String): ParsedBackup {
             val version = Regex("\"schemaVersion\":(\\d+)").find(text)?.groupValues?.get(1)?.toInt()
@@ -262,6 +334,12 @@ class FolderBackupRepositoryTest {
         }
         override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = throw UnsupportedOperationException()
         override suspend fun readSafetyBackup(): String? = null
+    }
+
+    private companion object {
+        const val PASSWORD = "a long backup password"
+        /** What [clock]'s backup is called. */
+        const val NEW = "2026-10-26_0300_forkcast-backup.forkcast"
     }
 
     private class XorAead : Aead {

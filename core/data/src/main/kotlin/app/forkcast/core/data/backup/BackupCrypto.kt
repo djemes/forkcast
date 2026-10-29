@@ -9,6 +9,8 @@ import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.security.GeneralSecurityException
 import java.security.SecureRandom
+import org.bouncycastle.crypto.generators.Argon2BytesGenerator
+import org.bouncycastle.crypto.params.Argon2Parameters
 import javax.crypto.Cipher
 import javax.crypto.spec.GCMParameterSpec
 import javax.crypto.spec.SecretKeySpec
@@ -16,19 +18,32 @@ import javax.crypto.spec.SecretKeySpec
 /** The backup's password is wrong, or the encrypted file was changed or cut short. */
 class BackupDecryptException(cause: Throwable? = null) : IOException("wrong password or damaged backup", cause)
 
+/** How the key is made from the password; stored in the file's header so it can change later. */
+data class Kdf(val memoryKiB: Int = ARGON2_MEMORY_KIB, val iterations: Int = ARGON2_ITERATIONS, val parallelism: Int = ARGON2_PARALLELISM) {
+    companion object {
+        /** 64 MiB, 3 passes, 1 lane: above OWASP's minimum (19 MiB, 2 passes); about a second on a phone. */
+        const val ARGON2_MEMORY_KIB = 64 * 1024
+        const val ARGON2_ITERATIONS = 3
+        const val ARGON2_PARALLELISM = 1
+    }
+}
+
 /**
- * Password-protected backups (roadmap 2.0 decision D5, owner OK 2026-10-24). The same key
- * derivation as the settings export (PBKDF2-HMAC-SHA256, random salt, [SettingsCrypto.ITERATIONS]),
- * then AES-256-GCM in segments of [SEGMENT] bytes, so a backup full of photos never has to fit in
- * memory (Android's GCM buffers a whole message on decrypt).
+ * Encrypted backups (owner, 2026-10-29: one backup password). The key is Argon2id of the
+ * password with a random salt ([Kdf], Bouncy Castle), then AES-256-GCM in segments of [SEGMENT]
+ * bytes, so a backup full of photos never has to fit in memory (Android's GCM buffers a whole
+ * message on decrypt). Files from 1.5 to 1.8.1 (version 1: PBKDF2-HMAC-SHA256) still open.
  *
- * File: [MAGIC], format version, iterations, salt, nonce prefix, segment size; then the segments.
- * Segment i's nonce is the prefix + i; its associated data is the header + i + "last segment?",
- * so reordered, dropped or cut-off segments and an edited header all fail to decrypt.
+ * File v2: [MAGIC], 2, memory KiB, iterations, parallelism, salt, nonce prefix, segment size;
+ * v1: [MAGIC], 1, PBKDF2 iterations, salt, prefix, segment size. Then the segments. Segment i's
+ * nonce is the prefix + i; its associated data is the header + i + "last segment?", so
+ * reordered, dropped or cut-off segments and an edited header all fail to decrypt.
  */
 object BackupCrypto {
     const val SEGMENT = 1 shl 20
-    private const val VERSION = 1
+    private const val VERSION_PBKDF2 = 1
+    private const val VERSION = 2
+    private const val KEY_BYTES = 32
     private const val SALT_BYTES = 16
     private const val PREFIX_BYTES = 8
     private const val TAG_BYTES = 16
@@ -41,10 +56,19 @@ object BackupCrypto {
     fun isEncrypted(head: ByteArray): Boolean = head.size >= MAGIC.size && head.copyOf(MAGIC.size).contentEquals(MAGIC)
 
     /** Writes the header to [out] now and returns a stream that encrypts into it; close it to finish the file. */
-    fun encrypt(out: OutputStream, password: CharArray, iterations: Int = SettingsCrypto.ITERATIONS, segment: Int = SEGMENT): OutputStream {
+    fun encrypt(out: OutputStream, password: CharArray, kdf: Kdf = Kdf(), segment: Int = SEGMENT): OutputStream {
         val salt = ByteArray(SALT_BYTES).also(random::nextBytes)
         val prefix = ByteArray(PREFIX_BYTES).also(random::nextBytes)
-        val header = header(iterations, salt, prefix, segment)
+        val header = header(kdf, salt, prefix, segment)
+        out.write(header)
+        return EncryptingStream(out, argon2(password, salt, kdf), header, prefix, segment)
+    }
+
+    /** Tests only: a file as 1.5 to 1.8.1 wrote it (version 1, PBKDF2), to check those still open. */
+    internal fun encryptPbkdf2(out: OutputStream, password: CharArray, iterations: Int, segment: Int = SEGMENT): OutputStream {
+        val salt = ByteArray(SALT_BYTES).also(random::nextBytes)
+        val prefix = ByteArray(PREFIX_BYTES).also(random::nextBytes)
+        val header = pbkdf2Header(iterations, salt, prefix, segment)
         out.write(header)
         return EncryptingStream(out, SettingsCrypto.deriveKey(password, salt, iterations), header, prefix, segment)
     }
@@ -54,24 +78,66 @@ object BackupCrypto {
         val data = DataInputStream(input)
         val magic = ByteArray(MAGIC.size).also { data.readFully(it) }
         if (!magic.contentEquals(MAGIC)) throw BackupDecryptException()
-        val version = data.readUnsignedByte()
-        if (version != VERSION) throw BackupDecryptException()
-        val iterations = data.readInt()
-        // Bounds keep a hostile file from asking for a year of PBKDF2 or a huge buffer.
-        if (iterations !in 100_000..10_000_000) throw BackupDecryptException()
+        // Bounds keep a hostile file from asking for a year of key derivation or a huge buffer.
+        return when (data.readUnsignedByte()) {
+            VERSION -> {
+                val kdf = Kdf(memoryKiB = data.readInt(), iterations = data.readInt(), parallelism = data.readUnsignedByte())
+                if (kdf.memoryKiB !in 8 * 1024..256 * 1024 || kdf.iterations !in 1..10 || kdf.parallelism !in 1..4) throw BackupDecryptException()
+                val (salt, prefix, segment) = rest(data)
+                DecryptingStream(input, argon2(password, salt, kdf), header(kdf, salt, prefix, segment), prefix, segment)
+            }
+            VERSION_PBKDF2 -> {
+                val iterations = data.readInt()
+                if (iterations !in 100_000..10_000_000) throw BackupDecryptException()
+                val (salt, prefix, segment) = rest(data)
+                DecryptingStream(input, SettingsCrypto.deriveKey(password, salt, iterations), pbkdf2Header(iterations, salt, prefix, segment), prefix, segment)
+            }
+            else -> throw BackupDecryptException()
+        }
+    }
+
+    /** Salt, nonce prefix and segment size, the same in both versions. */
+    private fun rest(data: DataInputStream): Triple<ByteArray, ByteArray, Int> {
         val salt = ByteArray(SALT_BYTES).also { data.readFully(it) }
         val prefix = ByteArray(PREFIX_BYTES).also { data.readFully(it) }
         val segment = data.readInt()
         if (segment !in 4_096..(16 shl 20)) throw BackupDecryptException()
-        val header = header(iterations, salt, prefix, segment)
-        return DecryptingStream(input, SettingsCrypto.deriveKey(password, salt, iterations), header, prefix, segment)
+        return Triple(salt, prefix, segment)
     }
 
-    private fun header(iterations: Int, salt: ByteArray, prefix: ByteArray, segment: Int): ByteArray =
+    private fun argon2(password: CharArray, salt: ByteArray, kdf: Kdf): SecretKeySpec {
+        val params = Argon2Parameters.Builder(Argon2Parameters.ARGON2_id)
+            .withVersion(Argon2Parameters.ARGON2_VERSION_13)
+            .withMemoryAsKB(kdf.memoryKiB)
+            .withIterations(kdf.iterations)
+            .withParallelism(kdf.parallelism)
+            .withSalt(salt)
+            .build()
+        val key = ByteArray(KEY_BYTES)
+        Argon2BytesGenerator().apply { init(params) }.generateBytes(password, key)
+        // SecretKeySpec keeps its own copy.
+        return SecretKeySpec(key, "AES").also { key.fill(0) }
+    }
+
+    private fun header(kdf: Kdf, salt: ByteArray, prefix: ByteArray, segment: Int): ByteArray =
         ByteArrayOutputStream().also { bytes ->
             DataOutputStream(bytes).apply {
                 write(MAGIC)
                 writeByte(VERSION)
+                writeInt(kdf.memoryKiB)
+                writeInt(kdf.iterations)
+                writeByte(kdf.parallelism)
+                write(salt)
+                write(prefix)
+                writeInt(segment)
+            }
+        }.toByteArray()
+
+    private fun pbkdf2Header(iterations: Int, salt: ByteArray, prefix: ByteArray, segment: Int): ByteArray =
+        ByteArrayOutputStream().also { bytes ->
+            DataOutputStream(bytes).apply {
+                write(MAGIC)
+                writeByte(VERSION_PBKDF2)
                 writeInt(iterations)
                 write(salt)
                 write(prefix)

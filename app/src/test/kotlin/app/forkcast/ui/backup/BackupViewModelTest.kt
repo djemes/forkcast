@@ -4,6 +4,9 @@ import android.net.Uri
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.data.ai.PhotoStore
 import app.forkcast.core.data.backup.BackupFile
+import app.forkcast.core.data.backup.BackupCrypto
+import app.forkcast.core.data.backup.BackupSecrets
+import app.forkcast.core.data.backup.Kdf
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.ImportSummary
 import app.forkcast.core.data.backup.PhotoArchive
@@ -49,8 +52,11 @@ class BackupViewModelTest {
     private val context = androidx.test.core.app.ApplicationProvider.getApplicationContext<android.content.Context>()
     private val photos = PhotoStore(context)
     private val archive = PhotoArchive(context, photos)
-    private val file = BackupFile(backups, archive, "1.5.0", clock)
-    private fun vm() = BackupViewModel(backups, documents, archive, file, folder, clock).also { current = it }
+    @get:org.junit.Rule val tmp = org.junit.rules.TemporaryFolder()
+    private val store by lazy { app.forkcast.fakes.testSecretStore(tmp.root) }
+    private val secrets by lazy { BackupSecrets(store) }
+    private val file by lazy { BackupFile(backups, archive, secrets, "1.5.0", clock).apply { kdf = Kdf(8 * 1024, 1, 1) } }
+    private fun vm() = BackupViewModel(backups, documents, archive, file, folder, secrets, BackupShares(context)).also { current = it }
     private var current: BackupViewModel? = null
 
     /** Like advanceUntilIdle, also waiting out BackupFile's and PhotoArchive's work on Dispatchers.IO. */
@@ -66,47 +72,96 @@ class BackupViewModelTest {
 
     @Test fun fileNamesUseLocalTime() {
         val vm = vm()
-        assertThat(vm.suggestedName(ExportKind.BACKUP)).isEqualTo("forkcast-backup-2026-10-18.forkcast")
-        assertThat(vm.suggestedName(ExportKind.FOOD_LOG_CSV)).isEqualTo("forkcast-20261018-1205-food-log.csv")
-        assertThat(vm.suggestedName(ExportKind.WEIGHTS_CSV)).isEqualTo("forkcast-20261018-1205-weights.csv")
+        assertThat(vm.suggestedName()).isEqualTo("2026-10-18_1205_forkcast-backup.forkcast")
+        assertThat(vm.suggestedName(SaveMode.UNENCRYPTED)).isEqualTo("2026-10-18_1205_forkcast-backup_unencrypted.forkcast")
     }
 
-    @Test fun saveAsksOptionsThenThePickerThenWritesAndRecordsIt() = runTest(dispatcher) {
+    @Test fun backUpNowWithoutAFolderAsksWhereThenWritesEncrypted() = runTest(dispatcher) {
+        folder.setPassword(PASSWORD)
         val vm = vm()
-        vm.onEvent(BackupEvent.AskSave)
-        assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.SaveOptions)
-        vm.onEvent(BackupEvent.SaveChosen(photos = false, password = null))
-        assertThat(vm.state.value.dialog).isNull()
-        assertThat(vm.state.value.pickBackupFile).isTrue()
-        val target = Uri.parse("content://test/forkcast-backup-2026-10-18.forkcast")
+        vm.onEvent(BackupEvent.BackUpNow)
+        settle()
+        assertThat(vm.state.value.pickBackupFile).isEqualTo(SaveMode.ENCRYPTED)
+        val target = Uri.parse("content://test/2026-10-18_1205_forkcast-backup.forkcast")
         vm.onEvent(BackupEvent.SaveTo(target))
         settle()
-        assertThat(vm.state.value.pickBackupFile).isFalse()
+        assertThat(vm.state.value.pickBackupFile).isNull()
         assertThat(vm.state.value.notice).isEqualTo(BackupNotice.Exported(ExportKind.BACKUP))
         val bytes = documents.writtenBytes.getValue(target)
-        assertThat(folder.saved).containsExactly("forkcast-backup-2026-10-18.forkcast" to bytes.size.toLong())
-        // It opens again as a backup.
-        documents.fileBytes[uri] = bytes
-        backups.parseAs("{json}", "good")
-        vm.onEvent(BackupEvent.Open(uri))
+        assertThat(BackupCrypto.isEncrypted(bytes)).isTrue()
+        assertThat(folder.saved).containsExactly("2026-10-18_1205_forkcast-backup.forkcast" to bytes.size.toLong())
+    }
+
+    @Test fun backUpNowWithAFolderWritesThere() = runTest(dispatcher) {
+        folder.setPassword(PASSWORD)
+        folder.chooseFolder("content://tree/1")
+        val vm = vm()
+        vm.onEvent(BackupEvent.BackUpNow)
         settle()
-        assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.Preview(FakeBackupRepository.PREVIEW, isSafetyBackup = false, photos = 0))
+        assertThat(folder.backups).isEqualTo(1)
+        assertThat(vm.state.value.pickBackupFile).isNull()
+        assertThat(vm.state.value.notice).isEqualTo(BackupNotice.Folder(null))
+    }
+
+    @Test fun theUnencryptedCopyWarnsFirstAndIsReadable() = runTest(dispatcher) {
+        val vm = vm()
+        vm.onEvent(BackupEvent.AskUnencrypted)
+        assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.UnencryptedWarning)
+        // The screen asks for the phone's unlock, then confirms.
+        vm.onEvent(BackupEvent.UnencryptedConfirmed)
+        assertThat(vm.state.value.pickBackupFile).isEqualTo(SaveMode.UNENCRYPTED)
+        vm.onEvent(BackupEvent.SaveTo(uri))
+        settle()
+        assertThat(BackupCrypto.isEncrypted(documents.writtenBytes.getValue(uri))).isFalse()
     }
 
     @Test fun aCanceledPickerSavesNothing() = runTest(dispatcher) {
+        folder.setPassword(PASSWORD)
         val vm = vm()
-        vm.onEvent(BackupEvent.SaveChosen(photos = true, password = null))
+        vm.onEvent(BackupEvent.BackUpNow)
+        settle()
         vm.onEvent(BackupEvent.SaveTo(null))
         settle()
         assertThat(documents.writtenBytes).isEmpty()
-        assertThat(vm.state.value.pickBackupFile).isFalse()
+        assertThat(vm.state.value.pickBackupFile).isNull()
+    }
+
+    @Test fun keysComeBackAndThePasswordCanBeKept() = runTest(dispatcher) {
+        // Made on the "old phone": a key and the backup password.
+        store.setAiKey("p1", "sk-old-phone-key")
+        folder.setPassword(PASSWORD)
+        val vm = vm()
+        vm.onEvent(BackupEvent.BackUpNow)
+        settle()
+        vm.onEvent(BackupEvent.SaveTo(uri))
+        settle()
+        documents.fileBytes[uri] = documents.writtenBytes.getValue(uri)
+        // The "new phone": no keys, no backup password.
+        store.setAiKey("p1", null)
+        folder.removePassword()
+        backups.parseAs("{json}", "good")
+        vm.onEvent(BackupEvent.Open(uri))
+        settle()
+        vm.onEvent(BackupEvent.Unlock(PASSWORD))
+        settle()
+        vm.onEvent(BackupEvent.Merge)
+        settle()
+        assertThat(vm.state.value.dialog).isInstanceOf(BackupDialog.Done::class.java)
+        assertThat(store.aiKey("p1")).isEqualTo("sk-old-phone-key")
+        vm.onEvent(BackupEvent.DismissDialog)
+        assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.KeepPassword)
+        vm.onEvent(BackupEvent.KeepPassword)
+        settle()
+        assertThat(folder.password).isEqualTo(PASSWORD)
     }
 
     @Test fun aProtectedBackupAsksForItsPassword() = runTest(dispatcher) {
         photos.root.deleteRecursively()
         File(photos.root, "a1/0.jpg").apply { parentFile?.mkdirs(); writeBytes(byteArrayOf(1, 2, 3)) }
+        folder.setPassword("a long backup password")
         val vm = vm()
-        vm.onEvent(BackupEvent.SaveChosen(photos = true, password = "a long backup password"))
+        vm.onEvent(BackupEvent.BackUpNow)
+        settle()
         vm.onEvent(BackupEvent.SaveTo(uri))
         settle()
         documents.fileBytes[uri] = documents.writtenBytes.getValue(uri)
@@ -121,20 +176,6 @@ class BackupViewModelTest {
         vm.onEvent(BackupEvent.Unlock("a long backup password"))
         settle()
         assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.Preview(FakeBackupRepository.PREVIEW, isSafetyBackup = false, photos = 1))
-    }
-
-    @Test fun csvExportsWriteAndReport() = runTest(dispatcher) {
-        val vm = vm()
-        vm.onEvent(BackupEvent.ExportCsv(ExportKind.FOOD_LOG_CSV, uri))
-        settle()
-        assertThat(documents.written[uri]).isEqualTo("food,csv")
-        assertThat(vm.state.value.notice).isEqualTo(BackupNotice.Exported(ExportKind.FOOD_LOG_CSV))
-
-        documents.failWrites = true
-        vm.onEvent(BackupEvent.ExportCsv(ExportKind.WEIGHTS_CSV, uri))
-        settle()
-        assertThat(vm.state.value.notice).isEqualTo(BackupNotice.ExportFailed)
-        assertThat(vm.state.value.busy).isFalse()
     }
 
     @Test fun openShowsPreviewThenMerges() = runTest(dispatcher) {
@@ -213,5 +254,9 @@ class BackupViewModelTest {
         assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.ImportFailed)
         assertThat(vm.state.value.busy).isFalse()
         assertThat(backups.imports).isEmpty()
+    }
+
+    private companion object {
+        const val PASSWORD = "a long backup password"
     }
 }

@@ -62,12 +62,10 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import javax.inject.Inject
 
-data class NotificationsUiState(val settings: NotificationSettings, val slots: List<MealSlot>) {
+/** [backupReminder]: the "Time for a backup" card on Today (moved here from Backup & data, owner 2026-10-29). */
+data class NotificationsUiState(val settings: NotificationSettings, val slots: List<MealSlot>, val backupReminder: Boolean = true) {
     val meals: List<NotificationRules.Meal>
         get() = slots.map { NotificationRules.Meal(it.id, it.name, it.endMinute ?: NotificationRules.DEFAULT_DINNER_MINUTE) }
 
@@ -89,10 +87,12 @@ class NotificationsViewModel @Inject constructor(
     slots: MealSlotRepository,
 ) : ViewModel() {
     val state: StateFlow<NotificationsUiState?> = combine(settings.settings, slots.observeMealSlots()) { s, m ->
-        NotificationsUiState(s.notifications, m)
+        NotificationsUiState(s.notifications, m, s.backup.reminder)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun update(change: (NotificationSettings) -> NotificationSettings) = viewModelScope.launch { settings.updateNotifications(change) }
+
+    fun setBackupReminder(on: Boolean) = viewModelScope.launch { settings.update { it.copy(backup = it.backup.copy(reminder = on)) } }
 
     fun setMealTime(slotId: String, minute: Int) = update { s ->
         val st = state.value ?: return@update s
@@ -128,6 +128,7 @@ fun NotificationsRoute(onBack: () -> Unit, viewModel: NotificationsViewModel = h
         onMeal = viewModel::setMeal,
         onMealCategory = viewModel::setMealCategory,
         onBack = onBack,
+        onBackupReminder = viewModel::setBackupReminder,
     )
 }
 
@@ -139,6 +140,7 @@ fun NotificationsScreen(
     onMeal: (String, Boolean) -> Unit,
     onMealCategory: (Boolean) -> Unit,
     onBack: () -> Unit,
+    onBackupReminder: (Boolean) -> Unit = {},
 ) {
     val context = LocalContext.current
     val s = state.settings
@@ -268,6 +270,8 @@ fun NotificationsScreen(
 
         ToggleRow(R.string.nset_estimate_ready, R.string.nset_estimate_ready_body, s.estimateReadyEnabled) { on -> enable(on) { it.copy(estimateReadyEnabled = on) } }
         ToggleRow(R.string.nset_backup_failed, R.string.nset_backup_failed_body, s.backupFailedEnabled) { on -> enable(on) { it.copy(backupFailedEnabled = on) } }
+        // A card on Today, not a notification: no permission needed.
+        ToggleRow(R.string.backup_reminder, R.string.backup_reminder_detail, state.backupReminder) { on -> onBackupReminder(on) }
         HorizontalDivider(Modifier.padding(vertical = 8.dp))
 
         Text(
@@ -364,8 +368,8 @@ private fun LabeledTime(label: String, minute: Int, onClick: () -> Unit) {
     }
 }
 
-fun timeText(minute: Int): String =
-    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(LocalTime.of((minute / 60) % 24, minute % 60))
+@Composable
+fun timeText(minute: Int): String = app.forkcast.ui.common.mealTimeText(minute)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

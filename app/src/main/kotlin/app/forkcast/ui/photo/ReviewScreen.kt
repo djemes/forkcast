@@ -1,5 +1,7 @@
 package app.forkcast.ui.photo
 
+import app.forkcast.ui.format.formatEpoch
+import app.forkcast.ui.format.clockFormatter
 import app.forkcast.ui.format.unitLabels
 import app.forkcast.ui.common.PortionChips
 import app.forkcast.ui.common.portionLabel
@@ -98,10 +100,6 @@ import app.forkcast.ui.format.UnitFormatter
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.delay
 import java.io.File
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import kotlin.math.roundToInt
 
 @Composable
@@ -473,11 +471,11 @@ fun elapsed(ms: Long): String {
     return "%d:%02d".format(s / 60, s % 60)
 }
 
-private fun clockTime(epochMs: Long): String =
-    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
+@Composable
+private fun clockTime(epochMs: Long): String = clockFormatter().formatEpoch(epochMs)
 
-private fun clockTimeSeconds(epochMs: Long): String =
-    DateTimeFormatter.ofLocalizedTime(FormatStyle.MEDIUM).format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
+@Composable
+private fun clockTimeSeconds(epochMs: Long): String = clockFormatter(seconds = true).formatEpoch(epochMs)
 
 /**
  * What can be done while an estimate isn't finished (owner, 2026-10-23): Retry now, Try with another

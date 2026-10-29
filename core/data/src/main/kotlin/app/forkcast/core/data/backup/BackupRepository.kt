@@ -74,11 +74,9 @@ data class ImportSummary(
     val unchanged: Int,
 )
 
-/** JSON and CSV export, import with preview (SPEC §4.11, §6.3). */
+/** JSON export, import with preview (SPEC §4.11, §6.3). */
 interface BackupRepository {
     suspend fun exportJson(): String
-    suspend fun foodLogCsv(): String
-    suspend fun weightsCsv(): String
     fun parse(text: String): ParsedBackup
     suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary
     /** The newest safety backup taken before a Replace, or null if there is none. */
@@ -97,7 +95,6 @@ class RoomBackupRepository @Inject constructor(
     private val settings: DataStore<AppSettings>,
     private val clock: Clock,
     @Named(APP_VERSION) private val appVersion: String,
-    private val csv: CsvExporter,
 ) : BackupRepository {
     private val dao: BackupDao = db.backupDao()
 
@@ -133,10 +130,6 @@ class RoomBackupRepository @Inject constructor(
     }.copy(settings = settings.data.first())
 
     override suspend fun exportJson(): String = BackupJson.encodeToString(ForkcastExport.serializer(), export())
-
-    override suspend fun foodLogCsv(): String = csv.foodLog()
-
-    override suspend fun weightsCsv(): String = csv.weights()
 
     override fun parse(text: String): ParsedBackup {
         val root = try {

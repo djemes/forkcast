@@ -9,7 +9,7 @@ package app.forkcast.ui.settings
 // - "estimate" (estimativa): anything the AI returns. Never "result", "analysis" or "calculation".
 // - "key" or "API key" (chave, chave de API); "token" only for GitHub's.
 // - "log" (registro) for what was eaten; "entry" for one line of it; "weigh-in" (pesagem).
-// - "backup" (backup): a .forkcast file. "Export" only for CSV files and the settings file.
+// - "backup" (backup): a .forkcast file. "Export" only for the meal report.
 // - Paths: "Settings › AI services" (Configurações › Serviços de IA), with › and the screen's title.
 
 import androidx.annotation.StringRes

@@ -1,73 +1,81 @@
 package app.forkcast.core.domain
 
+import app.forkcast.core.model.BackupFrequency
+import app.forkcast.core.model.BackupSettings
+import app.forkcast.core.model.RetentionPreset
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import java.time.Duration
-import java.time.Instant
 import java.time.LocalDate
-import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class BackupRetentionTest {
 
     private val zone = ZoneId.of("America/New_York")
-    private fun at(date: LocalDate) = date.atTime(3, 0).atZone(zone).toInstant()
 
-    @Test fun keepsFourteenNewestAndFirstOfEachOfTwelveMonths() {
-        // One backup a day for 500 days.
-        val last = LocalDate.of(2026, 10, 19)
-        val all = (0L until 500L).map { BackupRetention.Backup("d$it", at(last.minusDays(it))) }
-        val delete = BackupRetention.toDelete(all, zone)
-        val kept = all.filter { it.id !in delete }.map { it.createdAt.atZone(zone).toLocalDate() }
-        // 14 newest: Oct 6–19. Monthly: Oct 1 and the 1st of Nov 2025 … Sep 2026 (12 months: Nov..Oct).
-        assertThat(kept.filter { it >= LocalDate.of(2026, 10, 6) }).hasSize(14)
-        val firsts = kept.filter { it < LocalDate.of(2026, 10, 6) }
-        assertThat(firsts).containsExactlyElementsIn((0L until 12L).map { LocalDate.of(2026, 10, 1).minusMonths(it) })
-        assertThat(kept).hasSize(26)
+    /** One backup a week at 3 am, newest first, going back [weeks] weeks from 2026-10-26. */
+    private fun weekly(weeks: Int) = (0 until weeks).map { i ->
+        val day = LocalDate.of(2026, 10, 26).minusWeeks(i.toLong())
+        BackupRetention.Backup("w$i", day.atTime(3, 0).atZone(zone).toInstant())
     }
 
-    @Test fun fewBackupsAreAllKept() {
-        val all = (0L until 5L).map { BackupRetention.Backup("d$it", at(LocalDate.of(2026, 10, 19).minusDays(it))) }
-        assertThat(BackupRetention.toDelete(all, zone)).isEmpty()
+    private fun kept(backups: List<BackupRetention.Backup>, rule: BackupRetention.Rule) =
+        backups.map { it.id }.toSet() - BackupRetention.toDelete(backups, zone, rule)
+
+    private fun dateOf(all: List<BackupRetention.Backup>, id: String) = all.first { it.id == id }.createdAt.atZone(zone).toLocalDate()
+
+    @Test fun `simple keeps the newest five`() {
+        val all = weekly(9)
+        assertThat(kept(all, BackupRetention.rule(BackupSettings(retention = RetentionPreset.SIMPLE)))).containsExactly("w0", "w1", "w2", "w3", "w4")
     }
 
-    @Test fun nextNightRun() {
-        val evening = ZonedDateTime.of(LocalDate.of(2026, 10, 19), LocalTime.of(21, 30), zone)
-        assertThat(BackupRetention.delayUntil(evening)).isEqualTo(Duration.ofMinutes(5 * 60 + 30))
-        val early = ZonedDateTime.of(LocalDate.of(2026, 10, 19), LocalTime.of(1, 0), zone)
-        assertThat(BackupRetention.delayUntil(early)).isEqualTo(Duration.ofHours(2))
+    @Test fun `balanced keeps seven plus the newest of each of six months`() {
+        val all = weekly(52)
+        val keep = kept(all, BackupRetention.rule(BackupSettings()))
+        // 7 recent (Sep 14 to Oct 26); October and September's newest are among them; then Aug, Jul, Jun, May.
+        assertThat(keep).hasSize(11)
+        assertThat(keep).containsAtLeast("w0", "w6")
+        assertThat(keep.map { dateOf(all, it) }).contains(LocalDate.of(2026, 8, 31))
+        assertThat(keep.minOf { dateOf(all, it) }).isAtLeast(LocalDate.of(2026, 5, 1))
     }
 
-    @Test fun overdueAfterTwoPeriods() {
-        val now = Instant.parse("2026-10-19T12:00:00Z")
-        assertThat(BackupRetention.overdue(now.minus(Duration.ofDays(1)), now.minus(Duration.ofDays(30)), 1, now)).isFalse()
-        assertThat(BackupRetention.overdue(now.minus(Duration.ofDays(3)), now.minus(Duration.ofDays(30)), 1, now)).isTrue()
-        assertThat(BackupRetention.overdue(null, now.minus(Duration.ofDays(1)), 7, now)).isFalse()
+    @Test fun `long term keeps one per year for every year`() {
+        val all = weekly(52 * 3)
+        val keep = kept(all, BackupRetention.rule(BackupSettings(retention = RetentionPreset.LONG_TERM)))
+        assertThat(keep.map { dateOf(all, it).year }.toSet()).containsExactly(2023, 2024, 2025, 2026)
     }
 
-    /** Clocks change at 2 am in the US; the 3 am backup still lands at 3 am local, an hour sooner or later. */
-    @Test fun nightRunAcrossDaylightSavingChanges() {
-        val ny = java.time.ZoneId.of("America/New_York")
-        // Spring forward (2026-03-08): 1:00 → 3:00 is one real hour (2:00–3:00 doesn't exist).
-        val spring = java.time.ZonedDateTime.of(2026, 3, 8, 1, 0, 0, 0, ny)
-        assertThat(BackupRetention.delayUntil(spring)).isEqualTo(Duration.ofHours(1))
-        // Fall back (2026-11-01): 0:30 → 3:00 is three and a half real hours (1:00–2:00 happens twice).
-        val fall = java.time.ZonedDateTime.of(2026, 11, 1, 0, 30, 0, 0, ny)
-        assertThat(BackupRetention.delayUntil(fall)).isEqualTo(Duration.ofMinutes(3 * 60 + 30))
+    @Test fun `custom uses its own numbers and never keeps fewer than one`() {
+        val all = weekly(10)
+        val rule = BackupRetention.rule(BackupSettings(retention = RetentionPreset.CUSTOM, customRecent = 0, customMonths = 0, customYears = 0))
+        assertThat(kept(all, rule)).containsExactly("w0")
     }
 
-    /** New installs back up weekly on Mondays around 3 am (owner, 2026-10-23). */
-    @Test fun weeklyBackupWaitsForMondayNight() {
-        val zone = java.time.ZoneId.of("America/New_York")
-        // Friday 2026-10-23, 10 pm → Monday 2026-10-26, 3 am.
-        val friday = java.time.ZonedDateTime.of(2026, 10, 23, 22, 0, 0, 0, zone)
-        assertThat(BackupRetention.delayUntilWeekday(friday, 1)).isEqualTo(java.time.Duration.ofHours(53))
-        // Monday at 2 am → the same night at 3 am; at 4 am → next Monday.
-        val monday = java.time.ZonedDateTime.of(2026, 10, 26, 2, 0, 0, 0, zone)
-        assertThat(BackupRetention.delayUntilWeekday(monday, 1)).isEqualTo(java.time.Duration.ofHours(1))
-        // 4 am → next Monday 3 am: 6 days 23 h, plus the hour clocks go back on Nov 1.
-        assertThat(BackupRetention.delayUntilWeekday(monday.withHour(4), 1)).isEqualTo(java.time.Duration.ofDays(7))
-        assertThat(app.forkcast.core.model.BackupSettings().frequency).isEqualTo(app.forkcast.core.model.BackupFrequency.WEEKLY)
+    @Test fun `next run is the next chosen day at the chosen time`() {
+        // A zone without a clock change in that week, so a week is exactly 7 days.
+        val sundayNoon = ZonedDateTime.of(2026, 10, 25, 12, 0, 0, 0, ZoneId.of("UTC"))
+        // Monday and Thursday at 3 am: Monday 3 am is next.
+        assertThat(BackupRetention.delayUntilNext(sundayNoon, setOf(1, 4), 180)).isEqualTo(Duration.ofHours(15))
+        // Sunday at 1 pm: later today.
+        assertThat(BackupRetention.delayUntilNext(sundayNoon, setOf(7), 13 * 60)).isEqualTo(Duration.ofHours(1))
+        // Sunday at 11 am: already past, so next Sunday.
+        assertThat(BackupRetention.delayUntilNext(sundayNoon, setOf(7), 11 * 60)).isEqualTo(Duration.ofDays(7).minusHours(1))
+        assertThat(BackupRetention.delayUntilNext(sundayNoon, emptySet(), 180)).isNull()
+    }
+
+    @Test fun `a late run still counts for the evening's day`() {
+        // Chosen: Sunday at 11:30 pm. Android runs it at 12:20 am Monday.
+        val mondayAfterMidnight = ZonedDateTime.of(2026, 10, 26, 0, 20, 0, 0, zone)
+        assertThat(BackupRetention.isChosenDay(mondayAfterMidnight, setOf(7), 23 * 60 + 30)).isTrue()
+        assertThat(BackupRetention.isChosenDay(mondayAfterMidnight, setOf(1), 23 * 60 + 30)).isFalse()
+        // Chosen: Monday at 3 am, run at 3:10 am Monday.
+        assertThat(BackupRetention.isChosenDay(mondayAfterMidnight.withHour(3).withMinute(10), setOf(1), 180)).isTrue()
+    }
+
+    @Test fun `older daily and weekly settings map to days`() {
+        assertThat(BackupSettings(frequency = BackupFrequency.DAILY).scheduleDays).hasSize(7)
+        assertThat(BackupSettings(frequency = BackupFrequency.WEEKLY, weekday = 3).scheduleDays).containsExactly(3)
+        assertThat(BackupSettings(frequency = BackupFrequency.DAILY, days = setOf(2, 5)).scheduleDays).containsExactly(2, 5)
     }
 }

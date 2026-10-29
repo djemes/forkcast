@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "Back up and share": only the encrypted backup in cache/share/ can be shared (BackupShares). -->
+<paths>
+    <cache-path name="share" path="share/" />
+</paths>

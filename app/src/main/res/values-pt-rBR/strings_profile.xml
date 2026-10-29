@@ -168,7 +168,7 @@
     <string name="onb_extra_hc_needs">Precisa do Health Connect neste celular.</string>
     <string name="onb_extra_backup_title">Backup automático</string>
     <string name="onb_extra_backup_body">Uma cópia semanal dos seus dados numa pasta que você escolhe, para que perder o celular não signifique perder o histórico.</string>
-    <string name="onb_extra_backup_needs">Precisa de uma pasta. Uma que sincroniza com a nuvem mantém seus dados seguros mesmo se você perder o celular.</string>
+    <string name="onb_extra_backup_needs">Precisa de uma pasta e de uma senha dos backups. Uma pasta que sincroniza com a nuvem mantém seus dados seguros mesmo se você perder o celular.</string>
     <string name="onb_extra_notify_title">Lembretes e avisos</string>
     <string name="onb_extra_notify_body">Lembretes das refeições, um balanço semanal e um aviso quando uma estimativa por foto fica pronta.</string>
     <string name="onb_extra_notify_needs">O Android pede a sua permissão. Você escolhe quais recebe.</string>
@@ -180,6 +180,6 @@
     <string name="onb_extra_ready">Pronto</string>
     <string name="onb_restore">Vindo de outro celular? Restaure um backup</string>
     <string name="onb_restore_confirm">Restaurar</string>
-    <string name="onb_restore_choices">Restaurar traz de volta seu registro, sua meta e suas configurações deste backup. As chaves de API nunca vão para os backups, então adicione sua chave de IA de novo depois.</string>
+    <string name="onb_restore_choices">Restaurar traz de volta tudo deste backup: seu registro, sua meta, as configurações, os serviços de IA e suas chaves.</string>
     <string name="onb_restore_incomplete">Esse backup não tinha perfil e meta, então responda algumas perguntas para terminar.</string>
 </resources>

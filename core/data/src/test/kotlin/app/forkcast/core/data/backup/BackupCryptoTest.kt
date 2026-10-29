@@ -19,7 +19,7 @@ class BackupCryptoTest {
 
     private fun encrypt(plain: ByteArray, pw: CharArray = password): ByteArray {
         val out = ByteArrayOutputStream()
-        BackupCrypto.encrypt(out, pw, ITERATIONS, SEGMENT).use { it.write(plain) }
+        BackupCrypto.encrypt(out, pw, FAST, SEGMENT).use { it.write(plain) }
         return out.toByteArray()
     }
 
@@ -44,7 +44,7 @@ class BackupCryptoTest {
     @Test fun byteByByteWritesGiveTheSameResult() {
         val plain = Random(1).nextBytes(2 * SEGMENT + 3)
         val out = ByteArrayOutputStream()
-        BackupCrypto.encrypt(out, password, ITERATIONS, SEGMENT).use { s -> plain.forEach { s.write(it.toInt()) } }
+        BackupCrypto.encrypt(out, password, FAST, SEGMENT).use { s -> plain.forEach { s.write(it.toInt()) } }
         assertThat(decrypt(out.toByteArray())).isEqualTo(plain)
     }
 
@@ -80,18 +80,27 @@ class BackupCryptoTest {
 
     @Test fun anEditedHeaderFails() {
         val bytes = encrypt(Random(6).nextBytes(10))
-        // The salt starts after the magic, the version (1 byte) and the iterations (4 bytes).
-        val i = BackupCrypto.MAGIC.size + 5
+        // The salt starts after the magic, the version (1 byte), memory and passes (4 bytes each) and lanes (1 byte).
+        val i = BackupCrypto.MAGIC.size + 10
         bytes[i] = (bytes[i].toInt() xor 1).toByte()
         assertThrows(BackupDecryptException::class.java) { decrypt(bytes) }
     }
 
-    @Test fun absurdIterationsAreRefusedBeforeAnyWork() {
+    @Test fun absurdKeySettingsAreRefusedBeforeAnyWork() {
         val bytes = encrypt(Random(7).nextBytes(10))
+        // Memory (KiB) right after the version byte.
         val at = BackupCrypto.MAGIC.size + 1
         bytes[at] = 0x7f
         for (i in 1 until 4) bytes[at + i] = -1
         assertThrows(BackupDecryptException::class.java) { decrypt(bytes) }
+    }
+
+    @Test fun filesFromOlderVersionsStillOpen() {
+        val plain = Random(8).nextBytes(SEGMENT + 7)
+        val out = ByteArrayOutputStream()
+        BackupCrypto.encryptPbkdf2(out, password, ITERATIONS, SEGMENT).use { it.write(plain) }
+        assertThat(decrypt(out.toByteArray())).isEqualTo(plain)
+        assertThrows(BackupDecryptException::class.java) { decrypt(out.toByteArray(), "wrong password".toCharArray()) }
     }
 
     @Test fun plainFilesAreNotTakenForEncryptedOnes() {
@@ -101,6 +110,8 @@ class BackupCryptoTest {
 
     private companion object {
         const val ITERATIONS = 100_000
+        /** The smallest Argon2id settings a file may ask for, so the tests stay quick. */
+        val FAST = Kdf(memoryKiB = 8 * 1024, iterations = 1, parallelism = 1)
         const val SEGMENT = 4_096
         const val TAG = 16
     }
