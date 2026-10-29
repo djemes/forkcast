@@ -12,27 +12,14 @@ import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewModelScope
 import app.forkcast.R
-import app.forkcast.core.data.repository.ConsentRepository
 import app.forkcast.core.model.AgreementAcceptance
 import app.forkcast.ui.settings.SettingsScaffold
-import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import javax.inject.Inject
-
-@HiltViewModel
-class TermsViewModel @Inject constructor(consent: ConsentRepository) : ViewModel() {
-    val accepted: StateFlow<AgreementAcceptance?> = consent.agreement.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-}
 
 @Composable
 fun TermsRoute(onBack: () -> Unit, viewModel: TermsViewModel = hiltViewModel()) {

@@ -114,15 +114,7 @@ class AiSetupViewModel @Inject constructor(
     fun onEvent(event: AiSetupEvent) {
         when (event) {
             is AiSetupEvent.Choose -> _state.update { it.copy(provider = event.provider, step = SetupStep.ABOUT, key = "", error = null) }
-            AiSetupEvent.Next -> _state.update { s ->
-                val next = when (s.step) {
-                    SetupStep.CHOOSE -> SetupStep.ABOUT
-                    SetupStep.ABOUT -> SetupStep.GET_KEY
-                    SetupStep.GET_KEY -> SetupStep.PASTE
-                    else -> s.step
-                }
-                s.copy(step = next)
-            }
+            AiSetupEvent.Next -> _state.update { s -> s.copy(step = nextStep(s.step)) }
             AiSetupEvent.AllowAndNext -> viewModelScope.launch {
                 consent.allowAi(AiRecipient.of(_state.value.provider, null))
                 onEvent(AiSetupEvent.Next)
@@ -138,6 +130,13 @@ class AiSetupViewModel @Inject constructor(
             AiSetupEvent.Check -> check()
             AiSetupEvent.SaveAnyway -> viewModelScope.launch { finish(SetupOutcome.UNCHECKED, report = null) }
         }
+    }
+
+    private fun nextStep(step: SetupStep): SetupStep = when (step) {
+        SetupStep.CHOOSE -> SetupStep.ABOUT
+        SetupStep.ABOUT -> SetupStep.GET_KEY
+        SetupStep.GET_KEY -> SetupStep.PASTE
+        else -> step
     }
 
     private fun check() {

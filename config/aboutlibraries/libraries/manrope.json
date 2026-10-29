@@ -1,0 +1,15 @@
+{
+  "uniqueId": "manrope",
+  "name": "Manrope",
+  "artifactVersion": "",
+  "description": "The app's typeface.",
+  "website": "https://github.com/googlefonts/manrope",
+  "developers": [
+    {
+      "name": "The Manrope Project Authors"
+    }
+  ],
+  "licenses": [
+    "OFL-1.1"
+  ]
+}

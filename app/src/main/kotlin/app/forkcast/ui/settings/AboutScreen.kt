@@ -17,10 +17,18 @@ import androidx.compose.ui.unit.dp
 import app.forkcast.BuildConfig
 import app.forkcast.Distribution
 import app.forkcast.R
+import app.forkcast.di.DONATION_URL
+import app.forkcast.di.GITHUB_ISSUES_URL
 import app.forkcast.di.GITHUB_URL
 
 @Composable
-fun AboutRoute(onBack: () -> Unit, onOpenUpdates: () -> Unit, onOpenTerms: () -> Unit, onOpenPrivacy: () -> Unit) {
+fun AboutRoute(
+    onBack: () -> Unit,
+    onOpenUpdates: () -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenLicenses: () -> Unit,
+) {
     AboutScreen(
         versionName = BuildConfig.VERSION_NAME,
         versionCode = BuildConfig.VERSION_CODE,
@@ -28,10 +36,16 @@ fun AboutRoute(onBack: () -> Unit, onOpenUpdates: () -> Unit, onOpenTerms: () ->
         onOpenUpdates = onOpenUpdates.takeIf { Distribution.current.hasUpdater },
         onOpenTerms = onOpenTerms,
         onOpenPrivacy = onOpenPrivacy,
+        onOpenLicenses = onOpenLicenses,
+        donationUrl = DONATION_URL.takeIf { Distribution.current.hasDonationLink && it.isNotBlank() },
     )
 }
 
-/** Settings › About: version (and the way to Updates in the GitHub build), source, privacy, licenses. */
+/**
+ * Settings › About (roadmap 2.0 task 4.7): version and Updates (github build), source, reporting a
+ * problem, Support Forkcast (github build, once the link exists), the legal texts and licenses, the
+ * privacy summary, and attributions.
+ */
 @Composable
 fun AboutScreen(
     versionName: String,
@@ -40,6 +54,8 @@ fun AboutScreen(
     onOpenUpdates: (() -> Unit)? = null,
     onOpenTerms: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
+    onOpenLicenses: () -> Unit = {},
+    donationUrl: String? = null,
 ) {
     val uri = LocalUriHandler.current
     SettingsScaffold(title = stringResource(R.string.settings_about), onBack = onBack) {
@@ -56,23 +72,51 @@ fun AboutScreen(
                 }
             }
 
-            Heading(R.string.about_github_title)
+            AboutHeading(R.string.about_github_title)
             Text(stringResource(R.string.about_github_body), style = MaterialTheme.typography.bodyLarge)
             TextButton(onClick = { uri.openUri(GITHUB_URL) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.about_github_open))
             }
 
+            AboutHeading(R.string.about_report_title)
+            Text(stringResource(R.string.about_report_body), style = MaterialTheme.typography.bodyLarge)
+            TextButton(onClick = { uri.openUri(GITHUB_ISSUES_URL) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.about_report_open))
+            }
+
+            // Voluntary tips (roadmap 2.0 task 4.6): only here, never a reminder or pop-up anywhere else.
+            if (donationUrl != null) {
+                AboutHeading(R.string.about_support_title)
+                Text(stringResource(R.string.about_support_body), style = MaterialTheme.typography.bodyLarge)
+                OutlinedButton(onClick = { uri.openUri(donationUrl) }, modifier = Modifier.padding(top = 8.dp).heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.about_support_open))
+                }
+            }
+
+            AboutHeading(R.string.about_legal_title)
             TextButton(onClick = onOpenTerms, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_terms)) }
             TextButton(onClick = onOpenPrivacy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_privacy_policy)) }
+            TextButton(onClick = onOpenLicenses, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_licenses_title)) }
             AboutSection(R.string.about_privacy_title, stringResource(R.string.about_privacy_body))
             AboutSection(R.string.about_medical_title, stringResource(R.string.about_medical_body))
-            AboutSection(R.string.about_licenses_title, stringResource(R.string.about_license_manrope))
+
+            // Data attributions and the non-affiliation note (roadmap 2.0 task 4.5).
+            AboutHeading(R.string.about_attributions_title)
+            listOf(R.string.about_attribution_off, R.string.about_attribution_usda).forEach {
+                Text(stringResource(it), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 8.dp))
+            }
+            Text(
+                stringResource(R.string.about_not_affiliated),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 24.dp),
+            )
         }
     }
 }
 
 @Composable
-private fun Heading(title: Int) {
+internal fun AboutHeading(title: Int) {
     Text(
         text = stringResource(title),
         style = MaterialTheme.typography.titleMedium,
@@ -84,6 +128,6 @@ private fun Heading(title: Int) {
 
 @Composable
 private fun AboutSection(title: Int, body: String) {
-    Heading(title)
+    AboutHeading(title)
     Text(text = body, style = MaterialTheme.typography.bodyLarge)
 }

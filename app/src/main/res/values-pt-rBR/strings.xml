@@ -107,7 +107,22 @@
     <string name="about_medical_title">Não é orientação médica</string>
     <string name="about_medical_body">O Forkcast faz estimativas, principalmente a partir de fotos. Pese a comida quando a precisão importar, e converse com um médico ou nutricionista antes de grandes mudanças.</string>
     <string name="about_licenses_title">Licenças</string>
-    <string name="about_license_manrope">Fonte Manrope, SIL Open Font License 1.1</string>
+    <string name="about_app_license_title">Licença do Forkcast</string>
+    <string name="about_app_license_body">O Forkcast é software livre e de código aberto: você pode usar, estudar, compartilhar e modificar o app nos termos da GNU General Public License, versão 3, com uma permissão adicional para as bibliotecas ML Kit e Play services do Google. Ele vem sem nenhuma garantia.</string>
+    <string name="about_app_license_open">Ler a licença do Forkcast</string>
+    <string name="about_libraries_title">Bibliotecas de código aberto</string>
+    <string name="about_libraries_body">O Forkcast é feito com estas bibliotecas e com a fonte Manrope. Toque em uma para ler a licença.</string>
+    <string name="about_report_title">Relatar um problema</string>
+    <string name="about_report_body">Encontrou um erro ou algo que não faz sentido? Relate no GitHub. O suporte é feito na medida do possível, então a resposta pode demorar. Não inclua chaves de API nem dados pessoais: outras pessoas podem ler as issues.</string>
+    <string name="about_report_open">Abrir o GitHub Issues</string>
+    <string name="about_legal_title">Termos, privacidade e licenças</string>
+    <string name="about_support_title">Apoie o Forkcast</string>
+    <string name="about_support_body">O Forkcast é gratuito e de código aberto. Se ele te ajuda, você pode deixar uma gorjeta. Gorjetas são voluntárias e não liberam nada.</string>
+    <string name="about_support_open">Deixar uma gorjeta</string>
+    <string name="about_attributions_title">Créditos</string>
+    <string name="about_attribution_off">Dados de alimentos do Open Food Facts (openfoodfacts.org), disponíveis sob a Open Database License (ODbL).</string>
+    <string name="about_attribution_usda">Dados de alimentos do USDA FoodData Central (fdc.nal.usda.gov), Departamento de Agricultura dos EUA.</string>
+    <string name="about_not_affiliated">O Forkcast não é afiliado nem endossado por Google, Anthropic, OpenAI, USDA, Open Food Facts ou Samsung. Os nomes de produtos pertencem aos seus donos.</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
     <string name="key_saved_encrypted">Guardada com criptografia. Os backups a incluem, criptografada com a senha dos backups.</string>

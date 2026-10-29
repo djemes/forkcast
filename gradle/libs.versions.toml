@@ -47,6 +47,8 @@ profileinstaller = "1.4.1"
 uiautomator = "2.4.0"
 # 2.0 Phase 1, checked 2026-10-24 on Google Maven: lint = AGP 9.4.1 + 23 (32.4.1)
 lint = "32.4.1"
+# 2.0 Phase 4, checked 2026-10-25 on Maven Central / Gradle Plugin Portal (15.3.0 of 2026-10-13 is the newest)
+aboutLibraries = "15.3.0"
 
 [libraries]
 androidx-core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
@@ -126,6 +128,7 @@ health-connect = { module = "androidx.health.connect:connect-client", version.re
 lint-api = { module = "com.android.tools.lint:lint-api", version.ref = "lint" }
 lint-checks = { module = "com.android.tools.lint:lint-checks", version.ref = "lint" }
 lint-tests = { module = "com.android.tools.lint:lint-tests", version.ref = "lint" }
+aboutlibraries-compose-m3 = { module = "com.mikepenz:aboutlibraries-compose-m3", version.ref = "aboutLibraries" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
@@ -139,3 +142,4 @@ ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
 hilt = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 room = { id = "androidx.room", version.ref = "room" }
 detekt = { id = "dev.detekt", version.ref = "detekt" }
+aboutlibraries-android = { id = "com.mikepenz.aboutlibraries.plugin.android", version.ref = "aboutLibraries" }

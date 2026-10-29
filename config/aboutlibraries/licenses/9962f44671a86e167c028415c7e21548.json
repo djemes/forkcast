@@ -1,0 +1,6 @@
+{
+  "name": "ML Kit Terms of Service",
+  "url": "https://developers.google.com/ml-kit/terms",
+  "hash": "9962f44671a86e167c028415c7e21548",
+  "content": "ML Kit (barcode and text recognition, which run on the phone) is provided by Google under the ML Kit Terms of Service: https://developers.google.com/ml-kit/terms\n\nForkcast's license gives an additional permission to combine Forkcast with these libraries (see LICENSE-ADDITIONAL-PERMISSION.md in the source code)."
+}

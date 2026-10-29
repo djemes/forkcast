@@ -10,6 +10,7 @@ plugins {
     alias(libs.plugins.hilt) apply false
     alias(libs.plugins.room) apply false
     alias(libs.plugins.detekt) apply false
+    alias(libs.plugins.aboutlibraries.android) apply false
 }
 
 // The project folder lives in OneDrive. Build output goes outside it so OneDrive
