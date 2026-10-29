@@ -1,5 +1,7 @@
 package app.forkcast.ui.common
 
+import app.forkcast.ui.format.formatMinute
+import app.forkcast.ui.format.clockFormatter
 import android.text.format.DateFormat
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -24,21 +26,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 
 /** "8:15 AM" (or "08:15") for minutes after midnight, in the phone's style. */
 @Composable
-fun mealTimeText(minute: Int): String {
-    val locale = LocalLocale.current.platformLocale
-    return DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale).format(LocalTime.of(minute / 60 % 24, minute % 60))
-}
+fun mealTimeText(minute: Int): String = clockFormatter().formatMinute(minute)
 
 /**
  * When it was eaten (owner, 2026-10-23): a button showing the time; tapping opens the clock.

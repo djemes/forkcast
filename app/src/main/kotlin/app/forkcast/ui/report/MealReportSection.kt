@@ -145,8 +145,9 @@ fun MealReportSectionRoute(snackbar: SnackbarHostState, viewModel: MealReportVie
     val context = LocalContext.current
     val resources = LocalResources.current
     val locale = LocalLocale.current.platformLocale
-    val files = remember(units, locale, resources) {
-        MealReportFiles(resources, UnitFormatter(units ?: UnitFormatter.defaultsFor(locale), locale, UnitLabels.from(resources)), locale)
+    val is24Hour = android.text.format.DateFormat.is24HourFormat(context)
+    val files = remember(units, locale, resources, is24Hour) {
+        MealReportFiles(resources, UnitFormatter(units ?: UnitFormatter.defaultsFor(locale), locale, UnitLabels.from(resources)), locale, is24Hour)
     }
     val pickPdf = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ReportFormat.PDF.mimeType)) { viewModel.save(it, files) }
     val pickSheet = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ReportFormat.SPREADSHEET.mimeType)) { viewModel.save(it, files) }

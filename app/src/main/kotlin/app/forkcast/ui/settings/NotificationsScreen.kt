@@ -62,9 +62,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import javax.inject.Inject
 
 /** [backupReminder]: the "Time for a backup" card on Today (moved here from Backup & data, owner 2026-10-29). */
@@ -371,8 +368,8 @@ private fun LabeledTime(label: String, minute: Int, onClick: () -> Unit) {
     }
 }
 
-fun timeText(minute: Int): String =
-    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(LocalTime.of((minute / 60) % 24, minute % 60))
+@Composable
+fun timeText(minute: Int): String = app.forkcast.ui.common.mealTimeText(minute)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -1,5 +1,6 @@
 package app.forkcast.ui.report
 
+import app.forkcast.ui.format.ClockFormat
 import android.content.res.Resources
 import android.graphics.Paint
 import android.graphics.Typeface
@@ -37,11 +38,11 @@ enum class ReportFormat(val extension: String, val mimeType: String) {
  * come from [res] (the app's language), amounts from [f] (the user's units); grams and mg stay
  * as they are. No photos and nothing about how an AI estimate was made, only that it is one.
  */
-class MealReportFiles(private val res: Resources, private val f: UnitFormatter, private val locale: Locale) {
+class MealReportFiles(private val res: Resources, private val f: UnitFormatter, private val locale: Locale, is24Hour: Boolean = false) {
 
     private val dayFormat = DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(locale)
     private val shortDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
-    private val timeFormat = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(locale)
+    private val timeFormat = ClockFormat.formatter(locale, is24Hour)
 
     fun write(out: OutputStream, report: MealReport.Report, options: ReportOptions) = when (options.format) {
         ReportFormat.PDF -> pdf(out, report, options)

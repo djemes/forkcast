@@ -1,5 +1,7 @@
 package app.forkcast.ui.today
 
+import app.forkcast.ui.format.formatEpoch
+import app.forkcast.ui.format.clockFormatter
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -299,9 +301,8 @@ fun PendingEstimateRow(p: PendingEstimate, f: UnitFormatter, onClick: () -> Unit
     }
 }
 
-private fun timeOf(epochMs: Long): String =
-    java.time.format.DateTimeFormatter.ofLocalizedTime(java.time.format.FormatStyle.SHORT)
-        .format(java.time.Instant.ofEpochMilli(epochMs).atZone(java.time.ZoneId.systemDefault()))
+@Composable
+private fun timeOf(epochMs: Long): String = clockFormatter().formatEpoch(epochMs)
 
 /** What the edit sheet saves (all at once, on Save only). */
 data class EntryEdit(

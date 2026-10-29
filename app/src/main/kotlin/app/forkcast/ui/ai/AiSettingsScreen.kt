@@ -1,5 +1,7 @@
 package app.forkcast.ui.ai
 
+import app.forkcast.ui.format.formatEpoch
+import app.forkcast.ui.format.clockFormatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -292,7 +294,7 @@ private fun ProfileCard(
             )
         }
         // What it does, and whether it works
-        RoleLine(role, p.cooldownUntil?.let(::formatTime))
+        RoleLine(role, p.cooldownUntil?.let { clockFormatter().formatEpoch(it) })
         if (test != null) TestResult(test, p.provider) else CheckLine(check)
         Text(
             stringResource(R.string.ai_used_today, item.usedToday),
@@ -360,16 +362,11 @@ private fun CheckLine(check: ProfileCheck?) {
     }
 }
 
-private fun formatDateTime(epochMs: Long): String =
-    DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT).withLocale(Locale.getDefault())
-        .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
+@Composable
+private fun formatDateTime(epochMs: Long): String = clockFormatter(date = true).formatEpoch(epochMs)
 
 private fun formatDate(epochMs: Long): String =
     DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault())
-        .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
-
-private fun formatTime(epochMs: Long): String =
-    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(Locale.getDefault())
         .format(Instant.ofEpochMilli(epochMs).atZone(ZoneId.systemDefault()))
 
 @Composable

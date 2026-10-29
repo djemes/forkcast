@@ -1,5 +1,7 @@
 package app.forkcast.ui.today
 
+import app.forkcast.ui.format.formatMinute
+import app.forkcast.ui.format.clockFormatter
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -44,9 +46,6 @@ import app.forkcast.core.domain.Forecast
 import app.forkcast.core.model.NutrientKey
 import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.theme.ForkcastTheme
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import kotlin.math.abs
 
 /**
@@ -242,5 +241,5 @@ private fun Fits(state: TodayUiState, totals: DayTotals, targets: DailyTargets, 
     }
 }
 
-private fun timeLabel(minuteOfDay: Int): String =
-    DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).format(LocalTime.of(minuteOfDay / 60, minuteOfDay % 60))
+@Composable
+private fun timeLabel(minuteOfDay: Int): String = clockFormatter().formatMinute(minuteOfDay)
