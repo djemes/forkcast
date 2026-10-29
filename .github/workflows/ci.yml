@@ -35,15 +35,19 @@ jobs:
       - name: Build, test, lint
         run: ./gradlew assembleDebug testDebugUnitTest lintDebug detekt --stacktrace
 
+      # Uploads are conveniences: a full artifact storage quota mustn't turn a green build red.
+      # Each push stores a ~50 MB APK, so it's kept 3 days (14 filled the private repo's quota).
       - name: Upload debug APK
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: forkcast-debug-apk
           path: app/build/outputs/apk/github/debug/*.apk
-          retention-days: 14
+          retention-days: 3
 
       - name: Upload test and lint reports
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@v7
         with:
           name: reports
