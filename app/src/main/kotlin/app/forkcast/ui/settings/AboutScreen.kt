@@ -20,7 +20,13 @@ import app.forkcast.R
 import app.forkcast.di.GITHUB_URL
 
 @Composable
-fun AboutRoute(onBack: () -> Unit, onOpenUpdates: () -> Unit, onOpenTerms: () -> Unit, onOpenPrivacy: () -> Unit) {
+fun AboutRoute(
+    onBack: () -> Unit,
+    onOpenUpdates: () -> Unit,
+    onOpenTerms: () -> Unit,
+    onOpenPrivacy: () -> Unit,
+    onOpenLicenses: () -> Unit,
+) {
     AboutScreen(
         versionName = BuildConfig.VERSION_NAME,
         versionCode = BuildConfig.VERSION_CODE,
@@ -28,10 +34,11 @@ fun AboutRoute(onBack: () -> Unit, onOpenUpdates: () -> Unit, onOpenTerms: () ->
         onOpenUpdates = onOpenUpdates.takeIf { Distribution.current.hasUpdater },
         onOpenTerms = onOpenTerms,
         onOpenPrivacy = onOpenPrivacy,
+        onOpenLicenses = onOpenLicenses,
     )
 }
 
-/** Settings › About: version (and the way to Updates in the GitHub build), source, privacy, licenses. */
+/** Settings › About: version (and the way to Updates in the GitHub build), source, privacy, licenses, attributions. */
 @Composable
 fun AboutScreen(
     versionName: String,
@@ -40,6 +47,7 @@ fun AboutScreen(
     onOpenUpdates: (() -> Unit)? = null,
     onOpenTerms: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
+    onOpenLicenses: () -> Unit = {},
 ) {
     val uri = LocalUriHandler.current
     SettingsScaffold(title = stringResource(R.string.settings_about), onBack = onBack) {
@@ -56,7 +64,7 @@ fun AboutScreen(
                 }
             }
 
-            Heading(R.string.about_github_title)
+            AboutHeading(R.string.about_github_title)
             Text(stringResource(R.string.about_github_body), style = MaterialTheme.typography.bodyLarge)
             TextButton(onClick = { uri.openUri(GITHUB_URL) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.about_github_open))
@@ -64,15 +72,27 @@ fun AboutScreen(
 
             TextButton(onClick = onOpenTerms, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_terms)) }
             TextButton(onClick = onOpenPrivacy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_privacy_policy)) }
+            TextButton(onClick = onOpenLicenses, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_licenses_title)) }
             AboutSection(R.string.about_privacy_title, stringResource(R.string.about_privacy_body))
             AboutSection(R.string.about_medical_title, stringResource(R.string.about_medical_body))
-            AboutSection(R.string.about_licenses_title, stringResource(R.string.about_license_manrope))
+
+            // Data attributions and the non-affiliation note (roadmap 2.0 task 4.5).
+            AboutHeading(R.string.about_attributions_title)
+            listOf(R.string.about_attribution_off, R.string.about_attribution_usda).forEach {
+                Text(stringResource(it), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(bottom = 8.dp))
+            }
+            Text(
+                stringResource(R.string.about_not_affiliated),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 24.dp),
+            )
         }
     }
 }
 
 @Composable
-private fun Heading(title: Int) {
+internal fun AboutHeading(title: Int) {
     Text(
         text = stringResource(title),
         style = MaterialTheme.typography.titleMedium,
@@ -84,6 +104,6 @@ private fun Heading(title: Int) {
 
 @Composable
 private fun AboutSection(title: Int, body: String) {
-    Heading(title)
+    AboutHeading(title)
     Text(text = body, style = MaterialTheme.typography.bodyLarge)
 }

@@ -1,0 +1,6 @@
+{
+  "name": "Android Software Development Kit License",
+  "url": "https://developer.android.com/studio/terms",
+  "hash": "ASDKL",
+  "content": "These Google libraries are provided under the Android Software Development Kit License Agreement: https://developer.android.com/studio/terms\n\nForkcast's license gives an additional permission to combine Forkcast with these libraries (see LICENSE-ADDITIONAL-PERMISSION.md in the source code)."
+}

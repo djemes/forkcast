@@ -83,4 +83,5 @@
     <string name="fdb_err_key">USDA didn\'t accept this key. Make sure you copied the whole key, then paste it again.</string>
     <string name="fdb_err_offline">No connection. Connect to Wi-Fi or mobile data and try again, or save the key now.</string>
     <string name="fdb_err_server">USDA\'s server didn\'t answer properly. Try again later, or save the key now.</string>
+    <string name="food_usda_credit">Data from USDA FoodData Central (U.S. Department of Agriculture).</string>
 </resources>

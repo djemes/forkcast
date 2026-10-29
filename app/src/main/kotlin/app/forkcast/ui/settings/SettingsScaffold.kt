@@ -33,7 +33,8 @@ import app.forkcast.ui.common.ScreenEntrance
 
 /**
  * Shared top bar + scrolling column for settings screens. [dirty]: the screen has unsaved edits,
- * so Back (arrow or gesture) asks "Discard changes?" first (owner, 2026-10-23).
+ * so Back (arrow or gesture) asks "Discard changes?" first (owner, 2026-10-23). [scroll] = false
+ * for a screen whose content is a lazy list that scrolls by itself.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +43,7 @@ fun SettingsScaffold(
     onBack: () -> Unit,
     snackbarHostState: SnackbarHostState? = null,
     dirty: Boolean = false,
+    scroll: Boolean = true,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     var confirmDiscard by remember { mutableStateOf(false) }
@@ -68,7 +70,7 @@ fun SettingsScaffold(
                 .padding(padding)
                 // The keyboard shrinks the scroll area, so the focused field scrolls into view above it.
                 .keyboardAware(padding)
-                .verticalScroll(rememberScrollState()),
+                .then(if (scroll) Modifier.verticalScroll(rememberScrollState()) else Modifier),
         ) {
             // Charts and bars fill in the first time this screen is opened, not when coming back (DESIGN.md §8).
             val column = this

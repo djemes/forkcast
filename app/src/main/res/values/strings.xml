@@ -102,7 +102,15 @@
     <string name="about_medical_title">Not medical advice</string>
     <string name="about_medical_body">Forkcast gives estimates, especially from photos. Weigh food when accuracy matters, and talk to a doctor or dietitian before big changes.</string>
     <string name="about_licenses_title">Licenses</string>
-    <string name="about_license_manrope">Manrope font, SIL Open Font License 1.1</string>
+    <string name="about_app_license_title">Forkcast\'s license</string>
+    <string name="about_app_license_body">Forkcast is free and open-source software: you can use, study, share and change it under the GNU General Public License, version 3, with an additional permission for Google\'s ML Kit and Play services libraries. It comes with no warranty.</string>
+    <string name="about_app_license_open">Read Forkcast\'s license</string>
+    <string name="about_libraries_title">Open-source libraries</string>
+    <string name="about_libraries_body">Forkcast is built with these libraries and the Manrope font. Tap one to read its license.</string>
+    <string name="about_attributions_title">Attributions</string>
+    <string name="about_attribution_off">Food data from Open Food Facts (openfoodfacts.org), available under the Open Database License (ODbL).</string>
+    <string name="about_attribution_usda">Food data from USDA FoodData Central (fdc.nal.usda.gov), U.S. Department of Agriculture.</string>
+    <string name="about_not_affiliated">Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, or Samsung. Product names belong to their owners.</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
     <string name="key_saved_encrypted">Stored encrypted. Only the passphrase-protected settings export includes it.</string>

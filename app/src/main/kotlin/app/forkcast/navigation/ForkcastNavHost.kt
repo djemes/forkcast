@@ -82,6 +82,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object AboutDestination
 @Serializable data object TermsDestination
 @Serializable data object PrivacyPolicyDestination
+@Serializable data object LicensesDestination
+@Serializable data object AppLicenseDestination
 @Serializable data object UpdatesDestination
 @Serializable data object LanguageDestination
 @Serializable data object FoodDatabasesDestination
@@ -497,10 +499,15 @@ fun ForkcastNavHost(
                     onOpenUpdates = { navController.navigate(UpdatesDestination) },
                     onOpenTerms = { navController.navigate(TermsDestination) },
                     onOpenPrivacy = { navController.navigate(PrivacyPolicyDestination) },
+                    onOpenLicenses = { navController.navigate(LicensesDestination) },
                 )
             }
             composable<TermsDestination> { app.forkcast.ui.legal.TermsRoute(onBack = back) }
             composable<PrivacyPolicyDestination> { app.forkcast.ui.legal.PrivacyPolicyScreen(onBack = back) }
+            composable<LicensesDestination> {
+                app.forkcast.ui.settings.LicensesScreen(onBack = back, onOpenAppLicense = { navController.navigate(AppLicenseDestination) })
+            }
+            composable<AppLicenseDestination> { app.forkcast.ui.settings.AppLicenseScreen(onBack = back) }
             composable<UpdatesDestination> { app.forkcast.ui.settings.UpdatesRoute(onBack = back) }
             composable<LanguageDestination> { app.forkcast.ui.settings.LanguageRoute(onBack = back) }
             composable<HelpDestination> {

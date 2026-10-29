@@ -7,6 +7,7 @@ plugins {
     alias(libs.plugins.ksp)
     alias(libs.plugins.hilt)
     alias(libs.plugins.baselineprofile)
+    alias(libs.plugins.aboutlibraries.android)
 }
 
 // ---- Version: versionCode = commit count, so PC builds and CI releases share one rising counter.
@@ -138,8 +139,32 @@ android {
     }
 }
 
+// Forkcast's own license, readable offline in About › Licenses: the repo-root files are the one
+// source, copied into the assets at build time (roadmap 2.0 task 4.5).
+abstract class CopyAppLicense : DefaultTask() {
+    @get:InputFiles
+    @get:PathSensitive(PathSensitivity.NAME_ONLY)
+    abstract val licenseFiles: ConfigurableFileCollection
+
+    @get:OutputDirectory
+    abstract val outputDir: DirectoryProperty
+
+    @TaskAction
+    fun copy() {
+        val dir = outputDir.get().asFile.resolve("licenses")
+        dir.deleteRecursively()
+        dir.mkdirs()
+        licenseFiles.forEach { it.copyTo(dir.resolve(it.name)) }
+    }
+}
+
+val copyAppLicense = tasks.register<CopyAppLicense>("copyAppLicense") {
+    licenseFiles.from(rootProject.file("LICENSE"), rootProject.file("LICENSE-ADDITIONAL-PERMISSION.md"))
+}
+
 androidComponents {
     beforeVariants { if (it.productFlavors.any { (_, flavor) -> flavor == "play" } && !playEnabled) it.enable = false }
+    onVariants { it.sources.assets?.addGeneratedSourceDirectory(copyAppLicense, CopyAppLicense::outputDir) }
 }
 
 // The one shipped flavor keeps the flavor-less task names that CLAUDE.md, CI and the memory notes use
@@ -199,6 +224,8 @@ dependencies {
     implementation(libs.glance.material3)
     implementation(libs.coil.compose)
     implementation(libs.reorderable)
+    // Settings › About › Licenses, generated from the dependencies (roadmap 2.0 task 4.5)
+    implementation(libs.aboutlibraries.compose.m3)
     implementation(libs.androidx.work.runtime)
     implementation(libs.hilt.work)
     ksp(libs.hilt.androidx.compiler)
@@ -219,4 +246,12 @@ dependencies {
     testImplementation(libs.compose.ui.test.junit4)
     testImplementation(libs.androidx.navigation.testing)
     testImplementation(libs.tink.android)
+}
+
+// The third-party licenses screen (roadmap 2.0 task 4.5): generated from the dependencies at build
+// time, so it stays accurate by itself. The Manrope font isn't a dependency: config/aboutlibraries.
+aboutLibraries {
+    collect {
+        configPath = rootProject.file("config/aboutlibraries")
+    }
 }

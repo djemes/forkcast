@@ -237,9 +237,13 @@ fun FoodDetailScreen(
                     onChange = onCountsAsWater,
                 )
             }
-            if (food.source == FoodSource.OFF) {
-                Text(stringResource(R.string.food_odbl), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            // Where the data came from (roadmap 2.0 task 4.5).
+            val credit = when (food.source) {
+                FoodSource.OFF -> R.string.food_odbl
+                FoodSource.USDA -> R.string.food_usda_credit
+                else -> null
             }
+            credit?.let { Text(stringResource(it), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         }
     }
 }

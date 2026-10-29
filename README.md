@@ -31,3 +31,9 @@ A private, offline-first Android calorie and nutrition tracker. Log a meal by sc
 Android 10 or newer. English and Portuguese (Brazil).
 
 For adults (18+). Not medical advice: Forkcast gives estimates, and those from photos can be well off, so weigh food when accuracy matters. Read the [Terms of Use and Disclaimer](TERMS.md) and the [Privacy Policy](PRIVACY.md).
+
+## License
+
+Forkcast is free and open-source software under the [GNU General Public License, version 3](LICENSE), with an [additional permission](LICENSE-ADDITIONAL-PERMISSION.md) for Google's ML Kit and Play services libraries. The licenses of the libraries it uses are in the app under Settings › About › Licenses.
+
+Food data from [Open Food Facts](https://openfoodfacts.org) (Open Database License) and [USDA FoodData Central](https://fdc.nal.usda.gov). Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, or Samsung. Product names belong to their owners.
