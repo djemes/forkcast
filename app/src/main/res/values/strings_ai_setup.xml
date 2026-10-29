@@ -62,7 +62,7 @@
     <string name="setup_paste">Paste</string>
     <string name="setup_check">Check key</string>
     <string name="setup_checking">Checking with %1$s…</string>
-    <string name="setup_key_stored">Your key is stored encrypted on this phone. It\'s never put in backups.</string>
+    <string name="setup_key_stored">Your key is stored encrypted on this phone. Backups include it, encrypted with your backup password.</string>
     <string name="setup_show_key">Show key</string>
     <string name="setup_hide_key">Hide key</string>
     <string name="key_check_space">There\'s a space in it. Copy only the key, without other text.</string>

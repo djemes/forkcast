@@ -2,7 +2,7 @@ package app.forkcast.ui.backup
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.rememberScrollState
@@ -23,7 +23,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
@@ -90,7 +89,8 @@ private fun NewPasswordFields(onValid: (String?) -> Unit, onCopy: (String) -> Un
             supportingText = if (mismatch) ({ Text(stringResource(R.string.bpw_mismatch)) }) else null,
             modifier = Modifier.fillMaxWidth(),
         )
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        // Wraps: next to each other when they fit, Copy below at large text or on narrow screens.
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             OutlinedButton(
                 onClick = {
                     val generated = BackupPassword.generate()

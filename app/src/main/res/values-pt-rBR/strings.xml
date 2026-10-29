@@ -74,7 +74,7 @@
     <string name="settings_ai_summary">Serviços de IA e chaves, a ordem deles, fotos das refeições</string>
     <string name="settings_food_databases_summary">Chave do USDA e Open Food Facts</string>
     <string name="settings_notifications_summary">Orçamento, lembretes, horário de silêncio</string>
-    <string name="settings_backup_data_summary">Backups, restauração, planilhas e transferência de configurações</string>
+    <string name="settings_backup_data_summary">Senha dos backups, backups, restauração e relatório de refeições</string>
     <string name="settings_appearance_summary">Claro, escuro e cores</string>
     <string name="settings_about_summary">Versão, atualizações, privacidade e licenças</string>
     <string name="settings_daily_targets">Metas diárias</string>
