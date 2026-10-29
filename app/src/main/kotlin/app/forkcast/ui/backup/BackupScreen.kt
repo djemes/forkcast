@@ -117,7 +117,13 @@ fun BackupRoute(
             onEvent(BackupEvent.DismissDialog)
             noLock = R.string.backup_unencrypted_no_lock
         } else {
-            DeviceAuth.authenticate(context, unlockTitle, unencryptedSubtitle, onSuccess = { onEvent(BackupEvent.UnencryptedConfirmed) }, onFailure = { onEvent(BackupEvent.DismissDialog) })
+            DeviceAuth.authenticate(
+                context,
+                unlockTitle,
+                unencryptedSubtitle,
+                onSuccess = { onEvent(BackupEvent.UnencryptedConfirmed) },
+                onFailure = { onEvent(BackupEvent.DismissDialog) },
+            )
         }
     }
 
