@@ -44,8 +44,6 @@ class BackupScreenTest {
                     state = BackupUiState(),
                     onEvent = { events += it },
                     actions = BackupActions(
-                        exportFoodLog = { launched += "log" },
-                        exportWeights = { launched += "weights" },
                         restore = { launched += "restore" },
                     ),
                     onBack = {},
@@ -58,13 +56,11 @@ class BackupScreenTest {
         compose.onNodeWithText("Set a backup password first. Backups are always encrypted with it.").assertIsDisplayed()
         compose.onNodeWithText("Restore from a backup…").performScrollTo().performClick()
         compose.onNodeWithText("Back up without encryption").performScrollTo().performClick()
-        // Spreadsheets wait under Advanced, collapsed (roadmap 2.0 task 3.5).
-        compose.onNodeWithText("Food log (CSV)").assertDoesNotExist()
+        // The meal report's spreadsheet replaced the CSV exports (owner, 2026-10-29).
         compose.onNodeWithText("Advanced").performScrollTo().performClick()
-        compose.onNodeWithText("Food log (CSV)").performScrollTo().performClick()
-        compose.onNodeWithText("Weights (CSV)").performScrollTo().performClick()
+        compose.onNodeWithText("Food log (CSV)").assertDoesNotExist()
         assertThat(events).containsExactly(BackupEvent.AskUnencrypted)
-        assertThat(launched).containsExactly("restore", "log", "weights").inOrder()
+        assertThat(launched).containsExactly("restore")
         compose.onNodeWithText("Undo the last replace").assertDoesNotExist()
     }
 

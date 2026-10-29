@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="backup_csv_title">For spreadsheets</string>
-    <string name="backup_csv_food_log">Food log (CSV)</string>
-    <string name="backup_csv_weights">Weights (CSV)</string>
     <string name="backup_restore_safety">Undo the last replace</string>
     <string name="backup_restore_safety_body">Forkcast saved a copy of your data before the last replace. Opening it shows the same import choices.</string>
     <string name="backup_working">Working…</string>
-    <string name="backup_saved_food_log">Food log saved</string>
-    <string name="backup_saved_weights">Weights saved</string>
     <string name="backup_save_failed">Couldn\'t save the file. Try another location.</string>
 
     <string name="backup_preview_title">Import this backup?</string>

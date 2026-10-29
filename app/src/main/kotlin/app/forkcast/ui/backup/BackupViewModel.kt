@@ -25,15 +25,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.IOException
-import java.time.Clock
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 enum class ExportKind(val extension: String, val mimeType: String) {
     /** The `.forkcast` backup file (roadmap 2.0, task 1.4). */
     BACKUP("forkcast", BackupFile.MIME_TYPE),
-    FOOD_LOG_CSV("csv", "text/csv"),
-    WEIGHTS_CSV("csv", "text/csv"),
 }
 
 sealed interface BackupDialog {
@@ -88,7 +84,6 @@ sealed interface BackupEvent {
     data object KeepPassword : BackupEvent
     /** The picker returned where to save (null = canceled). */
     data class SaveTo(val uri: Uri?) : BackupEvent
-    data class ExportCsv(val kind: ExportKind, val uri: Uri) : BackupEvent
     data class Open(val uri: Uri) : BackupEvent
     data class Unlock(val password: String) : BackupEvent
     data object OpenSafetyBackup : BackupEvent
@@ -108,7 +103,6 @@ class BackupViewModel @Inject constructor(
     private val folder: FolderBackupRepository,
     private val secrets: BackupSecrets,
     private val shares: BackupShares,
-    private val clock: Clock,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BackupUiState())
@@ -129,13 +123,9 @@ class BackupViewModel @Inject constructor(
         refreshSafetyBackup()
     }
 
-    /** `2026-10-29_0300_forkcast-backup[_unencrypted].forkcast`; CSVs `forkcast-YYYYMMDD-HHMM-….csv`. */
-    fun suggestedName(kind: ExportKind, mode: SaveMode = SaveMode.ENCRYPTED): String {
-        if (kind == ExportKind.BACKUP) return file.fileName(encrypted = mode == SaveMode.ENCRYPTED)
-        val stamp = NAME_STAMP.format(clock.instant().atZone(clock.zone))
-        val suffix = if (kind == ExportKind.FOOD_LOG_CSV) "-food-log" else "-weights"
-        return "forkcast-$stamp$suffix.${kind.extension}"
-    }
+    /** `2026-10-29_0300_forkcast-backup[_unencrypted].forkcast`. */
+    fun suggestedName(mode: SaveMode = SaveMode.ENCRYPTED): String =
+        file.fileName(encrypted = mode == SaveMode.ENCRYPTED)
 
     fun onEvent(event: BackupEvent) {
         when (event) {
@@ -163,7 +153,6 @@ class BackupViewModel @Inject constructor(
                 _state.update { it.copy(pickBackupFile = null) }
                 if (event.uri != null && mode != null) save(event.uri, mode)
             }
-            is BackupEvent.ExportCsv -> exportCsv(event.kind, event.uri)
             is BackupEvent.Open -> work {
                 lockedUri = null
                 read(event.uri, password = null)
@@ -241,19 +230,6 @@ class BackupViewModel @Inject constructor(
         _state.update { it.copy(busy = false, share = uri, notice = if (uri == null) BackupNotice.ExportFailed else it.notice) }
     }
 
-    private fun exportCsv(kind: ExportKind, uri: Uri) = viewModelScope.launch {
-        _state.update { it.copy(busy = true) }
-        val notice = try {
-            documents.writeText(uri, if (kind == ExportKind.FOOD_LOG_CSV) backups.foodLogCsv() else backups.weightsCsv())
-            BackupNotice.Exported(kind)
-        } catch (e: IOException) {
-            BackupNotice.ExportFailed
-        } catch (e: SecurityException) {
-            BackupNotice.ExportFailed
-        }
-        _state.update { it.copy(busy = false, notice = notice) }
-    }
-
     private suspend fun show(text: String, isSafetyBackup: Boolean, photos: Int) {
         val dialog = when (val parsed = backups.parse(text)) {
             is ParsedBackup.Ok -> {
@@ -311,9 +287,5 @@ class BackupViewModel @Inject constructor(
     private fun refreshSafetyBackup() = viewModelScope.launch {
         val has = runCatching { backups.readSafetyBackup() != null }.getOrDefault(false)
         _state.update { it.copy(hasSafetyBackup = has) }
-    }
-
-    private companion object {
-        val NAME_STAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyyMMdd-HHmm")
     }
 }

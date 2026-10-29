@@ -83,7 +83,7 @@ fun BackupRoute(
         onEvent(BackupEvent.SaveTo(uri))
     }
     LaunchedEffect(state.pickBackupFile) {
-        state.pickBackupFile?.let { saveBackup.launch(viewModel.suggestedName(ExportKind.BACKUP, it)) }
+        state.pickBackupFile?.let { saveBackup.launch(viewModel.suggestedName(it)) }
     }
     val shareTitle = stringResource(R.string.backup_share_title)
     LaunchedEffect(state.share) {
@@ -97,12 +97,6 @@ fun BackupRoute(
     }
     val importSettings = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> transfer.picked(uri) }
 
-    val exportFoodLog = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.FOOD_LOG_CSV.mimeType)) { uri ->
-        uri?.let { onEvent(BackupEvent.ExportCsv(ExportKind.FOOD_LOG_CSV, it)) }
-    }
-    val exportWeights = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument(ExportKind.WEIGHTS_CSV.mimeType)) { uri ->
-        uri?.let { onEvent(BackupEvent.ExportCsv(ExportKind.WEIGHTS_CSV, it)) }
-    }
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { onEvent(BackupEvent.Open(it)) }
     }
@@ -132,15 +126,13 @@ fun BackupRoute(
         state = state,
         onEvent = onEvent,
         actions = BackupActions(
-            exportFoodLog = { exportFoodLog.launch(viewModel.suggestedName(ExportKind.FOOD_LOG_CSV)) },
-            exportWeights = { exportWeights.launch(viewModel.suggestedName(ExportKind.WEIGHTS_CSV)) },
             // .forkcast has no registered type; 1.x backups are .json or .zip, which some file managers label oddly.
             restore = { open.launch(arrayOf("*/*")) },
         ),
         onBack = onBack,
         hasPassword = autoState.status.hasPassword,
         last = autoState.status.last,
-        exampleName = viewModel.suggestedName(ExportKind.BACKUP),
+        exampleName = viewModel.suggestedName(),
         reminder = autoState.status.settings.reminder,
         onReminder = auto::setReminder,
         passwordSection = { snackbar ->
@@ -168,8 +160,6 @@ enum class PasswordAsk { NEW, NEW_THEN_AUTO, CHANGE }
 
 /** System file pickers, launched from the route so the screen stays previewable and testable. */
 data class BackupActions(
-    val exportFoodLog: () -> Unit = {},
-    val exportWeights: () -> Unit = {},
     val restore: () -> Unit = {},
 )
 
@@ -268,16 +258,10 @@ fun BackupScreen(
                     modifier = Modifier.padding(top = 16.dp).heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.backup_unencrypted)) }
 
-                // Spreadsheets and settings files from older versions are for fewer people (roadmap 2.0 task 3.5).
+                // Settings files from older versions are for fewer people (roadmap 2.0 task 3.5). The meal
+                // report's spreadsheet replaced the CSV exports (owner, 2026-10-29).
                 AdvancedSection(Modifier.padding(top = 8.dp)) {
-                    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        SectionTitle(R.string.backup_csv_title, Modifier.padding(top = 8.dp))
-                        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            OutlinedButton(onClick = actions.exportFoodLog, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_food_log)) }
-                            OutlinedButton(onClick = actions.exportWeights, enabled = !state.busy) { Text(stringResource(R.string.backup_csv_weights)) }
-                        }
-                        Column(Modifier.padding(top = 16.dp)) { settingsSection() }
-                    }
+                    Column(Modifier.padding(top = 8.dp)) { settingsSection() }
                 }
             }
         }
@@ -456,11 +440,7 @@ private fun MessageDialog(title: String, body: String, onDismiss: () -> Unit, he
 }
 
 private fun BackupNotice.message(): Int = when (this) {
-    is BackupNotice.Exported -> when (kind) {
-        ExportKind.BACKUP -> R.string.backup_saved
-        ExportKind.FOOD_LOG_CSV -> R.string.backup_saved_food_log
-        ExportKind.WEIGHTS_CSV -> R.string.backup_saved_weights
-    }
+    is BackupNotice.Exported -> R.string.backup_saved
     BackupNotice.ExportFailed -> R.string.backup_save_failed
     is BackupNotice.Folder -> problem?.let(::folderProblemText) ?: R.string.backup_backed_up
 }

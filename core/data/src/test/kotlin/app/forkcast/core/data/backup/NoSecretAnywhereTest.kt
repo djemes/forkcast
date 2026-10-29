@@ -26,7 +26,7 @@ import java.util.zip.ZipInputStream
 /**
  * REVIEW-2 S12, as changed by the owner on 2026-10-29: a saved key appears in no file the app
  * writes except inside a backup's `secrets.json` (where backups carry everything), never in the
- * data export, the CSVs or a backup's other entries; an encrypted backup shows it nowhere; and the
+ * data export or a backup's other entries; an encrypted backup shows it nowhere; and the
  * backup password and GitHub token are never in a backup. The crash report has its own test
  * (app module, CrashReportsTest).
  */
@@ -38,7 +38,7 @@ class NoSecretAnywhereTest {
     private val db = Room.inMemoryDatabaseBuilder(context, ForkcastDatabase::class.java).allowMainThreadQueries().build()
     private val clock = Clock.fixed(Instant.parse("2026-10-25T10:00:00Z"), ZoneId.of("America/New_York"))
     private val settings = MemoryDataStore(AppSettings())
-    private val repo = RoomBackupRepository(context, db, settings, clock, "1.6.0", CsvExporter(db, clock))
+    private val repo = RoomBackupRepository(context, db, settings, clock, "1.6.0")
     private val secrets = testSecretStore(context, "secrets-test")
 
     private val aiKey = "sk-FAKE-ai-key-for-the-no-secret-test-1234"
@@ -60,8 +60,6 @@ class NoSecretAnywhereTest {
 
         val files = mutableMapOf(
             "export.json" to repo.exportJson(),
-            "food-log.csv" to repo.foodLogCsv(),
-            "weights.csv" to repo.weightsCsv(),
         )
         val file = BackupFile(repo, PhotoArchive(context, PhotoStore(context)), BackupSecrets(secrets), "1.6.0", clock)
         val plain = ByteArrayOutputStream().also { file.write(it, password = null) }

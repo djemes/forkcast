@@ -324,8 +324,6 @@ class FolderBackupRepositoryTest {
     private class FakeExports : BackupRepository {
         var json = """{"app":"Forkcast","schemaVersion":${ForkcastExport.SCHEMA_VERSION}}"""
         override suspend fun exportJson() = json
-        override suspend fun foodLogCsv() = ""
-        override suspend fun weightsCsv() = ""
         /** Reads only the version: older than the oldest import is too old, no version is unreadable. */
         override fun parse(text: String): ParsedBackup {
             val version = Regex("\"schemaVersion\":(\\d+)").find(text)?.groupValues?.get(1)?.toInt()

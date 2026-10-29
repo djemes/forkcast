@@ -104,8 +104,6 @@ class BackupFileTest {
     private object FixedExport : BackupRepository {
         const val JSON = """{"app":"Forkcast","schemaVersion":7}"""
         override suspend fun exportJson() = JSON
-        override suspend fun foodLogCsv(): String = error("unused")
-        override suspend fun weightsCsv(): String = error("unused")
         override fun parse(text: String): ParsedBackup = error("unused")
         override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = error("unused")
         override suspend fun readSafetyBackup(): String? = error("unused")

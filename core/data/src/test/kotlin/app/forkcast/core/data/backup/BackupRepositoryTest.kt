@@ -71,7 +71,7 @@ class BackupRepositoryTest {
         .allowMainThreadQueries().build()
     private val clock = Clock.fixed(Instant.parse("2026-10-18T16:00:00Z"), ZoneId.of("America/New_York"))
     private val settings = MemoryDataStore(AppSettings())
-    private val repo = RoomBackupRepository(context, db, settings, clock, "0.1.0", CsvExporter(db, clock))
+    private val repo = RoomBackupRepository(context, db, settings, clock, "0.1.0")
     private val dao = db.backupDao()
     private val day = LocalDate.of(2026, 10, 18)
 

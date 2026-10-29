@@ -56,7 +56,7 @@ class BackupViewModelTest {
     private val store by lazy { app.forkcast.fakes.testSecretStore(tmp.root) }
     private val secrets by lazy { BackupSecrets(store) }
     private val file by lazy { BackupFile(backups, archive, secrets, "1.5.0", clock).apply { kdf = Kdf(8 * 1024, 1, 1) } }
-    private fun vm() = BackupViewModel(backups, documents, archive, file, folder, secrets, BackupShares(context), clock).also { current = it }
+    private fun vm() = BackupViewModel(backups, documents, archive, file, folder, secrets, BackupShares(context)).also { current = it }
     private var current: BackupViewModel? = null
 
     /** Like advanceUntilIdle, also waiting out BackupFile's and PhotoArchive's work on Dispatchers.IO. */
@@ -72,10 +72,8 @@ class BackupViewModelTest {
 
     @Test fun fileNamesUseLocalTime() {
         val vm = vm()
-        assertThat(vm.suggestedName(ExportKind.BACKUP)).isEqualTo("2026-10-18_1205_forkcast-backup.forkcast")
-        assertThat(vm.suggestedName(ExportKind.BACKUP, SaveMode.UNENCRYPTED)).isEqualTo("2026-10-18_1205_forkcast-backup_unencrypted.forkcast")
-        assertThat(vm.suggestedName(ExportKind.FOOD_LOG_CSV)).isEqualTo("forkcast-20261018-1205-food-log.csv")
-        assertThat(vm.suggestedName(ExportKind.WEIGHTS_CSV)).isEqualTo("forkcast-20261018-1205-weights.csv")
+        assertThat(vm.suggestedName()).isEqualTo("2026-10-18_1205_forkcast-backup.forkcast")
+        assertThat(vm.suggestedName(SaveMode.UNENCRYPTED)).isEqualTo("2026-10-18_1205_forkcast-backup_unencrypted.forkcast")
     }
 
     @Test fun backUpNowWithoutAFolderAsksWhereThenWritesEncrypted() = runTest(dispatcher) {
@@ -178,20 +176,6 @@ class BackupViewModelTest {
         vm.onEvent(BackupEvent.Unlock("a long backup password"))
         settle()
         assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.Preview(FakeBackupRepository.PREVIEW, isSafetyBackup = false, photos = 1))
-    }
-
-    @Test fun csvExportsWriteAndReport() = runTest(dispatcher) {
-        val vm = vm()
-        vm.onEvent(BackupEvent.ExportCsv(ExportKind.FOOD_LOG_CSV, uri))
-        settle()
-        assertThat(documents.written[uri]).isEqualTo("food,csv")
-        assertThat(vm.state.value.notice).isEqualTo(BackupNotice.Exported(ExportKind.FOOD_LOG_CSV))
-
-        documents.failWrites = true
-        vm.onEvent(BackupEvent.ExportCsv(ExportKind.WEIGHTS_CSV, uri))
-        settle()
-        assertThat(vm.state.value.notice).isEqualTo(BackupNotice.ExportFailed)
-        assertThat(vm.state.value.busy).isFalse()
     }
 
     @Test fun openShowsPreviewThenMerges() = runTest(dispatcher) {
