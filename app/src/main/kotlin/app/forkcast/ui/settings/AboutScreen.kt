@@ -18,6 +18,7 @@ import app.forkcast.BuildConfig
 import app.forkcast.Distribution
 import app.forkcast.R
 import app.forkcast.di.DONATION_URL
+import app.forkcast.di.GITHUB_ISSUES_URL
 import app.forkcast.di.GITHUB_URL
 
 @Composable
@@ -40,7 +41,11 @@ fun AboutRoute(
     )
 }
 
-/** Settings › About: version (and the way to Updates in the GitHub build), source, privacy, licenses, attributions. */
+/**
+ * Settings › About (roadmap 2.0 task 4.7): version and Updates (github build), source, reporting a
+ * problem, Support Forkcast (github build, once the link exists), the legal texts and licenses, the
+ * privacy summary, and attributions.
+ */
 @Composable
 fun AboutScreen(
     versionName: String,
@@ -73,6 +78,12 @@ fun AboutScreen(
                 Text(stringResource(R.string.about_github_open))
             }
 
+            AboutHeading(R.string.about_report_title)
+            Text(stringResource(R.string.about_report_body), style = MaterialTheme.typography.bodyLarge)
+            TextButton(onClick = { uri.openUri(GITHUB_ISSUES_URL) }, modifier = Modifier.heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.about_report_open))
+            }
+
             // Voluntary tips (roadmap 2.0 task 4.6): only here, never a reminder or pop-up anywhere else.
             if (donationUrl != null) {
                 AboutHeading(R.string.about_support_title)
@@ -82,6 +93,7 @@ fun AboutScreen(
                 }
             }
 
+            AboutHeading(R.string.about_legal_title)
             TextButton(onClick = onOpenTerms, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_terms)) }
             TextButton(onClick = onOpenPrivacy, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_privacy_policy)) }
             TextButton(onClick = onOpenLicenses, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_licenses_title)) }

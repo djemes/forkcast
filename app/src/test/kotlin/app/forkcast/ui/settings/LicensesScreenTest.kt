@@ -51,6 +51,24 @@ class LicensesScreenTest {
         assertThat(opened).containsExactly("https://ko-fi.com/example")
     }
 
+    /** Roadmap 2.0 task 4.7: everything About should offer, and Report a problem opens the issue page. */
+    @Test fun aboutOffersEverythingAndReportsAProblemOnGitHub() {
+        val opened = mutableListOf<String>()
+        val uriHandler = object : UriHandler { override fun openUri(uri: String) { opened += uri } }
+        compose.setContent {
+            CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                ForkcastTheme { AboutScreen(versionName = "1.8.0", versionCode = 7, onBack = {}, onOpenUpdates = {}, donationUrl = "https://ko-fi.com/example") }
+            }
+        }
+        listOf(
+            "Version 1.8.0 (7)", "Check for updates", "Open on GitHub", "Support Forkcast",
+            "Terms of use and disclaimer", "Privacy policy", "Licenses", "Attributions",
+        ).forEach { compose.onNodeWithText(it).performScrollTo().assertIsDisplayed() }
+        compose.onNodeWithText("best effort", substring = true).performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Open GitHub Issues").performScrollTo().performClick()
+        assertThat(opened).containsExactly("https://github.com/djemes/forkcast/issues")
+    }
+
     /** No URL set yet (or the Play build): no row at all. */
     @Test fun supportRowHiddenWithoutADonationPage() {
         compose.setContent { ForkcastTheme { AboutScreen(versionName = "1.8.0", versionCode = 1, onBack = {}, donationUrl = null) } }

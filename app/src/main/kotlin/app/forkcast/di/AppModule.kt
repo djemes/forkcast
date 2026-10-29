@@ -32,6 +32,9 @@ object AppModule {
 const val GITHUB_REPO_NAME = "djemes/forkcast"
 const val GITHUB_URL = "https://github.com/$GITHUB_REPO_NAME"
 
+/** About › Report a problem. VERIFY: still the right place once D4 (issues, Phase 5) is decided. */
+const val GITHUB_ISSUES_URL = "$GITHUB_URL/issues"
+
 /**
  * The donation page "Support Forkcast" opens (decision D2: Ko-fi). Empty hides the row; the owner
  * sets it once the page exists. Only the github distribution shows it ([app.forkcast.Distribution.hasDonationLink]).
