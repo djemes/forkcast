@@ -51,6 +51,8 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.datastore)
     implementation(libs.tink.android)
+    // Argon2id only (BackupCrypto); R8 keeps just what is used.
+    implementation(libs.bouncycastle.prov)
     api(project(":core:network"))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.android)

@@ -1,5 +1,6 @@
 package app.forkcast.core.data.backup.folder
 
+import app.forkcast.core.data.backup.BackupCrypto
 import app.forkcast.core.data.backup.BackupFile
 import app.forkcast.core.data.backup.BackupRepository
 import app.forkcast.core.data.backup.ForkcastExport
@@ -13,6 +14,7 @@ import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.data.settings.DevicePrefs
 import app.forkcast.core.data.settings.LastBackup
 import app.forkcast.core.domain.BackupReminder
+import app.forkcast.core.domain.BackupRetention
 import app.forkcast.core.model.BackupSettings
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -23,6 +25,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.IOException
+import java.io.InputStream
 import java.time.Clock
 import java.time.Instant
 import javax.inject.Inject
@@ -34,7 +37,7 @@ enum class FolderProblem {
     NO_FOLDER,
     /** The folder was deleted, moved, or Forkcast's access to it was removed: choose it again. */
     FOLDER_LOST,
-    /** Automatic backups are set to use a password, but none is saved on this phone. */
+    /** No backup password is set: backups are always encrypted with it (owner, 2026-10-29). */
     PASSWORD_MISSING,
     /** Writing the file failed (full storage, the folder's app had a problem). */
     WRITE_FAILED,
@@ -67,9 +70,12 @@ enum class NotRestorable {
     OLD_FORMAT,
     /** Not a backup this version can open (damaged, cut short, or from a newer version). */
     UNREADABLE,
-    /** Locked with a password other than the one saved for automatic backups. */
+    /** Locked with a password other than this phone's backup password. */
     PASSWORD,
 }
+
+/** After a password change: the folder's backups now on the new password, and those that couldn't be updated (by name). */
+data class ReencryptResult(val updated: Int, val failed: List<String>, val problem: FolderProblem? = null)
 
 /** What Today says about backups, if anything. */
 enum class BackupNotice {
@@ -81,9 +87,10 @@ enum class BackupNotice {
 data class CleanupResult(val deleted: Int, val failed: Int, val kept: FolderFile)
 
 /**
- * Automatic backups to a folder the user chose (roadmap 2.0, task 1.4): a `.forkcast` file
- * ([BackupFile]) per run, keeping the newest [BackupSettings.keep] Forkcast backups in that folder.
- * Never touches files Forkcast didn't name.
+ * Backups to a folder the user chose (roadmap 2.0 task 1.4; owner, 2026-10-29): a `.forkcast` file
+ * ([BackupFile]) per run, always encrypted with the backup password, then the folder's Forkcast
+ * backups thinned out by the retention preset ([BackupRetention]) once the new one reads back
+ * cleanly. Never touches files Forkcast didn't name.
  */
 interface FolderBackupRepository {
     val status: Flow<FolderStatus>
@@ -99,8 +106,14 @@ interface FolderBackupRepository {
     /** A backup the user saved with the file picker counts as the last backup too. */
     suspend fun recordSaved(name: String, sizeBytes: Long?)
     suspend fun updateSettings(transform: (BackupSettings) -> BackupSettings)
-    /** Saves (or with null removes) the password automatic backups are locked with. */
-    suspend fun setPassword(password: String?)
+    /** Sets the backup password the first time (changing one goes through [changePassword]). */
+    suspend fun setPassword(password: String)
+    /** The backup password, for showing or copying it after the phone's unlock; null when none is set. */
+    suspend fun password(): String?
+    /** Re-encrypts the folder's backups with [password], then keeps it as the backup password. */
+    suspend fun changePassword(password: String): ReencryptResult
+    /** Removes the backup password; automatic backups turn off with it. */
+    suspend fun removePassword()
     /** Checks that the newest backup can be restored and lists the older ones; deletes nothing. */
     suspend fun cleanupPlan(): CleanupPlan
     /** Deletes [plan]'s older backups, and only those still in the folder. */
@@ -178,18 +191,18 @@ class DefaultFolderBackupRepository @Inject constructor(
 
     private suspend fun write(): FolderProblem? {
         val tree = device.state.value.backupFolder ?: return FolderProblem.NO_FOLDER
+        val password = secrets.get(SecretName.BACKUP_PASSWORD) ?: return FolderProblem.PASSWORD_MISSING
         if (!folder.reachable(tree)) return FolderProblem.FOLDER_LOST
         val s = settings.settings.first().backup
-        val password = if (s.password) secrets.get(SecretName.BACKUP_PASSWORD) ?: return FolderProblem.PASSWORD_MISSING else null
         val created = try {
-            folder.create(tree, file.timedFileName(), BackupFile.MIME_TYPE)
+            folder.create(tree, file.fileName(), BackupFile.MIME_TYPE)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) { // SecurityException, IOException, or a provider's own failure
             return FolderProblem.FOLDER_LOST.takeIf { !folder.reachable(tree) } ?: FolderProblem.WRITE_FAILED
         }
         val size = try {
-            folder.openOutput(created.uri).let { out -> file.write(out, s.photos, password?.toCharArray()) }
+            folder.openOutput(created.uri).let { out -> file.write(out, password.toCharArray()) }
         } catch (e: CancellationException) {
             folder.delete(created.uri)
             throw e
@@ -199,7 +212,8 @@ class DefaultFolderBackupRepository @Inject constructor(
             return FolderProblem.WRITE_FAILED
         }
         device.update { it.copy(lastBackup = LastBackup(clock.millis(), created.name, it.backupFolderName, size)) }
-        prune(tree, keepAlso = created.uri, keep = s.keep)
+        // Old backups go only once the new one opens and reads as a current backup.
+        if (restorable(created) == null) prune(tree, keepAlso = created.uri, rule = BackupRetention.rule(s))
         return null
     }
 
@@ -209,7 +223,64 @@ class DefaultFolderBackupRepository @Inject constructor(
     override suspend fun updateSettings(transform: (BackupSettings) -> BackupSettings) =
         settings.update { it.copy(backup = transform(it.backup)) }
 
-    override suspend fun setPassword(password: String?) = secrets.set(SecretName.BACKUP_PASSWORD, password)
+    override suspend fun setPassword(password: String) = secrets.set(SecretName.BACKUP_PASSWORD, password)
+
+    override suspend fun password(): String? = secrets.get(SecretName.BACKUP_PASSWORD)
+
+    override suspend fun removePassword() {
+        secrets.set(SecretName.BACKUP_PASSWORD, null)
+        settings.update { it.copy(backup = it.backup.copy(auto = false)) }
+    }
+
+    override suspend fun changePassword(password: String): ReencryptResult = mutex.withLock {
+        withContext(Dispatchers.IO) {
+            val old = secrets.get(SecretName.BACKUP_PASSWORD)
+            val tree = device.state.value.backupFolder
+            val result = when {
+                old == null || tree == null -> ReencryptResult(0, emptyList())
+                !folder.reachable(tree) -> ReencryptResult(0, emptyList(), FolderProblem.FOLDER_LOST)
+                else -> reencryptAll(tree, old.toCharArray(), password.toCharArray())
+            }
+            // Backups that couldn't be updated keep the old password; new ones use the new password from now on.
+            if (result.problem == null) secrets.set(SecretName.BACKUP_PASSWORD, password)
+            result
+        }
+    }
+
+    private fun reencryptAll(tree: String, old: CharArray, new: CharArray): ReencryptResult {
+        val files = try {
+            newestFirst(tree).filterNot { BackupFile.isUnencryptedName(it.name) }
+        } catch (e: Exception) {
+            return ReencryptResult(0, emptyList(), FolderProblem.FOLDER_LOST)
+        }
+        var updated = 0
+        val failed = mutableListOf<String>()
+        for (f in files) if (reencrypt(tree, f, old, new)) updated++ else failed += f.name
+        return ReencryptResult(updated, failed)
+    }
+
+    /**
+     * Writes [f] again under [new] next to it, checks the copy reads to the end, then replaces the
+     * original (the copy takes its name if the folder's app can rename). The zip inside is copied
+     * as it is, so nothing is unpacked on the way.
+     */
+    private fun reencrypt(tree: String, f: FolderFile, old: CharArray, new: CharArray): Boolean {
+        val head = runCatching { folder.openInput(f.uri).use { it.readNBytesCompat(BackupCrypto.MAGIC.size) } }.getOrNull() ?: return false
+        if (!BackupCrypto.isEncrypted(head)) return false
+        val copy = runCatching { folder.create(tree, f.name, BackupFile.MIME_TYPE) }.getOrNull() ?: return false
+        val ok = runCatching {
+            folder.openInput(f.uri).use { input ->
+                BackupCrypto.encrypt(folder.openOutput(copy.uri), new, file.kdf).use { out -> BackupCrypto.decrypt(input, old).copyTo(out) }
+            }
+            folder.openInput(copy.uri).use { BackupCrypto.decrypt(it, new).drain() }
+        }.isSuccess
+        if (!ok || !folder.delete(f.uri)) {
+            folder.delete(copy.uri)
+            return false
+        }
+        if (copy.name != f.name) folder.rename(copy.uri, f.name)
+        return true
+    }
 
     override suspend fun cleanupPlan(): CleanupPlan = mutex.withLock {
         withContext(Dispatchers.IO) {
@@ -258,15 +329,39 @@ class DefaultFolderBackupRepository @Inject constructor(
         }
     }
 
-    /** Forkcast's backups in [tree], newest first (by time, then name). */
+    /** Forkcast's backups in [tree], newest first (by the time in the name, else the file time). */
     private fun newestFirst(tree: String): List<FolderFile> =
         folder.list(tree)
             .filter { BackupFile.isBackupName(it.name) }
-            .sortedWith(compareByDescending<FolderFile> { it.modifiedAt ?: 0L }.thenByDescending { it.name })
+            .sortedWith(compareByDescending<FolderFile> { createdAt(it) }.thenByDescending { it.modifiedAt ?: 0L })
 
-    /** Deletes Forkcast backups beyond the newest [keep]; a failed delete waits for the next run. */
-    private fun prune(tree: String, keepAlso: String, keep: Int) {
+    /** Deletes the Forkcast backups [rule] doesn't keep; a failed delete waits for the next run. */
+    private fun prune(tree: String, keepAlso: String, rule: BackupRetention.Rule) {
         val all = runCatching { newestFirst(tree) }.getOrNull() ?: return
-        all.drop(keep.coerceAtLeast(1)).filter { it.uri != keepAlso }.forEach { folder.delete(it.uri) }
+        val dated = all.map { BackupRetention.Backup(it.uri, createdAt(it)) }
+        val drop = BackupRetention.toDelete(dated, clock.zone, rule)
+        all.filter { it.uri in drop && it.uri != keepAlso }.forEach { folder.delete(it.uri) }
     }
+
+    /** When [f] was made: from its name, else the folder's file time. */
+    private fun createdAt(f: FolderFile): Instant =
+        BackupFile.createdAt(f.name, clock.zone) ?: f.modifiedAt?.let(Instant::ofEpochMilli) ?: Instant.EPOCH
+}
+
+/** Reads to the end (a decrypting stream checks every segment on the way). */
+private fun InputStream.drain() {
+    val buf = ByteArray(64 * 1024)
+    while (read(buf) >= 0) Unit
+}
+
+/** Up to [n] bytes from the start (InputStream.readNBytes needs API 33). */
+private fun InputStream.readNBytesCompat(n: Int): ByteArray {
+    val buf = ByteArray(n)
+    var total = 0
+    while (total < n) {
+        val r = read(buf, total, n - total)
+        if (r < 0) break
+        total += r
+    }
+    return buf.copyOf(total)
 }

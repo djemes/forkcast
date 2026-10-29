@@ -13,11 +13,11 @@ import app.forkcast.core.data.R
 import app.forkcast.core.data.notify.Channel
 import app.forkcast.core.data.notify.Notifier
 import app.forkcast.core.data.repository.SettingsRepository
+import app.forkcast.core.data.secrets.SecretName
+import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.data.settings.DevicePrefs
 import app.forkcast.core.domain.BackupRetention
 import app.forkcast.core.domain.NotificationRules
-import app.forkcast.core.model.BackupFrequency
-import app.forkcast.core.model.BackupSettings
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -31,7 +31,10 @@ import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** The weekly (or daily) backup to the chosen folder (roadmap 2.0, task 1.4). */
+/**
+ * The automatic backup to the chosen folder (owner, 2026-10-29): a daily job around the chosen
+ * time that backs up only on the chosen days.
+ */
 @HiltWorker
 class FolderBackupWorker @AssistedInject constructor(
     @Assisted context: Context,
@@ -39,8 +42,12 @@ class FolderBackupWorker @AssistedInject constructor(
     private val backups: FolderBackupRepository,
     private val device: DevicePrefs,
     private val problems: FolderProblemNotifier,
+    private val settings: SettingsRepository,
+    private val clock: java.time.Clock,
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
+        val s = settings.settings.first().backup
+        if (!BackupRetention.isChosenDay(ZonedDateTime.now(clock), s.scheduleDays, s.minute)) return Result.success()
         val problem = backups.backupNow() ?: return Result.success().also { problems.clear() }
         return when (problem) {
             FolderProblem.NO_FOLDER -> Result.success()
@@ -66,6 +73,7 @@ class FolderBackupScheduler @Inject constructor(
     @ApplicationContext private val context: Context,
     private val settings: SettingsRepository,
     private val device: DevicePrefs,
+    private val secrets: SecretStore,
     private val clock: java.time.Clock,
 ) {
     /** Keeps the schedule in step with the settings (first pass keeps an existing schedule). */
@@ -76,28 +84,29 @@ class FolderBackupScheduler @Inject constructor(
         WorkManager.getInstance(context).cancelUniqueWork(LEGACY_DRIVE)
         scope.launch {
             var first = true
-            combine(settings.settings, device.state) { s, d -> s.backup.schedule() to (d.backupFolder != null) }
+            combine(settings.settings, device.state, secrets.present) { s, d, present ->
+                Plan(s.backup.auto && d.backupFolder != null && SecretName.BACKUP_PASSWORD in present, s.backup.scheduleDays, s.backup.minute)
+            }
                 .distinctUntilChanged()
-                .collect { (backup, chosen) ->
-                    schedule(backup, chosen, replace = !first)
+                .collect { plan ->
+                    schedule(plan, replace = !first)
                     first = false
                 }
         }
     }
 
-    /** Only what changes the schedule (keep, photos and password are read at run time). */
-    private fun BackupSettings.schedule() = BackupSettings(auto = auto, frequency = frequency, weekday = weekday)
+    /** What the schedule depends on (retention is read at run time); [on] needs a folder and the backup password. */
+    private data class Plan(val on: Boolean, val days: Set<Int>, val minute: Int)
 
-    fun schedule(backup: BackupSettings, chosen: Boolean, replace: Boolean) {
+    private fun schedule(plan: Plan, replace: Boolean) {
         val wm = WorkManager.getInstance(context)
-        if (!chosen || !backup.auto) {
+        val delay = BackupRetention.delayUntilNext(ZonedDateTime.now(clock), plan.days, plan.minute)
+        if (!plan.on || delay == null) {
             wm.cancelUniqueWork(NAME)
             return
         }
-        val now = ZonedDateTime.now(clock)
-        // First run at night (around 3 am; weekly: on the chosen weekday, Monday by default), then every period from there.
-        val delay = if (backup.frequency == BackupFrequency.WEEKLY) BackupRetention.delayUntilWeekday(now, backup.weekday) else BackupRetention.delayUntil(now)
-        val request = PeriodicWorkRequestBuilder<FolderBackupWorker>(backup.frequency.days.toLong(), TimeUnit.DAYS)
+        // First run at the next chosen day and time, then daily around that time; off days do nothing.
+        val request = PeriodicWorkRequestBuilder<FolderBackupWorker>(1, TimeUnit.DAYS)
             .setInitialDelay(delay.toMinutes(), TimeUnit.MINUTES)
             .setConstraints(Constraints.Builder().setRequiresStorageNotLow(true).build())
             .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.MINUTES)

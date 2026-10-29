@@ -36,6 +36,8 @@ interface BackupFolder {
     fun openOutput(file: String): OutputStream
     fun openInput(file: String): InputStream
     fun delete(file: String): Boolean
+    /** Renames [file] in place; the new uri, or null when the folder's app can't rename. */
+    fun rename(file: String, name: String): String? = null
 }
 
 @Singleton
@@ -107,6 +109,9 @@ class SafBackupFolder @Inject constructor(@ApplicationContext private val contex
         resolver.openInputStream(Uri.parse(file)) ?: throw FileNotFoundException(file)
 
     override fun delete(file: String): Boolean = runCatching { DocumentsContract.deleteDocument(resolver, Uri.parse(file)) }.getOrDefault(false)
+
+    override fun rename(file: String, name: String): String? =
+        runCatching { DocumentsContract.renameDocument(resolver, Uri.parse(file), name)?.toString() }.getOrNull()
 
     private fun folderDocument(tree: Uri): Uri = DocumentsContract.buildDocumentUriUsingTree(tree, DocumentsContract.getTreeDocumentId(tree))
 

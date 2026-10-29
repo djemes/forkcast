@@ -61,33 +61,46 @@ data class WaterContainers(
 )
 
 /**
- * Automatic backup to a folder the user picks (roadmap 2.0, 1.5). Weekly on Mondays around 3 am,
- * keeping the newest 8, data only (no photos), no password. The folder itself is per phone
- * (DevicePrefs). The 1.0–1.4 Drive fields `wifiOnly` and `chargingOnly` are gone; settings files
- * that have them still read (unknown keys are ignored).
+ * Backups (owner, 2026-10-29): automatic backup to a folder the user picks, on chosen days around
+ * a time, kept by a retention preset. Every backup is encrypted with the backup password (a
+ * secret, so not here) and holds everything, photos included. The folder itself is per phone
+ * (DevicePrefs). Settings files from older versions still read: unknown keys are ignored, and
+ * [frequency]/[weekday] stand in for [days] until the days are first chosen.
  */
 @Serializable
 data class BackupSettings(
-    /** Back up automatically once a folder is chosen on this phone. */
+    /** Back up automatically to the chosen folder; runs only while a backup password is set. */
     val auto: Boolean = true,
+    /** 1.5 to 1.8.1: daily or weekly. Read through [scheduleDays] only. */
     val frequency: BackupFrequency = BackupFrequency.WEEKLY,
-    /** Day of a weekly backup, ISO (1 = Monday). */
+    /** 1.5 to 1.8.1: the weekly backup's day, ISO (1 = Monday). Read through [scheduleDays] only. */
     val weekday: Int = 1,
-    /** How many backups the folder keeps; older Forkcast backups there are deleted. */
-    val keep: Int = DEFAULT_KEEP,
-    /** Automatic backups include meal photos. */
-    val photos: Boolean = false,
-    /** Automatic backups are locked with the password saved on this phone (SecretName.BACKUP_PASSWORD). */
-    val password: Boolean = false,
+    /** Days of the week, ISO (1 = Monday); null until chosen in 1.8.2. Never empty: no day turns [auto] off instead. */
+    val days: Set<Int>? = null,
+    /** Around this time, minutes after midnight. */
+    val minute: Int = DEFAULT_MINUTE,
+    val retention: RetentionPreset = RetentionPreset.BALANCED,
+    /** [RetentionPreset.CUSTOM]: newest backups kept, and one a month / a year for how many. */
+    val customRecent: Int = 7,
+    val customMonths: Int = 6,
+    val customYears: Int = 0,
     /** Today reminds when there's been no backup for [REMINDER_DAYS] days. */
     val reminder: Boolean = true,
 ) {
+    /** The chosen days, or what 1.5 to 1.8.1's daily/weekly setting meant. */
+    val scheduleDays: Set<Int>
+        get() = days?.takeIf { it.isNotEmpty() } ?: if (frequency == BackupFrequency.DAILY) (1..7).toSet() else setOf(weekday.coerceIn(1, 7))
+
     companion object {
-        const val DEFAULT_KEEP = 8
-        val KEEP_CHOICES = listOf(4, 8, 16)
+        /** 3 am. */
+        const val DEFAULT_MINUTE = 3 * 60
         const val REMINDER_DAYS = 14
     }
 }
+
+/** How many old backups the folder keeps (owner, 2026-10-29); the rules are in BackupRetention. */
+@Serializable
+enum class RetentionPreset { SIMPLE, BALANCED, LONG_TERM, CUSTOM }
 
 @Serializable
 enum class BackupFrequency(val days: Int) { DAILY(1), WEEKLY(7) }

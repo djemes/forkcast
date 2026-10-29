@@ -18,11 +18,12 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 /** What a backup zip held: the export JSON, its manifest (`.forkcast` files only) and how many photos were staged. */
-data class ArchiveContents(val json: String, val manifest: String?, val photos: Int)
+/** [secrets]: the saved keys (1.8.2+ backups), as written by [BackupSecrets]. */
+data class ArchiveContents(val json: String, val manifest: String?, val photos: Int, val secrets: String? = null)
 
 /**
  * The zip inside a backup (SPEC §4.11): `manifest.json` (`.forkcast` files, 1.5+), `forkcast.json`,
- * and optionally `photos/<estimate>/<n>.jpg`, the same relative paths the JSON references. 1.0–1.4's
+ * `secrets.json` (the saved keys, 1.8.2+) and optionally `photos/<estimate>/<n>.jpg`, the same relative paths the JSON references. 1.0–1.4's
  * "Include photos" `.zip` is the same without the manifest. Photos from an imported zip are
  * staged first and only moved into place once the import is confirmed.
  */
@@ -37,7 +38,7 @@ class PhotoArchive @Inject constructor(
     internal var maxJsonBytes = MAX_JSON_BYTES
     internal var maxPhotoBytes = MAX_PHOTO_BYTES
 
-    suspend fun write(out: OutputStream, json: String, manifest: String? = null, includePhotos: Boolean = true) = withContext(Dispatchers.IO) {
+    suspend fun write(out: OutputStream, json: String, manifest: String? = null, includePhotos: Boolean = true, secrets: String? = null) = withContext(Dispatchers.IO) {
         ZipOutputStream(out.buffered()).use { zip ->
             if (manifest != null) {
                 zip.putNextEntry(ZipEntry(MANIFEST_NAME))
@@ -47,6 +48,11 @@ class PhotoArchive @Inject constructor(
             zip.putNextEntry(ZipEntry(JSON_NAME))
             zip.write(json.encodeToByteArray())
             zip.closeEntry()
+            if (secrets != null) {
+                zip.putNextEntry(ZipEntry(SECRETS_NAME))
+                zip.write(secrets.encodeToByteArray())
+                zip.closeEntry()
+            }
             if (includePhotos) {
                 val root = photos.root
                 root.walkTopDown().filter { it.isFile }.forEach { f ->
@@ -76,6 +82,7 @@ class PhotoArchive @Inject constructor(
         val stage = staging.apply { mkdirs() }
         var json: String? = null
         var manifest: String? = null
+        var secrets: String? = null
         var photoCount = 0
         try {
             ZipInputStream(input).use { zip ->
@@ -88,6 +95,7 @@ class PhotoArchive @Inject constructor(
                         entry.isDirectory -> Unit
                         entry.name == JSON_NAME -> json = zip.readText(maxJsonBytes)
                         entry.name == MANIFEST_NAME -> manifest = zip.readText(MAX_MANIFEST_BYTES)
+                        entry.name == SECRETS_NAME -> secrets = zip.readText(MAX_MANIFEST_BYTES)
                         entry.name.startsWith(PHOTOS_PREFIX) && entry.name.endsWith(".jpg") -> {
                             val relative = entry.name.removePrefix(PHOTOS_PREFIX)
                             val target = File(stage, relative)
@@ -108,7 +116,7 @@ class PhotoArchive @Inject constructor(
             stage.deleteRecursively()
             throw e
         }
-        ArchiveContents(json ?: throw IOException("no $JSON_NAME in archive"), manifest, photoCount)
+        ArchiveContents(json ?: throw IOException("no $JSON_NAME in archive"), manifest, photoCount, secrets)
     }
 
     /** After a confirmed import: staged photos join the app's photos (existing files are kept). */
@@ -130,6 +138,7 @@ class PhotoArchive @Inject constructor(
     companion object {
         const val JSON_NAME = "forkcast.json"
         const val MANIFEST_NAME = "manifest.json"
+        const val SECRETS_NAME = "secrets.json"
         const val PHOTOS_PREFIX = "photos/"
         /** Years of daily logging is a few MB; anything this big isn't a Forkcast export. */
         const val MAX_JSON_BYTES = 64 * 1024 * 1024
