@@ -127,7 +127,7 @@ fun BudgetRing(
                         stroke = stroke,
                         startDeg = -90f + 360f * sweep,
                         sweepDeg = 360f * (forecastSweep - sweep),
-                        color = arcColor,
+                        color = colors.forecast,
                     )
                 }
                 if (sweep > 0f) {

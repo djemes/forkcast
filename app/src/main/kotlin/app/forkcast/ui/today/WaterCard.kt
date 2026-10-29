@@ -208,7 +208,7 @@ fun WaterCard(
     }
 }
 
-/** The water drop: one tap adds the last-used container; long-press opens the picker. */
+/** The quick-add button, showing the last-used container: one tap adds it; long-press opens the picker. */
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun WaterDrop(water: WaterSummary, f: UnitFormatter, onAdd: () -> Unit, onPick: () -> Unit) {
@@ -229,7 +229,7 @@ private fun WaterDrop(water: WaterSummary, f: UnitFormatter, onAdd: () -> Unit, 
             }
             .padding(start = 12.dp, end = 16.dp, top = 10.dp, bottom = 10.dp),
     ) {
-        Icon(painterResource(R.drawable.ic_water_drop), contentDescription = null, tint = ForkcastTheme.colors.protein, modifier = Modifier.size(20.dp))
+        Icon(painterResource(containerIcon(water.lastUsed)), contentDescription = null, tint = ForkcastTheme.colors.protein, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(6.dp))
         Text(label, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSecondaryContainer)
     }

@@ -32,6 +32,12 @@ data class ForkcastColors(
     val carbsText: Color,
     val fatText: Color,
     val apricotText: Color,
+    /**
+     * The ring's forecast band (owner, 2026-10-29): a neutral grey a little darker than the
+     * background in light theme and a little lighter in dark, so it reads as a guess and doesn't
+     * compete with what was eaten.
+     */
+    val forecast: Color,
 )
 
 val LightForkcastColors = ForkcastColors(
@@ -52,6 +58,7 @@ val LightForkcastColors = ForkcastColors(
     carbsText = Color(0xFF8A5A00),
     fatText = Color(0xFFA8324F),
     apricotText = Color(0xFFA3500F),
+    forecast = Color(0xFFAEB2B0),
 )
 
 val DarkForkcastColors = ForkcastColors(
@@ -73,6 +80,7 @@ val DarkForkcastColors = ForkcastColors(
     carbsText = Color(0xFFF2C46B),
     fatText = Color(0xFFF29AAE),
     apricotText = Color(0xFFFFB27A),
+    forecast = Color(0xFF636866),
 )
 
 val LocalForkcastColors = staticCompositionLocalOf { LightForkcastColors }
