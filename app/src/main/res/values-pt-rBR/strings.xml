@@ -111,7 +111,7 @@
     <string name="about_libraries_title">Bibliotecas de código aberto</string>
     <string name="about_libraries_body">O Forkcast é feito com estas bibliotecas e com a fonte Manrope. Toque em uma para ler a licença.</string>
     <string name="about_report_title">Relatar um problema</string>
-    <string name="about_report_body">Encontrou um erro ou algo que não faz sentido? Relate no GitHub. O suporte é feito na medida do possível, então a resposta pode demorar.</string>
+    <string name="about_report_body">Encontrou um erro ou algo que não faz sentido? Relate no GitHub. O suporte é feito na medida do possível, então a resposta pode demorar. Não inclua chaves de API nem dados pessoais: outras pessoas podem ler as issues.</string>
     <string name="about_report_open">Abrir o GitHub Issues</string>
     <string name="about_legal_title">Termos, privacidade e licenças</string>
     <string name="about_support_title">Apoie o Forkcast</string>

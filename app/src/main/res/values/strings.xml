@@ -108,7 +108,7 @@
     <string name="about_libraries_title">Open-source libraries</string>
     <string name="about_libraries_body">Forkcast is built with these libraries and the Manrope font. Tap one to read its license.</string>
     <string name="about_report_title">Report a problem</string>
-    <string name="about_report_body">Found a bug, or something that doesn\'t make sense? Report it on GitHub. Support is best effort, so an answer can take a while.</string>
+    <string name="about_report_body">Found a bug, or something that doesn\'t make sense? Report it on GitHub. Support is best effort, so an answer can take a while. Don\'t include API keys or personal details: other people can read issues.</string>
     <string name="about_report_open">Open GitHub Issues</string>
     <string name="about_legal_title">Terms, privacy and licenses</string>
     <string name="about_support_title">Support Forkcast</string>
