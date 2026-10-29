@@ -124,11 +124,11 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
 
-    /** core/data/schemas/export/export-schema-v7.json must list exactly the fields the app writes, and the same enum values. */
+    /** core/data/schemas/export/export-schema-v8.json must list exactly the fields the app writes, and the same enum values. */
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(exportSchema("export-schema-v7.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(exportSchema("export-schema-v8.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -179,12 +179,12 @@ class BackupRepositoryTest {
     }
 
     @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":8}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":9}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
         assertThat(repo.parse("not json")).isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":6,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":7,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
     }
 
@@ -213,32 +213,36 @@ class BackupRepositoryTest {
         assertThat(dao.activityDays().map { it.id to it.steps }).containsExactly("theirs" to 9000L)
     }
 
-    /** A 1.2/1.3 file (v6) imports in 1.4: its entries keep their times and `timeEstimated` is ignored. */
-    @Test fun importsV6WithTimeEstimated() = runTest {
+    /**
+     * A 1.4–1.8.2 file (v7) imports in 1.8.3: entries come in at 1×, and a favorite food's default
+     * amount is the amount it was last logged with (as the v9 database migration does).
+     */
+    @Test fun importsV7WithoutPortionsOrFavoriteDefaults() = runTest {
         seedEveryTable()
-        val v7 = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val v6 = kotlinx.serialization.json.JsonObject(
-            v7 + mapOf(
-                "schemaVersion" to kotlinx.serialization.json.JsonPrimitive(6),
-                "logEntries" to kotlinx.serialization.json.JsonArray(
-                    v7.getValue("logEntries").jsonArray.map { e ->
-                        kotlinx.serialization.json.JsonObject(e.jsonObject + ("timeEstimated" to kotlinx.serialization.json.JsonPrimitive(true)))
-                    },
-                ),
+        dao.upsertFoods(dao.foods().map { it.copy(isFavorite = true, lastQuantity = 2.0, lastServingLabel = "cup", favoriteQuantity = null, favoriteServingLabel = null) })
+        val v8 = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
+        fun kotlinx.serialization.json.JsonArray.without(vararg keys: String) =
+            kotlinx.serialization.json.JsonArray(map { r -> kotlinx.serialization.json.JsonObject(r.jsonObject - keys.toSet()) })
+        val v7 = kotlinx.serialization.json.JsonObject(
+            v8 + mapOf(
+                "schemaVersion" to kotlinx.serialization.json.JsonPrimitive(7),
+                "logEntries" to v8.getValue("logEntries").jsonArray.without("portion"),
+                "foods" to v8.getValue("foods").jsonArray.without("favoriteQuantity", "favoriteServingLabel"),
             ),
         )
-        val parsed = repo.parse(v6.toString()) as ParsedBackup.Ok
+        val parsed = repo.parse(v7.toString()) as ParsedBackup.Ok
         val before = dao.logEntries()
         dao.clearAll()
         repo.import(parsed.export, ImportMode.REPLACE)
-        assertThat(dao.logEntries().map { it.id to it.eatenMinute }).containsExactlyElementsIn(before.map { it.id to it.eatenMinute })
+        assertThat(dao.logEntries().map { it.id to it.quantity }).containsExactlyElementsIn(before.map { it.id to it.quantity })
+        assertThat(dao.logEntries().map { it.portion }.toSet()).containsExactly(1.0)
+        assertThat(dao.foods().map { it.favoriteQuantity to it.favoriteServingLabel }.toSet()).containsExactly(2.0 to "cup")
     }
 
-    @Test fun acceptsMinimalV6AndUnknownFields() {
-        val parsed = repo.parse(
-            """{"app":"Forkcast","schemaVersion":6,"appVersion":"1.2.1","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC","futureField":true}""",
-        )
-        assertThat(parsed).isInstanceOf(ParsedBackup.Ok::class.java)
+    @Test fun acceptsMinimalV7AndV6AndUnknownFields() {
+        val minimal = """{"app":"Forkcast","schemaVersion":7,"appVersion":"1.8.2","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC","futureField":true}"""
+        assertThat(repo.parse(minimal)).isInstanceOf(ParsedBackup.Ok::class.java)
+        assertThat(repo.parse(minimal.replace("\"schemaVersion\":7", "\"schemaVersion\":6"))).isInstanceOf(ParsedBackup.Ok::class.java)
     }
 
     @Test fun mergeNewerWinsAndDeletionsTravel() = runTest {

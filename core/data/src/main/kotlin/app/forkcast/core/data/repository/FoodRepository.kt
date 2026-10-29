@@ -206,6 +206,8 @@ fun FoodEntity.toModel() = Food(
     lastServingLabel = lastServingLabel,
     countsAsWater = countsAsWater,
     describedAs = describedAs,
+    favoriteQuantity = favoriteQuantity,
+    favoriteServingLabel = favoriteServingLabel,
 )
 
 private fun Food.toEntity(id: String, now: Long) = FoodEntity(
@@ -225,4 +227,6 @@ private fun Food.toEntity(id: String, now: Long) = FoodEntity(
     updatedAt = now,
     countsAsWater = countsAsWater,
     describedAs = describedAs,
+    favoriteQuantity = favoriteQuantity,
+    favoriteServingLabel = favoriteServingLabel,
 )
