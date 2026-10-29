@@ -43,7 +43,7 @@ Forkcast is intended for adults (18+) and isn't directed at children.
 
 ## Security
 
-Data is stored in the app's private storage on your device. API keys are encrypted with a key held by Android's secure keystore. Backups you create can be password-protected (if you turn it on); otherwise anyone with the file can read it, so store backups somewhere safe. A settings export, which you create yourself, contains your API keys, encrypted with the password you choose.
+Data is stored in the app's private storage on your device. API keys are encrypted with a key held by Android's secure keystore. Backups contain your data and your API keys. They are encrypted with the backup password you set, which only you have: without it, a backup can't be opened, by you or anyone else. If you choose to save a backup without encryption (Forkcast warns you first), anyone with the file can read it and use your API keys, so store it somewhere safe.
 
 ## Your choices
 

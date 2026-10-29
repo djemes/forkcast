@@ -107,7 +107,7 @@
     <string name="about_license_manrope">Manrope font, SIL Open Font License 1.1</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
-    <string name="key_saved_encrypted">Stored encrypted. Only the passphrase-protected settings export includes it.</string>
+    <string name="key_saved_encrypted">Stored encrypted. Backups include it, encrypted with your backup password.</string>
     <string name="key_copy">Copy key</string>
     <string name="key_copied">Copied. The clipboard clears in a minute.</string>
     <string name="key_clear_clipboard">Clear clipboard now</string>

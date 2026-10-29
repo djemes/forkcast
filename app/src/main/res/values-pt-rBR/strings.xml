@@ -110,7 +110,7 @@
     <string name="about_license_manrope">Fonte Manrope, SIL Open Font License 1.1</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
-    <string name="key_saved_encrypted">Guardada com criptografia. Só a exportação de configurações protegida por senha a inclui.</string>
+    <string name="key_saved_encrypted">Guardada com criptografia. Os backups a incluem, criptografada com a senha dos backups.</string>
     <string name="key_copy">Copiar chave</string>
     <string name="key_copied">Copiada. A área de transferência é limpa em um minuto.</string>
     <string name="key_clear_clipboard">Limpar área de transferência agora</string>
