@@ -50,6 +50,7 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
 
     // ---- Spreadsheet: one row per item, and one per day.
 
+    @Suppress("CyclomaticComplexMethod") // Two tables written column by column; the branches are optional cells.
     fun sheets(report: MealReport.Report, options: ReportOptions): List<Sheet> {
         val nutrients = MealReport.KEY_NUTRIENTS
         val energyHeader = res.getString(R.string.report_col_with_unit, res.getString(R.string.n_energy), f.energyUnitLabel)
@@ -81,8 +82,8 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
                 listOf(Cell.Text(res.getString(R.string.report_col_date)), Cell.Text(energyHeader)) +
                     Cell.Text(res.getString(R.string.report_col_target_energy, f.energyUnitLabel)) +
                     nutrients.map { Cell.Text(nutrientHeader(it)) } +
-                    (if (options.water) listOf(Cell.Text(res.getString(R.string.report_col_with_unit, res.getString(R.string.report_water), f.waterUnitLabel))) else emptyList()) +
-                    (if (options.weight) listOf(Cell.Text(res.getString(R.string.report_col_with_unit, res.getString(R.string.report_weight), f.weightUnitLabel))) else emptyList()),
+                    (if (options.water) listOf(Cell.Text(withUnit(R.string.report_water, f.waterUnitLabel))) else emptyList()) +
+                    (if (options.weight) listOf(Cell.Text(withUnit(R.string.report_weight, f.weightUnitLabel))) else emptyList()),
             )
             for (d in report.days) {
                 add(
@@ -95,6 +96,8 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
         }
         return listOf(Sheet(res.getString(R.string.report_sheet_items), items), Sheet(res.getString(R.string.report_sheet_days), days))
     }
+
+    private fun withUnit(name: Int, unit: String) = res.getString(R.string.report_col_with_unit, res.getString(name), unit)
 
     private fun nutrientHeader(k: NutrientKey) =
         res.getString(R.string.report_col_with_unit, res.getString(nutrientNameRes(k)), if (k.unit == NutrientUnit.MG) "mg" else "g")
@@ -116,6 +119,7 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
 
     // ---- PDF: A4 pages, a day at a time.
 
+    @Suppress("CyclomaticComplexMethod") // The page read top to bottom; the branches are optional lines.
     private fun pdf(out: OutputStream, report: MealReport.Report, options: ReportOptions) {
         val doc = PdfDocument()
         val page = PdfPager(doc, res)

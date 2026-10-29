@@ -49,6 +49,7 @@ import app.forkcast.ui.theme.ForkcastTheme
 fun nutrientName(key: NutrientKey): String = stringResource(nutrientNameRes(key))
 
 /** The nutrient's name as a string resource, for text written outside Compose (the meal report). */
+@Suppress("CyclomaticComplexMethod") // One branch per nutrient, nothing else.
 @StringRes
 fun nutrientNameRes(key: NutrientKey): Int = (
     when (key) {

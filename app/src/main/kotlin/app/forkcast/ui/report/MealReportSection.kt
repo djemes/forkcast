@@ -98,7 +98,8 @@ class MealReportViewModel @Inject constructor(
 
     fun fileName(options: ReportOptions): String = "${options.from}_to_${options.to}_forkcast-meal-report.${options.format.extension}"
 
-    /** The picker returned [uri] (null = canceled). */
+    /** The picker returned [uri] (null = canceled). A failure is said to the user; nothing is logged (no logs, CLAUDE.md). */
+    @Suppress("SwallowedException")
     fun save(uri: Uri?, files: MealReportFiles) {
         val options = _state.value.pick ?: return
         _state.update { it.copy(pick = null) }
@@ -207,7 +208,11 @@ fun MealReportDialog(today: LocalDate, onContinue: (ReportOptions) -> Unit, onDi
                 DateField(to, "", to, { to = it }, selectableFrom = from, selectableTo = minOf(today, from.plusDays(MAX_DAYS - 1)))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     FilterChip(selected = format == ReportFormat.PDF, onClick = { format = ReportFormat.PDF }, label = { Text(stringResource(R.string.report_format_pdf)) })
-                    FilterChip(selected = format == ReportFormat.SPREADSHEET, onClick = { format = ReportFormat.SPREADSHEET }, label = { Text(stringResource(R.string.report_format_sheet)) })
+                    FilterChip(
+                        selected = format == ReportFormat.SPREADSHEET,
+                        onClick = { format = ReportFormat.SPREADSHEET },
+                        label = { Text(stringResource(R.string.report_format_sheet)) },
+                    )
                 }
                 ToggleRow(stringResource(R.string.report_include_weight), null, weight) { weight = it }
                 ToggleRow(stringResource(R.string.report_include_water), null, water) { water = it }
