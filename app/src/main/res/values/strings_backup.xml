@@ -108,7 +108,7 @@
 
     <!-- Automatic backup to a folder -->
     <string name="backup_auto_title">Automatic backup</string>
-    <string name="backup_auto_intro">Pick a folder once and Forkcast saves a backup there every week. It can be on this phone, an SD card, or a cloud app\'s folder (Google Drive, OneDrive and others). Forkcast only sees that folder.</string>
+    <string name="backup_auto_intro">Pick a folder once and Forkcast saves an encrypted backup there on the days you choose. It can be on this phone, an SD card, or a cloud app\'s folder (Google Drive, OneDrive and others). Forkcast only sees that folder.</string>
     <string name="backup_auto_choose">Choose a folder</string>
     <string name="backup_auto_folder">Saving to: %1$s</string>
     <string name="backup_auto_folder_unnamed">Saving to the folder you chose</string>
@@ -165,4 +165,75 @@
         <item quantity="one">Deleted %1$d backup; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
         <item quantity="other">Deleted %1$d backups; %2$d couldn\'t be deleted and stay for now. Kept %3$s.</item>
     </plurals>
+
+    <!-- Backup password, buttons, schedule and retention (owner, 2026-10-29) -->
+    <string name="bpw_title">Backup password</string>
+    <string name="bpw_none">Not set. Backups need a password: it encrypts them, so only you can open them.</string>
+    <string name="bpw_is_set">Set. Every backup is encrypted with it.</string>
+    <string name="bpw_set">Set a backup password</string>
+    <string name="bpw_show">Show</string>
+    <string name="bpw_change">Change</string>
+    <string name="bpw_remove">Remove</string>
+    <string name="bpw_copy">Copy</string>
+    <string name="bpw_copied">Password copied</string>
+    <string name="bpw_unlock_title">Confirm it\'s you</string>
+    <string name="bpw_unlock_subtitle">To see or change your backup password</string>
+    <string name="bpw_no_lock">Set a screen lock on this phone first. Forkcast asks for it before showing or changing your backup password.</string>
+    <string name="bpw_dialog_new">Set a backup password</string>
+    <string name="bpw_dialog_change">Change the backup password</string>
+    <string name="bpw_dialog_show">Your backup password</string>
+    <string name="bpw_field">Password</string>
+    <string name="bpw_field_again">Type it again</string>
+    <string name="bpw_generate">Generate a strong password</string>
+    <string name="bpw_save_note">Save it in your password manager. If you lose this phone, it\'s the only way to open your backups.</string>
+    <string name="bpw_min">At least %1$d characters</string>
+    <string name="bpw_mismatch">The two don\'t match</string>
+    <string name="bpw_strength_weak">Weak</string>
+    <string name="bpw_strength_fair">Fair</string>
+    <string name="bpw_strength_good">Good</string>
+    <string name="bpw_strength_strong">Strong</string>
+    <string name="bpw_strength_label">Password strength: %1$s</string>
+    <string name="bpw_change_body">Your backups in the backup folder are encrypted again with the new password. Copies saved anywhere else keep the old one.</string>
+    <plurals name="bpw_changed">
+        <item quantity="one">Password changed. %1$d backup in the folder now uses it.</item>
+        <item quantity="other">Password changed. %1$d backups in the folder now use it.</item>
+    </plurals>
+    <string name="bpw_change_failed">These backups couldn\'t be updated and still open with the old password: %1$s</string>
+    <string name="bpw_change_folder_lost">Forkcast can\'t reach the backup folder, so the password wasn\'t changed. Choose the folder again, then try once more.</string>
+    <string name="bpw_remove_title">Remove the backup password?</string>
+    <string name="bpw_remove_body">Automatic backups turn off, and Back up now stops working until you set a password again. Backups you already have still open with the password they were made with.</string>
+    <string name="bpw_keep_title">Use this password on this phone?</string>
+    <string name="bpw_keep_body">Backups this phone makes will be encrypted with the password you just typed.</string>
+    <string name="bpw_keep_yes">Use it</string>
+    <string name="backup_now">Back up now</string>
+    <string name="backup_share">Back up and share</string>
+    <string name="backup_needs_password">Set a backup password first. Backups are always encrypted with it.</string>
+    <string name="backup_share_title">Share a backup</string>
+    <string name="backup_unencrypted">Back up without encryption</string>
+    <string name="backup_unencrypted_title">Back up without encryption?</string>
+    <string name="backup_unencrypted_body">This file is not encrypted. It includes your API keys and all your health data in readable form: food log, weights, water, activity, goals and profile, settings, AI services and meal photos. Anyone with the file can see and use them.</string>
+    <string name="backup_unencrypted_continue">I understand, continue</string>
+    <string name="backup_unencrypted_unlock">To save a backup without encryption</string>
+    <string name="backup_unencrypted_no_lock">Set a screen lock on this phone first. Forkcast asks for it before saving a backup anyone could read.</string>
+    <string name="backup_contents">Every backup holds everything: your log and foods, settings, AI services and their keys, and meal photos.</string>
+    <string name="backup_naming">Backup files are named by date and time, for example %1$s. Copies without encryption end in _unencrypted.</string>
+    <string name="backup_auto_needs_password">Needs a backup password</string>
+    <string name="backup_auto_days">Days</string>
+    <string name="backup_auto_time">Time</string>
+    <string name="backup_auto_around">Around %1$s. Android may move background work a little.</string>
+    <string name="backup_auto_day_on">%1$s, on</string>
+    <string name="backup_auto_day_off">%1$s, off</string>
+    <string name="backup_ret_title">Backups to keep</string>
+    <string name="backup_ret_simple">Simple</string>
+    <string name="backup_ret_balanced">Balanced</string>
+    <string name="backup_ret_long">Long-term</string>
+    <string name="backup_ret_custom">Custom</string>
+    <string name="backup_ret_simple_body">The last 5 backups.</string>
+    <string name="backup_ret_balanced_body">The last 7, plus one a month for 6 months.</string>
+    <string name="backup_ret_long_body">The last 14, one a month for 12 months, and one a year.</string>
+    <string name="backup_ret_custom_body">Choose how many of each to keep.</string>
+    <string name="backup_ret_recent">Latest</string>
+    <string name="backup_ret_months">Months, one each</string>
+    <string name="backup_ret_years">Years, one each</string>
+    <string name="backup_ret_note">Only Forkcast backups in this folder are deleted, and only after a new backup has been checked.</string>
 </resources>

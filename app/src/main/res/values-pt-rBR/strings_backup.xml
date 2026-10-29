@@ -110,7 +110,7 @@
 
     <!-- Automatic backup to a folder -->
     <string name="backup_auto_title">Backup automático</string>
-    <string name="backup_auto_intro">Escolha uma pasta uma vez e o Forkcast salva um backup nela toda semana. Pode ser neste celular, num cartão SD ou na pasta de um app de nuvem (Google Drive, OneDrive e outros). O Forkcast só vê essa pasta.</string>
+    <string name="backup_auto_intro">Escolha uma pasta uma vez e o Forkcast salva nela um backup criptografado nos dias que você escolher. Pode ser neste celular, num cartão SD ou na pasta de um app de nuvem (Google Drive, OneDrive e outros). O Forkcast só vê essa pasta.</string>
     <string name="backup_auto_choose">Escolher uma pasta</string>
     <string name="backup_auto_folder">Salvando em: %1$s</string>
     <string name="backup_auto_folder_unnamed">Salvando na pasta que você escolheu</string>
@@ -171,4 +171,76 @@
         <item quantity="many">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Mantido %3$s.</item>
         <item quantity="other">%1$d backups excluídos; %2$d não puderam ser excluídos e ficam por enquanto. Mantido %3$s.</item>
     </plurals>
+
+    <!-- Backup password, buttons, schedule and retention (owner, 2026-10-29) -->
+    <string name="bpw_title">Senha dos backups</string>
+    <string name="bpw_none">Não definida. Os backups precisam de uma senha: ela os criptografa, então só você consegue abri-los.</string>
+    <string name="bpw_is_set">Definida. Todo backup é criptografado com ela.</string>
+    <string name="bpw_set">Definir uma senha</string>
+    <string name="bpw_show">Mostrar</string>
+    <string name="bpw_change">Trocar</string>
+    <string name="bpw_remove">Remover</string>
+    <string name="bpw_copy">Copiar</string>
+    <string name="bpw_copied">Senha copiada</string>
+    <string name="bpw_unlock_title">Confirme que é você</string>
+    <string name="bpw_unlock_subtitle">Para ver ou trocar a senha dos backups</string>
+    <string name="bpw_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de mostrar ou trocar a senha dos backups.</string>
+    <string name="bpw_dialog_new">Definir a senha dos backups</string>
+    <string name="bpw_dialog_change">Trocar a senha dos backups</string>
+    <string name="bpw_dialog_show">Sua senha dos backups</string>
+    <string name="bpw_field">Senha</string>
+    <string name="bpw_field_again">Digite de novo</string>
+    <string name="bpw_generate">Gerar uma senha forte</string>
+    <string name="bpw_save_note">Guarde-a no seu gerenciador de senhas. Se você perder este celular, ela é a única forma de abrir seus backups.</string>
+    <string name="bpw_min">Pelo menos %1$d caracteres</string>
+    <string name="bpw_mismatch">As duas não são iguais</string>
+    <string name="bpw_strength_weak">Fraca</string>
+    <string name="bpw_strength_fair">Razoável</string>
+    <string name="bpw_strength_good">Boa</string>
+    <string name="bpw_strength_strong">Forte</string>
+    <string name="bpw_strength_label">Força da senha: %1$s</string>
+    <string name="bpw_change_body">Os backups da pasta de backups são criptografados de novo com a nova senha. Cópias salvas em outros lugares continuam com a antiga.</string>
+    <plurals name="bpw_changed">
+        <item quantity="one">Senha trocada. %1$d backup da pasta agora usa a nova.</item>
+        <item quantity="many">Senha trocada. %1$d backups da pasta agora usam a nova.</item>
+        <item quantity="other">Senha trocada. %1$d backups da pasta agora usam a nova.</item>
+    </plurals>
+    <string name="bpw_change_failed">Estes backups não puderam ser atualizados e ainda abrem com a senha antiga: %1$s</string>
+    <string name="bpw_change_folder_lost">O Forkcast não consegue acessar a pasta de backups, então a senha não foi trocada. Escolha a pasta de novo e tente outra vez.</string>
+    <string name="bpw_remove_title">Remover a senha dos backups?</string>
+    <string name="bpw_remove_body">Os backups automáticos são desligados e Fazer backup agora deixa de funcionar até você definir uma senha de novo. Os backups que você já tem continuam abrindo com a senha com que foram feitos.</string>
+    <string name="bpw_keep_title">Usar esta senha neste celular?</string>
+    <string name="bpw_keep_body">Os backups que este celular fizer serão criptografados com a senha que você acabou de digitar.</string>
+    <string name="bpw_keep_yes">Usar</string>
+    <string name="backup_now">Fazer backup agora</string>
+    <string name="backup_share">Fazer backup e compartilhar</string>
+    <string name="backup_needs_password">Defina primeiro uma senha dos backups. Os backups são sempre criptografados com ela.</string>
+    <string name="backup_share_title">Compartilhar um backup</string>
+    <string name="backup_unencrypted">Fazer backup sem criptografia</string>
+    <string name="backup_unencrypted_title">Fazer backup sem criptografia?</string>
+    <string name="backup_unencrypted_body">Este arquivo não é criptografado. Ele inclui suas chaves de API e todos os seus dados de saúde de forma legível: registro de alimentos, pesos, água, atividade, metas e perfil, configurações, serviços de IA e fotos das refeições. Qualquer pessoa com o arquivo pode ver e usar tudo isso.</string>
+    <string name="backup_unencrypted_continue">Entendi, continuar</string>
+    <string name="backup_unencrypted_unlock">Para salvar um backup sem criptografia</string>
+    <string name="backup_unencrypted_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de salvar um backup que qualquer pessoa poderia ler.</string>
+    <string name="backup_contents">Todo backup guarda tudo: seu registro e alimentos, configurações, serviços de IA e suas chaves, e fotos das refeições.</string>
+    <string name="backup_naming">Os arquivos de backup têm a data e a hora no nome, por exemplo %1$s. Cópias sem criptografia terminam em _unencrypted.</string>
+    <string name="backup_auto_needs_password">Precisa de uma senha dos backups</string>
+    <string name="backup_auto_days">Dias</string>
+    <string name="backup_auto_time">Horário</string>
+    <string name="backup_auto_around">Por volta das %1$s. O Android pode mudar um pouco o horário de tarefas em segundo plano.</string>
+    <string name="backup_auto_day_on">%1$s, ligado</string>
+    <string name="backup_auto_day_off">%1$s, desligado</string>
+    <string name="backup_ret_title">Backups a manter</string>
+    <string name="backup_ret_simple">Simples</string>
+    <string name="backup_ret_balanced">Equilibrado</string>
+    <string name="backup_ret_long">Longo prazo</string>
+    <string name="backup_ret_custom">Personalizado</string>
+    <string name="backup_ret_simple_body">Os 5 últimos backups.</string>
+    <string name="backup_ret_balanced_body">Os 7 últimos, mais um por mês durante 6 meses.</string>
+    <string name="backup_ret_long_body">Os 14 últimos, um por mês durante 12 meses e um por ano.</string>
+    <string name="backup_ret_custom_body">Escolha quantos de cada manter.</string>
+    <string name="backup_ret_recent">Últimos</string>
+    <string name="backup_ret_months">Meses, um de cada</string>
+    <string name="backup_ret_years">Anos, um de cada</string>
+    <string name="backup_ret_note">Só backups do Forkcast nesta pasta são apagados, e só depois que um backup novo foi conferido.</string>
 </resources>

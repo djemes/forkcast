@@ -73,7 +73,7 @@ class OnboardingExtrasViewModel @Inject constructor(
     private val settings: SettingsRepository,
 ) : ViewModel() {
     val state: StateFlow<ExtrasState> = combine(ai.profiles, health.status, backup.status) { profiles, h, b ->
-        ExtrasState(aiReady = profiles.any { it.profile.enabled }, healthConnected = h.connected, backupChosen = b.chosen)
+        ExtrasState(aiReady = profiles.any { it.profile.enabled }, healthConnected = h.connected, backupChosen = b.chosen && b.hasPassword)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ExtrasState())
 
     init {

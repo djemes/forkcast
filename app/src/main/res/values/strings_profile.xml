@@ -168,7 +168,7 @@
     <string name="onb_extra_hc_needs">Needs Health Connect on this phone.</string>
     <string name="onb_extra_backup_title">Back up automatically</string>
     <string name="onb_extra_backup_body">A weekly copy of your data in a folder you choose, so a lost phone doesn\'t mean lost history.</string>
-    <string name="onb_extra_backup_needs">Needs a folder. One that syncs to the cloud keeps your data safe even if you lose the phone.</string>
+    <string name="onb_extra_backup_needs">Needs a folder and a backup password. A folder that syncs to the cloud keeps your data safe even if you lose the phone.</string>
     <string name="onb_extra_notify_title">Reminders and notices</string>
     <string name="onb_extra_notify_body">Meal reminders, a weekly check-in, and a notice when a photo estimate is ready.</string>
     <string name="onb_extra_notify_needs">Android asks for your permission. You choose which ones you get.</string>

@@ -50,10 +50,6 @@ import java.time.format.FormatStyle
 import javax.inject.Inject
 
 sealed interface SettingsTransferStep {
-    /** Choose and confirm a passphrase; then the file picker opens. */
-    data object ExportPassphrase : SettingsTransferStep
-    /** Waiting for the file picker after the passphrase was set. */
-    data object PickExportFile : SettingsTransferStep
     data object ImportPassphrase : SettingsTransferStep
     data class Preview(val preview: SettingsPreview) : SettingsTransferStep
     data class Error(val error: SettingsImportError?) : SettingsTransferStep
@@ -66,7 +62,10 @@ data class SettingsTransferState(
     val notice: Int? = null,
 )
 
-/** Settings export with keys (SPEC §4.11): passphrase in, encrypted file out, and back. */
+/**
+ * Importing a settings file from 1.2 to 1.8.1 (SPEC §4.11). Making one is gone since 1.8.2: backups
+ * carry settings and keys (owner, 2026-10-29); reading them stays until 2.0 (compatibility rule).
+ */
 @HiltViewModel
 class SettingsTransferViewModel @Inject constructor(
     private val repo: SettingsBackupRepository,
@@ -76,41 +75,8 @@ class SettingsTransferViewModel @Inject constructor(
     private val _state = MutableStateFlow(SettingsTransferState())
     val state: StateFlow<SettingsTransferState> = _state.asStateFlow()
 
-    // Held only between the dialog and the file picker, then wiped.
-    private var passphrase: CharArray? = null
     private var importText: String? = null
     private var opened: SettingsPayload? = null
-
-    fun suggestedName(): String =
-        "forkcast-settings-${DateTimeFormatter.ofPattern("yyyyMMdd-HHmm").format(clock.instant().atZone(clock.zone))}.fksettings"
-
-    fun startExport() = _state.update { it.copy(step = SettingsTransferStep.ExportPassphrase) }
-
-    fun setExportPassphrase(value: CharArray) {
-        wipe()
-        passphrase = value
-        _state.update { it.copy(step = SettingsTransferStep.PickExportFile) }
-    }
-
-    fun export(uri: Uri?) {
-        val pass = passphrase
-        if (uri == null || pass == null) return dismiss()
-        viewModelScope.launch {
-            _state.update { it.copy(busy = true, step = null) }
-            val notice = try {
-                val text = repo.export(pass)
-                documents.writeText(uri, text)
-                R.string.settings_saved
-            } catch (e: IOException) {
-                R.string.settings_failed
-            } catch (e: SecurityException) {
-                R.string.settings_failed
-            } finally {
-                wipe()
-            }
-            _state.update { it.copy(busy = false, notice = notice) }
-        }
-    }
 
     fun picked(uri: Uri?) {
         if (uri == null) return
@@ -159,30 +125,21 @@ class SettingsTransferViewModel @Inject constructor(
     }
 
     fun dismiss() {
-        wipe()
         opened = null
         importText = null
         _state.update { it.copy(step = null) }
     }
 
     fun noticeShown() = _state.update { it.copy(notice = null) }
-
-    private fun wipe() {
-        passphrase?.fill('\u0000')
-        passphrase = null
-    }
-
-    override fun onCleared() = wipe()
 }
 
 /** The "Settings and keys" block on the Backup & data screen. */
 @Composable
-fun SettingsTransferSection(busy: Boolean, onExport: () -> Unit, onImport: () -> Unit) {
+fun SettingsTransferSection(busy: Boolean, onImport: () -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text(stringResource(R.string.settings_transfer_title), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
         Text(stringResource(R.string.settings_transfer_body), style = MaterialTheme.typography.bodyMedium)
         FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = onExport, enabled = !busy) { Text(stringResource(R.string.settings_export)) }
             OutlinedButton(onClick = onImport, enabled = !busy) { Text(stringResource(R.string.settings_import)) }
         }
     }
@@ -191,15 +148,12 @@ fun SettingsTransferSection(busy: Boolean, onExport: () -> Unit, onImport: () ->
 @Composable
 fun SettingsTransferDialogs(
     step: SettingsTransferStep,
-    onExportPassphrase: (CharArray) -> Unit,
     onUnlock: (CharArray) -> Unit,
     onApply: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     when (step) {
-        SettingsTransferStep.ExportPassphrase -> PassphraseDialog(confirm = true, onDone = onExportPassphrase, onDismiss = onDismiss)
         SettingsTransferStep.ImportPassphrase -> PassphraseDialog(confirm = false, onDone = onUnlock, onDismiss = onDismiss)
-        SettingsTransferStep.PickExportFile -> Unit
         is SettingsTransferStep.Preview -> {
             val p = step.preview
             val made = runCatching {
