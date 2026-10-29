@@ -1,6 +1,8 @@
 package app.forkcast.ui.photo
 
 import app.forkcast.ui.format.unitLabels
+import app.forkcast.ui.common.PortionChips
+import app.forkcast.ui.common.portionLabel
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -29,7 +31,6 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -70,8 +71,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -318,7 +317,6 @@ private fun ReviewBody(state: ReviewUiState, e: AiEstimateEntity, f: UnitFormatt
  */
 @Composable
 private fun PortionPicker(portion: Double, plateKcal: Double, f: UnitFormatter, onPick: (Double) -> Unit) {
-    var custom by remember { mutableStateOf(false) }
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier
@@ -327,17 +325,7 @@ private fun PortionPicker(portion: Double, plateKcal: Double, f: UnitFormatter, 
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(stringResource(R.string.portion_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            ComponentEdits.PORTIONS.forEach { p ->
-                FilterChip(selected = portion == p, onClick = { onPick(p) }, label = { Text(portionLabel(p)) })
-            }
-            val isCustom = portion !in ComponentEdits.PORTIONS
-            FilterChip(
-                selected = isCustom,
-                onClick = { custom = true },
-                label = { Text(if (isCustom) stringResource(R.string.portion_custom_value, (portion * 100).roundToInt()) else stringResource(R.string.portion_custom)) },
-            )
-        }
+        PortionChips(portion, R.string.portion_percent, onPick)
         if (portion != 1.0) {
             Text(
                 stringResource(R.string.portion_summary, portionLabel(portion), f.energy(plateKcal * portion), f.energy(plateKcal)),
@@ -346,36 +334,6 @@ private fun PortionPicker(portion: Double, plateKcal: Double, f: UnitFormatter, 
             )
         }
     }
-    if (custom) {
-        var text by rememberSaveable { mutableStateOf((portion * 100).roundToInt().toString()) }
-        val value = text.toIntOrNull()?.takeIf { it in 1..300 }
-        AlertDialog(
-            onDismissRequest = { custom = false },
-            title = { Text(stringResource(R.string.portion_title)) },
-            text = {
-                OutlinedTextField(
-                    value = text,
-                    onValueChange = { t -> text = t.filter(Char::isDigit).take(3) },
-                    label = { Text(stringResource(R.string.portion_percent)) },
-                    suffix = { Text("%") },
-                    singleLine = true,
-                    isError = value == null,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                )
-            },
-            confirmButton = { TextButton(onClick = { value?.let { onPick(it / 100.0) }; custom = false }, enabled = value != null) { Text(stringResource(R.string.ok)) } },
-            dismissButton = { TextButton(onClick = { custom = false }) { Text(stringResource(R.string.cancel)) } },
-        )
-    }
-}
-
-@Composable
-private fun portionLabel(p: Double): String = when (p) {
-    0.25 -> "¼"
-    0.5 -> "½"
-    0.75 -> "¾"
-    1.0 -> stringResource(R.string.portion_all)
-    else -> "${(p * 100).roundToInt()}%"
 }
 
 /**

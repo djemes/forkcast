@@ -42,6 +42,8 @@ interface FoodRepository {
     suspend fun refreshDetails(id: String)
     fun observeRecents(limit: Int = 50): Flow<List<Food>>
     fun observeFavorites(): Flow<List<Food>>
+    /** How often each of [ids] was logged (foods never logged are left out). */
+    suspend fun useCounts(ids: List<String>): Map<String, Int>
     fun observeCustom(): Flow<List<Food>>
     suspend fun setFavorite(id: String, favorite: Boolean)
     /** The user's "counts toward water" choice for a food; null returns it to the drink rule. */
@@ -128,6 +130,9 @@ class DefaultFoodRepository @Inject constructor(
     override fun observeRecents(limit: Int): Flow<List<Food>> = dao.observeRecents(limit).map { l -> l.map { it.toModel() } }
 
     override fun observeFavorites(): Flow<List<Food>> = dao.observeFavorites().map { l -> l.map { it.toModel() } }
+
+    override suspend fun useCounts(ids: List<String>): Map<String, Int> =
+        if (ids.isEmpty()) emptyMap() else dao.useCounts(ids).associate { it.foodId to it.uses }
 
     override fun observeCustom(): Flow<List<Food>> = dao.observeCustom().map { l -> l.map { it.toModel() } }
 

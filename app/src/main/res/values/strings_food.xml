@@ -3,7 +3,7 @@
     <!-- Search -->
     <string name="search_hint">Search foods</string>
     <string name="search_clear">Clear search</string>
-    <string name="search_your_foods">Your foods</string>
+    <string name="search_results">Results</string>
     <string name="search_usda">USDA FoodData Central</string>
     <string name="search_off">Open Food Facts</string>
     <string name="search_recent">Recent</string>

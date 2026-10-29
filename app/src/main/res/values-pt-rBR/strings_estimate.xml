@@ -25,11 +25,11 @@
 
     <!-- Quanto você comeu? -->
     <string name="portion_title">Quanto você comeu?</string>
-    <string name="portion_all">Tudo</string>
     <string name="portion_custom">Outro</string>
     <string name="portion_custom_value">%1$d%%</string>
     <string name="portion_percent">Parte do prato</string>
-    <string name="portion_summary">Você comeu %1$s: %2$s dos %3$s estimados.</string>
+    <string name="portion_percent_entry">Parte da quantidade registrada</string>
+    <string name="portion_summary">%1$s: %2$s em vez dos %3$s estimados.</string>
 
     <!-- Status: um de cada vez -->
     <string name="stage_step_send">Enviar</string>

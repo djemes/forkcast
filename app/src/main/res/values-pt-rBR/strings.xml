@@ -52,6 +52,8 @@
     <string name="log_saved_meals">Refeições salvas</string>
     <string name="log_recent">Recentes</string>
     <string name="log_favorites">Favoritos</string>
+    <string name="favorites_empty">Nada aqui ainda. Toque na estrela de um alimento para guardá-lo aqui.</string>
+    <string name="favorites_open">Abrir %1$s</string>
 
     <!-- Settings -->
     <string name="settings">Configurações</string>

@@ -81,7 +81,4 @@ object ComponentEdits {
         }
         return Totals(low * portion, exp * portion, high * portion)
     }
-
-    /** "How much did you eat?" presets: ¼, ½, ¾, all. */
-    val PORTIONS = listOf(0.25, 0.5, 0.75, 1.0)
 }

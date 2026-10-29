@@ -7,6 +7,7 @@ import androidx.compose.ui.test.hasSetTextAction
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithContentDescription
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -32,20 +33,26 @@ class FoodScreensTest {
 
     private val rice = FakeFoodRepository.food("Rice, white, cooked", kcal = 130.0).copy(id = "r")
 
-    @Test fun searchShowsSectionsAndOpensAResult() {
+    @Test fun searchShowsOneRankedListAndOpensAResult() {
         var typed = ""
         var opened: String? = null
+        var starred: String? = null
+        val brown = FakeFoodRepository.food("Rice, brown", sourceId = "2")
         val state = SearchUiState(
             query = "rice",
             local = listOf(rice),
-            usda = RemoteResults.Done(listOf(FakeFoodRepository.food("Rice, brown", sourceId = "2"))),
+            results = listOf(rice, brown),
+            usda = RemoteResults.Done(listOf(brown)),
             off = RemoteResults.Failed(FoodApiError.Offline()),
             usingDemoKey = true,
         )
-        compose.setContent { ForkcastTheme { SearchScreen(state, { typed = it }, { opened = it.name }, {}, {}) } }
+        compose.setContent { ForkcastTheme { SearchScreen(state, { typed = it }, { opened = it.name }, {}, {}, onToggleFavorite = { starred = it.name }) } }
         compose.onNode(hasSetTextAction()).performTextReplacement("rice white")
         assertThat(typed).isEqualTo("rice white")
-        compose.onNodeWithText("Your foods").assertIsDisplayed()
+        compose.onNodeWithText("Results").assertIsDisplayed()
+        compose.onAllNodesWithText("USDA")[0].assertIsDisplayed()
+        compose.onAllNodesWithContentDescription("Add to favorites")[1].performClick()
+        assertThat(starred).isEqualTo("Rice, brown")
         // 1 cup = 158 g → 205 kcal per serving
         compose.onAllNodesWithText("205 kcal")[0].assertIsDisplayed()
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("No connection. Showing your own foods only."))

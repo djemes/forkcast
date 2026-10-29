@@ -43,6 +43,7 @@
     <string name="edit_meal">Refeição</string>
 
     <!-- Source badges (DESIGN.md §5) -->
+    <string name="badge_favorite">Favorito</string>
     <string name="badge_usda">USDA</string>
     <string name="badge_off">OFF</string>
     <string name="badge_label">Tabela</string>
