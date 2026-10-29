@@ -107,6 +107,9 @@
     <string name="about_app_license_open">Read Forkcast\'s license</string>
     <string name="about_libraries_title">Open-source libraries</string>
     <string name="about_libraries_body">Forkcast is built with these libraries and the Manrope font. Tap one to read its license.</string>
+    <string name="about_support_title">Support Forkcast</string>
+    <string name="about_support_body">Forkcast is free and open source. If it helps you, you can leave a tip. Tips are voluntary and don\'t unlock anything.</string>
+    <string name="about_support_open">Leave a tip</string>
     <string name="about_attributions_title">Attributions</string>
     <string name="about_attribution_off">Food data from Open Food Facts (openfoodfacts.org), available under the Open Database License (ODbL).</string>
     <string name="about_attribution_usda">Food data from USDA FoodData Central (fdc.nal.usda.gov), U.S. Department of Agriculture.</string>

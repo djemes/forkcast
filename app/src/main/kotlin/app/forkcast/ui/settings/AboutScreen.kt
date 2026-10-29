@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import app.forkcast.BuildConfig
 import app.forkcast.Distribution
 import app.forkcast.R
+import app.forkcast.di.DONATION_URL
 import app.forkcast.di.GITHUB_URL
 
 @Composable
@@ -35,6 +36,7 @@ fun AboutRoute(
         onOpenTerms = onOpenTerms,
         onOpenPrivacy = onOpenPrivacy,
         onOpenLicenses = onOpenLicenses,
+        donationUrl = DONATION_URL.takeIf { Distribution.current.hasDonationLink && it.isNotBlank() },
     )
 }
 
@@ -48,6 +50,7 @@ fun AboutScreen(
     onOpenTerms: () -> Unit = {},
     onOpenPrivacy: () -> Unit = {},
     onOpenLicenses: () -> Unit = {},
+    donationUrl: String? = null,
 ) {
     val uri = LocalUriHandler.current
     SettingsScaffold(title = stringResource(R.string.settings_about), onBack = onBack) {
@@ -68,6 +71,15 @@ fun AboutScreen(
             Text(stringResource(R.string.about_github_body), style = MaterialTheme.typography.bodyLarge)
             TextButton(onClick = { uri.openUri(GITHUB_URL) }, modifier = Modifier.heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.about_github_open))
+            }
+
+            // Voluntary tips (roadmap 2.0 task 4.6): only here, never a reminder or pop-up anywhere else.
+            if (donationUrl != null) {
+                AboutHeading(R.string.about_support_title)
+                Text(stringResource(R.string.about_support_body), style = MaterialTheme.typography.bodyLarge)
+                OutlinedButton(onClick = { uri.openUri(donationUrl) }, modifier = Modifier.padding(top = 8.dp).heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.about_support_open))
+                }
             }
 
             TextButton(onClick = onOpenTerms, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_terms)) }

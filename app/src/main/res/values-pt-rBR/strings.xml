@@ -110,6 +110,9 @@
     <string name="about_app_license_open">Ler a licença do Forkcast</string>
     <string name="about_libraries_title">Bibliotecas de código aberto</string>
     <string name="about_libraries_body">O Forkcast é feito com estas bibliotecas e com a fonte Manrope. Toque em uma para ler a licença.</string>
+    <string name="about_support_title">Apoie o Forkcast</string>
+    <string name="about_support_body">O Forkcast é gratuito e de código aberto. Se ele te ajuda, você pode deixar uma gorjeta. Gorjetas são voluntárias e não liberam nada.</string>
+    <string name="about_support_open">Deixar uma gorjeta</string>
     <string name="about_attributions_title">Créditos</string>
     <string name="about_attribution_off">Dados de alimentos do Open Food Facts (openfoodfacts.org), disponíveis sob a Open Database License (ODbL).</string>
     <string name="about_attribution_usda">Dados de alimentos do USDA FoodData Central (fdc.nal.usda.gov), Departamento de Agricultura dos EUA.</string>
