@@ -144,6 +144,8 @@ data class TodayUiState(
     val recents: List<Food> = emptyList(),
     /** [recents] are favorites (nothing logged yet). */
     val recentsAreFavorites: Boolean = false,
+    /** Every favorite, for the Log sheet's Favorites list (owner, 2026-10-29). */
+    val favorites: List<Food> = emptyList(),
     val savedMeals: List<SavedMeal> = emptyList(),
     /** Meals that had entries yesterday: these get a "Same as yesterday" button when empty. */
     val yesterdayMealIds: Set<String> = emptySet(),
@@ -220,6 +222,8 @@ sealed interface TodayEvent {
         val eatenMinute: Int? = null,
     ) : TodayEvent
     data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
+    /** The star in the Favorites list. */
+    data class SetFavorite(val foodId: String, val favorite: Boolean) : TodayEvent
     /** "What fits" in the budget sheet: logs it to the meal for now, on today. */
     data class LogFit(val fit: FitSuggestion, val mealSlotId: String) : TodayEvent
     /** Copies entries to [toDate], into [toMealSlotId] or (null) each entry's own meal. */
@@ -344,10 +348,10 @@ class TodayViewModel @Inject constructor(
         profileRepository.observeDailyTargets(),
         settingsRepository.settings,
         // One-tap foods: recents, or favorites before anything has been logged.
-        combine(foods.observeRecents(5), foods.observeFavorites()) { r, fav -> if (r.isNotEmpty()) r to false else fav.take(5) to true },
+        combine(foods.observeRecents(5), foods.observeFavorites()) { r, fav -> Triple(if (r.isNotEmpty()) r else fav.take(5), r.isEmpty(), fav) },
         savedMealRepository.meals,
         missingKeys.missing,
-    ) { t, s, (r, favorites), saved, missing -> Extras(t, s, r, saved, favorites, missing) }
+    ) { t, s, (r, recentsAreFavorites, favorites), saved, missing -> Extras(t, s, r, saved, recentsAreFavorites, missing, favorites) }
 
     private val body = combine(weightRepository.entries, profileRepository.profile) { weights, profile -> weights to profile }
 
@@ -377,6 +381,7 @@ class TodayViewModel @Inject constructor(
         val saved: List<SavedMeal>,
         val recentsAreFavorites: Boolean = false,
         val missingKeys: List<app.forkcast.core.data.repository.MissingKey> = emptyList(),
+        val favorites: List<Food> = emptyList(),
     )
 
     val uiState: StateFlow<TodayUiState?> = combine(
@@ -445,6 +450,7 @@ class TodayViewModel @Inject constructor(
             selection = selected intersect entries.map { it.id }.toSet(),
             recents = x.recents,
             recentsAreFavorites = x.recentsAreFavorites,
+            favorites = x.favorites,
             savedMeals = x.saved,
             yesterdayMealIds = dayData.yesterdayMeals,
             water = WaterSummary(
@@ -530,6 +536,7 @@ class TodayViewModel @Inject constructor(
                 val (serving, qty) = FoodLogging.defaultServing(event.food)
                 FoodLogging.entry(event.food, serving, qty, date, event.mealSlotId, clock.instant())
             }
+            is TodayEvent.SetFavorite -> viewModelScope.launch { foods.setFavorite(event.foodId, event.favorite) }
             is TodayEvent.Copy -> viewModelScope.launch {
                 selection.value = emptySet()
                 // No future days, whatever the caller passed.

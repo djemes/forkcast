@@ -260,6 +260,7 @@ fun ForkcastNavHost(
                         openActivity = { date -> navController.navigate(ActivityDestination(date.toString())) },
                         openTrends = { navController.navigate(TrendsDestination) },
                         openRecipes = { meal, date -> navController.navigate(RecipesDestination(meal, date.toString())) },
+                        openFood = { id, meal, date -> navController.navigate(FoodDetailDestination(id, meal, date.toString())) },
                         openKeys = { ai -> navController.navigate(if (ai) AiSettingsDestination else FoodDatabasesDestination) },
                         openBackup = { navController.navigate(BackupDestination) },
                     ),

@@ -129,6 +129,8 @@ data class TodayActions(
     val openTrends: () -> Unit = {},
     /** Opens the recipe list to log into [mealSlotId] on [date]. */
     val openRecipes: ((mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
+    /** A food's detail, to log it into [mealSlotId] on [date] (Favorites' pencil). */
+    val openFood: ((foodId: String, mealSlotId: String, date: java.time.LocalDate) -> Unit)? = null,
     /** Missing keys: Settings › AI (true) or Food databases (false). */
     val openKeys: (ai: Boolean) -> Unit = {},
     /** Settings › Backup & data, from the backup card. */
@@ -214,6 +216,7 @@ fun TodayScreen(
     LaunchedEffect(editingId) { editingId?.let { onEvent(TodayEvent.LoadEditServings(it)) } }
     var quickAddMealId by rememberSaveable { mutableStateOf<String?>(null) }
     var savedMealsFor by rememberSaveable { mutableStateOf<String?>(null) }
+    var favoritesFor by rememberSaveable { mutableStateOf<String?>(null) }
     var copyRequest by remember { mutableStateOf<CopyRequest?>(null) }
     var saveRequest by remember { mutableStateOf<SaveRequest?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -278,7 +281,7 @@ fun TodayScreen(
                     SelectionBar(
                         count = state.selection.size,
                         onEvent = onEvent,
-                        onCopy = { copyRequest = CopyRequest(state.selection.toList(), allowSameMeal = true, from = state.date) },
+                        onCopy = { copyRequest = CopyRequest(state.selection.toList(), allowSameMeal = true) },
                         onSave = { saveRequest = SaveRequest(state.selection.toList(), "") },
                     )
                 } else {
@@ -442,9 +445,9 @@ fun TodayScreen(
                             onPendingClick = actions.openEstimate,
                             onEntryLongClick = { id -> onEvent(TodayEvent.ToggleSelect(id)) },
                             onDelete = { id -> onEvent(TodayEvent.Delete(listOf(id))) },
-                            onCopyMeal = { copyRequest = CopyRequest(meal.entries.map { it.id }, allowSameMeal = true, from = day.date) },
+                            onCopyMeal = { copyRequest = CopyRequest(meal.entries.map { it.id }, allowSameMeal = true) },
                             onSaveMeal = { saveRequest = SaveRequest(meal.entries.map { it.id }, meal.slot.name) },
-                            onCopyDay = { copyRequest = CopyRequest(day.allEntries.map { it.id }, allowSameMeal = true, from = day.date, wholeDay = true) },
+                            onCopyDay = { copyRequest = CopyRequest(day.allEntries.map { it.id }, allowSameMeal = true, wholeDay = true) },
                             dayHasEntries = day.allEntries.isNotEmpty(),
                             showSameAsYesterday = meal.slot.id in day.yesterdayMealIds,
                             onSameAsYesterday = { onEvent(TodayEvent.SameAsYesterday(meal.slot.id)) },
@@ -512,6 +515,7 @@ fun TodayScreen(
                 describe = actions.openDescribe?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
                 savedMeals = { logSheetMealId = null; savedMealsFor = mealId },
+                favorites = { logSheetMealId = null; favoritesFor = mealId },
                 recipes = actions.openRecipes?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
             ),
             recents = state.recents,
@@ -538,6 +542,17 @@ fun TodayScreen(
             latestMinute = state.nowMinute.takeIf { state.isToday },
         )
     }
+    favoritesFor?.let { mealId ->
+        FavoritesSheet(
+            favorites = state.favorites,
+            mealName = state.meals.firstOrNull { it.slot.id == mealId }?.slot?.name.orEmpty(),
+            f = f,
+            onLog = { food -> favoritesFor = null; onEvent(TodayEvent.AddRecent(food, mealId)) },
+            onOpen = actions.openFood?.let { open -> { food -> favoritesFor = null; open(food.id, mealId, state.date) } },
+            onUnstar = { food -> onEvent(TodayEvent.SetFavorite(food.id, favorite = false)) },
+            onDismiss = { favoritesFor = null },
+        )
+    }
     savedMealsFor?.let { mealId ->
         SavedMealsSheet(
             meals = state.savedMeals,
@@ -550,7 +565,8 @@ fun TodayScreen(
     }
     copyRequest?.let { req ->
         CopyDialog(
-            initialDate = req.from.plusDays(1),
+            // Copying from a past day usually means "I'm eating that again now" (owner, 2026-10-29).
+            initialDate = state.today,
             meals = state.loggableSlots,
             allowSameMeal = req.allowSameMeal,
             onCopy = { date, meal -> copyRequest = null; onEvent(TodayEvent.Copy(req.ids, date, meal)) },
@@ -617,7 +633,7 @@ private fun LazyItemScope.TodayItem(key: String, index: Int, content: @Composabl
     ) { content() }
 }
 
-private data class CopyRequest(val ids: List<String>, val allowSameMeal: Boolean, val from: LocalDate, val wholeDay: Boolean = false)
+private data class CopyRequest(val ids: List<String>, val allowSameMeal: Boolean, val wholeDay: Boolean = false)
 private data class SaveRequest(val ids: List<String>, val suggestedName: String)
 
 private fun shortDate(date: LocalDate, locale: java.util.Locale): String =

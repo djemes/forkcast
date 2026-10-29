@@ -90,6 +90,7 @@ fun SearchRoute(
     SearchScreen(
         state, viewModel::onQueryChange, viewModel::open, onBack, onCreateFood, onCreateRecipe, forRecipe,
         onDescribe = onDescribe.takeIf { state.canDescribe }, onLogSavedMeal = viewModel::logSavedMeal,
+        onToggleFavorite = viewModel::toggleFavorite,
     )
 }
 
@@ -104,6 +105,7 @@ fun SearchScreen(
     forRecipe: Boolean = false,
     onDescribe: ((query: String) -> Unit)? = null,
     onLogSavedMeal: (SavedMeal) -> Unit = {},
+    onToggleFavorite: ((Food) -> Unit)? = null,
 ) {
     val f = UnitFormatter(state.units, LocalLocale.current.platformLocale, labels = unitLabels())
     val focus = remember { FocusRequester() }
@@ -165,18 +167,16 @@ fun SearchScreen(
                 }
                 if (!state.isSearching) {
                     item { Hint(stringResource(R.string.search_empty_start)) }
-                    foodSection(R.string.search_favorites, state.favorites, f, onOpen)
-                    foodSection(R.string.search_recent, state.recents.take(15), f, onOpen)
-                    foodSection(R.string.search_my_foods, state.custom, f, onOpen)
+                    foodSection(R.string.search_favorites, state.favorites, state, f, onOpen, onToggleFavorite)
+                    foodSection(R.string.search_recent, state.recents.take(15), state, f, onOpen, onToggleFavorite)
+                    foodSection(R.string.search_my_foods, state.custom, state, f, onOpen, onToggleFavorite)
                 } else {
                     // Nothing good found: describing it to the AI is the next step (owner, 2026-10-23).
                     if (onDescribe != null && state.fewResults) {
                         item(key = "describe-top") { DescribeCard(state.query.trim()) { onDescribe(state.query.trim()) } }
                     }
                     savedMealSection(state.savedMeals, f, onLogSavedMeal)
-                    foodSection(R.string.search_your_foods, state.local, f, onOpen)
-                    remoteSection(R.string.search_usda, state.usda, f, onOpen, showDemoNote = state.usingDemoKey)
-                    remoteSection(R.string.search_off, state.off, f, onOpen, showDemoNote = false)
+                    resultsSection(state, f, onOpen, onToggleFavorite)
                     if (onDescribe != null && !state.fewResults) {
                         item(key = "describe-bottom") {
                             TextButton(onClick = { onDescribe(state.query.trim()) }, modifier = Modifier.padding(top = 8.dp)) {
@@ -300,53 +300,73 @@ private fun SectionTitle(title: Int) = Text(
         .semantics { heading() },
 )
 
-private fun LazyListScope.foodSection(title: Int, foods: List<Food>, f: UnitFormatter, onOpen: (Food) -> Unit) {
-    if (foods.isEmpty()) return
-    item(key = "h$title") { SectionTitle(title) }
-    items(foods, key = { "$title-${it.id.ifEmpty { "${it.source}:${it.sourceId}" }}" }) { FoodRow(it, f) { onOpen(it) } }
-}
-
-private fun LazyListScope.remoteSection(
+private fun LazyListScope.foodSection(
     title: Int,
-    results: RemoteResults,
+    foods: List<Food>,
+    state: SearchUiState,
     f: UnitFormatter,
     onOpen: (Food) -> Unit,
-    showDemoNote: Boolean,
+    onToggleFavorite: ((Food) -> Unit)?,
 ) {
-    if (results is RemoteResults.Idle) return
+    if (foods.isEmpty()) return
     item(key = "h$title") { SectionTitle(title) }
-    if (showDemoNote) item(key = "demo$title") { Hint(stringResource(R.string.search_demo_key)) }
-    when (results) {
-        RemoteResults.Loading -> item(key = "l$title") {
-            Column {
+    items(foods, key = { "$title-${it.id.ifEmpty { "${it.source}:${it.sourceId}" }}" }) {
+        FoodRow(it, f, favorite = state.isFavorite(it), onToggleFavorite = onToggleFavorite?.let { t -> { t(it) } }) { onOpen(it) }
+    }
+}
+
+/**
+ * Your foods, USDA and Open Food Facts as one ranked list with source tags (owner, 2026-10-29),
+ * then what's still loading or didn't answer, per database.
+ */
+private fun LazyListScope.resultsSection(state: SearchUiState, f: UnitFormatter, onOpen: (Food) -> Unit, onToggleFavorite: ((Food) -> Unit)?) {
+    if (state.results.isNotEmpty()) {
+        item(key = "h-results") { SectionTitle(R.string.search_results) }
+        items(state.results, key = { "r-${it.id.ifEmpty { "${it.source}:${it.sourceId}" }}" }) {
+            FoodRow(it, f, favorite = state.isFavorite(it), onToggleFavorite = onToggleFavorite?.let { t -> { t(it) } }) { onOpen(it) }
+        }
+    }
+    if (state.remoteLoading) {
+        item(key = "loading") {
+            Column(Modifier.padding(top = 8.dp)) {
                 Hint(stringResource(R.string.search_loading))
                 LinearProgressIndicator(Modifier.fillMaxWidth())
             }
         }
-        is RemoteResults.Failed -> item(key = "e$title") {
-            val name = stringResource(title)
-            Column {
-                Hint(
-                    when (results.error) {
-                        is FoodApiError.Offline -> stringResource(R.string.search_offline)
-                        is FoodApiError.RateLimited -> stringResource(R.string.search_rate_limited, name)
-                        is FoodApiError.InvalidKey -> stringResource(R.string.search_invalid_key)
-                        else -> stringResource(R.string.search_failed, name)
-                    },
-                )
-                HelpLink(HelpLinks.food(results.error))
-            }
+        return
+    }
+    if (state.usingDemoKey && state.usda is RemoteResults.Done) item(key = "demo") { Hint(stringResource(R.string.search_demo_key)) }
+    remoteProblem(R.string.search_usda, state.usda)
+    remoteProblem(R.string.search_off, state.off)
+    val bothDone = state.usda is RemoteResults.Done && state.off is RemoteResults.Done
+    if (state.results.isEmpty() && bothDone) item(key = "none") { Hint(stringResource(R.string.search_no_results)) }
+}
+
+/** A database that didn't answer, in its own words, with the help link. */
+private fun LazyListScope.remoteProblem(title: Int, results: RemoteResults) {
+    if (results !is RemoteResults.Failed) return
+    item(key = "e$title") {
+        val name = stringResource(title)
+        Column {
+            Hint(
+                when (results.error) {
+                    is FoodApiError.Offline -> stringResource(R.string.search_offline)
+                    is FoodApiError.RateLimited -> stringResource(R.string.search_rate_limited, name)
+                    is FoodApiError.InvalidKey -> stringResource(R.string.search_invalid_key)
+                    else -> stringResource(R.string.search_failed, name)
+                },
+            )
+            HelpLink(HelpLinks.food(results.error))
         }
-        is RemoteResults.Done ->
-            if (results.foods.isEmpty()) item(key = "n$title") { Hint(stringResource(R.string.search_no_results)) }
-            else items(results.foods, key = { "$title-${it.source}:${it.sourceId}" }) { FoodRow(it, f) { onOpen(it) } }
-        RemoteResults.Idle -> Unit
     }
 }
 
-/** Name, brand, serving, kcal per serving, source badge (SPEC §4.3). */
+/**
+ * Name, brand, serving, kcal per serving, source badge (SPEC §4.3), and the favorite star
+ * (owner, 2026-10-29): a button when [onToggleFavorite] is given, else shown only on favorites.
+ */
 @Composable
-fun FoodRow(food: Food, f: UnitFormatter, onClick: () -> Unit) {
+fun FoodRow(food: Food, f: UnitFormatter, favorite: Boolean = food.isFavorite, onToggleFavorite: (() -> Unit)? = null, onClick: () -> Unit) {
     val serving = food.servingSizes.firstOrNull()
     val kcal = food.nutrientsPer100g.forGrams(serving?.grams ?: 100.0).kcal
     val servingText = serving?.label ?: stringResource(R.string.per_100g)
@@ -373,5 +393,6 @@ fun FoodRow(food: Food, f: UnitFormatter, onClick: () -> Unit) {
             }
         }
         Text(f.energy(kcal), style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(start = 12.dp))
+        FavoriteStar(favorite, onToggleFavorite)
     }
 }

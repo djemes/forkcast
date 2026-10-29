@@ -49,6 +49,8 @@
     <string name="log_saved_meals">Saved meals</string>
     <string name="log_recent">Recent</string>
     <string name="log_favorites">Favorites</string>
+    <string name="favorites_empty">Nothing here yet. Tap the star on a food to keep it here.</string>
+    <string name="favorites_open">Open %1$s</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>

@@ -12,6 +12,7 @@ import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SavedMealRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DescribedMatch
+import app.forkcast.core.domain.SearchRanking
 import app.forkcast.core.model.SavedMeal
 import app.forkcast.core.data.secrets.SecretName
 import app.forkcast.core.data.secrets.SecretStore
@@ -52,6 +53,11 @@ data class SearchUiState(
     val local: List<Food> = emptyList(),
     val usda: RemoteResults = RemoteResults.Idle,
     val off: RemoteResults = RemoteResults.Idle,
+    /**
+     * Your foods and both databases in one ranked list (owner, 2026-10-29): your foods at once,
+     * the databases merged in once both have answered, so the list doesn't reshuffle twice.
+     */
+    val results: List<Food> = emptyList(),
     val recents: List<Food> = emptyList(),
     val favorites: List<Food> = emptyList(),
     val custom: List<Food> = emptyList(),
@@ -65,6 +71,13 @@ data class SearchUiState(
     val photo: java.io.File? = null,
 ) {
     val isSearching: Boolean get() = query.isNotBlank()
+
+    /** A database is still answering. */
+    val remoteLoading: Boolean get() = usda is RemoteResults.Loading || off is RemoteResults.Loading
+
+    /** Favorites by id and by source id (a search result starred before it was ever opened). */
+    fun isFavorite(food: Food): Boolean =
+        food.isFavorite || favorites.any { (food.id.isNotEmpty() && it.id == food.id) || (food.sourceId != null && it.source == food.source && it.sourceId == food.sourceId) }
 
     /**
      * No good results: nothing of your own, and the databases are done with fewer than three
@@ -158,24 +171,41 @@ class SearchViewModel @Inject constructor(
         search.update { it.copy(query = query) }
         job?.cancel()
         if (query.isBlank()) {
-            search.update { it.copy(local = emptyList(), usda = RemoteResults.Idle, off = RemoteResults.Idle) }
+            search.update { it.copy(local = emptyList(), usda = RemoteResults.Idle, off = RemoteResults.Idle, results = emptyList()) }
             return
         }
         job = viewModelScope.launch {
             // Your own foods show at once and work offline (SPEC §4.3).
-            search.update { it.copy(local = foods.searchLocal(query)) }
+            val local = foods.searchLocal(query)
+            val uses = foods.useCounts(local.map { it.id })
+            search.update { it.copy(local = local, results = SearchRanking.rank(query, local, uses)) }
             delay(DEBOUNCE_MS)
             search.update { it.copy(usda = RemoteResults.Loading, off = RemoteResults.Loading) }
             val usda = async { remote { foods.searchUsda(query) } }
             val off = async { remote { foods.searchOff(query) } }
             val usdaResult = usda.await()
-            search.update { it.copy(usda = usdaResult) }
             val offResult = off.await()
             // Drop OFF items USDA already returned (same barcode).
             val usdaBarcodes = (usdaResult as? RemoteResults.Done)?.foods?.mapNotNull { it.barcode }?.toSet().orEmpty()
-            search.update {
-                it.copy(off = if (offResult is RemoteResults.Done) RemoteResults.Done(offResult.foods.filter { f -> f.barcode == null || f.barcode !in usdaBarcodes }) else offResult)
-            }
+            val offShown = if (offResult is RemoteResults.Done) RemoteResults.Done(offResult.foods.filter { f -> f.barcode == null || f.barcode !in usdaBarcodes }) else offResult
+            val merged = SearchRanking.merge(
+                query,
+                own = local,
+                usda = (usdaResult as? RemoteResults.Done)?.foods.orEmpty(),
+                off = (offShown as? RemoteResults.Done)?.foods.orEmpty(),
+                uses = uses,
+            )
+            search.update { it.copy(usda = usdaResult, off = offShown, results = merged) }
+        }
+    }
+
+    /** The star on a row: a search result is saved on this phone first, like when it's opened. */
+    fun toggleFavorite(food: Food) {
+        viewModelScope.launch {
+            val favorite = !state.value.isFavorite(food)
+            val id = if (food.id.isNotEmpty()) food.id else foods.cache(food)
+            foods.setFavorite(id, favorite)
+            search.update { s -> s.copy(results = s.results.map { if (it === food) it.copy(id = id, isFavorite = favorite) else it }) }
         }
     }
 

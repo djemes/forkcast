@@ -85,6 +85,10 @@ interface FoodDao {
     @Query("SELECT * FROM food WHERE deletedAt IS NULL AND isFavorite = 1 ORDER BY name")
     fun observeFavorites(): Flow<List<FoodEntity>>
 
+    /** How often each food was logged, for ranking search results (owner, 2026-10-29). */
+    @Query("SELECT foodId, COUNT(*) AS uses FROM log_entry WHERE deletedAt IS NULL AND foodId IN (:ids) GROUP BY foodId")
+    suspend fun useCounts(ids: List<String>): List<FoodUses>
+
     @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source IN ('CUSTOM', 'LABEL', 'RECIPE', 'AI_TEXT') ORDER BY name")
     fun observeCustom(): Flow<List<FoodEntity>>
 
@@ -249,3 +253,6 @@ interface RecipeDao {
     @Query("UPDATE recipe_ingredient SET deletedAt = :now, updatedAt = :now WHERE recipeId = :recipeId AND deletedAt IS NULL AND id NOT IN (:keep)")
     suspend fun softDeleteIngredientsExcept(recipeId: String, keep: List<String>, now: Long)
 }
+
+/** A food's number of log entries ([FoodDao.useCounts]). */
+data class FoodUses(val foodId: String, val uses: Int)
