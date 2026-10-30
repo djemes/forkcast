@@ -18,6 +18,8 @@ import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.domain.DrinkWater
+import app.forkcast.core.domain.MealNaming
+import app.forkcast.core.model.MealEstimateJson
 import app.forkcast.core.domain.MealTimes
 import app.forkcast.core.model.AiRecipient
 import app.forkcast.core.model.EstimatedItem
@@ -48,6 +50,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.UUID
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.coroutines.cancellation.CancellationException
@@ -137,8 +140,13 @@ interface AiEstimateRepository {
      * remembered, and the entry is logged (or updated) without the AI·review badge.
      */
     suspend fun saveReview(id: String, components: List<AiComponentEntity>, portion: Double)
-    /** "Save as food" after a described meal: a food (AI · text) with the estimate's nutrition. Returns its id. */
+    /**
+     * "Save as food" (⋯ menu): a food with the estimate's nutrition (the plate at 1×), source AI or
+     * AI · text, linked to the entry. An entry already linked to a food returns that one. Returns its id.
+     */
     suspend fun saveAsFood(id: String, name: String): String?
+    /** "Rename" (pencil): the estimate's name and its entry's; the AI won't change it on a later "Correct it". */
+    suspend fun rename(id: String, name: String)
     suspend fun delete(id: String)
     /** Deletes photos older than the retention setting (SPEC §4.6). */
     suspend fun cleanUpPhotos()
@@ -279,11 +287,16 @@ class DefaultAiEstimateRepository @Inject constructor(
                 dao.replaceComponents(id, components, clock.millis())
                 val cur = dao.estimate(id) ?: e
                 val totals = ComponentEdits.totals(components, cur.portion)
+                val slotNames = mealSlots.observeMealSlots().first().map { it.name }
+                // A name the user gave (pencil) stays when "Correct it" comes back.
+                val userNamed = cur.mealName != null &&
+                    cur.result?.let { prev -> cur.mealName != prev.mealName && cur.mealName != autoName(prev, slotNames) } == true
                 val question = r.parsed.clarifyingQuestion
                 val done = cur.copy(
                     status = if (question != null) EstimateStatus.NEEDS_INPUT else EstimateStatus.DONE,
                     profileId = p.id, profileName = p.name, provider = p.provider, model = r.model, tierLabel = p.tierLabel,
-                    rawJson = r.rawJson, result = r.parsed, warnings = r.warnings, mealName = r.parsed.mealName.ifBlank { null },
+                    rawJson = r.rawJson, result = r.parsed, warnings = r.warnings,
+                    mealName = if (userNamed) cur.mealName else autoName(r.parsed, slotNames),
                     kcalLow = totals.low, kcalExpected = totals.expected, kcalHigh = totals.high,
                     inputTokens = r.inputTokens, outputTokens = r.outputTokens, latencyMs = r.latencyMs,
                     errorCode = null, errorDetail = null, retryAfter = null, correction = null, notified = false,
@@ -490,17 +503,38 @@ class DefaultAiEstimateRepository @Inject constructor(
         if (saved.status == EstimateStatus.DONE) writeLogEntry(dao.estimate(id) ?: saved, kept)
     }
 
+    /**
+     * The model's meal_name, or one built from the main components when it's generic ("Snack",
+     * "Lunch at 13:15"; owner, 2026-10-30). Joined in the app's language.
+     */
+    private fun autoName(result: MealEstimateJson, slotNames: List<String>): String? {
+        val locale = context.resources.configuration.locales[0] ?: Locale.getDefault()
+        val joiners = MealNaming.Joiners(context.getString(R.string.meal_name_two), context.getString(R.string.meal_name_three))
+        val parts = result.items.map { MealNaming.Part(it.name, it.nutrients.kcal, it.isHiddenIngredient) }
+        return MealNaming.name(result.mealName, parts, slotNames, joiners, locale)
+    }
+
+    override suspend fun rename(id: String, name: String) {
+        val clean = name.trim().ifBlank { return }
+        val e = dao.estimate(id) ?: return
+        update(e.copy(mealName = clean))
+        e.logEntryId?.let { log.get(it) }?.let { log.update(it.copy(displayName = clean)) }
+    }
+
     override suspend fun saveAsFood(id: String, name: String): String? {
         val e = dao.estimate(id) ?: return null
+        // One food per entry: a "★ Favorite" from Today may have made it already.
+        e.logEntryId?.let { log.get(it) }?.foodId?.takeIf { foods.get(it) != null }?.let { return it }
         val components = dao.components(id)
         val grams = components.sumOf { it.grams }
         if (grams <= 0) return null
         val total = components.map { it.nutrientsUsed }.sumNutrients()
         val waterOnly = components.isNotEmpty() && components.all { DrinkWater.snapshotCountsAsWater(it.name, it.usdaQuery, it.nutrientsUsed, it.grams) }
-        // Keyed by the estimate (source AI_TEXT, sourceId = estimate id): saving the review again updates that food, no duplicate.
+        // Keyed by the estimate (sourceId = estimate id): saving again updates that food, no duplicate.
         val foodId = foods.cache(
             Food(
-                id = "", name = name.trim().ifBlank { e.mealName ?: e.description.orEmpty() }, brand = null, source = FoodSource.AI_TEXT,
+                id = "", name = name.trim().ifBlank { e.mealName ?: e.description.orEmpty() }, brand = null,
+                source = if (e.kind == EstimateKind.TEXT) FoodSource.AI_TEXT else FoodSource.AI,
                 sourceId = e.id, barcode = null, servingSizes = listOf(ServingSize(SERVING_LABEL, grams)),
                 nutrientsPer100g = total.mapValues { (_, v) -> v * 100.0 / grams },
                 isFavorite = false, lastUsedAt = null, lastQuantity = null, lastServingLabel = null,

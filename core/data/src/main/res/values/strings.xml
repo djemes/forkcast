@@ -21,6 +21,9 @@
     <string name="described_meal">Described meal</string>
     <string name="estimate_gave_up_title">%1$s wasn\'t estimated</string>
     <string name="estimate_gave_up_notification">Tap to see what was tried and retry, or log it another way.</string>
+    <!-- An AI meal named after its main components (MealNaming): "Chicken & rice", "Chicken, rice & guacamole". -->
+    <string name="meal_name_two">%1$s &amp; %2$s</string>
+    <string name="meal_name_three">%1$s, %2$s &amp; %3$s</string>
     <string name="photo_meal">Photo meal</string>
     <!-- DESIGN.md §6: factual and kind. -->
     <string name="estimate_ready_notification">%1$s estimated: ~%2$s kcal (%3$s–%4$s). Tap to review.</string>

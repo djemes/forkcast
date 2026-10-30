@@ -7,17 +7,21 @@ import kotlinx.serialization.SerializationException
 /** System prompt and user text (AI_PROVIDERS.md §4). Same words for every provider. */
 object MealPrompt {
     /** Recorded on each estimate, so accuracy can be compared across prompt versions. */
-    const val VERSION = "meal-v2"
+    const val VERSION = "meal-v3"
 
-    /** v2 (2026-10-23): described meals, chain-restaurant and packaged items, drinks as items. */
+    /**
+     * v2 (2026-10-23): described meals, chain-restaurant and packaged items, drinks as items.
+     * v3 (2026-10-30): naming rules for meal_name; the slot and time are context, never the name
+     * (owner: names came back as "Snack" or "Lunch at 13:15").
+     */
     val system: String by lazy {
-        requireNotNull(MealPrompt::class.java.getResourceAsStream("/ai/meal_system_prompt_v2.txt")) { "prompt resource missing" }
+        requireNotNull(MealPrompt::class.java.getResourceAsStream("/ai/meal_system_prompt_v3.txt")) { "prompt resource missing" }
             .bufferedReader().use { it.readText().trim() }
     }
 
     /** The text that follows the images in the user turn. */
     fun userText(r: MealEstimateRequest): String = buildString {
-        append("Meal: ${r.mealSlot} at ${r.localTime}. Units the user thinks in: ${r.unitsHint}.\n")
+        append("Logged as ${r.mealSlot} at ${r.localTime} (context only; never use it in meal_name). Units the user thinks in: ${r.unitsHint}.\n")
         append("Write every food and meal name in ${r.language}.\n")
         if (r.isTextOnly) append("No photo: estimate from the description alone.\n")
         append("Description: ${r.description?.takeIf { it.isNotBlank() }?.trim() ?: "none"}\n")

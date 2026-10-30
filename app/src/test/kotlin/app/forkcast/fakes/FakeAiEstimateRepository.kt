@@ -46,6 +46,11 @@ class FakeAiEstimateRepository : AiEstimateRepository {
         calls += "save:${components.size}:$portion"
     }
     override suspend fun saveAsFood(id: String, name: String): String? { calls += "food:$name"; return "f1" }
+    override suspend fun rename(id: String, name: String) {
+        calls += "rename:$name"
+        rows.value = rows.value.map { if (it.id == id) it.copy(mealName = name) else it }
+        details.update { m -> m[id]?.let { d -> m + (id to d.copy(estimate = d.estimate.copy(mealName = name))) } ?: m }
+    }
     override suspend fun delete(id: String) {
         calls += "delete"
         details.update { it - id }
