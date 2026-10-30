@@ -1,39 +1,125 @@
-<p align="center"><img src="assets/brand/logo-512.png" width="112" alt="Forkcast logo"></p>
+<p align="center"><img src="assets/brand/logo-512.png" width="96" alt="Forkcast logo: a fork inside a ring"></p>
 
-# Forkcast
+<h1 align="center">Forkcast</h1>
 
-A private, offline-first Android calorie and nutrition tracker. Log a meal by scanning a barcode, searching, taking a photo or describing it in a sentence. Forkcast tracks it against a daily budget built from your weight goal and your real maintenance calories.
+<p align="center"><b>A free calorie and nutrition tracker for Android.<br>Your food log stays on your phone.</b></p>
 
 <p align="center">
-  <img src="assets/screenshots/today.png" width="240" alt="Today: calories left on the ring, macros and meals">
-  <img src="assets/screenshots/log.png" width="240" alt="Log sheet: Scan, Photo, Describe, Search">
-  <img src="assets/screenshots/trends.png" width="240" alt="Trends: calories against the budget and the weight trend">
+  <a href="https://github.com/djemes/forkcast/releases/latest">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="assets/readme/download-dark.png">
+      <img src="assets/readme/download-light.png" width="300" alt="Download for Android">
+    </picture>
+  </a>
 </p>
+
+<p align="center">
+  <img src="assets/readme/badges/android.svg" alt="Android 10 or newer">
+  <img src="assets/readme/badges/license.svg" alt="License: GPL-3.0">
+  <img src="assets/readme/badges/price.svg" alt="Free, no ads">
+</p>
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/banner-dark.webp">
+    <img src="assets/readme/banner-light.webp" width="100%" alt="Three Forkcast screens: Today with the calorie ring and the day's meals, the Log sheet with Scan, Photo, Describe and Search, and Trends with calories against the budget and the weight trend">
+  </picture>
+</p>
+
+## Why Forkcast
+
+- **Log a meal your way:** scan a barcode, search, or describe it in a sentence or a photo.
+- **A budget that learns:** your daily budget adjusts to the calories you actually burn, worked out from your weight trend.
+- **Your data stays on your phone:** no account, no ads, no tracking.
+- **Free and open source.**
 
 ## What it does
 
-- **Barcode, search and labels:** USDA FoodData Central and Open Food Facts, plus nutrition-label scanning for products the databases don't know
-- **AI logging:** a photo (up to three) or a short description goes to the AI provider you choose (Gemini, Claude or any OpenAI-compatible endpoint), comes back as itemized foods matched to USDA, and you review and adjust it. If one service is busy or out of its daily limit, the next one in your list takes over. Forkcast asks before it sends anything to a service for the first time
-- **Budget with exercise eat-back:** the daily budget follows your goal and pace, learns your real maintenance from your weight trend, and adds part of unusually active days back
-- **Health Connect:** weight, body fat, steps and workouts come in; food and water go out
-- **Water:** one tap adds your usual glass, can, bottle or tumbler; drinks like water and plain tea count automatically
-- **Trends:** calories against the budget, weight trend and goal date, macros, nutrients, meal timing, and a weekly check-in
-- **Backups:** one backup file you save anywhere (optionally with a password), plus automatic weekly backups to a folder you choose
-- **Privacy, bring your own key:** your data stays on your phone. No account, no server, no analytics. API keys are encrypted on the phone, and Android's unlock prompt is required before one is shown
+<img src="assets/readme/screens/log-light.webp#gh-light-mode-only" align="right" width="240" alt="The Log sheet: meal chips, then Scan, Photo, Describe and Search, Quick add calories, Recipes, and recent and favorite foods">
+<img src="assets/readme/screens/log-dark.webp#gh-dark-mode-only" align="right" width="240" alt="The Log sheet in the dark theme">
 
-## Basic use
+### Logging
 
-1. Install the APK from [Releases](../../releases). Later versions arrive through Settings › Updates.
-2. Read and accept the terms, then answer the onboarding questions (units, body, activity, goal) to get your daily budget.
-3. Optional: add an AI service in Settings › AI services (a free Gemini key works; the guide walks you through it), connect Health Connect, and choose a folder for automatic backups in Settings › Backup & data.
-4. Tap **Log** on Today and pick Scan, Photo, Describe or Search. The ring shows what's left for the day.
+Scan a barcode, search Open Food Facts (and USDA FoodData Central, with a free key), or read a nutrition label with the camera. Favorites and recent foods are one tap away.
 
-Android 10 or newer. English and Portuguese (Brazil).
+With an AI service you set up, take a photo of a meal or describe it in a sentence: Forkcast shows an estimate with a likely range, which you can review and adjust. AI is optional, uses your own key, and its estimates can be wrong.
 
-For adults (18+). Not medical advice: Forkcast gives estimates, and those from photos can be well off, so weigh food when accuracy matters. Read the [Terms of Use and Disclaimer](TERMS.md) and the [Privacy Policy](PRIVACY.md).
+<br clear="right">
 
-## License
+<img src="assets/readme/screens/budget-light.webp#gh-light-mode-only" align="left" width="240" alt="Today's budget: maintenance, goal deficit, budget, eaten and what's left, then each meal against its share">
+<img src="assets/readme/screens/budget-dark.webp#gh-dark-mode-only" align="left" width="240" alt="Today's budget in the dark theme">
 
-Forkcast is free and open-source software under the [GNU General Public License, version 3](LICENSE), with an [additional permission](LICENSE-ADDITIONAL-PERMISSION.md) for Google's ML Kit and Play services libraries. The licenses of the libraries it uses are in the app under Settings › About › Licenses.
+### A daily budget
 
-Food data from [Open Food Facts](https://openfoodfacts.org) (Open Database License) and [USDA FoodData Central](https://fdc.nal.usda.gov). Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, or Samsung. Product names belong to their owners.
+Your budget starts from your goal and the pace you pick. After a few weeks of logging and weighing in, Forkcast compares what you ate with how your weight trend moved and adjusts to what your body actually burns. Unusually active days add part of the exercise back. Tap the ring to see how today's budget was worked out.
+
+<br clear="left">
+
+<img src="assets/readme/screens/trends-light.webp#gh-light-mode-only" align="right" width="240" alt="Trends: average eaten against the average budget, a bar chart of calories per day with the budget as a dashed line, and the weight trend">
+<img src="assets/readme/screens/trends-dark.webp#gh-dark-mode-only" align="right" width="240" alt="Trends in the dark theme">
+
+### Trends
+
+Calories against your budget, your weight trend and goal date, macros, nutrients, meal timing, and a weekly check-in.
+
+### Water and Health Connect
+
+One tap adds your usual glass or bottle. With Health Connect, weight, body fat, steps and workouts come in from your other apps and devices, and your food and water go out.
+
+<br clear="right">
+
+<img src="assets/readme/screens/backup-light.webp#gh-light-mode-only" align="left" width="240" alt="Backup and data: backup password, Back up now, Back up and share, and automatic backup to a folder you choose">
+<img src="assets/readme/screens/backup-dark.webp#gh-dark-mode-only" align="left" width="240" alt="Backup and data in the dark theme">
+
+### Backups
+
+One encrypted backup file you save wherever you want, and automatic backups to a folder you choose, such as one your cloud drive syncs. Moving to a new phone is a restore away.
+
+English and Portuguese (Brazil).
+
+<br clear="left">
+
+## Privacy at a glance
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/privacy-dark.png">
+    <img src="assets/readme/privacy-light.png" width="640" alt="Your phone holds your food log and weights, meal photos, settings and your keys, encrypted. Only what you use connects to it: food databases when you search or scan (Open Food Facts, and USDA with your own key); your AI service, optional, with your own key and asked first (meal photos and descriptions); your backups, wherever you save them, and Android's device backup if it's on; Health Connect, on your phone, shared only with what you allow; and GitHub, to check for updates. No account, no ads, no tracking.">
+  </picture>
+</p>
+
+Forkcast has no servers and no accounts, and its developer receives none of your data. The [Privacy Policy](PRIVACY.md) lists exactly what goes where.
+
+## Get started
+
+1. **Download** the APK from the [latest release](https://github.com/djemes/forkcast/releases/latest).
+2. **Install** it: your phone asks once to allow installs from your browser.
+3. **Set up:** a few questions give you your daily budget. Then tap **Log**.
+
+The [install guide](INSTALL.md) walks through every step, including updates and backups.
+
+<details>
+<summary><b>Questions</b></summary>
+
+**Why isn't it on Google Play?**
+Forkcast is a free project by one person and is published here on GitHub. You install it once; after that it updates itself from Settings › Updates.
+
+**Do I need AI?**
+No. Barcode, search, labels, recipes and quick add all work without it. AI is an extra for logging from a photo or a sentence, with a key from a provider you choose (Google's Gemini has a free tier).
+
+**What leaves my phone?**
+Only what a feature you use needs: a search or barcode goes to the food databases, a meal photo or description to your AI service, an update check to GitHub. Your weight, goals and other health data never go to an AI service. See the [Privacy Policy](PRIVACY.md).
+
+**How do updates work?**
+Settings › Updates checks this page's releases, downloads the new version, checks it, and asks Android to install it. Your data stays.
+</details>
+
+---
+
+AI is optional, uses your own key, and its estimates can be wrong. Forkcast is for adults (18+) and is not medical advice; see the [Terms of Use and Disclaimer](TERMS.md).
+
+Help is best effort, through [GitHub](SUPPORT.md).
+
+Free and open-source under the [GNU GPL, version 3](LICENSE), with an [additional permission](LICENSE-ADDITIONAL-PERMISSION.md). Food data from [Open Food Facts](https://openfoodfacts.org) (Open Database License) and [USDA FoodData Central](https://fdc.nal.usda.gov).
+
+Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, or Samsung. Product names belong to their owners.

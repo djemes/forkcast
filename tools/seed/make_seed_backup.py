@@ -1,6 +1,9 @@
 """Builds a year of realistic Forkcast data as a backup file, for upgrade and restore tests.
 
-  python tools/seed/make_seed_backup.py out.forkcast [--days 365] [--photos 20]
+  python tools/seed/make_seed_backup.py out.forkcast [--days 365] [--photos 20] [--demo]
+
+--demo makes the README's demo data (tools/screenshots): no brand names, a steady loss of about
+0.45 kg a week on meals near the budget, and no photos. Without it, the upgrade-test data as before.
 
 The result is a zip with forkcast.json (export schema v7) and meal photos, which every version
 from 1.4 on restores (1.4 reads it as its "Include photos" zip; 1.5+ as a .forkcast without a
@@ -20,7 +23,10 @@ parser = argparse.ArgumentParser()
 parser.add_argument("out")
 parser.add_argument("--days", type=int, default=365)
 parser.add_argument("--photos", type=int, default=20)
+parser.add_argument("--demo", action="store_true")
 args = parser.parse_args()
+if args.demo:
+    args.photos = 0
 
 rnd = random.Random(2026)
 ZONE = "America/New_York"
@@ -67,8 +73,10 @@ FOODS = [
 ]
 foods = []
 for name, brand, kcal, p, c, f, grams, label in FOODS:
+    if args.demo:
+        brand = None  # no real products in the README's pictures
     foods.append(stamp({
-        "id": uid(), "name": name, "brand": brand, "source": rnd.choice(["USDA", "OFF", "CUSTOM"]) if brand is None else "OFF",
+        "id": uid(), "name": name, "brand": brand, "source": "USDA" if args.demo else (rnd.choice(["USDA", "OFF", "CUSTOM"]) if brand is None else "OFF"),
         "sourceId": None, "barcode": None, "servingSizes": [{"label": label, "grams": grams}, {"label": "100 g", "grams": 100.0}],
         "nutrientsPer100g": {"ENERGY_KCAL": kcal, "PROTEIN_G": p, "CARBS_G": c, "FAT_G": f, "FIBER_G": round(rnd.uniform(0, 6), 1), "SODIUM_MG": round(rnd.uniform(0, 400))},
         "isFavorite": rnd.random() < 0.2, "lastUsedAt": None, "lastQuantity": None, "lastServingLabel": None,
@@ -86,18 +94,21 @@ PLANS = {"Breakfast": [[0, 1, 13], [2, 1, 13], [3, 3, 4, 13], [0, 14, 10]], "Lun
          "Dinner": [[8, 6, 7, 9], [15, 16, 17], [5, 22, 9, 6], [26, 27]], "Snacks": [[10], [11], [12, 10], [23], [24]]}
 
 entries, water, weights, days, activity = [], [], [], [], []
-weight = 92.0
+weight = 90.0 if args.demo else 92.0
+QTYS = [1.0, 1.0, 1.5, 1.5, 2.0] if args.demo else [1.0, 1.0, 1.0, 0.5, 1.5, 2.0]
 day = START
 while day <= TODAY:
-    skip = rnd.random() < 0.06  # an unlogged day now and then
+    skip = rnd.random() < (0.02 if args.demo else 0.06)  # an unlogged day now and then
     if not skip:
         for slot in slots:
-            if slot["name"] == "Snacks" and rnd.random() < 0.4:
+            if slot["name"] == "Snacks" and rnd.random() < (0.1 if args.demo else 0.4):
                 continue
+            if args.demo and day == TODAY and slot["name"] in ("Dinner", "Snacks"):
+                continue  # the README's Today is an afternoon: breakfast and lunch so far
             minute = rnd.randint(slot["startMinute"] + 30, min(slot["endMinute"], slot["startMinute"] + 200)) if slot["name"] != "Snacks" else rnd.randint(840, 1290)
             for idx in rnd.choice(PLANS[slot["name"]]):
                 food = foods[idx]
-                qty = rnd.choice([1.0, 1.0, 1.0, 0.5, 1.5, 2.0])
+                qty = rnd.choice(QTYS)
                 g, n = portion(food, qty)
                 entries.append(stamp({
                     "id": uid(), "date": day.isoformat(), "zoneId": ZONE, "mealSlotId": slot["id"], "foodId": food["id"],
@@ -108,9 +119,10 @@ while day <= TODAY:
         for _ in range(rnd.randint(3, 8)):
             m = rnd.randint(420, 1320)
             water.append(stamp({"id": uid(), "timestamp": ms(day, m), "date": day.isoformat(), "zoneId": ZONE, "ml": rnd.choice([250.0, 355.0, 500.0]), "hcRecordId": None}, day, m))
-    weight += rnd.uniform(-0.25, 0.18)
+    weight += rnd.uniform(-0.2, 0.07) if args.demo else rnd.uniform(-0.25, 0.18)
     if rnd.random() < 0.55:
-        weights.append(stamp({"id": uid(), "timestamp": ms(day, 420), "kg": round(weight, 2), "bodyFatPct": None, "source": "MANUAL", "hcRecordId": None}, day, 420))
+        scale = weight + (rnd.uniform(-0.6, 0.6) if args.demo else 0.0)  # day-to-day water weight
+        weights.append(stamp({"id": uid(), "timestamp": ms(day, 420), "kg": round(scale, 2), "bodyFatPct": None, "source": "MANUAL", "hcRecordId": None}, day, 420))
     if rnd.random() < 0.7:
         steps = rnd.randint(2500, 14000)
         activity.append(stamp({"id": uid(), "date": day.isoformat(), "steps": steps, "activeKcal": round(steps * 0.04, 1), "totalKcal": None, "exerciseMinutes": rnd.choice([None, 20, 30, 45]), "sessions": []}, day, 1380))
@@ -139,7 +151,7 @@ for name, servings, idxs in [("Chili", 6, [17, 18, 16]), ("Overnight oats", 2, [
 export = {
     "schemaVersion": 7, "app": "Forkcast", "appVersion": "seed", "exportedAt": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"), "timeZone": ZONE,
     "profile": stamp({"id": "profile", "sex": "MALE", "birthDate": "1988-04-12", "heightCm": 180.3, "activityLevel": "LIGHT", "exerciseMode": "INCLUDED", "exerciseAddBackPct": 50}, START),
-    "goals": [stamp({"id": uid(), "goalType": "LOSE", "startDate": START.isoformat(), "startWeightKg": 92.0, "targetWeightKg": 82.0, "targetDate": None, "weeklyRateKg": 0.45, "isActive": True}, START)],
+    "goals": [stamp({"id": uid(), "goalType": "LOSE", "startDate": START.isoformat(), "startWeightKg": weights[0]["kg"] if args.demo else 92.0, "targetWeightKg": 75.0 if args.demo else 82.0, "targetDate": None, "weeklyRateKg": 0.45, "isActive": True}, START)],
     "targetOverrides": [], "tdeeEstimates": [], "mealSlots": slots, "foods": foods, "recipes": recipes, "recipeIngredients": ingredients,
     "savedMeals": saved, "savedMealItems": saved_items, "logEntries": entries, "aiEstimates": [], "aiComponents": [], "aiProfiles": [],
     "usageRecords": [], "notificationLog": [], "aiMatchCache": [], "weights": weights, "water": water, "activityDays": activity, "dayStatus": days,
