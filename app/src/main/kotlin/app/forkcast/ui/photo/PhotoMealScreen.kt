@@ -188,7 +188,7 @@ fun PhotoMealScreen(
 private fun CaptureStep(state: PhotoMealUiState, onEvent: (PhotoMealEvent) -> Unit, onBack: () -> Unit, openGallery: () -> Unit) {
     val context = LocalContext.current
     // Photos are downscaled to 1568 px before they're sent (AI_PROVIDERS.md §5), so capture near
-    // 2048 × 1536 instead of the full sensor (up to 200 MP on the S25 Ultra): faster shutter, small files.
+    // 2048 × 1536 instead of the full sensor (up to 200 MP on recent phones): faster shutter, small files.
     val capture = remember {
         ImageCapture.Builder()
             .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)

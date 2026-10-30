@@ -85,8 +85,8 @@ class FoodRepositoryTest {
     }
 
     @Test fun customFoodsCreateUpdateDelete() = runTest {
-        val id = repo.saveCustom(remote("Gabe's chili").copy(source = FoodSource.CUSTOM, sourceId = null))
-        assertThat(repo.observeCustom().first().single().name).isEqualTo("Gabe's chili")
+        val id = repo.saveCustom(remote("Home chili").copy(source = FoodSource.CUSTOM, sourceId = null))
+        assertThat(repo.observeCustom().first().single().name).isEqualTo("Home chili")
         repo.saveCustom(repo.get(id)!!.copy(name = "Chili"))
         assertThat(repo.get(id)!!.name).isEqualTo("Chili")
         repo.delete(id)

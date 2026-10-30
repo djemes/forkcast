@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem privately
+    url: https://github.com/djemes/forkcast/security/advisories/new
+    about: Don't open a public issue for a vulnerability.
+  - name: Installing, updating and backups
+    url: https://github.com/djemes/forkcast/blob/main/INSTALL.md
+    about: Step-by-step guide, for when something doesn't install or update.

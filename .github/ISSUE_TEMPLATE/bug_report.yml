@@ -1,0 +1,50 @@
+name: Bug report
+description: Something in Forkcast doesn't work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting this. Forkcast is made by one person, so help is best effort.
+        **Please don't post API keys, tokens, backup files or your health data.** Issues are public.
+        For a security problem, report it privately instead (see SECURITY.md).
+  - type: input
+    id: app-version
+    attributes:
+      label: Forkcast version
+      description: Settings › About shows it
+      placeholder: "1.9.0"
+    validations:
+      required: true
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version and phone model
+      description: In your phone's settings, under About phone
+      placeholder: "Android 15, Pixel 8"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: What did you do?
+      description: Step by step, so someone else can do the same
+      placeholder: |
+        1. Open Today
+        2. Tap Log, then Scan
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Screenshots or crash report
+      description: |
+        After a crash, Today offers to save a short report (no meals, notes or keys); attach it here.
+        Check screenshots for personal data first.
