@@ -2,7 +2,7 @@
 <resources>
     <!-- About: source link and Check for updates (owner request 2026-10-20) -->
     <string name="about_github_title">Código e versões</string>
-    <string name="about_github_body">O Forkcast fica em um repositório privado no GitHub. O link abre no seu navegador (entre no GitHub para ver).</string>
+    <string name="about_github_body">O código e as versões do Forkcast estão no GitHub. O link abre no seu navegador.</string>
     <string name="about_github_open">Abrir no GitHub</string>
     <string name="about_releases_open">Abrir as versões no GitHub</string>
 
@@ -18,10 +18,8 @@
     <string name="update_allow_body">Só mais um passo: o Android pede uma vez antes de um app poder instalar as próprias atualizações. Na próxima tela, ative \"Permitir desta fonte\", volte aqui e toque em Instalar. Seus dados continuam.</string>
     <string name="update_allow">Permitir instalações do Forkcast</string>
     <string name="update_install_again">Instalar</string>
-    <string name="update_no_token">O projeto do Forkcast no GitHub ainda é privado, então a verificação precisa de um token do GitHub (em Avançado). Você também pode abrir as Releases no GitHub e baixar o APK por lá.</string>
     <string name="update_offline">Sem conexão. Tente de novo quando estiver online.</string>
-    <string name="update_token_rejected">O GitHub recusou o token. Confira se ele não expirou e se pode ler o repositório forkcast (Contents: somente leitura).</string>
-    <string name="update_no_release">O GitHub ainda não tem nenhuma versão, ou o token não consegue ver o repositório.</string>
+    <string name="update_no_release">O GitHub ainda não tem nenhuma versão.</string>
     <string name="update_wrong_download">O GitHub enviou algo que não é o APK. Tente de novo; se continuar, baixe o APK na página de Releases.</string>
     <string name="update_http">O GitHub respondeu com um erro (HTTP %1$d). Tente de novo mais tarde.</string>
     <string name="update_no_apk">Essa versão não tem um APK anexado.</string>
@@ -32,12 +30,6 @@
     <string name="update_failed">A instalação não terminou. Nada foi alterado.</string>
     <string name="update_failed_detail">A instalação não terminou: %1$s. Nada foi alterado.</string>
 
-    <string name="update_token">Token do GitHub</string>
-    <string name="update_token_new">Novo token do GitHub</string>
-    <string name="update_token_remove">Remover token</string>
-    <string name="update_token_help_title">Como criar um token</string>
-    <string name="update_token_help">1. No github.com, abra Settings › Developer settings › Personal access tokens › Fine-grained tokens › Generate new token.\n2. Repository access: Only select repositories › forkcast.\n3. Permissions › Repository permissions › Contents: Read-only.\n4. Escolha uma validade, gere, copie o token e cole aqui.\n\nEle fica criptografado neste celular e só é enviado ao GitHub quando o Forkcast procura atualizações.</string>
-    <string name="update_token_page">Abrir as configurações de token do GitHub</string>
 
     <!-- Settings › Updates (roadmap 2.0, task 1.5) -->
     <string name="update_from_github">Do GitHub, onde o Forkcast é publicado</string>
@@ -48,7 +40,6 @@
     <string name="update_auto_detail">No máximo uma vez por dia. Você recebe uma notificação quando sair uma versão nova; nada é instalado sozinho.</string>
     <string name="update_beta">Atualizações beta</string>
     <string name="update_beta_detail">Oferecer também versões antecipadas para testar antes da final. Podem ter erros.</string>
-    <string name="update_token_why">Um token do GitHub só é necessário enquanto o projeto do Forkcast no GitHub for privado.</string>
     <string name="update_rate_limited">O GitHub limita quantas verificações podem vir de uma mesma rede. Tente de novo em uma hora.</string>
     <string name="update_rate_limited_until">O GitHub limita quantas verificações podem vir de uma mesma rede. Tente de novo depois das %1$s.</string>
     <string name="update_no_checksum">Esta versão não traz a informação que o Forkcast usa para conferir um download, então ele não consegue confirmar que o arquivo é autêntico. Nada foi alterado. Você pode baixar o APK na página de versões.</string>

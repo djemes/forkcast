@@ -3,8 +3,6 @@ package app.forkcast.core.data.update
 import android.content.Context
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
-import app.forkcast.core.data.secrets.SecretName
-import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.domain.AppVersion
 import app.forkcast.core.domain.Checksums
 import app.forkcast.core.network.update.GitHubReleases
@@ -12,8 +10,6 @@ import app.forkcast.core.network.update.Release
 import app.forkcast.core.network.update.UpdateError
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -23,8 +19,6 @@ import javax.inject.Singleton
 
 /** The answer to "Check for updates". */
 sealed interface UpdateCheck {
-    /** GitHub has no release this phone can see without a token: the repository is still private. */
-    data object NeedsToken : UpdateCheck
     data class UpToDate(val latestTag: String) : UpdateCheck
     data class Available(val release: Release) : UpdateCheck
     data class Failed(val error: UpdateError) : UpdateCheck
@@ -53,13 +47,9 @@ sealed interface Download {
  * Updates from GitHub Releases (owner, 2026-10-20; roadmap 2.0 task 1.5): finds the newest
  * release (betas only when asked), downloads its APK into the cache, and checks it against the
  * release's SHA-256 (SHA256SUMS and GitHub's digest), that it's this app, signed with this app's
- * key and newer, before the system installer is asked. The token is used only while the
- * repository is private.
+ * key and newer, before the system installer is asked.
  */
 interface UpdateRepository {
-    val hasToken: Flow<Boolean>
-    suspend fun savedToken(): String?
-    suspend fun setToken(token: String?)
     suspend fun check(currentVersionName: String, includeBetas: Boolean): UpdateCheck
     suspend fun download(release: Release, progress: (Long, Long) -> Unit): Download
 }
@@ -68,27 +58,17 @@ interface UpdateRepository {
 class GitHubUpdateRepository @Inject constructor(
     @ApplicationContext private val context: Context,
     private val releases: GitHubReleases,
-    private val secrets: SecretStore,
 ) : UpdateRepository {
 
-    override val hasToken: Flow<Boolean> = secrets.present.map { SecretName.GITHUB_TOKEN in it }
-
-    override suspend fun savedToken(): String? = secrets.get(SecretName.GITHUB_TOKEN)
-
-    override suspend fun setToken(token: String?) = secrets.set(SecretName.GITHUB_TOKEN, token)
-
     override suspend fun check(currentVersionName: String, includeBetas: Boolean): UpdateCheck {
-        val token = savedToken()
         return try {
             val newest = if (includeBetas) {
-                releases.recent(token).filter { AppVersion.parse(it.tag) != null }.maxByOrNull { AppVersion.parse(it.tag)!! }
+                releases.recent().filter { AppVersion.parse(it.tag) != null }.maxByOrNull { AppVersion.parse(it.tag)!! }
                     ?: throw UpdateError.NoRelease()
             } else {
-                releases.latest(token)
+                releases.latest()
             }
             if (AppVersion.isNewer(newest.tag, currentVersionName)) UpdateCheck.Available(newest) else UpdateCheck.UpToDate(newest.tag)
-        } catch (e: UpdateError.NoRelease) {
-            if (token == null) UpdateCheck.NeedsToken else UpdateCheck.Failed(e)
         } catch (e: UpdateError) {
             UpdateCheck.Failed(e)
         }
@@ -96,15 +76,14 @@ class GitHubUpdateRepository @Inject constructor(
 
     override suspend fun download(release: Release, progress: (Long, Long) -> Unit): Download {
         val asset = release.apk ?: return Download.Refused(ApkProblem.NO_APK_IN_RELEASE)
-        val token = savedToken()
         val dir = File(context.cacheDir, DIR).apply { mkdirs() }
         // One update at a time: older downloads go.
         dir.listFiles()?.forEach { it.delete() }
         val file = File(dir, "forkcast-${release.tag.removePrefix("v")}.apk")
         val expected = try {
             withContext(Dispatchers.IO) {
-                file.outputStream().use { out -> releases.download(token, asset, out, progress) }
-                expectedHashes(release, token)
+                file.outputStream().use { out -> releases.download(asset, out, progress) }
+                expectedHashes(release)
             }
         } catch (e: UpdateError) {
             file.delete()
@@ -120,10 +99,10 @@ class GitHubUpdateRepository @Inject constructor(
     }
 
     /** What the release says the APK's SHA-256 is: from SHA256SUMS and from GitHub's digest, whichever exist. */
-    private suspend fun expectedHashes(release: Release, token: String?): List<String> {
+    private suspend fun expectedHashes(release: Release): List<String> {
         val apk = release.apk ?: return emptyList()
         val fromSums = release.checksums?.let { sums ->
-            val text = ByteArrayOutputStream().also { releases.download(token, sums, it) { _, _ -> } }.toString(Charsets.UTF_8.name())
+            val text = ByteArrayOutputStream().also { releases.download(sums, it) { _, _ -> } }.toString(Charsets.UTF_8.name())
             // A SHA256SUMS that doesn't list the APK can't vouch for it.
             Checksums.fromSums(text, apk.name) ?: return listOf(MISSING)
         }

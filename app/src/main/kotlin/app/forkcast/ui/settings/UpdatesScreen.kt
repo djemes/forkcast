@@ -20,7 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -50,9 +49,6 @@ import app.forkcast.core.model.UpdateSettings
 import app.forkcast.core.network.update.Release
 import app.forkcast.core.network.update.UpdateError
 import app.forkcast.di.GITHUB_URL
-import app.forkcast.ui.common.AdvancedSection
-import app.forkcast.ui.common.SavedKeyField
-import app.forkcast.ui.common.SecretText
 import app.forkcast.ui.common.ToggleRow
 import app.forkcast.update.AppInstaller
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -90,11 +86,6 @@ class UpdatesViewModel @Inject constructor(
     private val _ui = MutableStateFlow<UpdateUi>(UpdateUi.Idle)
     val ui: StateFlow<UpdateUi> = _ui.asStateFlow()
 
-    /** The saved token, masked with show/hide like the API keys; never logged. */
-    val token: StateFlow<SecretText?> = updates.hasToken
-        .map { has -> if (has) updates.savedToken()?.let(::SecretText) else null }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
-
     val options: StateFlow<UpdateSettings> = settings.settings.map { it.updates }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UpdateSettings())
 
@@ -127,29 +118,24 @@ class UpdatesViewModel @Inject constructor(
 
     fun setAuto(on: Boolean) = viewModelScope.launch { settings.update { it.copy(updates = it.updates.copy(auto = on)) } }
     fun setBeta(on: Boolean) = viewModelScope.launch { settings.update { it.copy(updates = it.updates.copy(beta = on)) } }
-    fun saveToken(token: String) = viewModelScope.launch { updates.setToken(token) }
-    fun removeToken() = viewModelScope.launch { updates.setToken(null) }
 }
 
 @Composable
 fun UpdatesRoute(onBack: () -> Unit, viewModel: UpdatesViewModel = hiltViewModel()) {
     val ui by viewModel.ui.collectAsStateWithLifecycle()
-    val token by viewModel.token.collectAsStateWithLifecycle()
     val options by viewModel.options.collectAsStateWithLifecycle()
     val installer by viewModel.installer.collectAsStateWithLifecycle()
     LaunchedEffect(Unit) { viewModel.checkOnOpen() }
     UpdatesScreen(
         versionName = BuildConfig.VERSION_NAME,
         onBack = onBack,
-        state = UpdatesState(ui, installer, token, options),
+        state = UpdatesState(ui, installer, options),
         actions = UpdatesActions(
             check = viewModel::check,
             download = viewModel::download,
             install = viewModel::install,
             setAuto = viewModel::setAuto,
             setBeta = viewModel::setBeta,
-            saveToken = viewModel::saveToken,
-            removeToken = viewModel::removeToken,
         ),
     )
 }
@@ -157,7 +143,6 @@ fun UpdatesRoute(onBack: () -> Unit, viewModel: UpdatesViewModel = hiltViewModel
 data class UpdatesState(
     val ui: UpdateUi = UpdateUi.Idle,
     val installer: AppInstaller.Status = AppInstaller.Status.Idle,
-    val token: SecretText? = null,
     val options: UpdateSettings = UpdateSettings(),
 )
 
@@ -167,14 +152,12 @@ data class UpdatesActions(
     val install: (UpdateUi.Ready) -> Unit = {},
     val setAuto: (Boolean) -> Unit = {},
     val setBeta: (Boolean) -> Unit = {},
-    val saveToken: (String) -> Unit = {},
-    val removeToken: () -> Unit = {},
 )
 
 /**
  * Settings › Updates (roadmap 2.0, task 1.5; GitHub build only): the version, Check now, the
- * release notes before installing, automatic checks and betas, and (under Advanced) the token
- * the private repository still needs until it goes public.
+ * release notes before installing, automatic checks and betas. The repository is public, so
+ * there's nothing to sign in with (the token field went in 1.9.0, roadmap 5.5).
  */
 @Composable
 fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, actions: UpdatesActions) {
@@ -211,7 +194,7 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
                         }
                         Button(onClick = { actions.download(c.release) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_install)) }
                     }
-                    UpdateCheck.NeedsToken, is UpdateCheck.Failed ->
+                    is UpdateCheck.Failed ->
                         OutlinedButton(onClick = { uri.openUri("$GITHUB_URL/releases") }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.about_releases_open)) }
                     is UpdateCheck.UpToDate -> Unit
                 }
@@ -238,13 +221,6 @@ fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, 
                 ToggleRow(stringResource(R.string.update_auto), stringResource(R.string.update_auto_detail), state.options.auto, actions.setAuto)
                 ToggleRow(stringResource(R.string.update_beta), stringResource(R.string.update_beta_detail), state.options.beta, actions.setBeta)
             }
-
-            AdvancedSection {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(stringResource(R.string.update_token_why), style = MaterialTheme.typography.bodyMedium)
-                    TokenField(state.token, actions)
-                }
-            }
         }
     }
 }
@@ -256,7 +232,6 @@ private fun statusText(state: UpdatesState, canInstall: Boolean): String? {
         UpdateUi.Idle -> null
         UpdateUi.Checking -> stringResource(R.string.update_checking)
         is UpdateUi.Result -> when (val c = ui.check) {
-            UpdateCheck.NeedsToken -> stringResource(R.string.update_no_token)
             is UpdateCheck.UpToDate -> stringResource(R.string.update_up_to_date, c.latestTag.removePrefix("v"))
             is UpdateCheck.Available -> stringResource(
                 if (c.release.prerelease) R.string.update_available_beta else R.string.update_available,
@@ -289,7 +264,6 @@ private fun statusText(state: UpdatesState, canInstall: Boolean): String? {
 /** Help for a check, download or install that didn't work; null while things are fine. */
 private fun updateHelp(state: UpdatesState): HelpEntry? = when (val ui = state.ui) {
     is UpdateUi.Result -> when (val c = ui.check) {
-        UpdateCheck.NeedsToken -> HelpEntry.UPDATE_CHECK_FAILED
         is UpdateCheck.Failed -> HelpLinks.update(c.error)
         is UpdateCheck.UpToDate, is UpdateCheck.Available -> null
     }
@@ -300,34 +274,8 @@ private fun updateHelp(state: UpdatesState): HelpEntry? = when (val ui = state.u
 }
 
 @Composable
-private fun TokenField(token: SecretText?, actions: UpdatesActions) {
-    val uri = LocalUriHandler.current
-    var replacing by rememberSaveable { mutableStateOf(false) }
-    var help by rememberSaveable { mutableStateOf(false) }
-    if (token != null && !replacing) {
-        SavedKeyField(stringResource(R.string.update_token), token)
-        FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OutlinedButton(onClick = { replacing = true }) { Text(stringResource(R.string.key_replace)) }
-            TextButton(onClick = actions.removeToken) { Text(stringResource(R.string.update_token_remove)) }
-        }
-    } else {
-        KeyEntry(
-            label = stringResource(if (token != null) R.string.update_token_new else R.string.update_token),
-            onSave = { actions.saveToken(it); replacing = false },
-            onCancel = if (token != null) ({ replacing = false }) else null,
-        )
-    }
-    TextButton(onClick = { help = !help }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_token_help_title)) }
-    if (help) {
-        Text(stringResource(R.string.update_token_help), style = MaterialTheme.typography.bodyMedium)
-        TextButton(onClick = { uri.openUri(TOKEN_PAGE) }, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.update_token_page)) }
-    }
-}
-
-@Composable
 private fun errorText(e: UpdateError): String = when (e) {
     is UpdateError.Offline -> stringResource(R.string.update_offline)
-    is UpdateError.TokenRejected -> stringResource(R.string.update_token_rejected)
     is UpdateError.NoRelease -> stringResource(R.string.update_no_release)
     is UpdateError.RateLimited -> {
         val context = LocalContext.current
@@ -350,9 +298,6 @@ private fun Heading(title: Int) {
 }
 
 private const val NOTES_LINES = 12
-
-/** GitHub's page for creating a fine-grained token. */
-private const val TOKEN_PAGE = app.forkcast.GuideLinks.GITHUB_TOKEN_NEW
 
 /**
  * Release notes are Markdown on GitHub; shown here as plain text: no `**`, `#` or backticks, and

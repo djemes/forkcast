@@ -103,7 +103,7 @@
     <string name="help_q_update_how">Como atualizo o Forkcast?</string>
     <string name="help_a_update_how">As atualizações vêm das versões do Forkcast no GitHub. Abra Configurações › Atualizações e toque em Procurar atualizações; quando houver uma versão nova, leia as novidades e toque em Baixar e instalar. Os seus dados ficam. Ligue a verificação automática para receber um aviso quando sair uma. O Android pergunta uma vez antes de o Forkcast poder instalar as próprias atualizações.</string>
     <string name="help_q_update_check">Procurar atualizações falha</string>
-    <string name="help_a_update_check">Confira a conexão e tente mais tarde; o GitHub também limita quantas vezes uma rede pode verificar. Enquanto o projeto do Forkcast no GitHub for privado, a verificação precisa de um token do GitHub, adicionado em Avançado, em Configurações › Atualizações. Se o GitHub recusar o token, ele pode ter expirado. Você sempre pode baixar o APK mais novo na página de versões no GitHub.</string>
+    <string name="help_a_update_check">Confira a conexão e tente mais tarde; o GitHub também limita quantas vezes uma rede pode verificar. Você sempre pode baixar o APK mais novo na página de versões no GitHub.</string>
     <string name="help_q_update_install">A atualização não instala</string>
     <string name="help_a_update_install">O Forkcast confere cada download antes: ele precisa ser o Forkcast, mais novo que esta versão, assinado com a mesma chave e bater com o que a versão informa. Se uma conferência falhar, nada muda. Tente de novo; um download novo resolve um arquivo que se danificou no caminho. Um APK assinado com outra chave não instala por cima deste: é o Android protegendo os seus dados.</string>
 

@@ -18,6 +18,7 @@ import app.forkcast.core.data.update.UpdateCheck
 import app.forkcast.core.network.update.Release
 import app.forkcast.core.model.UpdateSettings
 import app.forkcast.core.network.update.ReleaseAsset
+import app.forkcast.core.network.update.UpdateError
 import app.forkcast.ui.theme.ForkcastTheme
 import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
@@ -158,16 +159,17 @@ class SettingsScreensTest {
         compose.setContent { ForkcastTheme { UpdatesScreen("1.5.0", onBack = {}, state = UpdatesState(ui, options = options), actions = actions) } }
     }
 
-    @Test fun privateRepositoryPointsToReleasesAndTheTokenUnderAdvanced() {
+    /** Roadmap 5.5: the repository is public, so there's no token field (and no Advanced) any more. */
+    @Test fun failedCheckPointsToReleasesWithNoTokenField() {
         var checked = false
-        updates(UpdateUi.Result(UpdateCheck.NeedsToken), UpdatesActions(check = { checked = true }))
+        updates(UpdateUi.Result(UpdateCheck.Failed(UpdateError.NoRelease())), UpdatesActions(check = { checked = true }))
         compose.onNodeWithText("You have Forkcast 1.5.0.").assertIsDisplayed()
         compose.onNodeWithText("Check for updates").performClick()
         assertThat(checked).isTrue()
+        compose.onNodeWithText("GitHub has no release yet.").assertIsDisplayed()
         compose.onNodeWithText("Open Releases on GitHub").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("GitHub token").assertDoesNotExist()
-        compose.onNodeWithText("Advanced").performScrollTo().performClick()
-        compose.onNodeWithText("GitHub token").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Advanced").assertDoesNotExist()
+        compose.onNodeWithText("token", substring = true, ignoreCase = true).assertDoesNotExist()
     }
 
     @Test fun availableUpdateShowsWhatsNewThenInstalls() {

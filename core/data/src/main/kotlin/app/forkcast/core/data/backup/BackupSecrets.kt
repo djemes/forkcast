@@ -10,7 +10,7 @@ import javax.inject.Singleton
 /**
  * The saved keys inside a backup (owner, 2026-10-29: backups carry everything, API keys
  * included): the AI services' keys and the USDA key. Never the backup password itself (it opens
- * the file) or the GitHub token (per phone, removed once the repository is public).
+ * the file).
  */
 @Singleton
 class BackupSecrets @Inject constructor(private val store: SecretStore) {
@@ -19,7 +19,7 @@ class BackupSecrets @Inject constructor(private val store: SecretStore) {
 
     /**
      * After a restore: [REPLACE][ImportMode.REPLACE] makes the file's keys this phone's (keeping
-     * the backup password and GitHub token); [MERGE][ImportMode.MERGE] adds only keys this phone
+     * the backup password); [MERGE][ImportMode.MERGE] adds only keys this phone
      * doesn't have.
      */
     suspend fun restore(keys: Map<String, String>, mode: ImportMode) {
@@ -34,7 +34,8 @@ class BackupSecrets @Inject constructor(private val store: SecretStore) {
     }
 
     companion object {
-        private val perPhone = setOf(SecretName.BACKUP_PASSWORD.name, SecretName.GITHUB_TOKEN.name)
+        // The legacy updates token (1.5–1.8) never left the phone either; SecretStore.refresh() deletes it.
+        private val perPhone = setOf(SecretName.BACKUP_PASSWORD.name, SecretStore.LEGACY_GITHUB_TOKEN)
         private val serializer = MapSerializer(String.serializer(), String.serializer())
 
         fun encode(keys: Map<String, String>): String = BackupJson.encodeToString(serializer, keys)

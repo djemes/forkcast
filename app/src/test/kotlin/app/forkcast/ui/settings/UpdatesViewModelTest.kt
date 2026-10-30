@@ -9,7 +9,6 @@ import app.forkcast.core.network.update.Release
 import app.forkcast.fakes.FakeSettingsRepository
 import com.google.common.truth.Truth.assertThat
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -30,9 +29,6 @@ class UpdatesViewModelTest {
 
     private class CountingUpdates : UpdateRepository {
         var checks = 0
-        override val hasToken = MutableStateFlow(false)
-        override suspend fun savedToken(): String? = null
-        override suspend fun setToken(token: String?) = Unit
         override suspend fun check(currentVersionName: String, includeBetas: Boolean): UpdateCheck {
             checks++
             return UpdateCheck.UpToDate("v9.9.9")

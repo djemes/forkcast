@@ -7,6 +7,7 @@ import app.forkcast.core.data.ai.PhotoStore
 import app.forkcast.core.data.db.AiProfileEntity
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.secrets.SecretName
+import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.model.AppSettings
 import app.forkcast.core.model.ProviderId
 import app.forkcast.core.model.TierLabel
@@ -56,7 +57,8 @@ class NoSecretAnywhereTest {
         secrets.setAiKey("p1", aiKey)
         secrets.set(SecretName.USDA_API_KEY, usdaKey)
         secrets.set(SecretName.BACKUP_PASSWORD, backupPassword)
-        secrets.set(SecretName.GITHUB_TOKEN, githubToken)
+        // The updates token 1.5–1.8 kept: if a phone still had it, it never went into a backup.
+        secrets.replaceAll(secrets.exportAll() + (SecretStore.LEGACY_GITHUB_TOKEN to githubToken))
 
         val files = mutableMapOf(
             "export.json" to repo.exportJson(),

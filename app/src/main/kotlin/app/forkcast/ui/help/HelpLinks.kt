@@ -78,7 +78,7 @@ object HelpLinks {
     }
 
     fun update(error: UpdateError): HelpEntry = when (error) {
-        is UpdateError.Offline, is UpdateError.TokenRejected, is UpdateError.NoRelease, is UpdateError.RateLimited,
+        is UpdateError.Offline, is UpdateError.NoRelease, is UpdateError.RateLimited,
         is UpdateError.Http, is UpdateError.WrongDownload,
         -> HelpEntry.UPDATE_CHECK_FAILED
     }

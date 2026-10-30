@@ -35,7 +35,6 @@ object GuideLinks {
     // Food databases: FoodData Central's "Get an API Key" page (the api.data.gov form loads on it).
     const val USDA_SIGNUP = "https://fdc.nal.usda.gov/api-key-signup"
 
-    // Android and GitHub
+    // Android
     const val HEALTH_CONNECT_STORE = "https://play.google.com/store/apps/details?id="
-    const val GITHUB_TOKEN_NEW = "https://github.com/settings/personal-access-tokens/new"
 }
