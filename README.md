@@ -122,4 +122,4 @@ Help is best effort, through [GitHub](SUPPORT.md).
 
 Free and open-source under the [GNU GPL, version 3](LICENSE), with an [additional permission](LICENSE-ADDITIONAL-PERMISSION.md). Food data from [Open Food Facts](https://openfoodfacts.org) (Open Database License) and [USDA FoodData Central](https://fdc.nal.usda.gov).
 
-Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, or Samsung. Product names belong to their owners.
+Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, Samsung, or Ko-fi. Product names belong to their owners.

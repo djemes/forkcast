@@ -47,8 +47,22 @@ class LicensesScreenTest {
         }
         compose.onNodeWithText("Support Forkcast").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("unlock anything", substring = true).performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Leave a tip").performScrollTo().performClick()
+        compose.onNodeWithText("Support on Ko-fi").performScrollTo().performClick()
         assertThat(opened).containsExactly("https://ko-fi.com/example")
+    }
+
+    /** Before the Ko-fi page exists (owner, 2026-10-30): the row is there and says "Coming soon", opening nothing. */
+    @Test fun supportRowSaysComingSoonWithoutALink() {
+        val opened = mutableListOf<String>()
+        val uriHandler = object : UriHandler { override fun openUri(uri: String) { opened += uri } }
+        compose.setContent {
+            CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                ForkcastTheme { AboutScreen(versionName = "1.8.6", versionCode = 1, onBack = {}, donationUrl = "") }
+            }
+        }
+        compose.onNodeWithText("Support on Ko-fi").performScrollTo().performClick()
+        compose.onNodeWithText("Coming soon").assertIsDisplayed()
+        assertThat(opened).isEmpty()
     }
 
     /** Roadmap 2.0 task 4.7: everything About should offer, and Report a problem opens the issue page. */
@@ -69,11 +83,11 @@ class LicensesScreenTest {
         assertThat(opened).containsExactly("https://github.com/djemes/forkcast/issues/new/choose")
     }
 
-    /** No URL set yet (or the Play build): no row at all. */
-    @Test fun supportRowHiddenWithoutADonationPage() {
+    /** A build without the donation link (the Play build): no row at all. */
+    @Test fun supportRowHiddenWithoutTheDonationLink() {
         compose.setContent { ForkcastTheme { AboutScreen(versionName = "1.8.0", versionCode = 1, onBack = {}, donationUrl = null) } }
         compose.onNodeWithText("Support Forkcast").assertDoesNotExist()
-        compose.onNodeWithText("Leave a tip").assertDoesNotExist()
+        compose.onNodeWithText("Support on Ko-fi").assertDoesNotExist()
     }
 
     @Test fun licensesListTheAppLicenseAndTheLibraries() {

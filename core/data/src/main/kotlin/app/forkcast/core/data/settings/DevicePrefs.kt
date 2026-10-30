@@ -39,6 +39,8 @@ data class DeviceState(
     val agreement: AgreementAcceptance? = null,
     /** AI recipients ([app.forkcast.core.model.AiRecipient]) allowed to receive meals, with when (epoch ms). */
     val aiConsents: Map<String, Long> = emptyMap(),
+    /** The major version the Ko-fi card in Settings was hidden at, null = shown ([app.forkcast.core.domain.SupportCard]). */
+    val supportCardHiddenAtMajor: Int? = null,
 )
 
 /** Where and when the last backup was written. [place] is the folder's name, null for a picked file. */
@@ -72,6 +74,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             putOrRemove(AGREEMENT_AT, next.agreement?.acceptedAt)
             putOrRemove(AGREEMENT_APP, next.agreement?.appVersion)
             putStringSet(AI_CONSENTS, next.aiConsents.map { (recipient, at) -> "$at$SEP$recipient" }.toSet())
+            putOrRemove(SUPPORT_CARD_HIDDEN, next.supportCardHiddenAtMajor?.toLong())
             // The camera tips' open/closed state (1.3–1.4) is gone; drop it from phones that have it.
             remove(CAMERA_WARNINGS)
         }
@@ -107,6 +110,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             val at = entry.substringBefore(SEP).toLongOrNull() ?: return@mapNotNull null
             entry.substringAfter(SEP) to at
         }.toMap(),
+        supportCardHiddenAtMajor = long(SUPPORT_CARD_HIDDEN)?.toInt(),
     )
 
     companion object {
@@ -128,6 +132,7 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         private const val AGREEMENT_AT = "agreementAcceptedAt"
         private const val AGREEMENT_APP = "agreementAppVersion"
         private const val AI_CONSENTS = "aiConsents"
+        private const val SUPPORT_CARD_HIDDEN = "supportCardHiddenAtMajor"
         /** Between the time and the recipient in [AI_CONSENTS] entries; recipients never contain it. */
         private const val SEP = "|"
         // 1.0–1.4 Google Drive backup.

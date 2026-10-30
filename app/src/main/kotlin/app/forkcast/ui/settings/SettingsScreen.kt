@@ -13,6 +13,7 @@ package app.forkcast.ui.settings
 // - Paths: "Settings › AI services" (Configurações › Serviços de IA), with › and the screen's title.
 
 import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.HorizontalDivider
@@ -21,9 +22,11 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -32,6 +35,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
 import app.forkcast.ui.common.AdvancedSection
+import kotlinx.coroutines.launch
 
 /** Where each settings entry leads. */
 data class SettingsActions(
@@ -61,18 +65,44 @@ data class SettingsActions(
  * Settings (roadmap 2.0 task 3.5; groups rearranged by the owner, 2026-10-25): you and your log
  * (with the per-nutrient daily targets), data and connections (AI services, Health Connect, food
  * databases, backups), then the app itself (with notifications). Each entry says what's inside.
- * Debug builds add their developer tools under a collapsed Advanced.
+ * Debug builds add their developer tools under a collapsed Advanced. The github build starts with
+ * the Ko-fi card ([supportCard]; owner, 2026-10-30) until it's hidden.
  */
 @Composable
-fun SettingsScreen(onBack: () -> Unit, actions: SettingsActions, @StringRes message: Int? = null, onMessageShown: () -> Unit = {}) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    actions: SettingsActions,
+    @StringRes message: Int? = null,
+    onMessageShown: () -> Unit = {},
+    supportCard: SupportCardState? = null,
+) {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
+    val scope = rememberCoroutineScope()
     LaunchedEffect(message) {
         val shown = message ?: return@LaunchedEffect
         onMessageShown()
         snackbar.showSnackbar(resources.getString(shown))
     }
     SettingsScaffold(title = stringResource(R.string.settings), onBack = onBack, snackbarHostState = snackbar) {
+        if (supportCard != null) {
+            val open = rememberDonationOpener(supportCard.url, snackbar)
+            AnimatedVisibility(visible = supportCard.shown) {
+                SupportCard(
+                    onOpen = open,
+                    onHide = {
+                        supportCard.onHide()
+                        scope.launch {
+                            val result = snackbar.showSnackbar(
+                                resources.getString(R.string.support_card_hidden),
+                                actionLabel = resources.getString(R.string.undo),
+                            )
+                            if (result == SnackbarResult.ActionPerformed) supportCard.onUndoHide()
+                        }
+                    },
+                )
+            }
+        }
         Group(R.string.settings_group_you, divider = false)
         Item(R.string.settings_goal_budget, R.string.settings_goal_budget_summary, actions.goalBudget)
         Item(R.string.settings_profile, R.string.settings_profile_summary, actions.profile)
