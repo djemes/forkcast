@@ -46,6 +46,9 @@ class FakeFoodRepository : FoodRepository {
     override suspend fun useCounts(ids: List<String>) = uses.filterKeys { it in ids }
     override fun observeCustom() = foods.map { m -> m.values.filter { it.source == FoodSource.CUSTOM } }
     override suspend fun setFavorite(id: String, favorite: Boolean) = foods.update { m -> m[id]?.let { m + (id to it.copy(isFavorite = favorite)) } ?: m }
+    override suspend fun setFavoriteAmount(id: String, quantity: Double, servingLabel: String) = foods.update { m ->
+        m[id]?.let { m + (id to it.copy(isFavorite = true, favoriteQuantity = quantity, favoriteServingLabel = servingLabel)) } ?: m
+    }
     override suspend fun setCountsAsWater(id: String, counts: Boolean?) = foods.update { m -> m[id]?.let { m + (id to it.copy(countsAsWater = counts)) } ?: m }
     override suspend fun saveCustom(food: Food): String = put(food)
     override suspend fun delete(id: String) = foods.update { it - id }

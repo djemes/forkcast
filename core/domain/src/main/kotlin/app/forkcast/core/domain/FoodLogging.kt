@@ -56,11 +56,12 @@ object FoodLogging {
     fun convertQuantity(quantity: Double, from: ServingSize, to: ServingSize): Double =
         if (to.grams <= 0) quantity else quantity * from.grams / to.grams
 
-    /** Last-used serving and quantity, else the food's first serving × 1, else 100 g. */
+    /** A favorite's default amount, else the last-used serving and quantity, else the first serving × 1, else 100 g. */
     fun defaultServing(food: Food): Pair<ServingSize, Double> {
         val options = servingOptions(food)
-        food.lastServingLabel?.let { label ->
-            options.firstOrNull { it.label == label }?.let { return it to (food.lastQuantity ?: 1.0) }
+        // A favorite's default amount, else the last one logged (roadmap 3.10).
+        food.defaultAmount?.let { (quantity, label) ->
+            options.firstOrNull { it.label == label }?.let { return it to quantity }
         }
         return food.servingSizes.firstOrNull()?.let { it to 1.0 } ?: (options.first { it.label == GRAM_LABEL } to 100.0)
     }

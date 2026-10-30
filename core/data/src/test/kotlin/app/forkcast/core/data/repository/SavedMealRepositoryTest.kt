@@ -50,4 +50,21 @@ class SavedMealRepositoryTest {
         repo.delete(id)
         assertThat(repo.meals.first()).isEmpty()
     }
+
+    /** Editing a favorite meal (roadmap 3.10): name, amounts (snapshots scale), removed items; Undo brings a removed meal back. */
+    @Test fun editAmountsRemoveItemsAndRestore() = runTest {
+        val id = repo.saveFrom("Usual breakfast", listOf(entry("Banana", 105.0, 1), entry("Yogurt", 146.0, 2)))
+        val (banana, yogurt) = repo.meals.first().single().items
+        repo.update(id, " Weekday breakfast ", quantities = mapOf(banana.id to 2.0), removed = setOf(yogurt.id))
+        val meal = repo.meals.first().single()
+        assertThat(meal.name).isEqualTo("Weekday breakfast")
+        assertThat(meal.items.map { it.displayName }).containsExactly("Banana")
+        assertThat(meal.items.single().quantity).isEqualTo(2.0)
+        assertThat(meal.items.single().grams).isEqualTo(490.0)
+        assertThat(meal.items.single().nutrients[NutrientKey.ENERGY_KCAL]).isEqualTo(210.0)
+
+        repo.delete(id)
+        repo.restore(id)
+        assertThat(repo.meals.first().single().items.single().displayName).isEqualTo("Banana")
+    }
 }

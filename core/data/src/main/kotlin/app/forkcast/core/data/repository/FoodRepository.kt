@@ -45,7 +45,10 @@ interface FoodRepository {
     /** How often each of [ids] was logged (foods never logged are left out). */
     suspend fun useCounts(ids: List<String>): Map<String, Int>
     fun observeCustom(): Flow<List<Food>>
+    /** Favoriting keeps the food's default amount, or starts it from the last amount logged (roadmap 3.10). */
     suspend fun setFavorite(id: String, favorite: Boolean)
+    /** Favorites [id] with [quantity] × [servingLabel] as the amount it's logged with from now on; past entries never change. */
+    suspend fun setFavoriteAmount(id: String, quantity: Double, servingLabel: String)
     /** The user's "counts toward water" choice for a food; null returns it to the drink rule. */
     suspend fun setCountsAsWater(id: String, counts: Boolean?)
     /** Creates (id == "") or updates a custom/label food. Returns its id. */
@@ -136,7 +139,17 @@ class DefaultFoodRepository @Inject constructor(
 
     override fun observeCustom(): Flow<List<Food>> = dao.observeCustom().map { l -> l.map { it.toModel() } }
 
-    override suspend fun setFavorite(id: String, favorite: Boolean) = dao.setFavorite(id, favorite, clock.millis())
+    override suspend fun setFavorite(id: String, favorite: Boolean) {
+        val now = clock.millis()
+        dao.setFavorite(id, favorite, now)
+        val food = dao.get(id) ?: return
+        if (favorite && food.favoriteQuantity == null && food.lastQuantity != null && food.lastServingLabel != null) {
+            dao.setFavoriteAmount(id, food.lastQuantity, food.lastServingLabel, now)
+        }
+    }
+
+    override suspend fun setFavoriteAmount(id: String, quantity: Double, servingLabel: String) =
+        dao.setFavoriteAmount(id, quantity, servingLabel, clock.millis())
 
     override suspend fun setCountsAsWater(id: String, counts: Boolean?) = dao.setCountsAsWater(id, counts, clock.millis())
 

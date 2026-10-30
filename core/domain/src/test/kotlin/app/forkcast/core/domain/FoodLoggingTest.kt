@@ -44,6 +44,13 @@ class FoodLoggingTest {
         assertThat(FoodLogging.defaultServing(noServings).let { it.first.label to it.second }).isEqualTo("g" to 100.0)
     }
 
+    @Test fun `a favorite logs with its default amount everywhere, not the last one`() {
+        val fav = rice.copy(isFavorite = true, lastServingLabel = "g", lastQuantity = 180.0, favoriteServingLabel = "1 cup", favoriteQuantity = 0.5)
+        assertThat(FoodLogging.defaultServing(fav).let { it.first.label to it.second }).isEqualTo("1 cup" to 0.5)
+        // Unstarred, the last amount is back.
+        assertThat(FoodLogging.defaultServing(fav.copy(isFavorite = false)).let { it.first.label to it.second }).isEqualTo("g" to 180.0)
+    }
+
     @Test fun `quick add carries only what was entered`() {
         val e = FoodLogging.quickAdd("Coffee", 45.0, null, 5.0, null, day, "b", Instant.EPOCH)
         assertThat(e.nutrients).containsExactly(NutrientKey.ENERGY_KCAL, 45.0, NutrientKey.CARBS_G, 5.0)
