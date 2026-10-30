@@ -39,7 +39,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 
-// The JDK's own AES-GCM for password-protected backups (see SettingsBackupTest).
+// The JDK's own AES-GCM for password-protected backups (see BackupCryptoTest).
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @RunWith(AndroidJUnit4::class)
 class FolderBackupRepositoryTest {

@@ -17,7 +17,7 @@ import java.time.Clock
 import java.time.Instant
 import java.time.ZoneId
 
-// As in SettingsBackupTest: the JDK's own AES-GCM, not Robolectric's Conscrypt.
+// As in BackupCryptoTest: the JDK's own AES-GCM, not Robolectric's Conscrypt.
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @RunWith(AndroidJUnit4::class)
 class BackupFileTest {

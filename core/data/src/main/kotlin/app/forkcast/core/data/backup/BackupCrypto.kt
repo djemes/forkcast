@@ -12,7 +12,9 @@ import java.security.SecureRandom
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import javax.crypto.Cipher
+import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 /** The backup's password is wrong, or the encrypted file was changed or cut short. */
@@ -70,7 +72,7 @@ object BackupCrypto {
         val prefix = ByteArray(PREFIX_BYTES).also(random::nextBytes)
         val header = pbkdf2Header(iterations, salt, prefix, segment)
         out.write(header)
-        return EncryptingStream(out, SettingsCrypto.deriveKey(password, salt, iterations), header, prefix, segment)
+        return EncryptingStream(out, pbkdf2Key(password, salt, iterations), header, prefix, segment)
     }
 
     /** Reads the header from [input] and returns the decrypted stream; reads throw [BackupDecryptException]. */
@@ -90,7 +92,7 @@ object BackupCrypto {
                 val iterations = data.readInt()
                 if (iterations !in 100_000..10_000_000) throw BackupDecryptException()
                 val (salt, prefix, segment) = rest(data)
-                DecryptingStream(input, SettingsCrypto.deriveKey(password, salt, iterations), pbkdf2Header(iterations, salt, prefix, segment), prefix, segment)
+                DecryptingStream(input, pbkdf2Key(password, salt, iterations), pbkdf2Header(iterations, salt, prefix, segment), prefix, segment)
             }
             else -> throw BackupDecryptException()
         }
@@ -257,3 +259,15 @@ object BackupCrypto {
         override fun close() = input.close()
     }
 }
+
+/** The key of PBKDF2 backups (made before Argon2), from the password. */
+private fun pbkdf2Key(password: CharArray, salt: ByteArray, iterations: Int): SecretKeySpec {
+    val spec = PBEKeySpec(password, salt, iterations, PBKDF2_KEY_BITS)
+    try {
+        return SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded, "AES")
+    } finally {
+        spec.clearPassword()
+    }
+}
+
+private const val PBKDF2_KEY_BITS = 256

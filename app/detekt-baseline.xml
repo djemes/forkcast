@@ -68,8 +68,6 @@
     <ID>SwallowedException:BackupViewModel.kt:BackupViewModel$e: IOException</ID>
     <ID>SwallowedException:BackupViewModel.kt:BackupViewModel$e: SecurityException</ID>
     <ID>SwallowedException:PhotoMealViewModel.kt:PhotoMealViewModel$e: Exception</ID>
-    <ID>SwallowedException:SettingsTransfer.kt:SettingsTransferViewModel$e: IOException</ID>
-    <ID>SwallowedException:SettingsTransfer.kt:SettingsTransferViewModel$e: SecurityException</ID>
     <ID>TooGenericExceptionCaught:AppInstaller.kt:AppInstaller$e: Exception</ID>
     <ID>TooGenericExceptionCaught:BackupViewModel.kt:BackupViewModel$e: Exception</ID>
     <ID>TooGenericExceptionCaught:PhotoMealViewModel.kt:PhotoMealViewModel$e: Exception</ID>
