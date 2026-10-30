@@ -595,7 +595,7 @@ fun TodayScreen(
                 meals = state.loggableSlots,
                 f = f,
                 onSave = { edit ->
-                    onEvent(TodayEvent.UpdateEntry(entry, edit.quantity, edit.mealSlotId, edit.countsAsWater, edit.serving, edit.date, edit.eatenMinute))
+                    onEvent(TodayEvent.UpdateEntry(entry, edit.quantity, edit.mealSlotId, edit.countsAsWater, edit.serving, edit.date, edit.eatenMinute, edit.portion))
                     editingId = null
                 },
                 today = state.today,

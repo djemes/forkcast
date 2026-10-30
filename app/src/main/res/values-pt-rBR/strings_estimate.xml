@@ -25,11 +25,38 @@
 
     <!-- Quanto você comeu? -->
     <string name="portion_title">Quanto você comeu?</string>
-    <string name="portion_custom">Outro</string>
-    <string name="portion_custom_value">%1$d%%</string>
-    <string name="portion_percent">Parte do prato</string>
-    <string name="portion_percent_entry">Parte da quantidade registrada</string>
-    <string name="portion_summary">%1$s: %2$s em vez dos %3$s estimados.</string>
+    <string name="portion_custom">Outro…</string>
+    <string name="portion_headline_fraction">%1$s porção · %2$s</string>
+    <string name="portion_headline">%1$s · %2$s</string>
+    <string name="portion_slider_label">Porção</string>
+    <string name="portion_reset">Voltar para 1×</string>
+    <string name="portion_jump">Mudar para %1$s</string>
+    <string name="portion_custom_title">Outra porção</string>
+    <string name="portion_multiplier">Vezes a porção</string>
+    <string name="portion_multiplier_hint">Por exemplo 0,4 ou 1,75</string>
+    <string name="portion_grams">Gramas comidos</string>
+    <string name="portion_use_grams">Digitar em gramas</string>
+    <string name="portion_use_multiplier">Digitar um multiplicador</string>
+    <string name="portion_spoken_quarter">Um quarto da porção</string>
+    <string name="portion_spoken_half">Meia porção</string>
+    <string name="portion_spoken_three_quarters">Três quartos da porção</string>
+    <string name="portion_spoken_one">Uma porção</string>
+    <string name="portion_spoken_one_quarter">Uma porção e um quarto</string>
+    <string name="portion_spoken_one_half">Uma porção e meia</string>
+    <string name="portion_spoken_two">Porção dupla</string>
+    <string name="portion_spoken_three">Porção tripla</string>
+    <string name="portion_spoken_custom">%1$s vezes a porção</string>
+    <string name="portion_spoken_state">%1$s, %2$s</string>
+    <plurals name="energy_spoken_kcal">
+        <item quantity="one">%1$s quilocaloria</item>
+        <item quantity="many">%1$s quilocalorias</item>
+        <item quantity="other">%1$s quilocalorias</item>
+    </plurals>
+    <plurals name="energy_spoken_kj">
+        <item quantity="one">%1$s quilojoule</item>
+        <item quantity="many">%1$s quilojoules</item>
+        <item quantity="other">%1$s quilojoules</item>
+    </plurals>
 
     <!-- Status: um de cada vez -->
     <string name="stage_step_send">Enviar</string>

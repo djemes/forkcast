@@ -208,6 +208,8 @@ sealed interface TodayEvent {
         /** Moves it to another day (past or today). */
         val date: LocalDate = entry.date,
         val eatenMinute: Int? = entry.eatenMinute,
+        /** The portion slider's value for the new amount. */
+        val portion: Double = entry.portion,
     ) : TodayEvent
     /** The edit sheet opened: load the food's servings for it. */
     data class LoadEditServings(val entryId: String) : TodayEvent
@@ -610,6 +612,7 @@ class TodayViewModel @Inject constructor(
                         // Never a future day (owner, 2026-10-23); a time the user set is no longer an estimate.
                         date = minOf(event.date, LocalDate.now(clock)),
                         eatenMinute = event.eatenMinute,
+                        portion = event.portion,
                     ),
                 )
             }

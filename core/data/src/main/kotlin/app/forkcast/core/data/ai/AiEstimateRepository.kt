@@ -415,13 +415,13 @@ class DefaultAiEstimateRepository @Inject constructor(
         val source = if (e.kind == EstimateKind.TEXT) FoodSource.AI_TEXT else FoodSource.AI
         val existing = e.logEntryId?.let { log.get(it) }
         if (existing != null) {
-            log.update(existing.copy(displayName = name, quantity = portion, grams = grams, nutrients = nutrients, waterMl = waterMl, source = source))
+            log.update(existing.copy(displayName = name, quantity = portion, portion = portion, grams = grams, nutrients = nutrients, waterMl = waterMl, source = source))
         } else {
             val entry = LogEntry(
                 id = "", date = e.date, mealSlotId = e.mealSlotId, foodId = null, displayName = name, brand = null,
                 quantity = portion, servingLabel = "meal", grams = grams, nutrients = nutrients, source = source,
                 note = null, loggedAt = clock.instant(), aiEstimateId = e.id, waterMl = waterMl,
-                eatenMinute = e.eatenMinute,
+                eatenMinute = e.eatenMinute, portion = portion,
             )
             val entryId = log.add(listOf(entry)).single()
             patch(e.id) { it.copy(logEntryId = entryId) }

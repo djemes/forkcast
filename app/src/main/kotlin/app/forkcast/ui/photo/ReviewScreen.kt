@@ -3,8 +3,7 @@ package app.forkcast.ui.photo
 import app.forkcast.ui.format.formatEpoch
 import app.forkcast.ui.format.clockFormatter
 import app.forkcast.ui.format.unitLabels
-import app.forkcast.ui.common.PortionChips
-import app.forkcast.ui.common.portionLabel
+import app.forkcast.ui.common.PortionSlider
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
@@ -251,7 +250,7 @@ private fun ReviewBody(state: ReviewUiState, e: AiEstimateEntity, f: UnitFormatt
     e.result?.clarifyingQuestion?.takeIf { e.status == EstimateStatus.NEEDS_INPUT }?.let { q ->
         QuestionCard(q, onAnswer = { onEvent(ReviewEvent.Correct(it)) }, onAcceptAsIs = { onEvent(ReviewEvent.AcceptAsIs) })
     }
-    PortionPicker(portion, plate.expected, f) { onEvent(ReviewEvent.SetPortion(it)) }
+    PortionPicker(portion, plate.expected, components.sumOf { it.grams }.takeIf { it > 0 }, f) { onEvent(ReviewEvent.SetPortion(it)) }
     // What the entry gets: every component's nutrients × the portion, vitamins and minerals with % DV.
     app.forkcast.ui.today.NutrientsExpander(components.map { it.nutrientsUsed }.sumNutrients().mapValues { (_, v) -> v * portion }, f)
     val (added, seen) = components.partition { it.isHiddenIngredient }
@@ -310,11 +309,11 @@ private fun ReviewBody(state: ReviewUiState, e: AiEstimateEntity, f: UnitFormatt
 }
 
 /**
- * "How much did you eat?" (owner, 2026-10-23): scales the entry locally, no AI request. The plate
- * stays as estimated, so "All" brings it back.
+ * "How much did you eat?" (roadmap 3.9): the portion slider scales the entry locally, no AI request.
+ * The plate stays as estimated, so 1× brings it back.
  */
 @Composable
-private fun PortionPicker(portion: Double, plateKcal: Double, f: UnitFormatter, onPick: (Double) -> Unit) {
+private fun PortionPicker(portion: Double, plateKcal: Double, plateGrams: Double?, f: UnitFormatter, onPick: (Double) -> Unit) {
     Column(
         verticalArrangement = Arrangement.spacedBy(4.dp),
         modifier = Modifier
@@ -323,14 +322,7 @@ private fun PortionPicker(portion: Double, plateKcal: Double, f: UnitFormatter, 
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(stringResource(R.string.portion_title), style = MaterialTheme.typography.titleSmall, modifier = Modifier.semantics { heading() })
-        PortionChips(portion, R.string.portion_percent, onPick)
-        if (portion != 1.0) {
-            Text(
-                stringResource(R.string.portion_summary, portionLabel(portion), f.energy(plateKcal * portion), f.energy(plateKcal)),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+        PortionSlider(portion = portion, kcalAtOne = plateKcal, f = f, gramsAtOne = plateGrams, onChange = onPick)
     }
 }
 

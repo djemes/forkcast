@@ -25,11 +25,36 @@
 
     <!-- How much did you eat? -->
     <string name="portion_title">How much did you eat?</string>
-    <string name="portion_custom">Custom</string>
-    <string name="portion_custom_value">%1$d%%</string>
-    <string name="portion_percent">Share of the plate</string>
-    <string name="portion_percent_entry">Share of the amount logged</string>
-    <string name="portion_summary">%1$s: %2$s instead of the %3$s estimated.</string>
+    <string name="portion_custom">Custom…</string>
+    <string name="portion_headline_fraction">%1$s portion · %2$s</string>
+    <string name="portion_headline">%1$s · %2$s</string>
+    <string name="portion_slider_label">Portion</string>
+    <string name="portion_reset">Back to 1×</string>
+    <string name="portion_jump">Set to %1$s</string>
+    <string name="portion_custom_title">Custom portion</string>
+    <string name="portion_multiplier">Times the portion</string>
+    <string name="portion_multiplier_hint">For example 0.4 or 1.75</string>
+    <string name="portion_grams">Grams eaten</string>
+    <string name="portion_use_grams">Enter grams instead</string>
+    <string name="portion_use_multiplier">Enter a multiplier instead</string>
+    <string name="portion_spoken_quarter">Quarter portion</string>
+    <string name="portion_spoken_half">Half portion</string>
+    <string name="portion_spoken_three_quarters">Three quarters of a portion</string>
+    <string name="portion_spoken_one">One portion</string>
+    <string name="portion_spoken_one_quarter">One and a quarter portions</string>
+    <string name="portion_spoken_one_half">One and a half portions</string>
+    <string name="portion_spoken_two">Double portion</string>
+    <string name="portion_spoken_three">Triple portion</string>
+    <string name="portion_spoken_custom">%1$s times the portion</string>
+    <string name="portion_spoken_state">%1$s, %2$s</string>
+    <plurals name="energy_spoken_kcal">
+        <item quantity="one">%1$s kilocalorie</item>
+        <item quantity="other">%1$s kilocalories</item>
+    </plurals>
+    <plurals name="energy_spoken_kj">
+        <item quantity="one">%1$s kilojoule</item>
+        <item quantity="other">%1$s kilojoules</item>
+    </plurals>
 
     <!-- Status: one at a time -->
     <string name="stage_step_send">Send</string>

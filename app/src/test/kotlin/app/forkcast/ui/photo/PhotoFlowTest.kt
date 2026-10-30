@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.SavedStateHandle
@@ -206,8 +207,10 @@ class PhotoFlowTest {
         assertThat(events.last()).isEqualTo(ReviewEvent.SetGrams("c1", 205.0))
         compose.onNodeWithText("Use AI values").performScrollTo().performClick()
         assertThat(events.last()).isEqualTo(ReviewEvent.SetSource("c1", ComponentSource.AI))
-        // Portion: one tap, no AI request (owner, 2026-10-23).
-        compose.onNodeWithText("½").performScrollTo().performClick()
+        // Portion: the slider, no AI request (roadmap 3.9). A label jumps; TalkBack's adjust sets a step.
+        compose.onNodeWithText("¼").performScrollTo().performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.SetPortion(0.25))
+        compose.onNodeWithContentDescription("Portion").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.SetProgress) { it(1f) }
         assertThat(events.last()).isEqualTo(ReviewEvent.SetPortion(0.5))
         compose.onNodeWithText("Save").performScrollTo().performClick()
         assertThat(events.last()).isEqualTo(ReviewEvent.Save())
