@@ -8,7 +8,10 @@ What it does, on emulator-5554 (or ANDROID_SERIAL=emulator-NNNN; it refuses anyt
      no photos) and restores it through the welcome screen's "Restore a backup", like a user would
   3. for light and dark (cmd uimode night): Today, the Log sheet, Today's budget, Trends and
      Backup & data; screens are cropped below the status bar and above the navigation bar
-  4. tools/screenshots/compose.py turns the raw captures into assets/readme (resized WebP,
+  4. the AI review: adds "Demo AI" (tools/screenshots/fake_ai.py, a stand-in OpenAI-compatible
+     server on this computer, reached through adb reverse: a fixed estimate, no key), describes a
+     meal, waits for the estimate and captures its review screen in light and dark
+  5. tools/screenshots/compose.py turns the raw captures into assets/readme (resized WebP,
      the hero banners and the social preview)
 
 Never run it against a phone: it clears the app's data. The emulator needs to be unlocked, in
@@ -101,12 +104,87 @@ def capture_theme(theme, raw_dir):
     back_to_today()
 
 
+DESCRIPTION = "Grilled chicken salad with avocado, cherry tomatoes and olive oil"
+FAKE_AI_PORT = 8765
+
+
+def add_demo_ai():
+    """Settings › AI services › Add AI › Advanced: OpenAI-compatible, pointed at fake_ai.py."""
+    back_to_today()
+    ui.tap(desc="Settings")
+    ui.scroll_to("AI services")
+    ui.tap("AI services")
+    ui.tap("Add AI")
+    ui.tap("Advanced: OpenAI-compatible")
+    ui.tap("Set up manually")
+    ui.tap("https://api.openai.com")
+    ui.sh("input keycombination 113 29")  # select all
+    ui.sh("input keyevent 67")
+    ui.sh(f"input text http://127.0.0.1:{FAKE_AI_PORT}")
+    ui.sh("input keyevent 4")
+    ui.wait_idle(1)
+    # Two "Model" texts: the section label and the field; the field is the lower one.
+    model = max((n for n in ui.nodes() if n["text"] == "Model"), key=lambda n: n["y"])
+    ui.tap_xy(model["x"], model["y"])
+    ui.sh("input keycombination 113 29")
+    ui.sh("input keyevent 67")
+    ui.sh("input text demo-vision")
+    ui.sh("input keyevent 4")
+    ui.wait_idle(0.8)
+    name = ui.find("Name in the list")
+    ui.tap_xy(name["x"], name["y"])
+    ui.sh("input keycombination 113 29")  # it's prefilled from the model
+    ui.sh("input keyevent 67")
+    ui.sh("input text Demo%sAI")
+    ui.sh("input keyevent 4")
+    ui.wait_idle(0.8)
+    ui.tap("Save and test")
+    ui.tap("Allow", timeout=15)  # the AI permission for 127.0.0.1
+    if ui.find("Working", contains=True, timeout=15) is None:
+        raise RuntimeError("Demo AI didn't pass its test: is fake_ai.py running and adb reverse set?")
+    back_to_today()
+
+
+def capture_review(raw_dir):
+    """Describes a meal, waits for the estimate on Today, and captures its review in both themes."""
+    ui.sh("cmd uimode night no")
+    ui.wait_idle(2)
+    back_to_today()
+    ui.tap(desc="Log")
+    ui.tap("Describe")
+    field = ui.find("e.g.", contains=True)
+    ui.tap_xy(field["x"], field["y"])
+    ui.sh('input text "' + DESCRIPTION.replace(" ", "%s") + '"')
+    ui.sh("input keyevent 4")
+    ui.wait_idle(0.8)
+    ui.tap("Lunch")
+    ui.tap("Estimate")
+    ui.tap("Not now", timeout=4, required=False)  # the notification question, first time only
+    entry = None
+    for _ in range(30):  # the estimate, then the USDA matching
+        entry = ui.scroll_to("Grilled chicken salad", tries=3)
+        if entry is not None and ui.find("Estimating", contains=True, timeout=0.5) is None                 and ui.find("Matching the foods", contains=True, timeout=0.5) is None:
+            break
+        ui.wait_idle(3)
+    if entry is None:
+        raise RuntimeError("The demo estimate didn't arrive")
+    ui.tap("Grilled chicken salad")
+    ui.wait_idle(2)
+    ui.screenshot(os.path.join(raw_dir, "review-light.png"))
+    ui.sh("cmd uimode night yes")
+    ui.wait_idle(3)
+    ui.screenshot(os.path.join(raw_dir, "review-dark.png"))
+    ui.sh("cmd uimode night no")
+    back_to_today()
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--apk")
     parser.add_argument("--out", default=os.path.join(ROOT, "assets", "readme"))
     parser.add_argument("--raw", default=os.path.join(ROOT, "build", "readme-raw"))
     parser.add_argument("--skip-restore", action="store_true", help="reuse the demo data already on the emulator")
+    parser.add_argument("--skip-ai", action="store_true", help="no AI review screen (keeps the last one)")
     args = parser.parse_args()
     os.makedirs(args.raw, exist_ok=True)
 
@@ -114,11 +192,18 @@ def main():
         ui.adb("install", "-r", args.apk)
     if not args.skip_restore:
         restore_demo(args.raw)
+    fake_ai = subprocess.Popen([sys.executable, "-X", "utf8", os.path.join(os.path.dirname(__file__), "fake_ai.py"), "--port", str(FAKE_AI_PORT)])
+    ui.adb("reverse", f"tcp:{FAKE_AI_PORT}", f"tcp:{FAKE_AI_PORT}")
     try:
         for theme in ("light", "dark"):
             capture_theme(theme, args.raw)
+        if not args.skip_ai:
+            add_demo_ai()
+            capture_review(args.raw)
     finally:
         ui.sh("cmd uimode night no", check=False)
+        ui.adb("reverse", "--remove", f"tcp:{FAKE_AI_PORT}", check=False)
+        fake_ai.terminate()
 
     status, nav = ui.system_bar_heights()
     subprocess.run([sys.executable, "-X", "utf8", os.path.join(os.path.dirname(__file__), "compose.py"),

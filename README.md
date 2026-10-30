@@ -22,7 +22,7 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="assets/readme/banner-dark.webp">
-    <img src="assets/readme/banner-light.webp" width="100%" alt="Three Forkcast screens: Today with the calorie ring and the day's meals, the Log sheet with Scan, Photo, Describe and Search, and Trends with calories against the budget and the weight trend">
+    <img src="assets/readme/banner-light.webp" width="100%" alt="Three Forkcast screens: Today with the calorie ring and the day's meals; an AI estimate of a described meal, about 371 kcal and likely 275 to 507, ready to review; and Trends with calories against the budget and the weight trend">
   </picture>
 </p>
 

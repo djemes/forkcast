@@ -4,7 +4,7 @@
 
 Writes, for light and dark:
   screens/<name>-<theme>.webp   each screen at 2x its README width, rounded corners, thin outline
-  banner-<theme>.webp           Today, Log and Trends side by side (the hero)
+  banner-<theme>.webp           Today, an AI estimate's review and Trends side by side (the hero)
   privacy-<theme>.png           the privacy-at-a-glance diagram (drawn here, text in Manrope)
   download-<theme>.png          the "Download for Android" button
 and social-preview.png (1280 x 640, for the repository settings). Needs Pillow only.
@@ -29,8 +29,8 @@ OUTLINE = ("#D3DCD8", "#2C3833")
 
 SCREEN_WIDTH = 540  # shown at 270 px
 # Part of each screen to keep, from the top (the rest is cut, e.g. rows that only matter after a restore).
-KEEP = {"today": 1.0, "log": 1.0, "budget": 1.0, "trends": 1.0, "backup": 0.62}
-HERO = ["today", "log", "trends"]
+KEEP = {"today": 1.0, "log": 1.0, "budget": 1.0, "trends": 1.0, "backup": 0.62, "review": 1.0}
+HERO = ["today", "review", "trends"]
 
 
 def font(size, weight="Regular"):
