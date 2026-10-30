@@ -1,0 +1,30 @@
+name: Feature idea
+description: Suggest something Forkcast could do
+labels: [idea]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Ideas are welcome. Forkcast stays deliberately simple, so not every idea gets built.
+        **Please don't post API keys, tokens or your health data.** Issues are public.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What would you like to do that you can't today?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: How do you picture it working?
+  - type: input
+    id: app-version
+    attributes:
+      label: Forkcast version
+      description: Settings › About shows it
+      placeholder: "1.9.0"
+  - type: input
+    id: android-version
+    attributes:
+      label: Android version
+      placeholder: "Android 15"
