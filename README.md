@@ -11,7 +11,7 @@
 </p>
 
 <p align="center">
-  <a href="#support-forkcast"><img src="assets/readme/kofi-button.png" width="200" alt="Support me on Ko-fi"></a>
+  <a href="https://ko-fi.com/gabemomp"><img src="assets/readme/kofi-button.png" width="200" alt="Support me on Ko-fi"></a>
 </p>
 
 <p align="center">
@@ -117,7 +117,7 @@ Settings › Updates checks this page's releases, downloads the new version, che
 
 ## Support Forkcast
 
-Forkcast is free, with no ads. If it helps you, you can leave a tip on Ko-fi; tips are voluntary and don't unlock anything. The Ko-fi page opens soon.
+Forkcast is free, with no ads. If it helps you, you can leave a tip at [ko-fi.com/gabemomp](https://ko-fi.com/gabemomp). Tips are voluntary and don't unlock anything. In the app, the link is in Settings › About.
 
 ---
 
