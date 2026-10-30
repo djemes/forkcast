@@ -97,6 +97,10 @@ interface FoodDao {
     @Query("UPDATE food SET isFavorite = :favorite, updatedAt = :now WHERE id = :id")
     suspend fun setFavorite(id: String, favorite: Boolean, now: Long)
 
+    /** Favorites [id] with a default amount (roadmap 3.10). */
+    @Query("UPDATE food SET isFavorite = 1, favoriteQuantity = :quantity, favoriteServingLabel = :servingLabel, updatedAt = :now WHERE id = :id")
+    suspend fun setFavoriteAmount(id: String, quantity: Double, servingLabel: String, now: Long)
+
     @Query("UPDATE food SET countsAsWater = :counts, updatedAt = :now WHERE id = :id")
     suspend fun setCountsAsWater(id: String, counts: Boolean?, now: Long)
 
@@ -182,6 +186,16 @@ interface SavedMealDao {
 
     @Query("UPDATE saved_meal SET name = :name, updatedAt = :now WHERE id = :id")
     suspend fun rename(id: String, name: String, now: Long)
+
+    /** Undo of a removed favorite meal. */
+    @Query("UPDATE saved_meal SET deletedAt = NULL, updatedAt = :now WHERE id = :id")
+    suspend fun restoreMeal(id: String, now: Long)
+
+    @Query("SELECT * FROM saved_meal_item WHERE id = :id")
+    suspend fun item(id: String): SavedMealItemEntity?
+
+    @Query("UPDATE saved_meal_item SET deletedAt = :now, updatedAt = :now WHERE id = :id")
+    suspend fun softDeleteItem(id: String, now: Long)
 }
 
 @Dao

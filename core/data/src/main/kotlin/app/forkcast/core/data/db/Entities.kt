@@ -102,6 +102,9 @@ data class FoodEntity(
     val countsAsWater: Boolean? = null,
     /** v7: what the user typed when this food came from "Describe" (AI · text), so a similar search finds it. */
     val describedAs: String? = null,
+    /** v9: a favorite's default amount, set when it's favorited and edited in Favorites (roadmap 3.10); null = the last used amount. */
+    val favoriteQuantity: Double? = null,
+    val favoriteServingLabel: String? = null,
 )
 
 @Serializable
@@ -134,6 +137,8 @@ data class LogEntryEntity(
     @Transient val hcWaterRecordId: String? = null,
     /** v7: when it was eaten, minutes after local midnight on [date] (owner, 2026-10-23). */
     val eatenMinute: Int? = null,
+    /** v9: the portion slider's value, a multiplier of the entry's 1× amount (roadmap 3.9); [quantity] already includes it. */
+    @ColumnInfo(defaultValue = "1.0") val portion: Double = 1.0,
 )
 
 @Serializable

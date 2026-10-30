@@ -20,6 +20,13 @@ interface SavedMealRepository {
     suspend fun saveFrom(name: String, entries: List<LogEntry>): String
     suspend fun rename(id: String, name: String)
     suspend fun delete(id: String)
+    /** Undo of [delete]. */
+    suspend fun restore(id: String)
+    /**
+     * Edit a favorite meal (roadmap 3.10): its name, each item's new [quantities] (its snapshot scales
+     * with it) and the items [removed]. Past log entries never change.
+     */
+    suspend fun update(id: String, name: String, quantities: Map<String, Double>, removed: Set<String>)
     /** Turns a saved meal into log entries for [date]/[mealSlotId] (not yet stored). */
     suspend fun toEntries(id: String, date: LocalDate, mealSlotId: String): List<LogEntry>
 }
@@ -65,6 +72,26 @@ class RoomSavedMealRepository @Inject constructor(
     override suspend fun rename(id: String, name: String) = dao.rename(id, name.trim(), clock.millis())
 
     override suspend fun delete(id: String) = dao.softDeleteMeal(id, clock.millis())
+
+    override suspend fun restore(id: String) = dao.restoreMeal(id, clock.millis())
+
+    override suspend fun update(id: String, name: String, quantities: Map<String, Double>, removed: Set<String>) {
+        val now = clock.millis()
+        if (name.isNotBlank()) dao.rename(id, name.trim(), now)
+        removed.forEach { dao.softDeleteItem(it, now) }
+        val changed = quantities.filterKeys { it !in removed }.mapNotNull { (itemId, q) ->
+            val item = dao.item(itemId)?.takeIf { it.savedMealId == id && q > 0 && it.quantity > 0 && q != it.quantity } ?: return@mapNotNull null
+            val factor = q / item.quantity
+            item.copy(
+                quantity = q,
+                grams = item.grams?.let { it * factor },
+                nutrients = item.nutrients.mapValues { (_, v) -> v * factor },
+                waterMl = item.waterMl?.let { it * factor },
+                updatedAt = now,
+            )
+        }
+        if (changed.isNotEmpty()) dao.upsertItems(changed)
+    }
 
     override suspend fun toEntries(id: String, date: LocalDate, mealSlotId: String): List<LogEntry> {
         val now = clock.instant()

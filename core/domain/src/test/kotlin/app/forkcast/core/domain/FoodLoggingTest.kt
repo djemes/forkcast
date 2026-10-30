@@ -1,5 +1,6 @@
 package app.forkcast.core.domain
 
+import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.Food
 import app.forkcast.core.model.FoodSource
 import app.forkcast.core.model.NutrientKey
@@ -42,6 +43,31 @@ class FoodLoggingTest {
         assertThat(FoodLogging.defaultServing(used).let { it.first.label to it.second }).isEqualTo("g" to 180.0)
         val noServings = rice.copy(servingSizes = emptyList())
         assertThat(FoodLogging.defaultServing(noServings).let { it.first.label to it.second }).isEqualTo("g" to 100.0)
+    }
+
+    @Test fun `a favorite logs with its default amount everywhere, not the last one`() {
+        val fav = rice.copy(isFavorite = true, lastServingLabel = "g", lastQuantity = 180.0, favoriteServingLabel = "1 cup", favoriteQuantity = 0.5)
+        assertThat(FoodLogging.defaultServing(fav).let { it.first.label to it.second }).isEqualTo("1 cup" to 0.5)
+        // Unstarred, the last amount is back.
+        assertThat(FoodLogging.defaultServing(fav.copy(isFavorite = false)).let { it.first.label to it.second }).isEqualTo("g" to 180.0)
+    }
+
+    @Test fun `an AI entry becomes one food whose serving is the whole plate`() {
+        val ai = LogEntry(
+            "e", day, "b", null, "Chicken bowl", null, 0.5, "meal", 250.0,
+            mapOf(NutrientKey.ENERGY_KCAL to 400.0, NutrientKey.PROTEIN_G to 30.0), FoodSource.AI, null, Instant.EPOCH, portion = 0.5,
+        )
+        val food = FoodLogging.foodFromEntry(ai)
+        assertThat(food.source).isEqualTo(FoodSource.AI)
+        assertThat(food.servingSizes.single()).isEqualTo(ServingSize("serving", 500.0))
+        // 1 serving logs the plate at 1×: 800 kcal, 60 g protein.
+        val again = FoodLogging.entry(food, food.servingSizes.single(), 1.0, day, "b", Instant.EPOCH)
+        assertThat(again.nutrients[NutrientKey.ENERGY_KCAL]).isWithin(1e-9).of(800.0)
+        assertThat(again.nutrients[NutrientKey.PROTEIN_G]).isWithin(1e-9).of(60.0)
+        // A quick add has no weight: still 1 serving = what was entered.
+        val quick = FoodLogging.foodFromEntry(FoodLogging.quickAdd("Coffee", 45.0, null, 5.0, null, day, "b", Instant.EPOCH))
+        assertThat(quick.source).isEqualTo(FoodSource.CUSTOM)
+        assertThat(FoodLogging.entry(quick, quick.servingSizes.single(), 1.0, day, "b", Instant.EPOCH).nutrients[NutrientKey.ENERGY_KCAL]).isWithin(1e-9).of(45.0)
     }
 
     @Test fun `quick add carries only what was entered`() {

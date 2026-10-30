@@ -140,12 +140,11 @@ data class TodayUiState(
     val targets: DailyTargets? = null,
     val totals: DayTotals? = null,
     val selection: Set<String> = emptySet(),
-    /** For one-tap add in the Log sheet. */
+    /** The Log sheet's Recent tab: the last [RECENT_FOODS] foods logged (roadmap 3.10). */
     val recents: List<Food> = emptyList(),
-    /** [recents] are favorites (nothing logged yet). */
-    val recentsAreFavorites: Boolean = false,
-    /** Every favorite, for the Log sheet's Favorites list (owner, 2026-10-29). */
+    /** Favorite foods, for the Log sheet's Favorites tab. */
     val favorites: List<Food> = emptyList(),
+    /** Favorite meals (stored as saved meals): named groups of items with amounts. */
     val savedMeals: List<SavedMeal> = emptyList(),
     /** Meals that had entries yesterday: these get a "Same as yesterday" button when empty. */
     val yesterdayMealIds: Set<String> = emptySet(),
@@ -208,6 +207,8 @@ sealed interface TodayEvent {
         /** Moves it to another day (past or today). */
         val date: LocalDate = entry.date,
         val eatenMinute: Int? = entry.eatenMinute,
+        /** The portion slider's value for the new amount. */
+        val portion: Double = entry.portion,
     ) : TodayEvent
     /** The edit sheet opened: load the food's servings for it. */
     data class LoadEditServings(val entryId: String) : TodayEvent
@@ -224,6 +225,19 @@ sealed interface TodayEvent {
     data class AddRecent(val food: Food, val mealSlotId: String) : TodayEvent
     /** The star in the Favorites list. */
     data class SetFavorite(val foodId: String, val favorite: Boolean) : TodayEvent
+    /**
+     * ★ Favorite on a selected entry (roadmap 3.10): its food with this amount as the default; an
+     * entry without a food (an AI estimate, a described meal, quick add) becomes one food with the
+     * entry's nutrition as "1 serving", and the entry points to it.
+     */
+    data class FavoriteEntry(val id: String) : TodayEvent
+    /** Favorites › ⋯ › Unfavorite: a food or a favorite meal, with Undo. */
+    data class Unfavorite(val name: String, val foodId: String? = null, val savedMealId: String? = null) : TodayEvent
+    data class RestoreFavorite(val foodId: String? = null, val savedMealId: String? = null) : TodayEvent
+    /** Favorites › ⋯ › Edit: a food's default amount. Only future entries use it. */
+    data class EditFavoriteFood(val foodId: String, val quantity: Double, val servingLabel: String) : TodayEvent
+    /** Favorites › ⋯ › Edit: a favorite meal's name, item amounts and removed items. */
+    data class EditFavoriteMeal(val savedMealId: String, val name: String, val quantities: Map<String, Double>, val removed: Set<String>) : TodayEvent
     /** "What fits" in the budget sheet: logs it to the meal for now, on today. */
     data class LogFit(val fit: FitSuggestion, val mealSlotId: String) : TodayEvent
     /** Copies entries to [toDate], into [toMealSlotId] or (null) each entry's own meal. */
@@ -256,6 +270,8 @@ sealed interface TodayEffect {
     data class Added(val mealName: String) : TodayEffect
     data class Copied(val count: Int, val toDate: LocalDate) : TodayEffect
     data class SavedMealCreated(val name: String) : TodayEffect
+    data class Favorited(val name: String) : TodayEffect
+    data class Unfavorited(val name: String, val foodId: String?, val savedMealId: String?) : TodayEffect
 }
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -347,11 +363,10 @@ class TodayViewModel @Inject constructor(
     private val extras = combine(
         profileRepository.observeDailyTargets(),
         settingsRepository.settings,
-        // One-tap foods: recents, or favorites before anything has been logged.
-        combine(foods.observeRecents(5), foods.observeFavorites()) { r, fav -> Triple(if (r.isNotEmpty()) r else fav.take(5), r.isEmpty(), fav) },
+        combine(foods.observeRecents(RECENT_FOODS), foods.observeFavorites()) { r, fav -> r to fav },
         savedMealRepository.meals,
         missingKeys.missing,
-    ) { t, s, (r, recentsAreFavorites, favorites), saved, missing -> Extras(t, s, r, saved, recentsAreFavorites, missing, favorites) }
+    ) { t, s, (r, favorites), saved, missing -> Extras(t, s, r, saved, missing, favorites) }
 
     private val body = combine(weightRepository.entries, profileRepository.profile) { weights, profile -> weights to profile }
 
@@ -379,7 +394,6 @@ class TodayViewModel @Inject constructor(
         val settings: AppSettings,
         val recents: List<Food>,
         val saved: List<SavedMeal>,
-        val recentsAreFavorites: Boolean = false,
         val missingKeys: List<app.forkcast.core.data.repository.MissingKey> = emptyList(),
         val favorites: List<Food> = emptyList(),
     )
@@ -449,7 +463,6 @@ class TodayViewModel @Inject constructor(
             totals = totals,
             selection = selected intersect entries.map { it.id }.toSet(),
             recents = x.recents,
-            recentsAreFavorites = x.recentsAreFavorites,
             favorites = x.favorites,
             savedMeals = x.saved,
             yesterdayMealIds = dayData.yesterdayMeals,
@@ -537,6 +550,33 @@ class TodayViewModel @Inject constructor(
                 FoodLogging.entry(event.food, serving, qty, date, event.mealSlotId, clock.instant())
             }
             is TodayEvent.SetFavorite -> viewModelScope.launch { foods.setFavorite(event.foodId, event.favorite) }
+            is TodayEvent.FavoriteEntry -> viewModelScope.launch {
+                selection.value = emptySet()
+                val e = uiState.value?.allEntries?.firstOrNull { it.id == event.id } ?: return@launch
+                val foodId = e.foodId?.takeIf { foods.get(it) != null }
+                if (foodId != null) {
+                    foods.setFavoriteAmount(foodId, e.quantity, e.servingLabel)
+                } else {
+                    val food = FoodLogging.foodFromEntry(e)
+                    val id = foods.saveCustom(food)
+                    foods.setFavoriteAmount(id, 1.0, FoodLogging.SERVING_LABEL)
+                    logRepository.update(e.copy(foodId = id))
+                }
+                effectChannel.send(TodayEffect.Favorited(e.displayName))
+            }
+            is TodayEvent.Unfavorite -> viewModelScope.launch {
+                event.foodId?.let { foods.setFavorite(it, false) }
+                event.savedMealId?.let { savedMealRepository.delete(it) }
+                effectChannel.send(TodayEffect.Unfavorited(event.name, event.foodId, event.savedMealId))
+            }
+            is TodayEvent.RestoreFavorite -> viewModelScope.launch {
+                event.foodId?.let { foods.setFavorite(it, true) }
+                event.savedMealId?.let { savedMealRepository.restore(it) }
+            }
+            is TodayEvent.EditFavoriteFood -> viewModelScope.launch { foods.setFavoriteAmount(event.foodId, event.quantity, event.servingLabel) }
+            is TodayEvent.EditFavoriteMeal -> viewModelScope.launch {
+                savedMealRepository.update(event.savedMealId, event.name, event.quantities, event.removed)
+            }
             is TodayEvent.Copy -> viewModelScope.launch {
                 selection.value = emptySet()
                 // No future days, whatever the caller passed.
@@ -610,6 +650,7 @@ class TodayViewModel @Inject constructor(
                         // Never a future day (owner, 2026-10-23); a time the user set is no longer an estimate.
                         date = minOf(event.date, LocalDate.now(clock)),
                         eatenMinute = event.eatenMinute,
+                        portion = event.portion,
                     ),
                 )
             }
@@ -654,3 +695,6 @@ class TodayViewModel @Inject constructor(
 
 /** Recent foods "what fits" looks through. */
 private const val FIT_RECENTS = 20
+
+/** The Log sheet's Recent tab (owner, 2026-10-29). */
+private const val RECENT_FOODS = 15

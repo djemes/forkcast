@@ -40,7 +40,18 @@ data class Food(
     val countsAsWater: Boolean? = null,
     /** What the user typed when this food was saved from "Describe" (search matches it too). */
     val describedAs: String? = null,
-)
+    /** A favorite's default amount (roadmap 3.10): set when favorited, editable in Favorites; null = [lastQuantity]. */
+    val favoriteQuantity: Double? = null,
+    val favoriteServingLabel: String? = null,
+) {
+    /** What logging this food starts with: the favorite's default, else the last amount used, else null. */
+    val defaultAmount: Pair<Double, String>?
+        get() = when {
+            isFavorite && favoriteQuantity != null && favoriteServingLabel != null -> favoriteQuantity to favoriteServingLabel
+            lastQuantity != null && lastServingLabel != null -> lastQuantity to lastServingLabel
+            else -> null
+        }
+}
 
 /** Scales per-100 g nutrients to an amount in grams. */
 fun Nutrients.forGrams(grams: Double): Nutrients = mapValues { (_, per100) -> per100 * grams / 100.0 }

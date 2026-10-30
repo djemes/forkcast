@@ -124,7 +124,7 @@
     <string name="budget_fits_protein">Mais proteína primeiro: faltam %1$s de proteína.</string>
     <string name="budget_fit_line">%1$s · %2$s de proteína</string>
     <string name="budget_fit_add">Adicionar %1$s a %2$s</string>
-    <string name="budget_saved_meal">Refeição salva</string>
+    <string name="budget_saved_meal">Refeição favorita</string>
     <!-- Backup card (roadmap 2.0, task 1.4) -->
     <string name="backup_notice_reminder_title">Hora de um backup</string>
     <string name="backup_notice_reminder_body">Faz duas semanas que não há um backup. Seus dados ficam só neste celular.</string>

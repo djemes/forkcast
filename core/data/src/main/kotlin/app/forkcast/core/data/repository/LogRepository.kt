@@ -127,6 +127,7 @@ class RoomLogRepository @Inject constructor(
         updatedAt = now,
         waterMl = waterMl,
         eatenMinute = eatenMinute,
+        portion = portion,
     )
 }
 
@@ -147,4 +148,5 @@ fun LogEntryEntity.toModel() = LogEntry(
     aiEstimateId = aiEstimateId,
     waterMl = waterMl,
     eatenMinute = eatenMinute,
+    portion = portion,
 )

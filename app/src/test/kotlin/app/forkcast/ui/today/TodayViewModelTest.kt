@@ -248,6 +248,68 @@ class TodayViewModelTest {
         assertThat(lunch.kcal).isEqualTo(340.0)
     }
 
+    /** ★ on one selected entry (roadmap 3.10): its food becomes a favorite with this amount; Unfavorite has Undo. */
+    @Test fun favoriteAnEntryThenUnfavoriteAndUndo() = runTest {
+        foods.foods.value = mapOf("f1" to food("f1", "Oatmeal", 300.0, 10.0, 1))
+        log.add(listOf(TestData.entry("Oatmeal", "b", 450.0).copy(foodId = "f1", quantity = 1.5, servingLabel = "serving")))
+        val vm = vm()
+        val entry = vm.uiState.filterNotNull().first { it.allEntries.isNotEmpty() }.allEntries.single()
+        vm.onEvent(TodayEvent.FavoriteEntry(entry.id))
+        val fav = vm.uiState.filterNotNull().first { it.favorites.isNotEmpty() }.favorites.single()
+        assertThat(fav.defaultAmount).isEqualTo(1.5 to "serving")
+
+        vm.onEvent(TodayEvent.Unfavorite("Oatmeal", foodId = "f1"))
+        assertThat(vm.uiState.filterNotNull().first { it.favorites.isEmpty() }.favorites).isEmpty()
+        vm.onEvent(TodayEvent.RestoreFavorite(foodId = "f1"))
+        assertThat(vm.uiState.filterNotNull().first { it.favorites.isNotEmpty() }.favorites.single().defaultAmount).isEqualTo(1.5 to "serving")
+
+        vm.onEvent(TodayEvent.EditFavoriteFood("f1", 2.0, "serving"))
+        assertThat(foods.foods.value.getValue("f1").defaultAmount).isEqualTo(2.0 to "serving")
+        // Past entries never change.
+        assertThat(log.rows.value.values.single().first.quantity).isEqualTo(1.5)
+    }
+
+    /** An AI estimate has no food: favoriting it makes one, "1 serving" = the whole plate, and the entry points to it. */
+    @Test fun favoriteAnAiEntryMakesOneFood() = runTest {
+        val (id) = log.add(listOf(TestData.entry("Chicken bowl", "l", 650.0).copy(source = app.forkcast.core.model.FoodSource.AI, servingLabel = "meal", grams = 400.0)))
+        val vm = vm()
+        vm.uiState.filterNotNull().first { it.allEntries.isNotEmpty() }
+        vm.onEvent(TodayEvent.FavoriteEntry(id))
+        val fav = vm.uiState.filterNotNull().first { it.favorites.isNotEmpty() }.favorites.single()
+        assertThat(fav.name).isEqualTo("Chicken bowl")
+        assertThat(fav.source).isEqualTo(app.forkcast.core.model.FoodSource.AI)
+        assertThat(fav.defaultAmount).isEqualTo(1.0 to "serving")
+        assertThat(log.rows.value.getValue(id).first.foodId).isEqualTo(fav.id)
+        vm.onEvent(TodayEvent.AddRecent(fav, "d"))
+        val dinner = vm.uiState.filterNotNull().first { s -> s.meals.first { it.slot.id == "d" }.entries.isNotEmpty() }.meals.first { it.slot.id == "d" }
+        assertThat(dinner.kcal).isWithin(1e-6).of(650.0)
+    }
+
+    /** A favorite meal: edit its amounts, unfavorite it, Undo. */
+    @Test fun favoriteMealEditAndUnfavorite() = runTest {
+        val ids = log.add(listOf(TestData.entry("Oats", "b", 300.0), TestData.entry("Coffee", "b", 40.0)))
+        val vm = vm()
+        vm.uiState.filterNotNull().first()
+        vm.onEvent(TodayEvent.SaveAsMeal(ids, "Usual breakfast"))
+        val meal = vm.uiState.filterNotNull().first { it.savedMeals.isNotEmpty() }.savedMeals.single()
+        vm.onEvent(TodayEvent.EditFavoriteMeal(meal.id, "Breakfast", mapOf(meal.items.first().id to 2.0), removed = setOf(meal.items.last().id)))
+        val edited = vm.uiState.filterNotNull().first { it.savedMeals.single().name == "Breakfast" }.savedMeals.single()
+        assertThat(edited.items.single().nutrients[app.forkcast.core.model.NutrientKey.ENERGY_KCAL]).isEqualTo(600.0)
+        vm.onEvent(TodayEvent.Unfavorite("Breakfast", savedMealId = meal.id))
+        vm.uiState.filterNotNull().first { it.savedMeals.isEmpty() }
+        vm.onEvent(TodayEvent.RestoreFavorite(savedMealId = meal.id))
+        assertThat(vm.uiState.filterNotNull().first { it.savedMeals.isNotEmpty() }.savedMeals.single().name).isEqualTo("Breakfast")
+    }
+
+    /** The Log sheet's Recent tab lists 15 foods (owner, 2026-10-29). */
+    @Test fun recentListsFifteen() = runTest {
+        foods.foods.value = (1..20).associate { "f$it" to food("f$it", "Food $it", 100.0, 1.0, it.toLong()) }
+        val vm = vm()
+        val s = vm.uiState.filterNotNull().first { it.recents.isNotEmpty() }
+        assertThat(s.recents).hasSize(15)
+        assertThat(s.recents.first().name).isEqualTo("Food 20")
+    }
+
     @Test fun sameAsYesterdayCopiesThatMeal() = runTest {
         log.add(listOf(TestData.entry("Pasta", "d", 650.0, date = TestData.TODAY.minusDays(1))))
         val vm = vm()

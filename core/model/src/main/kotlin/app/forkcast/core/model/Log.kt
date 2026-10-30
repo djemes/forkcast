@@ -30,6 +30,8 @@ data class LogEntry(
      * repository fills it in: the logging time today, else the meal's typical time).
      */
     val eatenMinute: Int? = null,
+    /** The portion slider's value (roadmap 3.9): a multiplier of the 1× amount, already included in [quantity]. */
+    val portion: Double = 1.0,
 )
 
 data class WeightEntry(

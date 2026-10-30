@@ -230,10 +230,10 @@ private fun DescribeCard(query: String, onDescribe: () -> Unit) {
     }
 }
 
-/** Saved meals that match, marked as meals, logged whole with one tap (owner, 2026-10-23). */
+/** Favorite meals that match, marked as meals, logged whole with one tap (owner, 2026-10-23; roadmap 3.10). */
 private fun LazyListScope.savedMealSection(meals: List<SavedMeal>, f: UnitFormatter, onLog: (SavedMeal) -> Unit) {
     if (meals.isEmpty()) return
-    item(key = "h-saved") { SectionTitle(R.string.saved_meals_title) }
+    item(key = "h-saved") { SectionTitle(R.string.favorite_meals_title) }
     items(meals, key = { "saved-${it.id}" }) { meal ->
         val kcal = meal.items.map { it.nutrients }.sumNutrients().kcal
         val logLabel = stringResource(R.string.saved_meal_log, meal.name)
@@ -246,7 +246,7 @@ private fun LazyListScope.savedMealSection(meals: List<SavedMeal>, f: UnitFormat
                 .padding(vertical = 6.dp),
         ) {
             Icon(
-                painterResource(R.drawable.ic_bookmark),
+                painterResource(R.drawable.ic_star),
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(end = 12.dp).size(20.dp),

@@ -46,11 +46,24 @@
     <string name="log_photo">Photo</string>
     <string name="log_search">Search</string>
     <string name="log_quick_add">Quick add calories</string>
-    <string name="log_saved_meals">Saved meals</string>
     <string name="log_recent">Recent</string>
     <string name="log_favorites">Favorites</string>
-    <string name="favorites_empty">Nothing here yet. Tap the star on a food to keep it here.</string>
-    <string name="favorites_open">Open %1$s</string>
+    <string name="favorites_empty">No favorites yet. Long-press an entry on Today, or tap the star on a food.</string>
+    <string name="favorites_all">All</string>
+    <string name="favorites_foods">Foods</string>
+    <string name="favorites_meals">Meals</string>
+    <string name="favorite_meal_summary">Meal · %1$s · %2$s</string>
+    <string name="favorite_more">More options for %1$s</string>
+    <string name="favorite_edit">Edit</string>
+    <string name="favorite_unfavorite">Unfavorite</string>
+    <string name="favorite_added">\"%1$s\" added to favorites</string>
+    <string name="favorite_removed">\"%1$s\" removed from favorites</string>
+    <string name="favorite_edit_title">Edit favorite</string>
+    <string name="favorite_default_amount">Amount when you log it</string>
+    <string name="favorite_future_only">Changes apply to what you log from now on. Past days stay as they are.</string>
+    <string name="favorite_edit_nutrition">Edit nutrition</string>
+    <string name="favorite_remove_item">Remove %1$s</string>
+    <string name="recent_empty">Foods you log show up here.</string>
 
     <!-- Settings -->
     <string name="settings">Settings</string>

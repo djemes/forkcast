@@ -66,6 +66,24 @@ class FoodRepositoryTest {
         assertThat(repo.observeFavorites().first()).hasSize(1)
     }
 
+    /** A favorite's default amount (roadmap 3.10): its last amount when starred, then whatever the user sets; caching keeps it. */
+    @Test fun favoritingKeepsADefaultAmount() = runTest {
+        val id = repo.cache(remote("Oats", sourceId = "o"))
+        db.foodDao().markUsed(id, 0.5, "cup", 1)
+        repo.setFavorite(id, true)
+        assertThat(repo.get(id)!!.defaultAmount).isEqualTo(0.5 to "cup")
+        db.foodDao().markUsed(id, 2.0, "cup", 2)
+        assertThat(repo.get(id)!!.defaultAmount).isEqualTo(0.5 to "cup")
+        repo.setFavoriteAmount(id, 40.0, "g")
+        repo.cache(remote("Oats, rolled", sourceId = "o"))
+        assertThat(repo.get(id)!!.defaultAmount).isEqualTo(40.0 to "g")
+        // Not a favorite: the last amount again; starring again restores the default it had.
+        repo.setFavorite(id, false)
+        assertThat(repo.get(id)!!.defaultAmount).isEqualTo(2.0 to "cup")
+        repo.setFavorite(id, true)
+        assertThat(repo.get(id)!!.defaultAmount).isEqualTo(40.0 to "g")
+    }
+
     @Test fun customFoodsCreateUpdateDelete() = runTest {
         val id = repo.saveCustom(remote("Gabe's chili").copy(source = FoodSource.CUSTOM, sourceId = null))
         assertThat(repo.observeCustom().first().single().name).isEqualTo("Gabe's chili")

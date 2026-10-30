@@ -28,6 +28,7 @@ enum class HelpEntry(val topic: HelpTopic, @StringRes val question: Int, @String
     START_CHANGE_GOAL(HelpTopic.GETTING_STARTED, R.string.help_q_change_goal, R.string.help_a_change_goal),
 
     LOG_WAYS(HelpTopic.LOGGING, R.string.help_q_log_ways, R.string.help_a_log_ways),
+    LOG_FAVORITES(HelpTopic.LOGGING, R.string.help_q_favorites, R.string.help_a_favorites),
     LOG_PHOTO_TIPS(HelpTopic.LOGGING, R.string.help_q_photo_tips, R.string.help_a_photo_tips),
     LOG_SEARCH_FAILED(HelpTopic.LOGGING, R.string.help_q_search_failed, R.string.help_a_search_failed),
     LOG_USDA_KEY(HelpTopic.LOGGING, R.string.help_q_usda_key, R.string.help_a_usda_key),

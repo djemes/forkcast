@@ -49,11 +49,24 @@
     <string name="log_photo">Foto</string>
     <string name="log_search">Buscar</string>
     <string name="log_quick_add">Adicionar calorias rápido</string>
-    <string name="log_saved_meals">Refeições salvas</string>
     <string name="log_recent">Recentes</string>
     <string name="log_favorites">Favoritos</string>
-    <string name="favorites_empty">Nada aqui ainda. Toque na estrela de um alimento para guardá-lo aqui.</string>
-    <string name="favorites_open">Abrir %1$s</string>
+    <string name="favorites_empty">Nenhum favorito ainda. Toque e segure um item em Hoje, ou toque na estrela de um alimento.</string>
+    <string name="favorites_all">Todos</string>
+    <string name="favorites_foods">Alimentos</string>
+    <string name="favorites_meals">Refeições</string>
+    <string name="favorite_meal_summary">Refeição · %1$s · %2$s</string>
+    <string name="favorite_more">Mais opções para %1$s</string>
+    <string name="favorite_edit">Editar</string>
+    <string name="favorite_unfavorite">Remover dos favoritos</string>
+    <string name="favorite_added">\"%1$s\" entrou nos favoritos</string>
+    <string name="favorite_removed">\"%1$s\" saiu dos favoritos</string>
+    <string name="favorite_edit_title">Editar favorito</string>
+    <string name="favorite_default_amount">Quantidade ao registrar</string>
+    <string name="favorite_future_only">As mudanças valem para o que você registrar daqui em diante. Os dias anteriores ficam como estão.</string>
+    <string name="favorite_edit_nutrition">Editar nutrição</string>
+    <string name="favorite_remove_item">Remover %1$s</string>
+    <string name="recent_empty">Os alimentos que você registrar aparecem aqui.</string>
 
     <!-- Settings -->
     <string name="settings">Configurações</string>

@@ -15,6 +15,8 @@ object FoodLogging {
     const val OUNCE_LABEL = "oz"
     const val ML_LABEL = "ml"
     const val FL_OZ_LABEL = "fl oz"
+    /** One serving of a food made from a log entry (shown as "1 serving" in the app's language). */
+    const val SERVING_LABEL = "serving"
 
     /**
      * The food's own servings, then grams and ounces (SPEC §4.3). Drinks that count toward water
@@ -56,11 +58,12 @@ object FoodLogging {
     fun convertQuantity(quantity: Double, from: ServingSize, to: ServingSize): Double =
         if (to.grams <= 0) quantity else quantity * from.grams / to.grams
 
-    /** Last-used serving and quantity, else the food's first serving × 1, else 100 g. */
+    /** A favorite's default amount, else the last-used serving and quantity, else the first serving × 1, else 100 g. */
     fun defaultServing(food: Food): Pair<ServingSize, Double> {
         val options = servingOptions(food)
-        food.lastServingLabel?.let { label ->
-            options.firstOrNull { it.label == label }?.let { return it to (food.lastQuantity ?: 1.0) }
+        // A favorite's default amount, else the last one logged (roadmap 3.10).
+        food.defaultAmount?.let { (quantity, label) ->
+            options.firstOrNull { it.label == label }?.let { return it to quantity }
         }
         return food.servingSizes.firstOrNull()?.let { it to 1.0 } ?: (options.first { it.label == GRAM_LABEL } to 100.0)
     }
@@ -92,6 +95,34 @@ object FoodLogging {
             waterMl = DrinkWater.waterMl(DrinkWater.countsAsWater(food), grams),
         )
     }
+
+    /**
+     * A food from an entry that has none (roadmap 3.10, owner 2026-10-29): an AI estimate, a described
+     * meal or a quick add becomes one food whose "1 serving" is the whole plate at 1× (the entry
+     * without its portion). It keeps the entry's source, so an AI estimate stays labeled as one.
+     */
+    fun foodFromEntry(e: LogEntry): Food {
+        val portion = e.portion.coerceAtLeast(PortionScale.MIN)
+        val grams = e.grams?.takeIf { it > 0 }?.let { it / portion } ?: NOMINAL_SERVING_GRAMS
+        val perServing = e.nutrients.mapValues { (_, v) -> v / portion }
+        return Food(
+            id = "",
+            name = e.displayName,
+            brand = e.brand,
+            source = if (e.source == FoodSource.QUICK_ADD) FoodSource.CUSTOM else e.source,
+            sourceId = null,
+            barcode = null,
+            servingSizes = listOf(ServingSize(SERVING_LABEL, grams)),
+            nutrientsPer100g = perServing.mapValues { (_, v) -> v * 100.0 / grams },
+            isFavorite = false,
+            lastUsedAt = null,
+            lastQuantity = null,
+            lastServingLabel = null,
+        )
+    }
+
+    /** The weight given to a serving when the entry had none (quick add): only its ratio to 100 g matters. */
+    private const val NOMINAL_SERVING_GRAMS = 100.0
 
     /** Quick add: calories (and optionally macros) with a label, no food behind it. */
     fun quickAdd(

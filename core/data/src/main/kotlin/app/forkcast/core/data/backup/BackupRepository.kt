@@ -152,6 +152,10 @@ class RoomBackupRepository @Inject constructor(
         // Photo paths are file names inside the photo folder; anything else never enters the database (REVIEW-2 M1).
         val safe = export.copy(
             aiEstimates = export.aiEstimates.map { e -> e.copy(photoPaths = e.photoPaths.filter(app.forkcast.core.data.ai.PhotoStore::isValidPath)) },
+            // v7 (1.4–1.8.2) had no favorite default amounts: a favorite keeps its last amount, as the v9 migration does.
+            foods = if (version >= FAVORITE_DEFAULTS_SINCE) export.foods else export.foods.map { f ->
+                if (f.isFavorite && f.favoriteQuantity == null) f.copy(favoriteQuantity = f.lastQuantity, favoriteServingLabel = f.lastServingLabel) else f
+            },
         )
         return ParsedBackup.Ok(safe, preview(safe))
     }
@@ -305,6 +309,8 @@ class RoomBackupRepository @Inject constructor(
     companion object {
         /** App-private and excluded from Android Auto Backup (it duplicates the database). */
         const val SAFETY_DIR = "safety-backups"
+        /** The export version whose foods carry a favorite's default amount. */
+        private const val FAVORITE_DEFAULTS_SINCE = 8
         private const val KEEP_SAFETY_BACKUPS = 3
         private val FILE_STAMP = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
     }

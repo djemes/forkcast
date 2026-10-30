@@ -25,7 +25,20 @@ class FakeSavedMealRepository : SavedMealRepository {
         return id
     }
     override suspend fun rename(id: String, name: String) = state.update { l -> l.map { if (it.id == id) it.copy(name = name) else it } }
-    override suspend fun delete(id: String) = state.update { l -> l.filterNot { it.id == id } }
+    private val removed = mutableMapOf<String, SavedMeal>()
+    override suspend fun delete(id: String) = state.update { l -> l.firstOrNull { it.id == id }?.let { removed[id] = it }; l.filterNot { it.id == id } }
+    override suspend fun restore(id: String) { removed.remove(id)?.let { m -> state.update { it + m } } }
+    override suspend fun update(id: String, name: String, quantities: Map<String, Double>, removed: Set<String>) = state.update { l ->
+        l.map { m ->
+            if (m.id != id) return@map m
+            m.copy(
+                name = name.ifBlank { m.name },
+                items = m.items.filterNot { it.id in removed }.map { i ->
+                    quantities[i.id]?.let { q -> i.copy(quantity = q, nutrients = i.nutrients.mapValues { (_, v) -> v * q / i.quantity }) } ?: i
+                },
+            )
+        }
+    }
     override suspend fun toEntries(id: String, date: LocalDate, mealSlotId: String): List<LogEntry> =
         state.value.firstOrNull { it.id == id }?.items.orEmpty().map { i ->
             LogEntry("", date, mealSlotId, i.foodId, i.displayName, i.brand, i.quantity, i.servingLabel, i.grams, i.nutrients, i.source, null, Instant.EPOCH)

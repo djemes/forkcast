@@ -223,7 +223,7 @@ private fun Fits(state: TodayUiState, totals: DayTotals, targets: DailyTargets, 
                 .padding(vertical = 4.dp),
         ) {
             Icon(
-                painterResource(if (c.savedMeal) R.drawable.ic_bookmark else R.drawable.ic_history),
+                painterResource(if (c.savedMeal) R.drawable.ic_star else R.drawable.ic_history),
                 contentDescription = if (c.savedMeal) stringResource(R.string.budget_saved_meal) else null,
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(end = 12.dp),

@@ -33,7 +33,8 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.material3.TextButton
 import app.forkcast.ui.common.MealTimeField
-import app.forkcast.ui.common.PortionChips
+import app.forkcast.ui.common.PortionSlider
+import app.forkcast.core.domain.PortionScale
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -315,6 +316,8 @@ data class EntryEdit(
     val date: java.time.LocalDate,
     /** When it was eaten, minutes after midnight. */
     val eatenMinute: Int,
+    /** The portion slider's value for the new amount (roadmap 3.9). */
+    val portion: Double = 1.0,
 )
 
 /**
@@ -344,6 +347,12 @@ fun EditEntrySheet(
     var servingLabel by rememberSaveable(entry.id) { mutableStateOf(entry.servingLabel) }
     var reseed by rememberSaveable(entry.id) { mutableIntStateOf(0) }
     val serving = servings.firstOrNull { it.label == servingLabel }
+    // The snapshot's factor for an amount: by grams when a serving is known, else by quantity.
+    fun factorFor(q: Double): Double = if (serving != null && entry.grams != null && entry.grams!! > 0) {
+        q * serving.grams / entry.grams!!
+    } else {
+        q / entry.quantity.coerceAtLeast(1e-9)
+    }
     var mealId by rememberSaveable(entry.id) { mutableStateOf(entry.mealSlotId) }
     var countsWater by rememberSaveable(entry.id) { mutableStateOf(entry.waterMl != null) }
     var date by rememberSaveable(entry.id) { mutableStateOf(entry.date) }
@@ -408,14 +417,18 @@ fun EditEntrySheet(
                     }
                 }
             }
-            // "How much did you eat?" on every entry (owner, 2026-10-29): a share or multiple of what was logged.
+            // "How much did you eat?" on every entry (roadmap 3.9): starts where the entry was left.
             Text(stringResource(R.string.portion_title), style = MaterialTheme.typography.titleSmall)
-            PortionChips(
-                portion = quantity?.takeIf { servingLabel == entry.servingLabel && entry.quantity > 0 }?.let { it / entry.quantity },
-                percentLabel = R.string.portion_percent_entry,
-                onPick = { p ->
-                    servingLabel = entry.servingLabel
-                    quantity = UnitFormatter.trimNumber(entry.quantity * p, 2).toDouble()
+            val portion = entry.portion * (quantity?.let(::factorFor) ?: 1.0)
+            PortionSlider(
+                portion = portion,
+                kcalAtOne = entry.nutrients.kcal / entry.portion.coerceAtLeast(PortionScale.MIN),
+                f = f,
+                gramsAtOne = entry.grams?.let { it / entry.portion.coerceAtLeast(PortionScale.MIN) },
+                onChange = { p ->
+                    // The same serving, scaled: 1 cup at 1× → ½ cup at ½.
+                    val q = quantity ?: entry.quantity
+                    quantity = UnitFormatter.trimNumber(PortionScale.quantityFor(q, portion, p), 2).toDouble()
                     reseed++
                 },
             )
@@ -429,12 +442,7 @@ fun EditEntrySheet(
             )
             val q = quantity
             if (q != null && q > 0 && entry.quantity > 0) {
-                // The snapshot, scaled by grams when a serving is known, else by quantity.
-                val factor = if (serving != null && entry.grams != null && entry.grams!! > 0) {
-                    q * serving.grams / entry.grams!!
-                } else {
-                    q / entry.quantity
-                }
+                val factor = factorFor(q)
                 Text(f.energy(entry.nutrients.kcal * factor), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                 NutrientsExpander(entry.nutrients.mapValues { (_, v) -> v * factor }, f)
             }
@@ -461,7 +469,7 @@ fun EditEntrySheet(
                 Button(
                     onClick = {
                         val m = if (date == today) minOf(minute, nowMinute) else minute
-                        quantity?.let { onSave(EntryEdit(it, mealId, countsWater, serving, date, m)) }
+                        quantity?.let { onSave(EntryEdit(it, mealId, countsWater, serving, date, m, entry.portion * factorFor(it))) }
                     },
                     enabled = (quantity ?: 0.0) > 0,
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),

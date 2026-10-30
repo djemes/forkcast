@@ -2,11 +2,11 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="meal_more">Mais opções para %1$s</string>
     <string name="meal_copy">Copiar refeição…</string>
-    <string name="meal_save_as">Salvar como refeição…</string>
+    <string name="meal_save_as">★ Salvar como refeição favorita…</string>
     <string name="day_copy">Copiar o dia todo…</string>
     <string name="same_as_yesterday">Igual a ontem</string>
     <string name="action_copy">Copiar</string>
-    <string name="action_save_as_meal">Salvar como refeição</string>
+    <string name="action_save_as_meal">Salvar como refeição favorita</string>
     <string name="copy_title">Copiar para</string>
     <string name="copy_same_meal">Mesma refeição</string>
     <string name="copy_day">Dia</string>
@@ -15,18 +15,16 @@
         <item quantity="many">%1$d itens copiados para %2$s</item>
         <item quantity="other">%1$d itens copiados para %2$s</item>
     </plurals>
-    <string name="save_meal_title">Salvar como refeição</string>
+    <string name="save_meal_title">Salvar como refeição favorita</string>
     <string name="save_meal_name">Nome</string>
     <string name="save_meal_hint">ex.: Café da manhã de sempre</string>
-    <string name="saved_meal_done">\"%1$s\" salva</string>
-    <string name="saved_meals_title">Refeições salvas</string>
-    <string name="saved_meals_empty">Nenhuma refeição salva ainda. Toque e segure itens em Hoje, ou use o menu de uma refeição, para salvar uma.</string>
+    <string name="saved_meal_done">\"%1$s\" está nos seus favoritos</string>
+    <string name="favorite_meals_title">Refeições favoritas</string>
     <plurals name="saved_meal_items">
         <item quantity="one">%1$d item</item>
         <item quantity="many">%1$d itens</item>
         <item quantity="other">%1$d itens</item>
     </plurals>
-    <string name="saved_meal_delete">Apagar %1$s</string>
     <string name="saved_meal_log">Registrar %1$s</string>
 
     <!-- Settings › Meals (SPEC §4.12) -->

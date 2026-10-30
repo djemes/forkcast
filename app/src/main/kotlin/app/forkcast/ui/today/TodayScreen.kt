@@ -215,8 +215,8 @@ fun TodayScreen(
     var editingId by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(editingId) { editingId?.let { onEvent(TodayEvent.LoadEditServings(it)) } }
     var quickAddMealId by rememberSaveable { mutableStateOf<String?>(null) }
-    var savedMealsFor by rememberSaveable { mutableStateOf<String?>(null) }
-    var favoritesFor by rememberSaveable { mutableStateOf<String?>(null) }
+    // Favorites › ⋯ › Edit: the favorite being edited, and the meal its Log sheet was open for.
+    var favoriteEditing by remember { mutableStateOf<Pair<FavoriteItem, String>?>(null) }
     var copyRequest by remember { mutableStateOf<CopyRequest?>(null) }
     var saveRequest by remember { mutableStateOf<SaveRequest?>(null) }
     val snackbar = remember { SnackbarHostState() }
@@ -245,6 +245,15 @@ fun TodayScreen(
                     resources.getQuantityString(R.plurals.copied, effect.count, effect.count, shortDate(effect.toDate, locale)),
                 )
                 is TodayEffect.SavedMealCreated -> snackbar.showSnackbar(resources.getString(R.string.saved_meal_done, effect.name))
+                is TodayEffect.Favorited -> snackbar.showSnackbar(resources.getString(R.string.favorite_added, effect.name))
+                is TodayEffect.Unfavorited -> {
+                    val result = snackbar.showSnackbar(
+                        resources.getString(R.string.favorite_removed, effect.name),
+                        resources.getString(R.string.undo),
+                        duration = SnackbarDuration.Long,
+                    )
+                    if (result == SnackbarResult.ActionPerformed) currentOnEvent(TodayEvent.RestoreFavorite(effect.foodId, effect.savedMealId))
+                }
                 is TodayEffect.Deleted -> {
                     val msg = effect.label?.let { resources.getString(R.string.deleted_one, it) }
                         ?: resources.getQuantityString(R.plurals.deleted_many, effect.ids.size, effect.ids.size)
@@ -278,11 +287,24 @@ fun TodayScreen(
                 label = "topBar",
             ) { selecting ->
                 if (selecting) {
+                    val single = state.selection.singleOrNull()?.let { id -> state.allEntries.firstOrNull { it.id == id } }
+                    val singleFoodId = single?.foodId
                     SelectionBar(
                         count = state.selection.size,
                         onEvent = onEvent,
                         onCopy = { copyRequest = CopyRequest(state.selection.toList(), allowSameMeal = true) },
                         onSave = { saveRequest = SaveRequest(state.selection.toList(), "") },
+                        singleIsFavorite = single?.let { state.favorites.any { f -> f.id == singleFoodId } },
+                        onFavorite = { favorite ->
+                            if (single != null) {
+                                if (favorite) {
+                                    onEvent(TodayEvent.FavoriteEntry(single.id))
+                                } else if (singleFoodId != null) {
+                                    onEvent(TodayEvent.ClearSelection)
+                                    onEvent(TodayEvent.Unfavorite(single.displayName, foodId = singleFoodId))
+                                }
+                            }
+                        },
                     )
                 } else {
                     DateHeader(state, onEvent, onPickDate = { showDatePicker = true }, onOpenSettings = actions.openSettings, onOpenTrends = actions.openTrends)
@@ -514,16 +536,26 @@ fun TodayScreen(
                 photo = actions.openPhoto?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 describe = actions.openDescribe?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
                 quickAdd = { logSheetMealId = null; quickAddMealId = mealId },
-                savedMeals = { logSheetMealId = null; savedMealsFor = mealId },
-                favorites = { logSheetMealId = null; favoritesFor = mealId },
                 recipes = actions.openRecipes?.let { open -> { logSheetMealId = null; open(mealId, state.date) } },
             ),
             recents = state.recents,
-            recentsAreFavorites = state.recentsAreFavorites,
+            favorites = state.favorites,
+            favoriteMeals = state.savedMeals,
             f = f,
             onAddRecent = { food ->
                 logSheetMealId = null
                 onEvent(TodayEvent.AddRecent(food, mealId))
+            },
+            onLogMeal = { meal ->
+                logSheetMealId = null
+                onEvent(TodayEvent.LogSavedMeal(meal.id, mealId))
+            },
+            onEditFavorite = { item -> logSheetMealId = null; favoriteEditing = item to mealId },
+            onUnfavorite = { item ->
+                when (item) {
+                    is FavoriteItem.FoodItem -> onEvent(TodayEvent.Unfavorite(item.name, foodId = item.food.id))
+                    is FavoriteItem.MealItem -> onEvent(TodayEvent.Unfavorite(item.name, savedMealId = item.meal.id))
+                }
             },
             dayLabel = if (state.isToday) null else shortDayLabel(state.date, state.today),
         )
@@ -542,25 +574,20 @@ fun TodayScreen(
             latestMinute = state.nowMinute.takeIf { state.isToday },
         )
     }
-    favoritesFor?.let { mealId ->
-        FavoritesSheet(
-            favorites = state.favorites,
-            mealName = state.meals.firstOrNull { it.slot.id == mealId }?.slot?.name.orEmpty(),
+    favoriteEditing?.let { (item, mealId) ->
+        FavoriteEditSheet(
+            item = item,
             f = f,
-            onLog = { food -> favoritesFor = null; onEvent(TodayEvent.AddRecent(food, mealId)) },
-            onOpen = actions.openFood?.let { open -> { food -> favoritesFor = null; open(food.id, mealId, state.date) } },
-            onUnstar = { food -> onEvent(TodayEvent.SetFavorite(food.id, favorite = false)) },
-            onDismiss = { favoritesFor = null },
-        )
-    }
-    savedMealsFor?.let { mealId ->
-        SavedMealsSheet(
-            meals = state.savedMeals,
-            mealName = state.meals.firstOrNull { it.slot.id == mealId }?.slot?.name.orEmpty(),
-            f = f,
-            onLog = { saved -> savedMealsFor = null; onEvent(TodayEvent.LogSavedMeal(saved.id, mealId)) },
-            onDelete = { saved -> onEvent(TodayEvent.DeleteSavedMeal(saved.id)) },
-            onDismiss = { savedMealsFor = null },
+            onSaveFood = { q, label ->
+                favoriteEditing = null
+                (item as? FavoriteItem.FoodItem)?.let { onEvent(TodayEvent.EditFavoriteFood(it.food.id, q, label)) }
+            },
+            onSaveMeal = { name, quantities, removed ->
+                favoriteEditing = null
+                (item as? FavoriteItem.MealItem)?.let { onEvent(TodayEvent.EditFavoriteMeal(it.meal.id, name, quantities, removed)) }
+            },
+            onDismiss = { favoriteEditing = null },
+            onEditNutrition = actions.openFood?.let { open -> { food -> favoriteEditing = null; open(food.id, mealId, state.date) } },
         )
     }
     copyRequest?.let { req ->
@@ -595,7 +622,7 @@ fun TodayScreen(
                 meals = state.loggableSlots,
                 f = f,
                 onSave = { edit ->
-                    onEvent(TodayEvent.UpdateEntry(entry, edit.quantity, edit.mealSlotId, edit.countsAsWater, edit.serving, edit.date, edit.eatenMinute))
+                    onEvent(TodayEvent.UpdateEntry(entry, edit.quantity, edit.mealSlotId, edit.countsAsWater, edit.serving, edit.date, edit.eatenMinute, edit.portion))
                     editingId = null
                 },
                 today = state.today,
@@ -640,7 +667,15 @@ private fun shortDate(date: LocalDate, locale: java.util.Locale): String =
     DateTimeFormatter.ofPattern(DateFormat.getBestDateTimePattern(locale, "EEEMMMd"), locale).format(date)
 
 @Composable
-private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit, onCopy: () -> Unit, onSave: () -> Unit) {
+private fun SelectionBar(
+    count: Int,
+    onEvent: (TodayEvent) -> Unit,
+    onCopy: () -> Unit,
+    onSave: () -> Unit,
+    /** One entry selected: whether its food is a favorite; null with two or more. */
+    singleIsFavorite: Boolean? = null,
+    onFavorite: (Boolean) -> Unit = {},
+) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
@@ -660,8 +695,17 @@ private fun SelectionBar(count: Int, onEvent: (TodayEvent) -> Unit, onCopy: () -
         IconButton(onClick = onCopy) {
             Icon(painterResource(R.drawable.ic_content_copy), stringResource(R.string.action_copy))
         }
-        IconButton(onClick = onSave) {
-            Icon(painterResource(R.drawable.ic_bookmark), stringResource(R.string.action_save_as_meal))
+        if (singleIsFavorite != null) {
+            IconButton(onClick = { onFavorite(!singleIsFavorite) }) {
+                Icon(
+                    painterResource(if (singleIsFavorite) R.drawable.ic_star else R.drawable.ic_star_outline),
+                    stringResource(if (singleIsFavorite) R.string.food_favorite_remove else R.string.food_favorite_add),
+                )
+            }
+        } else {
+            IconButton(onClick = onSave) {
+                Icon(painterResource(R.drawable.ic_star_outline), stringResource(R.string.action_save_as_meal))
+            }
         }
         IconButton(onClick = { onEvent(TodayEvent.DeleteSelected) }) {
             Icon(painterResource(R.drawable.ic_delete), stringResource(R.string.action_delete))
