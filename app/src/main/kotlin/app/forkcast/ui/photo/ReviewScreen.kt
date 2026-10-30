@@ -79,6 +79,12 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import app.forkcast.R
+import kotlinx.coroutines.launch
+import app.forkcast.ui.common.RenameableName
+import app.forkcast.ui.common.EntryMenu
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarHost
 import app.forkcast.core.data.ai.AiErrorCodes
 import app.forkcast.core.data.ai.ComponentEdits
 import app.forkcast.core.data.db.AiComponentEntity
@@ -109,21 +115,24 @@ fun ReviewRoute(
     viewModel: ReviewViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val snackbar = remember { SnackbarHostState() }
+    val resources = LocalResources.current
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { e ->
             when (e) {
                 ReviewEffect.Close -> onBack()
                 is ReviewEffect.OpenSearch -> onLogManually(e.mealSlotId, e.date, e.query, e.photo)
+                is ReviewEffect.Notice -> launch { snackbar.showSnackbar(resources.getString(e.text, e.name)) }
             }
         }
     }
     LaunchedEffect(state.loaded, state.detail) { if (state.loaded && state.detail == null) onBack() }
-    ReviewScreen(state, viewModel::onEvent, onBack)
+    ReviewScreen(state, viewModel::onEvent, onBack, snackbar)
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: () -> Unit) {
+fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: () -> Unit, snackbar: SnackbarHostState = remember { SnackbarHostState() }) {
     val f = UnitFormatter(state.units ?: UnitFormatter.defaultsFor(LocalLocale.current.platformLocale), LocalLocale.current.platformLocale, labels = unitLabels())
     var confirmDelete by remember { mutableStateOf(false) }
     var confirmDiscard by remember { mutableStateOf(false) }
@@ -145,8 +154,23 @@ fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: (
             TopAppBar(
                 title = { Text(stringResource(R.string.review_title)) },
                 navigationIcon = { IconButton(onClick = leave) { Icon(painterResource(R.drawable.ic_arrow_back), stringResource(R.string.action_back)) } },
+                actions = {
+                    // ⋮ (owner, 2026-10-30): Save as food and ★ Favorite once there's an estimate, Delete always.
+                    val est = state.detail?.estimate
+                    val ready = est?.status == EstimateStatus.DONE && state.components.isNotEmpty()
+                    if (est != null) {
+                        EntryMenu(
+                            onSaveAsFood = if (ready && state.savedFood == null) ({ onEvent(ReviewEvent.SaveAsFood) }) else null,
+                            favorite = state.savedFood?.isFavorite == true,
+                            onFavorite = if (ready) ({ onEvent(ReviewEvent.Favorite) }) else null,
+                            onUnfavorite = { onEvent(ReviewEvent.Unfavorite) },
+                            onDelete = { confirmDelete = true },
+                        )
+                    }
+                },
             )
         },
+        snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         val d = state.detail ?: return@Scaffold
         val e = d.estimate
@@ -169,11 +193,22 @@ fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: (
                 .padding(16.dp),
         ) {
             if (state.photoFiles.isNotEmpty()) PhotoHeader(state.photoFiles, onOpen = { enlarged = it })
-            if (state.isText && !e.description.isNullOrBlank()) DescribedCard(e.description!!)
-            Text(
-                e.mealName ?: stringResource(if (state.isText) R.string.describe_title else R.string.photo_meal_title),
+            val description = e.description?.takeIf { it.isNotBlank() }
+            if (state.isText && description != null) DescribedCard(description)
+            // What was typed with the photo, for reference; it stays when old photos are deleted (owner, 2026-10-30).
+            if (!state.isText && description != null) {
+                Text(
+                    stringResource(R.string.photo_you_wrote, description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            RenameableName(
+                name = e.mealName ?: stringResource(if (state.isText) R.string.describe_title else R.string.photo_meal_title),
+                onRename = { onEvent(ReviewEvent.Rename(it)) },
                 style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.semantics { heading() },
+                enabled = e.result != null,
+                heading = true,
             )
 
             when (stage) {
@@ -184,14 +219,6 @@ fun ReviewScreen(state: ReviewUiState, onEvent: (ReviewEvent) -> Unit, onBack: (
                 }
             }
             DetailsSection(e)
-            OutlinedButton(
-                onClick = { confirmDelete = true },
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            ) {
-                Icon(painterResource(R.drawable.ic_delete), contentDescription = null)
-                Text(stringResource(R.string.review_delete), modifier = Modifier.padding(start = 8.dp))
-            }
         }
     }
     enlarged?.let { file -> PhotoViewer(file, onClose = { enlarged = null }) }
@@ -272,37 +299,11 @@ private fun ReviewBody(state: ReviewUiState, e: AiEstimateEntity, f: UnitFormatt
         Text(stringResource(R.string.describe_knowledge_note), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
     CorrectField(onSend = { onEvent(ReviewEvent.Correct(it)) })
-    var saveAsFood by rememberSaveable(e.id) { mutableStateOf(true) }
-    var foodName by rememberSaveable(e.id) { mutableStateOf(e.mealName.orEmpty()) }
-    if (state.isText) {
-        // Never ask twice: the described meal becomes a food that search finds offline (owner, 2026-10-23).
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(min = 56.dp)
-                .toggleable(value = saveAsFood, role = Role.Switch, onValueChange = { saveAsFood = it }),
-        ) {
-            Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.describe_save_as_food), style = MaterialTheme.typography.bodyLarge)
-                Text(stringResource(R.string.describe_save_as_food_body), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-            Switch(checked = saveAsFood, onCheckedChange = null, modifier = Modifier.padding(start = 16.dp))
-        }
-        if (saveAsFood) {
-            OutlinedTextField(
-                value = foodName,
-                onValueChange = { foodName = it },
-                label = { Text(stringResource(R.string.describe_food_name)) },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
+    // Saving as a food is opt-in, in the ⋮ menu (owner, 2026-10-30).
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         OutlinedButton(onClick = onCancel, modifier = Modifier.weight(1f).heightIn(min = 56.dp)) { Text(stringResource(R.string.cancel)) }
         Button(
-            onClick = { onEvent(if (state.isText) ReviewEvent.Save(saveAsFood, foodName) else ReviewEvent.Save()) },
+            onClick = { onEvent(ReviewEvent.Save) },
             modifier = Modifier.weight(1f).heightIn(min = 56.dp),
         ) { Text(stringResource(R.string.review_save)) }
     }

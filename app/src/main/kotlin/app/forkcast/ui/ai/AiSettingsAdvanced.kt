@@ -36,46 +36,13 @@ import java.text.NumberFormat
 import java.util.Locale
 
 /**
- * Settings › AI › Advanced (roadmap 2.0 task 3.5): the fallback order with move up/down, Edit
- * (server, model, key), adding an AI service by hand (custom servers and model IDs), and this
- * month's usage with prices.
+ * Settings › AI › Advanced (roadmap 2.0 task 3.5): this month's usage with prices. The order's
+ * arrows moved onto the cards, and adding a service by hand is the setup guide's own Advanced
+ * path (owner, 2026-10-30).
  */
 @Composable
-internal fun AiAdvanced(state: AiSettingsUiState, onEvent: (AiSettingsEvent) -> Unit, onEditProfile: (String?) -> Unit) {
-    SectionTitle(R.string.ai_order_title)
-    Text(
-        stringResource(R.string.ai_order_explain),
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        modifier = Modifier.padding(horizontal = 16.dp),
-    )
-    Column(Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
-        state.profiles.forEachIndexed { index, item ->
-            key(item.profile.id) {
-                OrderRow(item.profile.name, index, state.profiles.size, first = state.roleAt(index) == ProfileRole.FIRST, onEvent)
-            }
-        }
-    }
-    OutlinedButton(onClick = { onEditProfile(null) }, modifier = Modifier.padding(horizontal = 16.dp).heightIn(min = 48.dp)) {
-        Icon(painterResource(R.drawable.ic_add), contentDescription = null)
-        Text(stringResource(R.string.ai_add_profile), modifier = Modifier.padding(start = 8.dp))
-    }
+internal fun AiAdvanced(state: AiSettingsUiState, onEvent: (AiSettingsEvent) -> Unit) {
     UsageSection(state.usage, state.settings.priceOverrides, onEvent)
-}
-
-/** One AI service in the order: its number and name, and the arrows (named for screen readers). Edit is on its card. */
-@Composable
-private fun OrderRow(name: String, index: Int, count: Int, first: Boolean, onEvent: (AiSettingsEvent) -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
-        PositionBadge(index + 1, first)
-        Text(name, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f).padding(horizontal = 12.dp))
-        IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index - 1)) }, enabled = index > 0) {
-            Icon(painterResource(R.drawable.ic_arrow_upward), stringResource(R.string.ai_move_up_named, name))
-        }
-        IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index + 1)) }, enabled = index < count - 1) {
-            Icon(painterResource(R.drawable.ic_arrow_downward), stringResource(R.string.ai_move_down_named, name))
-        }
-    }
 }
 
 @Composable

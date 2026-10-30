@@ -52,7 +52,6 @@
     <string name="review_answer_hint">Sua resposta</string>
     <string name="review_send">Enviar</string>
     <string name="review_save">Salvar</string>
-    <string name="review_delete">Apagar estimativa</string>
     <string name="review_delete_title">Apagar esta estimativa?</string>
     <string name="review_delete_body">As fotos dela e o item no registro são removidos.</string>
     <string name="review_photo_open">Abrir foto</string>

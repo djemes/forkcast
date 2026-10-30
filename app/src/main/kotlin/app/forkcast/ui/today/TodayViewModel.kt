@@ -9,6 +9,7 @@ import app.forkcast.core.data.db.LoggedDay
 import app.forkcast.core.data.health.HcAvailability
 import app.forkcast.core.data.health.HealthRepository
 import app.forkcast.core.data.repository.MaintenanceRepository
+import app.forkcast.core.data.repository.EntryFoods
 import app.forkcast.core.data.repository.FoodRepository
 import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.MealSlotRepository
@@ -231,6 +232,10 @@ sealed interface TodayEvent {
      * entry's nutrition as "1 serving", and the entry points to it.
      */
     data class FavoriteEntry(val id: String) : TodayEvent
+    /** Edit sheet ⋮ › Save as food: the entry becomes a food in My foods (one per entry; owner, 2026-10-30). */
+    data class SaveEntryAsFood(val id: String) : TodayEvent
+    /** Edit sheet pencil: this entry's name only (an AI entry's estimate keeps it too). */
+    data class RenameEntry(val id: String, val name: String) : TodayEvent
     /** Favorites › ⋯ › Unfavorite: a food or a favorite meal, with Undo. */
     data class Unfavorite(val name: String, val foodId: String? = null, val savedMealId: String? = null) : TodayEvent
     data class RestoreFavorite(val foodId: String? = null, val savedMealId: String? = null) : TodayEvent
@@ -271,6 +276,7 @@ sealed interface TodayEffect {
     data class Copied(val count: Int, val toDate: LocalDate) : TodayEffect
     data class SavedMealCreated(val name: String) : TodayEffect
     data class Favorited(val name: String) : TodayEffect
+    data class SavedAsFood(val name: String) : TodayEffect
     data class Unfavorited(val name: String, val foodId: String?, val savedMealId: String?) : TodayEffect
 }
 
@@ -285,7 +291,7 @@ class TodayViewModel @Inject constructor(
     private val waterRepository: WaterRepository,
     weightRepository: WeightRepository,
     private val settingsRepository: SettingsRepository,
-    estimateRepository: AiEstimateRepository,
+    private val estimateRepository: AiEstimateRepository,
     health: HealthRepository,
     private val maintenance: MaintenanceRepository,
     private val missingKeys: app.forkcast.core.data.repository.MissingKeysRepository,
@@ -293,6 +299,7 @@ class TodayViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val selectedDate = MutableStateFlow(LocalDate.now(clock))
+    private val entryFoods = EntryFoods(foods, logRepository, estimateRepository)
     /** True while the screen shows today, so it moves to the new day after midnight (see [TodayEvent.Resumed]). */
     private var followingToday = true
     private val selection = MutableStateFlow<Set<String>>(emptySet())
@@ -553,16 +560,19 @@ class TodayViewModel @Inject constructor(
             is TodayEvent.FavoriteEntry -> viewModelScope.launch {
                 selection.value = emptySet()
                 val e = uiState.value?.allEntries?.firstOrNull { it.id == event.id } ?: return@launch
-                val foodId = e.foodId?.takeIf { foods.get(it) != null }
-                if (foodId != null) {
-                    foods.setFavoriteAmount(foodId, e.quantity, e.servingLabel)
-                } else {
-                    val food = FoodLogging.foodFromEntry(e)
-                    val id = foods.saveCustom(food)
-                    foods.setFavoriteAmount(id, 1.0, FoodLogging.SERVING_LABEL)
-                    logRepository.update(e.copy(foodId = id))
-                }
+                entryFoods.favorite(e) ?: return@launch
                 effectChannel.send(TodayEffect.Favorited(e.displayName))
+            }
+            is TodayEvent.SaveEntryAsFood -> viewModelScope.launch {
+                val e = uiState.value?.allEntries?.firstOrNull { it.id == event.id } ?: return@launch
+                entryFoods.saveAsFood(e) ?: return@launch
+                effectChannel.send(TodayEffect.SavedAsFood(e.displayName))
+            }
+            is TodayEvent.RenameEntry -> viewModelScope.launch {
+                val e = uiState.value?.allEntries?.firstOrNull { it.id == event.id } ?: return@launch
+                val name = event.name.trim().ifBlank { return@launch }
+                val estimateId = e.aiEstimateId
+                if (estimateId != null) estimateRepository.rename(estimateId, name) else logRepository.update(e.copy(displayName = name))
             }
             is TodayEvent.Unfavorite -> viewModelScope.launch {
                 event.foodId?.let { foods.setFavorite(it, false) }

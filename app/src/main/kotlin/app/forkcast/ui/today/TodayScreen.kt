@@ -246,6 +246,7 @@ fun TodayScreen(
                 )
                 is TodayEffect.SavedMealCreated -> snackbar.showSnackbar(resources.getString(R.string.saved_meal_done, effect.name))
                 is TodayEffect.Favorited -> snackbar.showSnackbar(resources.getString(R.string.favorite_added, effect.name))
+                is TodayEffect.SavedAsFood -> snackbar.showSnackbar(resources.getString(R.string.entry_saved_as_food, effect.name))
                 is TodayEffect.Unfavorited -> {
                     val result = snackbar.showSnackbar(
                         resources.getString(R.string.favorite_removed, effect.name),
@@ -631,6 +632,11 @@ fun TodayScreen(
                 servings = editServings?.takeIf { it.first == entry.id }?.second ?: FoodLogging.editServings(entry, null),
                 onDelete = { onEvent(TodayEvent.Delete(listOf(entry.id))); editingId = null },
                 onDismiss = { editingId = null },
+                onRename = { onEvent(TodayEvent.RenameEntry(entry.id, it)) },
+                favorite = entry.foodId != null && state.favorites.any { it.id == entry.foodId },
+                onSaveAsFood = if (entry.foodId == null) ({ onEvent(TodayEvent.SaveEntryAsFood(entry.id)) }) else null,
+                onFavorite = { onEvent(TodayEvent.FavoriteEntry(entry.id)) },
+                onUnfavorite = { onEvent(TodayEvent.Unfavorite(entry.displayName, entry.foodId)) },
             )
         }
     }

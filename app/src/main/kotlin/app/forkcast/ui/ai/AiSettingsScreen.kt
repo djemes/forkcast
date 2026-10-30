@@ -44,6 +44,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Icon
+import androidx.compose.ui.res.painterResource
 import app.forkcast.R
 import app.forkcast.ui.common.AdvancedSection
 import app.forkcast.ui.help.HelpLink
@@ -105,8 +108,9 @@ private val RETENTION_CHOICES = listOf(7, 14, 30, 90, null)
  * Settings › AI (SPEC §4.7), reworked 2026-10-19 so each card answers four questions in order:
  * what it is (number, name, service · model), what it does (used first / backup / off), whether
  * it works (last test, kept across restarts) and what you can do (Test, Edit, Delete). Since
- * roadmap 2.0 task 3.5 the order, manual setup and prices are under Advanced ([AiAdvanced]); Edit
- * stays on the card because a rejected key is fixed there (replacing a key is everyday, not expert).
+ * roadmap 2.0 task 3.5 prices are under Advanced ([AiAdvanced]); Edit stays on the card because a
+ * rejected key is fixed there. Since 1.8.5 the order's arrows are on the cards and adding a service
+ * by hand is the setup guide's Advanced path (owner, 2026-10-30).
  */
 @Composable
 fun AiSettingsScreen(
@@ -152,6 +156,15 @@ fun AiSettingsScreen(
         HorizontalDivider()
 
         SectionTitle(R.string.ai_profiles_title)
+        if (state.profiles.size > 1) {
+            // The order lives on the cards: their arrows (owner, 2026-10-30).
+            Text(
+                stringResource(R.string.ai_order_explain),
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
+        }
         if (state.profiles.isEmpty()) {
             Text(
                 stringResource(R.string.ai_no_profiles),
@@ -168,6 +181,7 @@ fun AiSettingsScreen(
                             test = state.tests[item.profile.id],
                             check = s.lastChecks[item.profile.id],
                             index = index,
+                            count = state.profiles.size,
                             onEvent = onEvent,
                             onEdit = { onEditProfile(item.profile.id) },
                             onDelete = { confirmDelete = item.profile.id },
@@ -204,8 +218,8 @@ fun AiSettingsScreen(
         RetentionPicker(s.photoRetentionDays) { onEvent(AiSettingsEvent.SetRetention(it)) }
         HorizontalDivider()
 
-        // Order, editing, manual setup and prices are for experts (roadmap 2.0 task 3.5).
-        AdvancedSection { AiAdvanced(state, onEvent, onEditProfile) }
+        // Usage and prices are for experts (roadmap 2.0 task 3.5).
+        AdvancedSection { AiAdvanced(state, onEvent) }
     }
 
     confirmDelete?.let { id ->
@@ -265,6 +279,7 @@ private fun ProfileCard(
     test: TestState?,
     check: ProfileCheck?,
     index: Int,
+    count: Int,
     onEvent: (AiSettingsEvent) -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -286,6 +301,15 @@ private fun ProfileCard(
             Column(Modifier.weight(1f).padding(start = 12.dp, end = 8.dp)) {
                 Text(p.name, style = MaterialTheme.typography.titleMedium)
                 Text(profileLine(item), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            // Which AI goes first: the arrows (named for screen readers), only when there's an order to change.
+            if (count > 1) {
+                IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index - 1)) }, enabled = index > 0) {
+                    Icon(painterResource(R.drawable.ic_arrow_upward), stringResource(R.string.ai_move_up_named, p.name))
+                }
+                IconButton(onClick = { onEvent(AiSettingsEvent.Move(index, index + 1)) }, enabled = index < count - 1) {
+                    Icon(painterResource(R.drawable.ic_arrow_downward), stringResource(R.string.ai_move_down_named, p.name))
+                }
             }
             Switch(
                 checked = p.enabled,

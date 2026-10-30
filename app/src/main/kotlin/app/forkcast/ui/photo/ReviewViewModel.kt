@@ -13,10 +13,14 @@ import app.forkcast.core.data.db.ComponentSource
 import app.forkcast.core.data.db.EstimateKind
 import app.forkcast.core.data.repository.AiRepository
 import app.forkcast.core.data.repository.BackupOffer
+import app.forkcast.R
+import app.forkcast.core.data.repository.EntryFoods
 import app.forkcast.core.data.repository.FoodRepository
+import app.forkcast.core.data.repository.LogRepository
 import app.forkcast.core.data.repository.SettingsRepository
 import app.forkcast.core.model.AiProfile
 import app.forkcast.core.model.Food
+import app.forkcast.core.model.LogEntry
 import app.forkcast.core.model.UnitPrefs
 import app.forkcast.core.network.FoodApiError
 import app.forkcast.core.network.ai.AiError
@@ -27,6 +31,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -55,6 +60,8 @@ data class ReviewUiState(
     val profiles: List<AiProfile> = emptyList(),
     /** "Add backup model" (one Gemini profile only). */
     val backupOffer: BackupOffer? = null,
+    /** The food this meal was saved as ("Save as food" or ★ Favorite), if any. */
+    val savedFood: Food? = null,
 ) {
     /** What the screen shows: the draft when there is one, else what's stored. */
     val components: List<AiComponentEntity> get() = draft?.components ?: detail?.components.orEmpty()
@@ -89,8 +96,13 @@ sealed interface ReviewEvent {
     data class EditDescription(val text: String) : ReviewEvent
     data object LogManually : ReviewEvent
     data object AddBackupModel : ReviewEvent
-    /** [saveAsFood]: a described meal becomes a food named [foodName] (on by default). */
-    data class Save(val saveAsFood: Boolean = false, val foodName: String = "") : ReviewEvent
+    data object Save : ReviewEvent
+    /** Pencil: the entry's name (owner, 2026-10-30). */
+    data class Rename(val name: String) : ReviewEvent
+    /** ⋮ menu: saves pending edits first, then the meal as a food (one per entry). */
+    data object SaveAsFood : ReviewEvent
+    data object Favorite : ReviewEvent
+    data object Unfavorite : ReviewEvent
     /** Cancel / "Discard changes": drop the draft and leave. */
     data object Discard : ReviewEvent
     data object Delete : ReviewEvent
@@ -98,6 +110,8 @@ sealed interface ReviewEvent {
 
 sealed interface ReviewEffect {
     data object Close : ReviewEffect
+    /** A snackbar: [text] with the meal's [name] ("… saved in My foods"). */
+    data class Notice(val text: Int, val name: String) : ReviewEffect
     /** "Log manually instead": search on the estimate's day and meal, prefilled with the description. */
     data class OpenSearch(val mealSlotId: String, val date: String, val query: String, val photo: String?) : ReviewEffect
 }
@@ -110,7 +124,11 @@ class ReviewViewModel @Inject constructor(
     settings: SettingsRepository,
     private val foods: FoodRepository,
     private val ai: AiRepository,
+    private val log: LogRepository,
 ) : ViewModel() {
+
+    private val entryFoods = EntryFoods(foods, log, estimates)
+    private val savedFood = MutableStateFlow<Food?>(null)
 
     private val match = MutableStateFlow<MatchSearchState?>(null)
     private val draft = MutableStateFlow<ReviewDraft?>(null)
@@ -123,9 +141,10 @@ class ReviewViewModel @Inject constructor(
     val state: StateFlow<ReviewUiState> = combine(
         estimates.observeDetail(id),
         settings.settings,
-        combine(match, draft, backupOffer) { m, d, b -> Triple(m, d, b) },
+        combine(match, draft, backupOffer, savedFood) { m, d, b, food -> Extras(m, d, b, food) },
         ai.profiles,
-    ) { d, s, (m, dr, offer), profiles ->
+    ) { d, s, x, profiles ->
+        val (m, dr, offer) = Triple(x.match, x.draft, x.offer)
         ReviewUiState(
             loaded = true,
             detail = d,
@@ -136,11 +155,30 @@ class ReviewViewModel @Inject constructor(
             match = m,
             profiles = profiles.map { it.profile }.filter { it.enabled && !it.needsAttention },
             backupOffer = offer,
+            savedFood = x.food,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ReviewUiState())
 
     init {
         viewModelScope.launch { backupOffer.value = runCatching { ai.backupOffer() }.getOrNull() }
+        viewModelScope.launch { refreshFood() }
+    }
+
+    private suspend fun entry(): LogEntry? = estimates.observeDetail(id).first()?.estimate?.logEntryId?.let { log.get(it) }
+
+    private suspend fun refreshFood() {
+        savedFood.value = entry()?.foodId?.let { foods.get(it) }
+    }
+
+    /** The logged entry, with any pending edits saved first (so the food is what's on screen). */
+    private suspend fun savedEntry(): LogEntry? {
+        val s = state.value
+        val e = s.detail?.estimate ?: return null
+        if (s.dirty || e.logEntryId == null) {
+            estimates.saveReview(id, s.components, s.portion)
+            draft.value = null
+        }
+        return entry()
     }
 
     /** Applies [change] to a draft of the current components and portion. */
@@ -203,12 +241,30 @@ class ReviewViewModel @Inject constructor(
                     estimates.abandon(id)
                     effects.send(ReviewEffect.OpenSearch(e.mealSlotId, e.date.toString(), e.description.orEmpty(), e.photoPaths.firstOrNull()))
                 }
-                is ReviewEvent.Save -> {
+                ReviewEvent.Save -> {
                     val s = state.value
                     estimates.saveReview(id, s.components, s.portion)
-                    if (event.saveAsFood && s.isText) estimates.saveAsFood(id, event.foodName)
                     draft.value = null
                     effects.send(ReviewEffect.Close)
+                }
+                is ReviewEvent.Rename -> estimates.rename(id, event.name)
+                ReviewEvent.SaveAsFood -> {
+                    val entry = savedEntry() ?: return@launch
+                    entryFoods.saveAsFood(entry) ?: return@launch
+                    refreshFood()
+                    effects.send(ReviewEffect.Notice(R.string.entry_saved_as_food, entry.displayName))
+                }
+                ReviewEvent.Favorite -> {
+                    val entry = savedEntry() ?: return@launch
+                    entryFoods.favorite(entry) ?: return@launch
+                    refreshFood()
+                    effects.send(ReviewEffect.Notice(R.string.favorite_added, entry.displayName))
+                }
+                ReviewEvent.Unfavorite -> {
+                    val food = savedFood.value ?: return@launch
+                    foods.setFavorite(food.id, false)
+                    refreshFood()
+                    effects.send(ReviewEffect.Notice(R.string.favorite_removed, food.name))
                 }
                 ReviewEvent.Discard -> {
                     draft.value = null
@@ -250,3 +306,5 @@ fun errorFromCode(code: String?, detail: String?): Throwable? = when (code) {
     AiErrorCodes.NO_PROFILE, AiErrorCodes.DISABLED, AiErrorCodes.STOPPED -> null
     else -> AiError.BadResponse(null)
 }
+
+private data class Extras(val match: MatchSearchState?, val draft: ReviewDraft?, val offer: BackupOffer?, val food: Food?)

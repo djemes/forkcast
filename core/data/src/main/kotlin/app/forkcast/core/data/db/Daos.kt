@@ -89,7 +89,7 @@ interface FoodDao {
     @Query("SELECT foodId, COUNT(*) AS uses FROM log_entry WHERE deletedAt IS NULL AND foodId IN (:ids) GROUP BY foodId")
     suspend fun useCounts(ids: List<String>): List<FoodUses>
 
-    @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source IN ('CUSTOM', 'LABEL', 'RECIPE', 'AI_TEXT') ORDER BY name")
+    @Query("SELECT * FROM food WHERE deletedAt IS NULL AND source IN ('CUSTOM', 'LABEL', 'RECIPE', 'AI', 'AI_TEXT') ORDER BY name")
     fun observeCustom(): Flow<List<FoodEntity>>
 
     @Upsert suspend fun upsert(food: FoodEntity)

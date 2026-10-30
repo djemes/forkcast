@@ -15,6 +15,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.ui.test.performTextReplacement
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.SavedStateHandle
 import androidx.compose.ui.test.getUnclippedBoundsInRoot
@@ -213,7 +214,48 @@ class PhotoFlowTest {
         compose.onNodeWithContentDescription("Portion").performSemanticsAction(androidx.compose.ui.semantics.SemanticsActions.SetProgress) { it(1f) }
         assertThat(events.last()).isEqualTo(ReviewEvent.SetPortion(0.5))
         compose.onNodeWithText("Save").performScrollTo().performClick()
-        assertThat(events.last()).isEqualTo(ReviewEvent.Save())
+        assertThat(events.last()).isEqualTo(ReviewEvent.Save)
+    }
+
+    @Test fun reviewRenamesWithThePencilAndKeepsFoodActionsInTheMenu() {
+        val estimate = FakeAiEstimateRepository.row("a1", TestData.TODAY, "l", EstimateStatus.DONE, kcal = 640.0)
+            .copy(result = MealEstimateJson(mealName = "Chicken and rice"), description = "half a chipotle bowl")
+        val detail = EstimateDetail(estimate, listOf(component("c1", "White rice", 200.0, 260.0, hidden = false, usda = true)))
+        val events = mutableListOf<ReviewEvent>()
+        compose.setContent {
+            ForkcastTheme { ReviewScreen(ReviewUiState(loaded = true, detail = detail, units = UnitPrefs.METRIC), { events += it }, {}) }
+        }
+        // What was typed with the photo, under it (owner, 2026-10-30).
+        compose.onNodeWithText("You wrote: “half a chipotle bowl”").assertExists()
+        // No "Save as food" switch on the screen: it's opt-in, in the menu.
+        compose.onNodeWithText("Save as food").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Rename").performClick()
+        compose.onNodeWithText("Chicken and rice").performTextReplacement("Chipotle chicken bowl")
+        compose.onNodeWithText("Done").performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.Rename("Chipotle chicken bowl"))
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Favorite").assertExists()
+        compose.onNodeWithText("Delete").assertExists()
+        compose.onNodeWithText("Save as food").performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.SaveAsFood)
+    }
+
+    @Test fun aMealAlreadySavedAsAFoodOffersOnlyUnfavorite() {
+        val estimate = FakeAiEstimateRepository.row("a1", TestData.TODAY, "l", EstimateStatus.DONE, kcal = 640.0)
+            .copy(result = MealEstimateJson(mealName = "Chicken and rice"))
+        val detail = EstimateDetail(estimate, listOf(component("c1", "White rice", 200.0, 260.0, hidden = false, usda = true)))
+        val food = app.forkcast.core.model.Food(
+            "f1", "Chicken and rice", null, app.forkcast.core.model.FoodSource.AI, "a1", null, emptyList(), emptyMap(),
+            isFavorite = true, lastUsedAt = null, lastQuantity = null, lastServingLabel = null,
+        )
+        val events = mutableListOf<ReviewEvent>()
+        compose.setContent {
+            ForkcastTheme { ReviewScreen(ReviewUiState(loaded = true, detail = detail, units = UnitPrefs.METRIC, savedFood = food), { events += it }, {}) }
+        }
+        compose.onNodeWithContentDescription("More options").performClick()
+        compose.onNodeWithText("Save as food").assertDoesNotExist()
+        compose.onNodeWithText("Unfavorite").performClick()
+        assertThat(events.last()).isEqualTo(ReviewEvent.Unfavorite)
     }
 
     @Test fun reviewViewModelSavesAndCloses() = runTest {
@@ -222,10 +264,11 @@ class PhotoFlowTest {
             SavedStateHandle(mapOf("estimateId" to "a1")), estimates,
             app.forkcast.core.data.ai.PhotoStore(androidx.test.core.app.ApplicationProvider.getApplicationContext()),
             FakeSettingsRepository(), app.forkcast.fakes.FakeFoodRepository(), app.forkcast.fakes.FakeAiRepository(),
+            app.forkcast.fakes.FakeLogRepository(),
         )
         vm.effect.test {
             vm.onEvent(ReviewEvent.Correct("it was fried in butter"))
-            vm.onEvent(ReviewEvent.Save())
+            vm.onEvent(ReviewEvent.Save)
             assertThat(awaitItem()).isEqualTo(ReviewEffect.Close)
         }
         assertThat(estimates.calls).containsExactly("correct:it was fried in butter", "save:0:1.0").inOrder()

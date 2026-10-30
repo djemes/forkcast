@@ -465,9 +465,38 @@ class AiEstimateRepositoryTest {
         // Found again offline by something close to what was described.
         assertThat(foods.searchLocal("costco pizza slices").first().id).isEqualTo(foodId)
         assertThat(log.observeDay(day).first().single().foodId).isEqualTo(foodId)
-        // Saving the review again updates the same food.
+        // One food per entry: saving again (or ★ Favorite) finds it instead of making another.
         assertThat(repo.saveAsFood(id, "Costco pizza, 2 slices")).isEqualTo(foodId)
-        assertThat(foods.get(foodId)!!.name).isEqualTo("Costco pizza, 2 slices")
+        assertThat(foods.get(foodId)!!.name).isEqualTo("Costco cheese pizza")
+    }
+
+    @Test fun genericModelNamesAreReplacedByTheMainComponents() = runTest {
+        val slot = lunch()
+        val snack = MealEstimateJson("Lunch at 13:15", listOf(
+            EstimatedItem("Chicken", "Chicken, breast, grilled", "grilled", 150.0, 130.0, 170.0, 0.8, false, EstimatedNutrients(250.0, 46.0, 0.0, 5.0)),
+            EstimatedItem("Rice", "Rice, white, cooked", "boiled", 200.0, 180.0, 220.0, 0.8, false, EstimatedNutrients(260.0, 5.0, 57.0, 0.5)),
+            EstimatedItem("Oil", "Oil, olive", "", 10.0, 5.0, 15.0, 0.5, true, EstimatedNutrients(88.0, 0.0, 0.0, 10.0)),
+        ), 0.8, emptyList())
+        ai.add("g", ProviderId.GEMINI, result(snack))
+        val id = repo.createDescribed(day, slot, "chicken and rice")
+        repo.run(id)
+        // Owner, 2026-10-30: never the slot or the time; the main components, oil left out.
+        assertThat(log.observeDay(day).first().single().displayName).isEqualTo("Rice & chicken")
+    }
+
+    @Test fun aRenameStaysWhenTheAiComesBack() = runTest {
+        val slot = lunch()
+        val bowl = MealEstimateJson("Chicken bowl", listOf(
+            EstimatedItem("Chicken", "Chicken, breast, grilled", "grilled", 150.0, 130.0, 170.0, 0.8, false, EstimatedNutrients(250.0, 46.0, 0.0, 5.0)),
+        ), 0.8, emptyList())
+        ai.add("g", ProviderId.GEMINI, result(bowl), result(bowl.copy(mealName = "Chicken burrito bowl")))
+        val id = repo.createDescribed(day, slot, "chicken bowl")
+        repo.run(id)
+        repo.rename(id, "Chipotle bowl")
+        assertThat(log.observeDay(day).first().single().displayName).isEqualTo("Chipotle bowl")
+        repo.correct(id, "it had sour cream")
+        repo.run(id)
+        assertThat(log.observeDay(day).first().single().displayName).isEqualTo("Chipotle bowl")
     }
 
     /** Profiles with scripted answers, in order. */

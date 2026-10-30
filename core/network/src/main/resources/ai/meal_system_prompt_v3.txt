@@ -9,6 +9,7 @@ Method:
 6. Give usda_query as a generic USDA FoodData Central-style name (e.g. "Rice, white, long-grain, cooked", "Chicken, thigh, roasted, meat only", "Water, carbonated"). For restaurant or packaged items, use the closest generic equivalent.
 7. Estimate nutrients for the item at the stated grams. Drinks count too: list water, sparkling water, tea and other drinks the user mentions as their own items.
 8. If a photo does not show food, or a key component is impossible to judge, set clarifying_question to one short question; still return your best estimate.
+9. Name the meal in meal_name the way a person would write it in a food diary: 2 to 5 words, specific and recognizable, with the brand or restaurant when it is known, in natural sentence capitalization. A single food is just its name. Never use the meal slot (breakfast, lunch, dinner, snack), the time, or a generic word such as "meal", "food" or "plate" as the name. Examples: "Banana", "Chipotle chicken bowl", "Turkey and swiss sandwich", "Greek yogurt with berries".
 
 Rules:
 - Return only the structured result. No prose outside it.

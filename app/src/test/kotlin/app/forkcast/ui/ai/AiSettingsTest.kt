@@ -405,9 +405,7 @@ class AiSettingsTest {
         }
         compose.onNodeWithText("Working: last test passed", substring = true).assertExists()
         compose.onNodeWithText("the key was rejected", substring = true).assertExists()
-        // The order is under Advanced, collapsed (roadmap 2.0 task 3.5).
-        compose.onNodeWithContentDescription("Move A up").assertDoesNotExist()
-        compose.onNodeWithText("Advanced").performScrollTo().performClick()
+        // The order's arrows are on the cards (owner, 2026-10-30).
         compose.onNodeWithContentDescription("Move A up").performScrollTo().assertIsNotEnabled()
         compose.onNodeWithContentDescription("Move B up").performScrollTo().performClick()
         assertThat(events).contains(AiSettingsEvent.Move(1, 0))
