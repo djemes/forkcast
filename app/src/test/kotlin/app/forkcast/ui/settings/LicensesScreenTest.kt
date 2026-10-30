@@ -66,7 +66,7 @@ class LicensesScreenTest {
         ).forEach { compose.onNodeWithText(it).performScrollTo().assertIsDisplayed() }
         compose.onNodeWithText("best effort", substring = true).performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Open GitHub Issues").performScrollTo().performClick()
-        assertThat(opened).containsExactly("https://github.com/djemes/forkcast/issues")
+        assertThat(opened).containsExactly("https://github.com/djemes/forkcast/issues/new/choose")
     }
 
     /** No URL set yet (or the Play build): no row at all. */
