@@ -5,7 +5,7 @@ import org.junit.Test
 
 class ApiKeyFormatTest {
 
-    private val classicGemini = "AIzaSyD-9tSrke72PouQMnMX-a7eZSW0jkFMBWY"
+    private val classicGemini = "AIzaSyFAKE-test-key-not-real-0123456789"
     private val aqGemini = "AQ.Ab8RN6Kq-new-format-key-0123456789abcdef"
     private val claude = "sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789-ABCDEFG"
 
