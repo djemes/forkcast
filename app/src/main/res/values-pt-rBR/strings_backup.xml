@@ -133,7 +133,11 @@
     <string name="bpw_field_again">Digite de novo</string>
     <string name="bpw_generate">Gerar uma senha forte</string>
     <string name="bpw_save_note">Guarde-a no seu gerenciador de senhas. Se você perder este celular, ela é a única forma de abrir seus backups.</string>
-    <string name="bpw_min">Pelo menos %1$d caracteres</string>
+    <plurals name="bpw_min">
+        <item quantity="one">Pelo menos %1$d caractere</item>
+        <item quantity="many">Pelo menos %1$d caracteres</item>
+        <item quantity="other">Pelo menos %1$d caracteres</item>
+    </plurals>
     <string name="bpw_mismatch">As duas não são iguais</string>
     <string name="bpw_strength_weak">Fraca</string>
     <string name="bpw_strength_fair">Razoável</string>
