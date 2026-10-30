@@ -16,6 +16,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import app.forkcast.R
 import app.forkcast.ui.legal.LegalDocumentView
+import app.forkcast.ui.common.ProvideLinkOpener
 import app.forkcast.ui.legal.LegalTexts
 import app.forkcast.ui.settings.SettingsScaffold
 import app.forkcast.ui.theme.ForkcastTheme
@@ -32,7 +33,8 @@ class HealthPrivacyActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            ForkcastTheme(darkTheme = isSystemInDarkTheme(), useWallpaperColors = false) {
+            val dark = isSystemInDarkTheme()
+            ForkcastTheme(darkTheme = dark, useWallpaperColors = false) { ProvideLinkOpener(dark) {
                 SettingsScaffold(title = stringResource(R.string.hc_privacy_title), onBack = ::finish) {
                     Column(Modifier.padding(16.dp)) {
                         Text(stringResource(R.string.hc_privacy_body), style = MaterialTheme.typography.bodyLarge)
@@ -43,7 +45,7 @@ class HealthPrivacyActivity : ComponentActivity() {
                         }
                     }
                 }
-            }
+            } }
         }
     }
 }

@@ -137,6 +137,8 @@
     <string name="about_attributions_title">Attributions</string>
     <string name="about_attribution_off">Food data from Open Food Facts (openfoodfacts.org), available under the Open Database License (ODbL).</string>
     <string name="about_attribution_usda">Food data from USDA FoodData Central (fdc.nal.usda.gov), U.S. Department of Agriculture.</string>
+    <!-- Outside links open in a Custom Tab (v1.8.9); shown when the phone has no browser at all -->
+    <string name="link_no_browser">No browser on this phone can open the link.</string>
     <string name="about_not_affiliated">Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, Samsung, or Ko-fi. Product names belong to their owners.</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
