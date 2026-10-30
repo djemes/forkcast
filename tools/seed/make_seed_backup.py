@@ -109,6 +109,8 @@ while day <= TODAY:
             for idx in rnd.choice(PLANS[slot["name"]]):
                 food = foods[idx]
                 qty = rnd.choice(QTYS)
+                if args.demo and day == TODAY:
+                    qty = 1.0  # single portions so far, so the afternoon ring isn't "Likely over"
                 g, n = portion(food, qty)
                 entries.append(stamp({
                     "id": uid(), "date": day.isoformat(), "zoneId": ZONE, "mealSlotId": slot["id"], "foodId": food["id"],
