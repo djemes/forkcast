@@ -11,6 +11,10 @@
 </p>
 
 <p align="center">
+  <a href="#support-forkcast"><img src="assets/readme/kofi-button.png" width="200" alt="Support me on Ko-fi"></a>
+</p>
+
+<p align="center">
   <img src="assets/readme/badges/android.svg" alt="Android 10 or newer">
   <img src="assets/readme/badges/license.svg" alt="License: GPL-3.0">
   <img src="assets/readme/badges/price.svg" alt="Free, no ads">
@@ -110,6 +114,10 @@ Only what a feature you use needs: a search or barcode goes to the food database
 **How do updates work?**
 Settings › Updates checks this page's releases, downloads the new version, checks it, and asks Android to install it. Your data stays.
 </details>
+
+## Support Forkcast
+
+Forkcast is free, with no ads. If it helps you, you can leave a tip on Ko-fi; tips are voluntary and don't unlock anything. The Ko-fi page opens soon.
 
 ---
 
