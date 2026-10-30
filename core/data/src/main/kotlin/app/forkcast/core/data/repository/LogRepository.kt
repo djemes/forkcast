@@ -22,6 +22,8 @@ interface LogRepository {
     /** Entries from [from] to [to], inclusive. */
     fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntry>>
     suspend fun range(from: LocalDate, to: LocalDate): List<LogEntry>
+    /** The first day anything was logged, or null with an empty log. */
+    suspend fun firstDate(): LocalDate?
     /** The most recent day with entries other than [excluding], so an empty day can point to it. */
     fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?>
     suspend fun entriesForMeal(date: LocalDate, mealSlotId: String): List<LogEntry>
@@ -53,6 +55,8 @@ class RoomLogRepository @Inject constructor(
         dao.observeRange(from, to).map { list -> list.map { it.toModel() } }
 
     override suspend fun range(from: LocalDate, to: LocalDate): List<LogEntry> = dao.getRange(from, to).map { it.toModel() }
+
+    override suspend fun firstDate(): LocalDate? = dao.firstDate()
 
     override fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?> = dao.observeLatestDay(excluding)
 

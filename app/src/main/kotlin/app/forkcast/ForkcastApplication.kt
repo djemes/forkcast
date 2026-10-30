@@ -14,6 +14,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import app.forkcast.ui.report.ReportCache
 import javax.inject.Inject
 
 @HiltAndroidApp
@@ -48,6 +50,8 @@ class ForkcastApplication : Application(), Configuration.Provider {
         }
         Channel.createAll(this)
         appScope.launch {
+            // A meal report left in the cache when the app was closed during its preview.
+            withContext(Dispatchers.IO) { ReportCache.clear(this@ForkcastApplication) }
             notifications.get().start(appScope)
             health.get().start(appScope)
             missingKeys.get().start(appScope)

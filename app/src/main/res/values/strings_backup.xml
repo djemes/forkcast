@@ -42,33 +42,6 @@
     <string name="backup_import_failed">The import didn\'t finish, so nothing was changed.</string>
 
     <!-- Settings export with API keys (SPEC §4.11) -->
-    <string name="settings_transfer_title">Settings files</string>
-    <string name="settings_transfer_body">A settings file saved with an earlier version of Forkcast still imports here, with its passphrase. Backups now carry your settings and keys.</string>
-    <string name="settings_import">Import settings…</string>
-    <string name="settings_passphrase_title_export">Lock with a passphrase</string>
-    <string name="settings_passphrase_body_export">Anyone with this file and the passphrase can use your API keys. There is no way to recover a forgotten passphrase.</string>
-    <string name="settings_passphrase_title_import">Passphrase for this file</string>
-    <string name="settings_passphrase">Passphrase</string>
-    <string name="settings_passphrase_again">Passphrase again</string>
-    <string name="settings_passphrase_short">At least 8 characters</string>
-    <string name="settings_passphrase_mismatch">The two don\'t match</string>
-    <string name="settings_strength_weak">Weak. A few unrelated words are stronger.</string>
-    <string name="settings_strength_fair">Fair</string>
-    <string name="settings_strength_strong">Strong</string>
-    <string name="settings_continue">Continue</string>
-    <string name="settings_preview_title">Replace settings and keys?</string>
-    <plurals name="settings_preview_body">
-        <item quantity="one">From a file made %1$s. This replaces this phone\'s settings, AI services (%2$s) and %3$d saved key. Your food log isn\'t touched.</item>
-        <item quantity="other">From a file made %1$s. This replaces this phone\'s settings, AI services (%2$s) and %3$d saved keys. Your food log isn\'t touched.</item>
-    </plurals>
-    <string name="settings_preview_none">none</string>
-    <string name="settings_replace">Replace</string>
-    <string name="settings_imported">Settings and keys imported</string>
-    <string name="settings_wrong_passphrase">Wrong passphrase, or the file was changed.</string>
-    <string name="settings_not_forkcast">This isn\'t a Forkcast settings file.</string>
-    <string name="settings_newer">This file was made by a newer version of Forkcast. Update the app, then try again.</string>
-    <string name="settings_unreadable">This file couldn\'t be read.</string>
-    <string name="settings_failed">Couldn\'t save the file. Try another location.</string>
 
     <!-- Backups (roadmap 2.0, task 1.4) -->
     <string name="backup_title">Backups</string>
@@ -210,7 +183,7 @@
 
     <!-- Meal report for a health professional (owner, 2026-10-29) -->
     <string name="report_section_title">Meal report</string>
-    <string name="report_section_body">Your meals over a few days, as a PDF to print or a spreadsheet, to share with a doctor or dietitian.</string>
+    <string name="report_section_body">Your meals and daily totals, as a PDF to print or a spreadsheet, to share with a doctor or dietitian.</string>
     <string name="report_make">Make a meal report…</string>
     <string name="report_from">From</string>
     <string name="report_to">To</string>
@@ -219,9 +192,8 @@
     <string name="report_include_weight">Include weight</string>
     <string name="report_include_water">Include water</string>
     <string name="report_contents">Each meal with its time, foods, amounts, calories and macros, and each day\'s totals against your targets. No photos.</string>
-    <string name="report_continue">Continue</string>
-    <string name="report_unlock">To save your health data in a file</string>
-    <string name="report_no_lock">Set a screen lock on this phone first. Forkcast asks for it before saving your health data in a file.</string>
+    <string name="report_unlock">To put your health data in a report</string>
+    <string name="report_no_lock">Set a screen lock on this phone first. Forkcast asks for it before putting your health data in a report.</string>
     <string name="report_saved">Meal report saved</string>
     <string name="report_title">Meal report</string>
     <string name="report_range">%1$s to %2$s</string>
@@ -248,4 +220,44 @@
     <string name="report_col_target_energy">Target (%1$s)</string>
     <string name="report_col_estimate">Estimate</string>
     <string name="report_yes">Yes</string>
+    <string name="report_dates">Dates</string>
+    <string name="report_range_week">Last 7 days</string>
+    <string name="report_range_month">Last 30 days</string>
+    <string name="report_range_quarter">Last 90 days</string>
+    <string name="report_range_all">All time</string>
+    <string name="report_range_custom">Custom</string>
+    <string name="report_detail">Include every meal</string>
+    <string name="report_detail_body">Makes the report much longer, about a page for every two days.</string>
+    <string name="report_contents_summary">Daily totals against your targets, and weekly and monthly averages. No photos.</string>
+    <string name="report_generate">Make report</string>
+    <string name="report_working">Making the report…</string>
+    <string name="report_failed">Couldn\'t make the report. Try again.</string>
+    <string name="report_save">Save…</string>
+    <string name="report_share">Share…</string>
+    <string name="report_print">Print…</string>
+    <string name="report_close">Close</string>
+    <string name="report_share_title">Share the meal report</string>
+    <string name="report_print_job">Forkcast meal report</string>
+    <plurals name="report_pages">
+        <item quantity="one">%1$d page</item>
+        <item quantity="other">%1$d pages</item>
+    </plurals>
+    <string name="report_page_of">Page %1$d of %2$d</string>
+    <plurals name="report_preview_days">
+        <item quantity="one">%1$d day, %2$d with something logged</item>
+        <item quantity="other">%1$d days, %2$d with something logged</item>
+    </plurals>
+    <plurals name="report_preview_entries">
+        <item quantity="one">%1$d food logged</item>
+        <item quantity="other">%1$d foods logged</item>
+    </plurals>
+    <string name="report_sheet_contents">Two sheets: every food you logged, with its amount and nutrients, and each day\'s totals against your targets.</string>
+    <string name="report_every_meal">Every meal</string>
+    <string name="report_monthly">Monthly averages</string>
+    <string name="report_weekly">Weekly averages</string>
+    <string name="report_daily">Daily totals</string>
+    <string name="report_averages_note">Averages are over the days with something logged. Water and weight are averaged over the days they were logged.</string>
+    <string name="report_col_month">Month</string>
+    <string name="report_col_week">Week of</string>
+    <string name="report_col_days_logged">Days logged</string>
 </resources>

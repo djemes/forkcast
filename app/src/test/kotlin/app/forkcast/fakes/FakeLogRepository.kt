@@ -22,6 +22,7 @@ class FakeLogRepository : LogRepository {
     override fun observeRange(from: LocalDate, to: LocalDate): Flow<List<LogEntry>> =
         rows.map { m -> m.values.filter { !it.second && it.first.date in from..to }.map { it.first }.sortedBy { it.loggedAt } }
     override suspend fun range(from: LocalDate, to: LocalDate) = observeRange(from, to).first()
+    override suspend fun firstDate(): LocalDate? = rows.value.values.filterNot { it.second }.minOfOrNull { it.first.date }
     override fun observeLatestDay(excluding: LocalDate): Flow<LoggedDay?> = rows.map { m ->
         m.values.filter { !it.second && it.first.date != excluding }.groupBy { it.first.date }
             .maxByOrNull { it.key }?.let { (d, list) -> LoggedDay(d, list.size) }

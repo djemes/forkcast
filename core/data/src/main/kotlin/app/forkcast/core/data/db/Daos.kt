@@ -129,6 +129,9 @@ interface LogEntryDao {
     @Query("SELECT * FROM log_entry WHERE date >= :from AND date <= :to AND deletedAt IS NULL ORDER BY loggedAt")
     suspend fun getRange(from: LocalDate, to: LocalDate): List<LogEntryEntity>
 
+    @Query("SELECT MIN(date) FROM log_entry WHERE deletedAt IS NULL")
+    suspend fun firstDate(): LocalDate?
+
     /** The most recent day with entries, other than [excluding] ("Last logged: Sat, Oct 18 · 6 entries"). */
     @Query(
         """
@@ -219,6 +222,9 @@ interface WeightDao {
 interface WaterDao {
     @Query("SELECT * FROM water_entry WHERE date = :date AND deletedAt IS NULL ORDER BY timestamp")
     fun observeForDate(date: LocalDate): Flow<List<WaterEntryEntity>>
+
+    @Query("SELECT * FROM water_entry WHERE date >= :from AND date <= :to AND deletedAt IS NULL ORDER BY timestamp")
+    suspend fun getRange(from: LocalDate, to: LocalDate): List<WaterEntryEntity>
 
     @Upsert suspend fun upsert(entry: WaterEntryEntity)
 

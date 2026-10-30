@@ -1,5 +1,6 @@
 package app.forkcast.ui.report
 
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -55,12 +56,69 @@ class MealReportTest {
         assertThat((dayRow.last() as Cell.Number).value).isWithin(0.1).of(176.4)
     }
 
-    @Test fun theDialogDefaultsToTheLastWeekAndAPdf() {
+    @Test fun sheetProgressReachesTheEnd() {
+        val seen = mutableListOf<Float>()
+        files.sheets(report(), ReportOptions(day, day, ReportFormat.SPREADSHEET, weight = true, water = true)) { seen += it }
+        assertThat(seen.last()).isEqualTo(1f)
+        assertThat(seen).isInOrder()
+    }
+
+    @Test fun theDialogDefaultsToTheLast30DaysAndAPdf() {
         var chosen: ReportOptions? = null
         val today = LocalDate.of(2026, 10, 29)
-        compose.setContent { ForkcastTheme { MealReportDialog(today, onContinue = { chosen = it }, onDismiss = {}) } }
+        compose.setContent { ForkcastTheme { MealReportDialog(today, firstDate = null, onContinue = { chosen = it }, onDismiss = {}) } }
+        compose.onNodeWithText("Include every meal").assertDoesNotExist()
         compose.onNodeWithText("Include water").performScrollTo().performClick()
-        compose.onNodeWithText("Continue").performClick()
-        assertThat(chosen).isEqualTo(ReportOptions(today.minusDays(6), today, ReportFormat.PDF, weight = true, water = false))
+        compose.onNodeWithText("Make report").performClick()
+        assertThat(chosen).isEqualTo(ReportOptions(today.minusDays(29), today, ReportFormat.PDF, weight = true, water = false))
+        assertThat(chosen?.meals).isTrue()
+    }
+
+    @Test fun longRangesAreASummaryUnlessEveryMealIsAskedFor() {
+        var chosen: ReportOptions? = null
+        val today = LocalDate.of(2026, 10, 29)
+        compose.setContent { ForkcastTheme { MealReportDialog(today, firstDate = null, onContinue = { chosen = it }, onDismiss = {}) } }
+        compose.onNodeWithText("Last 90 days").performClick()
+        compose.onNodeWithText("Daily totals against your targets, and weekly and monthly averages. No photos.").performScrollTo().assertExists()
+        compose.onNodeWithText("Make report").performClick()
+        assertThat(chosen?.from).isEqualTo(today.minusDays(89))
+        assertThat(chosen?.summary).isTrue()
+        assertThat(chosen?.meals).isFalse()
+
+        compose.onNodeWithText("Include every meal").performScrollTo().performClick()
+        compose.onNodeWithText("Make report").performClick()
+        assertThat(chosen?.meals).isTrue()
+    }
+
+    @Test fun allTimeStartsOnTheFirstLoggedDay() {
+        var chosen: ReportOptions? = null
+        val today = LocalDate.of(2026, 10, 29)
+        val first = LocalDate.of(2024, 3, 2)
+        compose.setContent { ForkcastTheme { MealReportDialog(today, firstDate = first, onContinue = { chosen = it }, onDismiss = {}) } }
+        compose.onNodeWithText("All time").performClick()
+        compose.onNodeWithText("Spreadsheet").performScrollTo().performClick()
+        // The spreadsheet always has every row: no summary choice.
+        compose.onNodeWithText("Include every meal").assertDoesNotExist()
+        compose.onNodeWithText("Make report").performClick()
+        assertThat(chosen?.from).isEqualTo(first)
+        assertThat(chosen?.to).isEqualTo(today)
+        assertThat(chosen?.format).isEqualTo(ReportFormat.SPREADSHEET)
+    }
+
+    @Test fun theSpreadsheetPreviewSaysWhatsInItAndHasNoPrint() {
+        val options = ReportOptions(day.minusDays(6), day, ReportFormat.SPREADSHEET, weight = true, water = true)
+        val ready = ReportStep.Ready("/nowhere/forkcast-report.xlsx", options, days = 7, loggedDays = 5, entries = 23)
+        var saved = 0
+        compose.setContent {
+            ForkcastTheme {
+                ReportPreview(ready, SnackbarHostState(), onSave = { saved++ }, onShare = {}, onPrint = {}, onClose = {})
+            }
+        }
+        compose.onNodeWithText("7 days, 5 with something logged").assertExists()
+        compose.onNodeWithText("23 foods logged").assertExists()
+        compose.onNodeWithText("Print…").assertDoesNotExist()
+        compose.onNodeWithText("Share…").assertExists()
+        compose.onNodeWithText("Save…").performClick()
+        assertThat(saved).isEqualTo(1)
     }
 }

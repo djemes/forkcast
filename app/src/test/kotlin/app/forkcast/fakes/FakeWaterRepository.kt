@@ -13,6 +13,7 @@ class FakeWaterRepository : WaterRepository {
     val list = MutableStateFlow<List<WaterEntry>>(emptyList())
     private var next = 0
     override fun observeDay(date: LocalDate): Flow<List<WaterEntry>> = list.map { l -> l.filter { it.date == date } }
+    override suspend fun range(from: LocalDate, to: LocalDate) = list.value.filter { it.date in from..to }
     override suspend fun add(date: LocalDate, ml: Double): String {
         val id = "water${next}"
         list.update { it + WaterEntry(id, Instant.ofEpochMilli(next++.toLong()), date, ml) }

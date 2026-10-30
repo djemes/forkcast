@@ -43,34 +43,6 @@
     <string name="backup_import_failed">A importação não terminou, então nada foi alterado.</string>
 
     <!-- Settings export with API keys (SPEC §4.11) -->
-    <string name="settings_transfer_title">Arquivos de configurações</string>
-    <string name="settings_transfer_body">Um arquivo de configurações salvo com uma versão anterior do Forkcast ainda pode ser importado aqui, com a senha dele. Os backups agora levam suas configurações e chaves.</string>
-    <string name="settings_import">Importar configurações…</string>
-    <string name="settings_passphrase_title_export">Proteger com uma senha</string>
-    <string name="settings_passphrase_body_export">Quem tiver este arquivo e a senha pode usar suas chaves de API. Não há como recuperar uma senha esquecida.</string>
-    <string name="settings_passphrase_title_import">Senha deste arquivo</string>
-    <string name="settings_passphrase">Senha</string>
-    <string name="settings_passphrase_again">Senha de novo</string>
-    <string name="settings_passphrase_short">Pelo menos 8 caracteres</string>
-    <string name="settings_passphrase_mismatch">As duas não são iguais</string>
-    <string name="settings_strength_weak">Fraca. Algumas palavras sem relação entre si são mais fortes.</string>
-    <string name="settings_strength_fair">Razoável</string>
-    <string name="settings_strength_strong">Forte</string>
-    <string name="settings_continue">Continuar</string>
-    <string name="settings_preview_title">Substituir configurações e chaves?</string>
-    <plurals name="settings_preview_body">
-        <item quantity="one">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os serviços de IA (%2$s) e %3$d chave salva. Seu registro de comida não é alterado.</item>
-        <item quantity="many">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os serviços de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
-        <item quantity="other">De um arquivo feito em %1$s. Isso substitui as configurações deste celular, os serviços de IA (%2$s) e %3$d chaves salvas. Seu registro de comida não é alterado.</item>
-    </plurals>
-    <string name="settings_preview_none">nenhum</string>
-    <string name="settings_replace">Substituir</string>
-    <string name="settings_imported">Configurações e chaves importadas</string>
-    <string name="settings_wrong_passphrase">Senha errada, ou o arquivo foi alterado.</string>
-    <string name="settings_not_forkcast">Este não é um arquivo de configurações do Forkcast.</string>
-    <string name="settings_newer">Este arquivo foi feito por uma versão mais nova do Forkcast. Atualize o app e tente de novo.</string>
-    <string name="settings_unreadable">Não foi possível ler este arquivo.</string>
-    <string name="settings_failed">Não foi possível salvar o arquivo. Tente outro local.</string>
 
     <!-- Backups (roadmap 2.0, task 1.4) -->
     <string name="backup_title">Backups</string>
@@ -216,7 +188,7 @@
 
     <!-- Meal report for a health professional (owner, 2026-10-29) -->
     <string name="report_section_title">Relatório de refeições</string>
-    <string name="report_section_body">Suas refeições de alguns dias, em PDF para imprimir ou em planilha, para mostrar a um médico ou nutricionista.</string>
+    <string name="report_section_body">Suas refeições e os totais de cada dia, em PDF para imprimir ou em planilha, para mostrar a um médico ou nutricionista.</string>
     <string name="report_make">Fazer um relatório de refeições…</string>
     <string name="report_from">De</string>
     <string name="report_to">Até</string>
@@ -225,9 +197,8 @@
     <string name="report_include_weight">Incluir peso</string>
     <string name="report_include_water">Incluir água</string>
     <string name="report_contents">Cada refeição com horário, alimentos, quantidades, calorias e macros, e os totais de cada dia comparados às suas metas. Sem fotos.</string>
-    <string name="report_continue">Continuar</string>
-    <string name="report_unlock">Para salvar seus dados de saúde num arquivo</string>
-    <string name="report_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de salvar seus dados de saúde num arquivo.</string>
+    <string name="report_unlock">Para colocar seus dados de saúde num relatório</string>
+    <string name="report_no_lock">Defina primeiro um bloqueio de tela neste celular. O Forkcast pede o desbloqueio antes de colocar seus dados de saúde num relatório.</string>
     <string name="report_saved">Relatório de refeições salvo</string>
     <string name="report_title">Relatório de refeições</string>
     <string name="report_range">%1$s a %2$s</string>
@@ -254,4 +225,47 @@
     <string name="report_col_target_energy">Meta (%1$s)</string>
     <string name="report_col_estimate">Estimativa</string>
     <string name="report_yes">Sim</string>
+    <string name="report_dates">Datas</string>
+    <string name="report_range_week">Últimos 7 dias</string>
+    <string name="report_range_month">Últimos 30 dias</string>
+    <string name="report_range_quarter">Últimos 90 dias</string>
+    <string name="report_range_all">Tudo</string>
+    <string name="report_range_custom">Personalizado</string>
+    <string name="report_detail">Incluir cada refeição</string>
+    <string name="report_detail_body">Deixa o relatório bem mais longo, cerca de uma página a cada dois dias.</string>
+    <string name="report_contents_summary">Os totais de cada dia comparados às suas metas, e médias semanais e mensais. Sem fotos.</string>
+    <string name="report_generate">Fazer relatório</string>
+    <string name="report_working">Fazendo o relatório…</string>
+    <string name="report_failed">Não foi possível fazer o relatório. Tente de novo.</string>
+    <string name="report_save">Salvar…</string>
+    <string name="report_share">Compartilhar…</string>
+    <string name="report_print">Imprimir…</string>
+    <string name="report_close">Fechar</string>
+    <string name="report_share_title">Compartilhar o relatório de refeições</string>
+    <string name="report_print_job">Relatório de refeições do Forkcast</string>
+    <plurals name="report_pages">
+        <item quantity="one">%1$d página</item>
+        <item quantity="other">%1$d páginas</item>
+        <item quantity="many">%1$d páginas</item>
+    </plurals>
+    <string name="report_page_of">Página %1$d de %2$d</string>
+    <plurals name="report_preview_days">
+        <item quantity="one">%1$d dia, %2$d com algo registrado</item>
+        <item quantity="other">%1$d dias, %2$d com algo registrado</item>
+        <item quantity="many">%1$d dias, %2$d com algo registrado</item>
+    </plurals>
+    <plurals name="report_preview_entries">
+        <item quantity="one">%1$d alimento registrado</item>
+        <item quantity="other">%1$d alimentos registrados</item>
+        <item quantity="many">%1$d alimentos registrados</item>
+    </plurals>
+    <string name="report_sheet_contents">Duas abas: cada alimento registrado, com quantidade e nutrientes, e os totais de cada dia comparados às suas metas.</string>
+    <string name="report_every_meal">Cada refeição</string>
+    <string name="report_monthly">Médias mensais</string>
+    <string name="report_weekly">Médias semanais</string>
+    <string name="report_daily">Totais por dia</string>
+    <string name="report_averages_note">As médias consideram os dias com algo registrado. Água e peso são a média dos dias em que foram registrados.</string>
+    <string name="report_col_month">Mês</string>
+    <string name="report_col_week">Semana de</string>
+    <string name="report_col_days_logged">Dias registrados</string>
 </resources>
