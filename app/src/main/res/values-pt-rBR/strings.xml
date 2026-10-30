@@ -139,6 +139,7 @@
     <string name="about_attributions_title">Créditos</string>
     <string name="about_attribution_off">Dados de alimentos do Open Food Facts (openfoodfacts.org), disponíveis sob a Open Database License (ODbL).</string>
     <string name="about_attribution_usda">Dados de alimentos do USDA FoodData Central (fdc.nal.usda.gov), Departamento de Agricultura dos EUA.</string>
+    <string name="link_no_browser">Nenhum navegador neste celular consegue abrir o link.</string>
     <string name="about_not_affiliated">O Forkcast não é afiliado nem endossado por Google, Anthropic, OpenAI, USDA, Open Food Facts, Samsung ou Ko-fi. Os nomes de produtos pertencem aos seus donos.</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->

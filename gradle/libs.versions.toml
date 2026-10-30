@@ -44,6 +44,8 @@ healthConnect = "1.1.0"
 # v1.0 review, checked 2026-10-20 on Google Maven: Baseline Profile
 benchmark = "1.5.0"
 profileinstaller = "1.4.1"
+# v1.8.9, checked 2026-10-30 on Google Maven: Custom Tabs for outside links (1.10.0 is the newest stable)
+browser = "1.10.0"
 uiautomator = "2.4.0"
 # 2.0 Phase 1, checked 2026-10-24 on Google Maven: lint = AGP 9.4.1 + 23 (32.4.1)
 lint = "32.4.1"
@@ -120,6 +122,7 @@ hilt-androidx-compiler = { module = "androidx.hilt:hilt-compiler", version.ref =
 androidx-exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 coil-compose = { module = "io.coil-kt.coil3:coil-compose", version.ref = "coil" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version.ref = "reorderable" }
+androidx-browser = { module = "androidx.browser:browser", version.ref = "browser" }
 androidx-profileinstaller = { module = "androidx.profileinstaller:profileinstaller", version.ref = "profileinstaller" }
 androidx-benchmark-macro = { module = "androidx.benchmark:benchmark-macro-junit4", version.ref = "benchmark" }
 androidx-uiautomator = { module = "androidx.test.uiautomator:uiautomator", version.ref = "uiautomator" }
