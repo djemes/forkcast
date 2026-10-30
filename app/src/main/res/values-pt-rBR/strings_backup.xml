@@ -10,7 +10,7 @@
     <string name="backup_preview_made">Feito em %1$s pelo Forkcast %2$s</string>
     <string name="backup_preview_log">Itens do registro de comida: %1$d</string>
     <string name="backup_preview_foods">Alimentos: %1$d</string>
-    <string name="backup_preview_saved_meals">Refeições salvas: %1$d</string>
+    <string name="backup_preview_saved_meals">Refeições favoritas: %1$d</string>
     <string name="backup_preview_weights">Pesagens: %1$d</string>
     <string name="backup_preview_water">Registros de água: %1$d</string>
     <string name="backup_preview_ai_estimates">Estimativas com IA: %1$d</string>

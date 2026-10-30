@@ -120,5 +120,5 @@
     <string name="details_request_line">%1$s · %2$s (%3$s) · %4$s · %5$s</string>
     <string name="details_retry_after">pediu para esperar %1$s</string>
     <string name="search_manual_photo">Sua foto</string>
-    <string name="badge_saved_meal">Refeição salva</string>
+    <string name="badge_saved_meal">Refeição favorita</string>
 </resources>

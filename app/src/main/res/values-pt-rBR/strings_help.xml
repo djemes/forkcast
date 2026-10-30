@@ -25,7 +25,7 @@
     <string name="help_q_start">Por onde eu começo?</string>
     <string name="help_a_start">Registre o que você come em Hoje: toque em Adicionar numa refeição e depois busque, escaneie um código de barras ou use Foto ou Descrever, se a IA estiver configurada. O anel mostra quanto ainda resta do orçamento de hoje. Pese-se quando puder, pelo cartão de peso em Hoje, para o Forkcast acompanhar a sua tendência e, depois de algumas semanas, aprender a sua própria manutenção.</string>
     <string name="help_q_without_ai">Preciso de IA para usar o Forkcast?</string>
-    <string name="help_a_without_ai">Não. Busca, leitura de código de barras, adicionar calorias rápido, receitas e refeições salvas funcionam sem IA. A IA acrescenta Foto e Descrever, que estimam uma refeição a partir de uma imagem ou de uma frase. Ela precisa de uma chave de um serviço de IA, que você pode adicionar quando quiser em Configurações › Serviços de IA. O guia de lá mostra o passo a passo.</string>
+    <string name="help_a_without_ai">Não. Busca, leitura de código de barras, adicionar calorias rápido, receitas e favoritos funcionam sem IA. A IA acrescenta Foto e Descrever, que estimam uma refeição a partir de uma imagem ou de uma frase. Ela precisa de uma chave de um serviço de IA, que você pode adicionar quando quiser em Configurações › Serviços de IA. O guia de lá mostra o passo a passo.</string>
     <string name="help_q_change_goal">Como mudo minha meta ou meu orçamento?</string>
     <string name="help_a_change_goal">Abra Configurações › Meta e orçamento para mudar o peso-alvo e o ritmo. O orçamento se atualiza conforme você muda, e a tela mostra como ele foi calculado. Sexo, idade, altura e nível de atividade ficam em Configurações › Perfil.</string>
 

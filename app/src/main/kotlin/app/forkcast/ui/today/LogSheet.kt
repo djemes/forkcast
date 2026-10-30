@@ -1,5 +1,21 @@
 package app.forkcast.ui.today
 
+import app.forkcast.ui.theme.ForkcastTheme
+import app.forkcast.core.model.sumNutrients
+import app.forkcast.core.model.SavedMeal
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.Tab
+import androidx.compose.material3.PrimaryTabRow
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.foundation.layout.Box
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
@@ -54,15 +70,21 @@ data class LogSheetActions(
     val describe: (() -> Unit)? = null,
     val search: (() -> Unit)? = null,
     val quickAdd: (() -> Unit)? = null,
-    val savedMeals: (() -> Unit)? = null,
     val recipes: (() -> Unit)? = null,
     /** The Favorites list (owner, 2026-10-29). */
-    val favorites: (() -> Unit)? = null,
 )
 
+/** A favorite in the Log sheet: a food or a favorite meal (roadmap 3.10). */
+sealed interface FavoriteItem {
+    val name: String
+    data class FoodItem(val food: Food) : FavoriteItem { override val name get() = food.name }
+    data class MealItem(val meal: SavedMeal) : FavoriteItem { override val name get() = meal.name }
+}
+
 /**
- * The "Log" bottom sheet (DESIGN.md §6): Scan · Photo · Search tiles, then Quick add,
- * Favorites, Saved meals, Recipes, and the first 5 recent foods for one-tap add (≤ 3 taps from Today, SPEC §4.3).
+ * The "Log" bottom sheet (DESIGN.md §6): Scan · Photo · Describe · Search tiles, Quick add and
+ * Recipes, then two tabs (roadmap 3.10): Recent (the last 15 foods) and Favorites (All · Foods ·
+ * Meals). One tap logs into the meal; ⋯ edits a favorite or unfavorites it (≤ 3 taps from Today, SPEC §4.3).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -73,9 +95,13 @@ fun LogSheet(
     onDismiss: () -> Unit,
     actions: LogSheetActions = LogSheetActions(),
     recents: List<Food> = emptyList(),
-    recentsAreFavorites: Boolean = false,
+    favorites: List<Food> = emptyList(),
+    favoriteMeals: List<SavedMeal> = emptyList(),
     f: UnitFormatter? = null,
     onAddRecent: (Food) -> Unit = {},
+    onLogMeal: (SavedMeal) -> Unit = {},
+    onEditFavorite: (FavoriteItem) -> Unit = {},
+    onUnfavorite: (FavoriteItem) -> Unit = {},
     /** Set when the day on screen isn't today ("Yesterday"), so it's clear where the entry goes. */
     dayLabel: String? = null,
 ) {
@@ -131,39 +157,109 @@ fun LogSheet(
                 }
             }
             LogRow(R.drawable.ic_bolt, R.string.log_quick_add, actions.quickAdd)
-            if (actions.favorites != null) LogRow(R.drawable.ic_star_outline, R.string.log_favorites, actions.favorites)
-            LogRow(R.drawable.ic_bookmark, R.string.log_saved_meals, actions.savedMeals)
             LogRow(R.drawable.ic_recipe, R.string.log_recipes, actions.recipes)
-            if (recents.isNotEmpty() && f != null) {
-                Text(
-                    stringResource(if (recentsAreFavorites) R.string.log_favorites else R.string.log_recent),
-                    style = MaterialTheme.typography.titleSmall,
-                    modifier = Modifier
-                        .padding(start = 16.dp, top = 12.dp, bottom = 4.dp)
-                        .semantics { heading() },
-                )
-                recents.take(5).forEach { food -> RecentRow(food, f, selected?.name.orEmpty()) { onAddRecent(food) } }
+            if (f != null) {
+                val mealName = selected?.name.orEmpty()
+                // Favorites first while nothing has been logged yet.
+                var tab by rememberSaveable { mutableIntStateOf(if (recents.isEmpty() && (favorites.isNotEmpty() || favoriteMeals.isNotEmpty())) 1 else 0) }
+                PrimaryTabRow(selectedTabIndex = tab, modifier = Modifier.padding(top = 12.dp)) {
+                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.log_recent)) })
+                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.log_favorites)) })
+                }
+                if (tab == 0) {
+                    if (recents.isEmpty()) EmptyLine(R.string.recent_empty)
+                    recents.forEach { food -> FoodRow(food, f, mealName, favorite = false, onAdd = { onAddRecent(food) }) }
+                } else {
+                    FavoritesTab(favorites, favoriteMeals, f, mealName, onAddRecent, onLogMeal, onEditFavorite, onUnfavorite)
+                }
             }
         }
     }
 }
 
+/** Favorites › All · Foods · Meals: one tap logs it, ⋯ has Edit and Unfavorite. */
 @Composable
-private fun RecentRow(food: Food, f: UnitFormatter, mealName: String, onAdd: () -> Unit) {
+private fun FavoritesTab(
+    foods: List<Food>,
+    meals: List<SavedMeal>,
+    f: UnitFormatter,
+    mealName: String,
+    onAdd: (Food) -> Unit,
+    onLogMeal: (SavedMeal) -> Unit,
+    onEdit: (FavoriteItem) -> Unit,
+    onUnfavorite: (FavoriteItem) -> Unit,
+) {
+    var filter by rememberSaveable { mutableIntStateOf(0) }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)) {
+        listOf(R.string.favorites_all, R.string.favorites_foods, R.string.favorites_meals).forEachIndexed { i, label ->
+            FilterChip(selected = filter == i, onClick = { filter = i }, label = { Text(stringResource(label)) })
+        }
+    }
+    val items = buildList {
+        if (filter != 2) addAll(foods.map { FavoriteItem.FoodItem(it) })
+        if (filter != 1) addAll(meals.map { FavoriteItem.MealItem(it) })
+    }.sortedBy { it.name.lowercase() }
+    if (items.isEmpty()) EmptyLine(R.string.favorites_empty)
+    items.forEach { item ->
+        val menu = @Composable { FavoriteMenu(item.name, onEdit = { onEdit(item) }, onUnfavorite = { onUnfavorite(item) }) }
+        when (item) {
+            is FavoriteItem.FoodItem -> FoodRow(item.food, f, mealName, favorite = true, onAdd = { onAdd(item.food) }, menu = menu)
+            is FavoriteItem.MealItem -> MealRow(item.meal, f, onLog = { onLogMeal(item.meal) }, menu = menu)
+        }
+    }
+}
+
+@Composable
+private fun EmptyLine(@StringRes text: Int) {
+    Text(stringResource(text), style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(16.dp))
+}
+
+@Composable
+private fun FavoriteMenu(name: String, onEdit: () -> Unit, onUnfavorite: () -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        IconButton(onClick = { open = true }) {
+            Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.favorite_more, name))
+        }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            DropdownMenuItem(text = { Text(stringResource(R.string.favorite_edit)) }, onClick = { open = false; onEdit() })
+            DropdownMenuItem(text = { Text(stringResource(R.string.favorite_unfavorite)) }, onClick = { open = false; onUnfavorite() })
+        }
+    }
+}
+
+@Composable
+private fun MealRow(meal: SavedMeal, f: UnitFormatter, onLog: () -> Unit, menu: @Composable () -> Unit) {
+    val kcal = meal.items.map { it.nutrients }.sumNutrients().kcal
+    val count = pluralStringResource(R.plurals.saved_meal_items, meal.items.size, meal.items.size)
+    ListItem(
+        headlineContent = { Text(meal.name, maxLines = 2, overflow = TextOverflow.Ellipsis) },
+        supportingContent = { Text(stringResource(R.string.favorite_meal_summary, count, f.energy(kcal)), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        leadingContent = { Icon(painterResource(R.drawable.ic_star), contentDescription = null, tint = ForkcastTheme.colors.pine) },
+        trailingContent = menu,
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+        modifier = Modifier.clickable(onClickLabel = stringResource(R.string.saved_meal_log, meal.name), onClick = onLog),
+    )
+}
+
+/** A food to log in one tap with its default amount: a recent (clock) or a favorite (star, ⋯ menu). */
+@Composable
+private fun FoodRow(food: Food, f: UnitFormatter, mealName: String, favorite: Boolean, onAdd: () -> Unit, menu: (@Composable () -> Unit)? = null) {
     val (serving, qty) = FoodLogging.defaultServing(food)
     val kcal = food.nutrientsPer100g.forGrams(serving.grams * qty).kcal
     val amount = servingText(qty, serving.label)
     val addLabel = stringResource(R.string.food_add_to, mealName)
     ListItem(
         headlineContent = { Text(food.name, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        supportingContent = { Text(amount, maxLines = 1, overflow = TextOverflow.Ellipsis) },
-        leadingContent = { Icon(painterResource(R.drawable.ic_history), contentDescription = null) },
-        trailingContent = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(f.energy(kcal), style = MaterialTheme.typography.labelLarge)
-                Icon(painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.padding(start = 8.dp))
+        supportingContent = { Text("$amount · ${f.energy(kcal)}", maxLines = 1, overflow = TextOverflow.Ellipsis) },
+        leadingContent = {
+            if (favorite) {
+                Icon(painterResource(R.drawable.ic_star), contentDescription = null, tint = ForkcastTheme.colors.pine)
+            } else {
+                Icon(painterResource(R.drawable.ic_history), contentDescription = null)
             }
         },
+        trailingContent = menu ?: { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
         modifier = Modifier.clickable(onClickLabel = addLabel, onClick = onAdd),
     )

@@ -118,5 +118,5 @@
     <string name="details_request_line">%1$s · %2$s (%3$s) · %4$s · %5$s</string>
     <string name="details_retry_after">asked to wait %1$s</string>
     <string name="search_manual_photo">Your photo</string>
-    <string name="badge_saved_meal">Saved meal</string>
+    <string name="badge_saved_meal">Favorite meal</string>
 </resources>

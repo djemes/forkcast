@@ -142,10 +142,10 @@ class DefaultFoodRepository @Inject constructor(
     override suspend fun setFavorite(id: String, favorite: Boolean) {
         val now = clock.millis()
         dao.setFavorite(id, favorite, now)
-        val food = dao.get(id) ?: return
-        if (favorite && food.favoriteQuantity == null && food.lastQuantity != null && food.lastServingLabel != null) {
-            dao.setFavoriteAmount(id, food.lastQuantity, food.lastServingLabel, now)
-        }
+        val food = dao.get(id)?.takeIf { favorite && it.favoriteQuantity == null } ?: return
+        val quantity = food.lastQuantity ?: return
+        val label = food.lastServingLabel ?: return
+        dao.setFavoriteAmount(id, quantity, label, now)
     }
 
     override suspend fun setFavoriteAmount(id: String, quantity: Double, servingLabel: String) =

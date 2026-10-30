@@ -25,7 +25,7 @@
     <string name="help_q_start">How do I start?</string>
     <string name="help_a_start">Log what you eat on Today: tap Add on a meal, then search, scan a barcode, or use Photo or Describe if AI is set up. The ring shows how much of today\'s budget is left. Weigh in when you can, from the weight card on Today, so Forkcast can follow your trend and, after a few weeks, learn your own maintenance.</string>
     <string name="help_q_without_ai">Do I need AI to use Forkcast?</string>
-    <string name="help_a_without_ai">No. Search, barcode scanning, quick add, recipes and saved meals all work without AI. AI adds Photo and Describe, which estimate a meal from a picture or a sentence. It needs a key from an AI service, which you can add any time in Settings › AI services. The guide there walks you through it.</string>
+    <string name="help_a_without_ai">No. Search, barcode scanning, quick add, recipes and favorites all work without AI. AI adds Photo and Describe, which estimate a meal from a picture or a sentence. It needs a key from an AI service, which you can add any time in Settings › AI services. The guide there walks you through it.</string>
     <string name="help_q_change_goal">How do I change my goal or budget?</string>
     <string name="help_a_change_goal">Open Settings › Goal &amp; budget to change your target weight and pace. Your budget updates as you change them, and the screen shows how it was worked out. Sex, age, height and activity level are in Settings › Profile.</string>
 
