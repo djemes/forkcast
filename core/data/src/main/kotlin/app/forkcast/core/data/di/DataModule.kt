@@ -164,6 +164,9 @@ abstract class RepositoryModule {
     abstract fun bindConsentRepository(impl: app.forkcast.core.data.repository.DefaultConsentRepository): app.forkcast.core.data.repository.ConsentRepository
 
     @Binds
+    abstract fun bindSupportCardRepository(impl: app.forkcast.core.data.repository.DefaultSupportCardRepository): app.forkcast.core.data.repository.SupportCardRepository
+
+    @Binds
     abstract fun bindRecipeRepository(impl: app.forkcast.core.data.repository.RoomRecipeRepository): app.forkcast.core.data.repository.RecipeRepository
 
     @Binds

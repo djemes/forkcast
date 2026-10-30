@@ -6,10 +6,7 @@
 
 <p align="center">
   <a href="https://github.com/djemes/forkcast/releases/latest">
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="assets/readme/download-dark.png">
-      <img src="assets/readme/download-light.png" width="300" alt="Download for Android">
-    </picture>
+    <img src="assets/readme/download-light.png" width="300" alt="Download for Android">
   </a>
 </p>
 
@@ -20,10 +17,7 @@
 </p>
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/banner-dark.webp">
-    <img src="assets/readme/banner-light.webp" width="100%" alt="Three Forkcast screens: Today with the calorie ring and the day's meals; an AI estimate of a described meal, about 371 kcal and likely 275 to 507, ready to review; and Trends with calories against the budget and the weight trend">
-  </picture>
+  <img src="assets/readme/banner-light.webp" width="100%" alt="Three Forkcast screens: Today with the calorie ring and the day's meals; an AI estimate of a described meal, about 371 kcal and likely 275 to 507, ready to review; and Trends with calories against the budget and the weight trend">
 </p>
 
 ## Why Forkcast
@@ -35,8 +29,7 @@
 
 ## What it does
 
-<img src="assets/readme/screens/log-light.webp#gh-light-mode-only" align="right" width="240" alt="The Log sheet: meal chips, then Scan, Photo, Describe and Search, Quick add calories, Recipes, and recent and favorite foods">
-<img src="assets/readme/screens/log-dark.webp#gh-dark-mode-only" align="right" width="240" alt="The Log sheet in the dark theme">
+<img src="assets/readme/screens/log-light.webp" align="right" width="240" alt="The Log sheet: meal chips, then Scan, Photo, Describe and Search, Quick add calories, Recipes, and recent and favorite foods">
 
 ### Logging
 
@@ -46,8 +39,7 @@ With an AI service you set up, take a photo of a meal or describe it in a senten
 
 <br clear="right">
 
-<img src="assets/readme/screens/budget-light.webp#gh-light-mode-only" align="left" width="240" alt="Today's budget: maintenance, goal deficit, budget, eaten and what's left, then each meal against its share">
-<img src="assets/readme/screens/budget-dark.webp#gh-dark-mode-only" align="left" width="240" alt="Today's budget in the dark theme">
+<img src="assets/readme/screens/budget-light.webp" align="left" width="240" alt="Today's budget: maintenance, goal deficit, budget, eaten and what's left, then each meal against its share">
 
 ### A daily budget
 
@@ -55,8 +47,7 @@ Your budget starts from your goal and the pace you pick. After a few weeks of lo
 
 <br clear="left">
 
-<img src="assets/readme/screens/trends-light.webp#gh-light-mode-only" align="right" width="240" alt="Trends: average eaten against the average budget, a bar chart of calories per day with the budget as a dashed line, and the weight trend">
-<img src="assets/readme/screens/trends-dark.webp#gh-dark-mode-only" align="right" width="240" alt="Trends in the dark theme">
+<img src="assets/readme/screens/trends-light.webp" align="right" width="240" alt="Trends: average eaten against the average budget, a bar chart of calories per day with the budget as a dashed line, and the weight trend">
 
 ### Trends
 
@@ -68,8 +59,7 @@ One tap adds your usual glass or bottle. With Health Connect, weight, body fat, 
 
 <br clear="right">
 
-<img src="assets/readme/screens/backup-light.webp#gh-light-mode-only" align="left" width="240" alt="Backup and data: backup password, Back up now, Back up and share, and automatic backup to a folder you choose">
-<img src="assets/readme/screens/backup-dark.webp#gh-dark-mode-only" align="left" width="240" alt="Backup and data in the dark theme">
+<img src="assets/readme/screens/backup-light.webp" align="left" width="240" alt="Backup and data: backup password, Back up now, Back up and share, and automatic backup to a folder you choose">
 
 ### Backups
 
@@ -79,13 +69,20 @@ English and Portuguese (Brazil).
 
 <br clear="left">
 
+## Light and dark
+
+<p align="center">
+  <img src="assets/readme/screens/today-light.webp" width="45%" alt="Today in the light theme: the calorie ring, macros and the day's meals">
+  &nbsp;
+  <img src="assets/readme/screens/today-dark.webp" width="45%" alt="The same Today screen in the dark theme">
+</p>
+
+Forkcast follows your phone's light or dark theme, or you pick one in Settings › Appearance. It can also take its colors from your wallpaper.
+
 ## Privacy at a glance
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/readme/privacy-dark.png">
-    <img src="assets/readme/privacy-light.png" width="640" alt="Your phone holds your food log and weights, meal photos, settings and your keys, encrypted. Only what you use connects to it: food databases when you search or scan (Open Food Facts, and USDA with your own key); your AI service, optional, with your own key and asked first (meal photos and descriptions); your backups, wherever you save them, and Android's device backup if it's on; Health Connect, on your phone, shared only with what you allow; and GitHub, to check for updates. No account, no ads, no tracking.">
-  </picture>
+  <img src="assets/readme/privacy-light.png" width="640" alt="Your phone holds your food log and weights, meal photos, settings and your keys, encrypted. Only what you use connects to it: food databases when you search or scan (Open Food Facts, and USDA with your own key); your AI service, optional, with your own key and asked first (meal photos and descriptions); your backups, wherever you save them, and Android's device backup if it's on; Health Connect, on your phone, shared only with what you allow; and GitHub, to check for updates. No account, no ads, no tracking.">
 </p>
 
 Forkcast has no servers and no accounts, and its developer receives none of your data. The [Privacy Policy](PRIVACY.md) lists exactly what goes where.
@@ -122,4 +119,4 @@ Help is best effort, through [GitHub](SUPPORT.md).
 
 Free and open-source under the [GNU GPL, version 3](LICENSE), with an [additional permission](LICENSE-ADDITIONAL-PERMISSION.md). Food data from [Open Food Facts](https://openfoodfacts.org) (Open Database License) and [USDA FoodData Central](https://fdc.nal.usda.gov).
 
-Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, or Samsung. Product names belong to their owners.
+Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, Samsung, or Ko-fi. Product names belong to their owners.

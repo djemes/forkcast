@@ -128,11 +128,16 @@
     <string name="about_legal_title">Terms, privacy and licenses</string>
     <string name="about_support_title">Support Forkcast</string>
     <string name="about_support_body">Forkcast is free and open source. If it helps you, you can leave a tip. Tips are voluntary and don\'t unlock anything.</string>
-    <string name="about_support_open">Leave a tip</string>
+    <!-- The Ko-fi card at the top of Settings and About's button (owner, 2026-10-30) -->
+    <string name="support_kofi">Support on Ko-fi</string>
+    <string name="support_card_body">Free and ad-free. Tips help keep it that way.</string>
+    <string name="support_card_hide">Hide the Ko-fi card</string>
+    <string name="support_card_hidden">Hidden. You can still support Forkcast from Settings › About.</string>
+    <string name="support_coming_soon">Coming soon</string>
     <string name="about_attributions_title">Attributions</string>
     <string name="about_attribution_off">Food data from Open Food Facts (openfoodfacts.org), available under the Open Database License (ODbL).</string>
     <string name="about_attribution_usda">Food data from USDA FoodData Central (fdc.nal.usda.gov), U.S. Department of Agriculture.</string>
-    <string name="about_not_affiliated">Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, or Samsung. Product names belong to their owners.</string>
+    <string name="about_not_affiliated">Forkcast is not affiliated with or endorsed by Google, Anthropic, OpenAI, the USDA, Open Food Facts, Samsung, or Ko-fi. Product names belong to their owners.</string>
 
     <!-- Saved API keys (USDA, AI profiles): masked, show/hide, copy -->
     <string name="key_saved_encrypted">Stored encrypted. Backups include it, encrypted with your backup password.</string>
