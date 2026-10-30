@@ -22,7 +22,7 @@
     <string name="ai_role_first">Used first</string>
     <string name="ai_role_backup">Backup: used when the ones above can\'t answer</string>
     <string name="ai_role_off">Off: skipped</string>
-    <string name="ai_role_no_key">No key saved: skipped. Add one with Edit, under Advanced.</string>
+    <string name="ai_role_no_key">No key saved: skipped. Add one with Edit.</string>
     <string name="ai_role_key_rejected">Key rejected on the last try: skipped. Fix it with Edit, then Test.</string>
     <string name="ai_delete_title">Delete %1$s?</string>
     <string name="ai_delete_body">Its API key is removed from this phone. You can undo this right after.</string>
@@ -150,7 +150,7 @@
     <string name="ai_err_hint_check_key">Check this AI service\'s key, then test again.</string>
     <string name="ai_err_rate_limited">%1$s is busy or at its limit. Try again in a minute.</string>
     <string name="ai_err_quota">%1$s has reached its limit. It resets later.</string>
-    <string name="ai_err_model">%1$s doesn\'t have the model %2$s. Pick another in Settings › AI services, under Advanced.</string>
+    <string name="ai_err_model">%1$s doesn\'t have the model %2$s. Pick another with Edit in Settings › AI services.</string>
     <string name="ai_err_refused">%1$s declined to estimate this photo.</string>
     <string name="ai_err_bad_response">%1$s sent an answer Forkcast couldn\'t read. Try again.</string>
     <string name="ai_err_request">%1$s rejected the request: %2$s</string>

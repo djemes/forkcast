@@ -1,6 +1,7 @@
 package app.forkcast.ui.common
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -107,32 +108,39 @@ fun EntryMenu(
     onDelete: () -> Unit,
 ) {
     var open by remember { mutableStateOf(false) }
-    IconButton(onClick = { open = true }) { Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.entry_more)) }
-    DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-        onSaveAsFood?.let { save ->
-            DropdownMenuItem(text = { Text(stringResource(R.string.entry_save_as_food)) }, onClick = { open = false; save() })
-        }
-        if (favorite) {
-            onUnfavorite?.let { un ->
+    // In a Box, so the menu opens under the ⋮ wherever the caller puts it.
+    Box {
+        IconButton(onClick = { open = true }) { Icon(painterResource(R.drawable.ic_more_vert), stringResource(R.string.entry_more)) }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            onSaveAsFood?.let { save ->
                 DropdownMenuItem(
-                    text = { Text(stringResource(R.string.favorite_unfavorite)) },
-                    leadingIcon = { Icon(painterResource(R.drawable.ic_star_outline), contentDescription = null) },
-                    onClick = { open = false; un() },
+                    text = { Text(stringResource(R.string.entry_save_as_food)) },
+                    leadingIcon = { Icon(painterResource(R.drawable.ic_add), contentDescription = null) },
+                    onClick = { open = false; save() },
                 )
             }
-        } else {
-            onFavorite?.let { fav ->
-                DropdownMenuItem(
-                    text = { Text(stringResource(R.string.entry_favorite)) },
-                    leadingIcon = { Icon(painterResource(R.drawable.ic_star), contentDescription = null, tint = ForkcastTheme.colors.pine) },
-                    onClick = { open = false; fav() },
-                )
+            if (favorite) {
+                onUnfavorite?.let { un ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.favorite_unfavorite)) },
+                        leadingIcon = { Icon(painterResource(R.drawable.ic_star_outline), contentDescription = null) },
+                        onClick = { open = false; un() },
+                    )
+                }
+            } else {
+                onFavorite?.let { fav ->
+                    DropdownMenuItem(
+                        text = { Text(stringResource(R.string.entry_favorite)) },
+                        leadingIcon = { Icon(painterResource(R.drawable.ic_star), contentDescription = null, tint = ForkcastTheme.colors.pine) },
+                        onClick = { open = false; fav() },
+                    )
+                }
             }
+            DropdownMenuItem(
+                text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
+                leadingIcon = { Icon(painterResource(R.drawable.ic_delete), contentDescription = null, tint = MaterialTheme.colorScheme.error) },
+                onClick = { open = false; onDelete() },
+            )
         }
-        DropdownMenuItem(
-            text = { Text(stringResource(R.string.action_delete), color = MaterialTheme.colorScheme.error) },
-            leadingIcon = { Icon(painterResource(R.drawable.ic_delete), contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-            onClick = { open = false; onDelete() },
-        )
     }
 }

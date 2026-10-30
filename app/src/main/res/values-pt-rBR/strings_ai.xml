@@ -22,7 +22,7 @@
     <string name="ai_role_first">Usado primeiro</string>
     <string name="ai_role_backup">Reserva: usado quando os de cima não conseguem responder</string>
     <string name="ai_role_off">Desligado: pulado</string>
-    <string name="ai_role_no_key">Sem chave salva: pulado. Adicione uma em Editar, em Avançado.</string>
+    <string name="ai_role_no_key">Sem chave salva: pulado. Adicione uma em Editar.</string>
     <string name="ai_role_key_rejected">Chave recusada na última tentativa: pulado. Corrija em Editar e toque em Testar.</string>
     <string name="ai_delete_title">Excluir %1$s?</string>
     <string name="ai_delete_body">A chave de API dele sai deste celular. Você pode desfazer logo em seguida.</string>
@@ -152,7 +152,7 @@
     <string name="ai_err_hint_check_key">Confira a chave deste serviço de IA e teste de novo.</string>
     <string name="ai_err_rate_limited">%1$s está ocupado ou no limite. Tente de novo em um minuto.</string>
     <string name="ai_err_quota">%1$s atingiu o limite. Ele renova mais tarde.</string>
-    <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro em Configurações › Serviços de IA, em Avançado.</string>
+    <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro em Editar, em Configurações › Serviços de IA.</string>
     <string name="ai_err_refused">%1$s preferiu não estimar esta foto.</string>
     <string name="ai_err_bad_response">%1$s mandou uma resposta que o Forkcast não conseguiu ler. Tente de novo.</string>
     <string name="ai_err_request">%1$s recusou a requisição: %2$s</string>
