@@ -4,8 +4,7 @@
     <string name="ai_enabled">Estimativas com IA</string>
     <string name="ai_enabled_body">Estime uma refeição a partir de uma foto ou de uma descrição, usando a sua própria chave de IA.</string>
     <string name="ai_profiles_title">Seus serviços de IA</string>
-    <string name="ai_order_title">Qual IA vai primeiro</string>
-    <string name="ai_order_explain">Cada serviço de IA é um provedor e um modelo, com a chave dele. A foto vai primeiro para o número 1. Se ele não conseguir responder (no limite, ocupado, um erro), o número 2 tenta, e assim por diante. Desligue um serviço de IA para pulá-lo.</string>
+    <string name="ai_order_explain">A foto vai primeiro para o número 1. Se ele não conseguir responder (no limite, ocupado, um erro), o próximo tenta. Use as setas para mudar a ordem, ou desligue um para pulá-lo.</string>
     <string name="ai_section_photos">Estimativas por foto</string>
     <string name="ai_move_up_named">Subir %1$s</string>
     <string name="ai_move_down_named">Descer %1$s</string>
@@ -18,7 +17,6 @@
     <string name="ai_check_why_network">sem conexão</string>
     <string name="ai_check_why_other">o serviço respondeu com um erro</string>
     <string name="ai_no_profiles">Nenhum serviço de IA ainda. Adicione um para começar a estimar refeições.</string>
-    <string name="ai_add_profile">Adicionar um serviço de IA manualmente</string>
     <string name="ai_edit">Editar</string>
     <string name="ai_position">Número %1$d na ordem</string>
     <string name="ai_role_first">Usado primeiro</string>

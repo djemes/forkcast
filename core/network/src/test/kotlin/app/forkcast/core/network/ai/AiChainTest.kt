@@ -161,7 +161,10 @@ class AiChainTest {
         }
         // The only free text besides the prompt is what the user typed for this meal.
         val text = MealPrompt.userText(r)
-        assertThat(text).isEqualTo("Logged as Breakfast at 08:00 (context only; never use it in meal_name). Units the user thinks in: metric.\nWrite every food and meal name in English.\nDescription: toast\nPersonal context: none")
+        assertThat(text).isEqualTo(
+            "Logged as Breakfast at 08:00 (context only; never use it in meal_name). Units the user thinks in: metric.\n" +
+                "Write every food and meal name in English.\nDescription: toast\nPersonal context: none",
+        )
     }
 
     private fun allKeys(e: JsonElement): Set<String> = when (e) {

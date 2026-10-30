@@ -342,6 +342,14 @@ fun EditEntrySheet(
     nowMinute: Int = java.time.LocalTime.now().let { it.hour * 60 + it.minute },
     /** The entry's time when it has none yet. */
     defaultMinute: Int = 12 * 60,
+    /** Pencil: renames this entry only (owner, 2026-10-30). */
+    onRename: (String) -> Unit = {},
+    /** The entry's food is a favorite (the ⋮ menu offers Unfavorite). */
+    favorite: Boolean = false,
+    /** ⋮ › Save as food; null when the entry already has a food. */
+    onSaveAsFood: (() -> Unit)? = null,
+    onFavorite: (() -> Unit)? = null,
+    onUnfavorite: (() -> Unit)? = null,
 ) {
     var quantity by rememberSaveable(entry.id) { mutableStateOf<Double?>(entry.quantity) }
     var servingLabel by rememberSaveable(entry.id) { mutableStateOf(entry.servingLabel) }
@@ -386,9 +394,16 @@ fun EditEntrySheet(
                 .verticalScroll(rememberScrollState())
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            Text(stringResource(R.string.edit_entry_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(entry.displayName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text(
+                    stringResource(R.string.edit_entry_title),
+                    style = MaterialTheme.typography.titleLarge,
+                    modifier = Modifier.weight(1f).semantics { heading() },
+                )
+                app.forkcast.ui.common.EntryMenu(onSaveAsFood, favorite, onFavorite, onUnfavorite, onDelete)
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                app.forkcast.ui.common.RenameableName(entry.displayName, onRename, Modifier.weight(1f))
                 SourceBadge(entry.source)
             }
             if (servings.size > 1) {
@@ -475,11 +490,6 @@ fun EditEntrySheet(
                     modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.action_save)) }
             }
-            TextButton(
-                onClick = onDelete,
-                colors = androidx.compose.material3.ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
-            ) { Text(stringResource(R.string.action_delete)) }
         }
     }
     if (confirmDiscard) {

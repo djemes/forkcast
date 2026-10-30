@@ -9,9 +9,6 @@
     <string name="describe_estimate">Estimar</string>
     <string name="describe_you_said">Você descreveu</string>
     <string name="describe_knowledge_note">Vem do conhecimento da própria IA, não de uma busca na web: confira a faixa e as suposições.</string>
-    <string name="describe_save_as_food">Salvar como alimento</string>
-    <string name="describe_save_as_food_body">Na próxima vez ele aparece na busca, offline, sem IA.</string>
-    <string name="describe_food_name">Nome do alimento</string>
     <string name="describe_from_search">Descrever para a IA</string>
     <string name="describe_from_search_body">Não encontrou? A IA pode estimar “%1$s”.</string>
     <string name="badge_ai_text">IA · texto</string>
@@ -121,4 +118,13 @@
     <string name="details_retry_after">pediu para esperar %1$s</string>
     <string name="search_manual_photo">Sua foto</string>
     <string name="badge_saved_meal">Refeição favorita</string>
+    <!-- Rename (pencil) and the ⋮ menu on an entry, the description under a photo (owner, 2026-10-30). -->
+    <string name="rename">Renomear</string>
+    <string name="rename_label">Nome</string>
+    <string name="rename_done">Pronto</string>
+    <string name="entry_more">Mais opções</string>
+    <string name="entry_save_as_food">Salvar como alimento</string>
+    <string name="entry_favorite">Favoritar</string>
+    <string name="entry_saved_as_food">\"%1$s\" salvo em Meus alimentos</string>
+    <string name="photo_you_wrote">Você escreveu: “%1$s”</string>
 </resources>

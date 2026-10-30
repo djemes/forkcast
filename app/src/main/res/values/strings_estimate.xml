@@ -9,9 +9,6 @@
     <string name="describe_estimate">Estimate</string>
     <string name="describe_you_said">You described</string>
     <string name="describe_knowledge_note">From the AI\'s own knowledge, not a web search: check the range and the assumptions.</string>
-    <string name="describe_save_as_food">Save as food</string>
-    <string name="describe_save_as_food_body">Next time it\'s in search, offline, with no AI.</string>
-    <string name="describe_food_name">Food name</string>
     <string name="describe_from_search">Describe it to AI</string>
     <string name="describe_from_search_body">Not finding it? The AI can estimate “%1$s”.</string>
     <string name="badge_ai_text">AI · text</string>
@@ -119,4 +116,13 @@
     <string name="details_retry_after">asked to wait %1$s</string>
     <string name="search_manual_photo">Your photo</string>
     <string name="badge_saved_meal">Favorite meal</string>
+    <!-- Rename (pencil) and the ⋮ menu on an entry, the description under a photo (owner, 2026-10-30). -->
+    <string name="rename">Rename</string>
+    <string name="rename_label">Name</string>
+    <string name="rename_done">Done</string>
+    <string name="entry_more">More options</string>
+    <string name="entry_save_as_food">Save as food</string>
+    <string name="entry_favorite">Favorite</string>
+    <string name="entry_saved_as_food">\"%1$s\" saved in My foods</string>
+    <string name="photo_you_wrote">You wrote: “%1$s”</string>
 </resources>

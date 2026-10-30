@@ -4,8 +4,7 @@
     <string name="ai_enabled">AI estimates</string>
     <string name="ai_enabled_body">Estimate a meal from a photo or a description, using your own AI key.</string>
     <string name="ai_profiles_title">Your AI services</string>
-    <string name="ai_order_title">Which AI goes first</string>
-    <string name="ai_order_explain">Each AI service is one provider and model with its key. A photo goes to number 1 first. If it can\'t answer (at its limit, busy, an error), number 2 tries, and so on. Switch an AI service off to skip it.</string>
+    <string name="ai_order_explain">A photo goes to number 1 first. If it can\'t answer (at its limit, busy, an error), the next one tries. Use the arrows to change the order, or switch one off to skip it.</string>
     <string name="ai_section_photos">Photo estimates</string>
     <string name="ai_move_up_named">Move %1$s up</string>
     <string name="ai_move_down_named">Move %1$s down</string>
@@ -18,7 +17,6 @@
     <string name="ai_check_why_network">no connection</string>
     <string name="ai_check_why_other">the service returned an error</string>
     <string name="ai_no_profiles">No AI services yet. Add one to start estimating meals.</string>
-    <string name="ai_add_profile">Add an AI service manually</string>
     <string name="ai_edit">Edit</string>
     <string name="ai_position">Number %1$d in the order</string>
     <string name="ai_role_first">Used first</string>

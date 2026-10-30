@@ -3,6 +3,8 @@ package app.forkcast.ui.ai
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
@@ -60,21 +62,26 @@ class AiSettingsAdvancedTest {
         compose.onNodeWithText("Usage this month").assertDoesNotExist()
     }
 
-    @Test fun advancedHoldsTheOrderManualSetupAndUsage() {
-        val edited = mutableListOf<String?>()
-        show(edited)
+    @Test fun theOrderIsOnTheCardsAndAdvancedHoldsUsage() {
+        val events = mutableListOf<AiSettingsEvent>()
+        compose.setContent { ForkcastTheme { AiSettingsScreen(state, onEvent = { events += it }, onBack = {}, onEditProfile = {}, onAddAi = {}) } }
+        // Owner, 2026-10-30: the arrows sit on "Your AI services", explained under the title; no manual setup here.
+        compose.onNodeWithText("Use the arrows", substring = true).assertIsDisplayed()
+        compose.onNodeWithContentDescription("Move Gemini 3.5 Flash-Lite up").performScrollTo().performClick()
+        assertThat(events.last()).isEqualTo(AiSettingsEvent.Move(1, 0))
+        compose.onNodeWithContentDescription("Move Gemini 3.8 Flash up").assertIsNotEnabled()
         compose.onNodeWithText("Advanced").performScrollTo().performClick()
-        compose.onNodeWithText("Which AI goes first").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Usage this month").performScrollTo().assertIsDisplayed()
-        compose.onNodeWithText("Add an AI service manually").performScrollTo().performClick()
-        assertThat(edited).containsExactly(null)
+        compose.onNodeWithText("Which AI goes first").assertDoesNotExist()
+        compose.onNodeWithText("Add an AI service manually").assertDoesNotExist()
     }
 
     @Test fun darkThemeAtDoubleFontScaleKeepsTestAddAndAdvancedReachable() {
         show(dark = true, fontScale = 2f)
         compose.onNodeWithText("Gemini 3.8 Flash").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Add AI").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("Move Gemini 3.8 Flash down").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Advanced").performScrollTo().performClick()
-        compose.onNodeWithText("Add an AI service manually").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Usage this month").performScrollTo().assertIsDisplayed()
     }
 }
