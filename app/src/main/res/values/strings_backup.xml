@@ -129,7 +129,10 @@
     <string name="bpw_field_again">Type it again</string>
     <string name="bpw_generate">Generate a strong password</string>
     <string name="bpw_save_note">Save it in your password manager. If you lose this phone, it\'s the only way to open your backups.</string>
-    <string name="bpw_min">At least %1$d characters</string>
+    <plurals name="bpw_min">
+        <item quantity="one">At least %1$d character</item>
+        <item quantity="other">At least %1$d characters</item>
+    </plurals>
     <string name="bpw_mismatch">The two don\'t match</string>
     <string name="bpw_strength_weak">Weak</string>
     <string name="bpw_strength_fair">Fair</string>
