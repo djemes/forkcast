@@ -56,9 +56,10 @@ class BackupScreenTest {
         compose.onNodeWithText("Set a backup password first. Backups are always encrypted with it.").assertIsDisplayed()
         compose.onNodeWithText("Restore from a backup…").performScrollTo().performClick()
         compose.onNodeWithText("Back up without encryption").performScrollTo().performClick()
-        // The meal report's spreadsheet replaced the CSV exports (owner, 2026-10-29).
-        compose.onNodeWithText("Advanced").performScrollTo().performClick()
+        // The meal report's spreadsheet replaced the CSV exports; backups replaced settings files (owner, 2026-10-29).
+        compose.onNodeWithText("Advanced").assertDoesNotExist()
         compose.onNodeWithText("Food log (CSV)").assertDoesNotExist()
+        compose.onNodeWithText("Import settings…").assertDoesNotExist()
         assertThat(events).containsExactly(BackupEvent.AskUnencrypted)
         assertThat(launched).containsExactly("restore")
         compose.onNodeWithText("Undo the last replace").assertDoesNotExist()
@@ -183,23 +184,6 @@ class BackupScreenTest {
         }
         compose.onNodeWithText("Undo the last replace").performScrollTo().performClick()
         assertThat(events).containsExactly(BackupEvent.OpenSafetyBackup)
-    }
-
-    @Test fun oldSettingsFilesCanStillBeImported() {
-        compose.setContent {
-            ForkcastTheme {
-                BackupScreen(
-                    state = BackupUiState(),
-                    onEvent = {},
-                    actions = noActions,
-                    onBack = {},
-                    settingsSection = { SettingsTransferSection(busy = false, onImport = {}) },
-                )
-            }
-        }
-        compose.onNodeWithText("Advanced").performScrollTo().performClick()
-        compose.onNodeWithText("Export settings…").assertDoesNotExist()
-        compose.onNodeWithText("Import settings…").performScrollTo().assertExists()
     }
 
     @androidx.compose.runtime.Composable

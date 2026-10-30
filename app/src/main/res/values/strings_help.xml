@@ -96,6 +96,8 @@
     <string name="help_a_backup_auto">If the folder was moved or deleted, or its app was removed, Forkcast can\'t reach it: choose a folder again in Settings › Backup &amp; data. If saving failed, check that there\'s free space, or choose another folder. Forkcast lets you know when a scheduled backup fails twice in a row, and Back up now tries again right away.</string>
     <string name="help_q_backup_save">Saving a backup or a file failed</string>
     <string name="help_a_backup_save">The place you picked didn\'t accept the file. Try again and pick another place, such as Downloads, and check that there\'s free space. Some cloud apps need a connection to save.</string>
+    <string name="help_q_report">How do I make a meal report for my doctor?</string>
+    <string name="help_a_report">In Settings › Backup &amp; data, tap Make a meal report. Pick the dates (the last 30 days, or All time, or your own), and a PDF to print or a spreadsheet. Forkcast asks for your phone\'s unlock, makes the report and shows it. Then Save it to a folder, Share it with another app, or Print it (Android\'s print screen can also save a PDF). A PDF of more than 60 days shows daily totals and weekly and monthly averages; turn on Include every meal to add each meal, which makes it much longer. The spreadsheet always has every food. Photos are never included, and the copy Forkcast made is deleted when you close the report.</string>
 
     <!-- Updates -->
     <string name="help_q_update_how">How do I update Forkcast?</string>

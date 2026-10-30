@@ -54,7 +54,6 @@ import app.forkcast.ui.help.HelpLink
 import app.forkcast.ui.help.HelpLinks
 import app.forkcast.ui.help.LocalHelp
 import app.forkcast.ui.help.showError
-import app.forkcast.ui.common.AdvancedSection
 import app.forkcast.core.data.backup.BackupPreview
 import app.forkcast.core.data.backup.ImportMode
 import app.forkcast.core.data.backup.RejectReason
@@ -69,12 +68,10 @@ import java.time.format.FormatStyle
 fun BackupRoute(
     onBack: () -> Unit,
     viewModel: BackupViewModel = hiltViewModel(),
-    transfer: SettingsTransferViewModel = hiltViewModel(),
     auto: AutoBackupViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val autoState by auto.state.collectAsStateWithLifecycle()
-    val transferState by transfer.state.collectAsStateWithLifecycle()
     val onEvent = viewModel::onEvent
     val context = LocalContext.current
 
@@ -94,8 +91,6 @@ fun BackupRoute(
             .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         context.startActivity(Intent.createChooser(send, shareTitle))
     }
-    val importSettings = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri -> transfer.picked(uri) }
-
     val open = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         uri?.let { onEvent(BackupEvent.Open(it)) }
     }
@@ -137,19 +132,8 @@ fun BackupRoute(
         },
         autoSection = { AutoBackupSectionRoute(auto, autoState, needPassword = { askPassword = PasswordAsk.NEW_THEN_AUTO }) },
         reportSection = { snackbar -> app.forkcast.ui.report.MealReportSectionRoute(snackbar) },
-        settingsSection = {
-            SettingsTransferSection(
-                busy = state.busy || transferState.busy,
-                onImport = { importSettings.launch(arrayOf("application/octet-stream", "*/*")) },
-            )
-        },
-        extraNotice = transferState.notice,
-        onExtraNoticeShown = transfer::noticeShown,
         onUnencryptedContinue = confirmUnencrypted,
     )
-    transferState.step?.let { step ->
-        SettingsTransferDialogs(step, transfer::unlock, transfer::apply, transfer::dismiss)
-    }
 }
 
 /** Which password dialog is open: a first one (and then turn automatic backup on), or a change. */
@@ -179,22 +163,12 @@ fun BackupScreen(
     autoSection: @Composable () -> Unit = {},
     /** The meal report for a health professional. */
     reportSection: @Composable (SnackbarHostState) -> Unit = {},
-    settingsSection: @Composable () -> Unit = {},
-    extraNotice: Int? = null,
-    onExtraNoticeShown: () -> Unit = {},
     onUnencryptedContinue: () -> Unit = {},
 ) {
     val snackbar = remember { SnackbarHostState() }
     val resources = LocalResources.current
     val openHelp = LocalHelp.current
     val scope = rememberCoroutineScope()
-    LaunchedEffect(extraNotice) {
-        val notice = extraNotice ?: return@LaunchedEffect
-        onExtraNoticeShown()
-        // Settings transfer: only "Couldn't save the file" is a problem.
-        if (notice == R.string.settings_failed) snackbar.showError(resources.getString(notice), resources.getString(R.string.help_link)) { openHelp(HelpEntry.BACKUP_SAVE_FAILED) }
-        else snackbar.showSnackbar(resources.getString(notice))
-    }
     LaunchedEffect(state.notice) {
         val notice = state.notice ?: return@LaunchedEffect
         onEvent(BackupEvent.NoticeShown)
@@ -251,12 +225,6 @@ fun BackupScreen(
                     border = BorderStroke(1.dp, MaterialTheme.colorScheme.error),
                     modifier = Modifier.padding(top = 16.dp).heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.backup_unencrypted)) }
-
-                // Settings files from older versions are for fewer people (roadmap 2.0 task 3.5). The meal
-                // report's spreadsheet replaced the CSV exports (owner, 2026-10-29).
-                AdvancedSection(Modifier.padding(top = 8.dp)) {
-                    Column(Modifier.padding(top = 8.dp)) { settingsSection() }
-                }
             }
         }
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(16.dp))

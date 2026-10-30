@@ -7,7 +7,10 @@ import app.forkcast.core.model.NutrientKey
 import app.forkcast.core.model.Nutrients
 import app.forkcast.core.model.kcal
 import app.forkcast.core.model.sumNutrients
+import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import java.time.temporal.TemporalAdjusters
 
 /**
  * The meal report for a health professional (owner, 2026-10-29): a date range of meals with each
@@ -58,6 +61,50 @@ object MealReport {
     data class Report(val from: LocalDate, val to: LocalDate, val days: List<Day>) {
         val items: List<Item> get() = days.flatMap { d -> d.meals.flatMap { it.items } }
         val loggedDays: Int get() = days.count { it.meals.isNotEmpty() }
+    }
+
+    /**
+     * A week's or a month's averages: intake over the days something was logged (an empty day
+     * isn't a day of eating nothing), water over the days with water, weight over the weigh-ins.
+     */
+    data class Period(
+        val start: LocalDate,
+        val end: LocalDate,
+        val loggedDays: Int,
+        val kcal: Double?,
+        val targetKcal: Double?,
+        val nutrients: Nutrients,
+        val waterMl: Double?,
+        val weightKg: Double?,
+    )
+
+    /** Ranges longer than this get the summary PDF unless every meal is asked for (owner, 2026-10-29). */
+    const val SUMMARY_AFTER_DAYS = 60
+
+    fun summaryByDefault(from: LocalDate, to: LocalDate): Boolean = ChronoUnit.DAYS.between(from, to) + 1 > SUMMARY_AFTER_DAYS
+
+    /** Weeks starting on [firstDay] (the locale's), the first and last cut to the report's range. */
+    fun weeks(report: Report, firstDay: DayOfWeek): List<Period> =
+        periods(report) { it.with(TemporalAdjusters.previousOrSame(firstDay)) }
+
+    fun months(report: Report): List<Period> = periods(report) { it.withDayOfMonth(1) }
+
+    private fun periods(report: Report, startOf: (LocalDate) -> LocalDate): List<Period> =
+        report.days.groupBy { startOf(it.date) }.toSortedMap().map { (_, days) -> period(days) }
+
+    private fun period(days: List<Day>): Period {
+        val logged = days.filter { it.meals.isNotEmpty() }
+        val keys = KEY_NUTRIENTS.filter { k -> logged.any { k in it.nutrients } }
+        return Period(
+            start = days.first().date,
+            end = days.last().date,
+            loggedDays = logged.size,
+            kcal = logged.takeIf { it.isNotEmpty() }?.map { it.kcal }?.average(),
+            targetKcal = days.mapNotNull { it.targetKcal }.takeIf { it.isNotEmpty() }?.average(),
+            nutrients = keys.associateWith { k -> logged.sumOf { it.nutrients[k] ?: 0.0 } / logged.size },
+            waterMl = days.mapNotNull { it.waterMl }.takeIf { it.isNotEmpty() }?.average(),
+            weightKg = days.mapNotNull { it.weightKg }.takeIf { it.isNotEmpty() }?.average(),
+        )
     }
 
     /**

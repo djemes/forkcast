@@ -155,7 +155,7 @@
             android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
             tools:node="remove" />
 
-        <!-- "Back up and share" hands the encrypted backup to the share sheet (BackupShares). -->
+        <!-- "Back up and share" and the meal report's Share hand a file to the share sheet (BackupShares, ReportCache). -->
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.files"

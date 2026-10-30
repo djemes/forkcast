@@ -39,9 +39,6 @@
     <ID>SwallowedException:HealthRepository.kt:HealthConnectRepository$e: IllegalArgumentException</ID>
     <ID>SwallowedException:Notifier.kt:Notifier$e: SecurityException</ID>
     <ID>SwallowedException:SecretStore.kt:SecretStore$e: java.security.GeneralSecurityException</ID>
-    <ID>SwallowedException:SettingsBackup.kt:SettingsBackupRepository$e: AEADBadTagException</ID>
-    <ID>SwallowedException:SettingsBackup.kt:SettingsBackupRepository$e: GeneralSecurityException</ID>
-    <ID>SwallowedException:SettingsBackup.kt:SettingsBackupRepository$e: IllegalArgumentException</ID>
     <ID>ThrowsCount:BackupCrypto.kt:BackupCrypto$fun decrypt: InputStream</ID>
     <ID>ThrowsCount:HealthRepository.kt:HealthConnectRepository$private suspend fun deleteEach</ID>
     <ID>TooGenericExceptionCaught:AiEstimateRepository.kt:DefaultAiEstimateRepository$e: Exception</ID>

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- "Back up and share": only the encrypted backup in cache/share/ can be shared (BackupShares). -->
+<!-- Only these can be shared: the encrypted backup in cache/share/ ("Back up and share",
+     BackupShares) and the meal report in cache/report/ (ReportCache). -->
 <paths>
     <cache-path name="share" path="share/" />
+    <cache-path name="report" path="report/" />
 </paths>

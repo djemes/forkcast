@@ -96,6 +96,8 @@
     <string name="help_a_backup_auto">Se a pasta foi movida ou apagada, ou o app dela foi removido, o Forkcast não consegue chegar nela: escolha uma pasta de novo em Configurações › Backup e dados. Se salvar falhou, confira se há espaço livre, ou escolha outra pasta. O Forkcast avisa quando um backup agendado falha duas vezes seguidas, e Fazer backup agora tenta de novo na hora.</string>
     <string name="help_q_backup_save">Salvar um backup ou um arquivo falhou</string>
     <string name="help_a_backup_save">O lugar escolhido não aceitou o arquivo. Tente de novo e escolha outro lugar, como Downloads, e confira se há espaço livre. Alguns apps de nuvem precisam de conexão para salvar.</string>
+    <string name="help_q_report">Como faço um relatório de refeições para o meu médico?</string>
+    <string name="help_a_report">Em Configurações › Backup e dados, toque em Fazer um relatório de refeições. Escolha as datas (os últimos 30 dias, Tudo ou as suas), e um PDF para imprimir ou uma planilha. O Forkcast pede o desbloqueio do celular, faz o relatório e mostra. Depois, Salve numa pasta, Compartilhe com outro app ou Imprima (a tela de impressão do Android também salva em PDF). Um PDF de mais de 60 dias mostra os totais de cada dia e médias semanais e mensais; ligue Incluir cada refeição para acrescentar cada refeição, o que deixa o relatório bem mais longo. A planilha sempre tem todos os alimentos. Fotos nunca entram, e a cópia que o Forkcast fez é apagada quando você fecha o relatório.</string>
 
     <!-- Atualizações -->
     <string name="help_q_update_how">Como atualizo o Forkcast?</string>

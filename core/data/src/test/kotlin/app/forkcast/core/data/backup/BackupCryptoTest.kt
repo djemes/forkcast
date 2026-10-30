@@ -9,8 +9,9 @@ import org.robolectric.annotation.ConscryptMode
 import java.io.ByteArrayOutputStream
 import kotlin.random.Random
 
-// Robolectric with the JDK's own AES-GCM: an earlier Robolectric test in the same JVM leaves its
-// Conscrypt provider installed, which the JDK's JCE check rejects (see SettingsBackupTest).
+// Robolectric with the JDK's own AES-GCM: Robolectric's Conscrypt provider fails the Oracle JDK's
+// JCE signature check, and an earlier test in the same JVM leaves it installed. The JDK's AES-GCM
+// and PBKDF2 are the same algorithms Android provides.
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @RunWith(AndroidJUnit4::class)
 class BackupCryptoTest {

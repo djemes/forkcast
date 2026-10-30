@@ -34,7 +34,7 @@ import java.time.Instant
 import java.time.ZoneId
 
 @OptIn(ExperimentalCoroutinesApi::class)
-// The JDK's own AES-GCM for password-protected backups (see core:data SettingsBackupTest).
+// The JDK's own AES-GCM for password-protected backups (see core:data BackupCryptoTest).
 @ConscryptMode(ConscryptMode.Mode.OFF)
 @RunWith(AndroidJUnit4::class)
 class BackupViewModelTest {

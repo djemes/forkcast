@@ -16,6 +16,8 @@ import javax.inject.Singleton
 
 interface WaterRepository {
     fun observeDay(date: LocalDate): Flow<List<WaterEntry>>
+    /** Entries from [from] to [to], inclusive, in one query (the meal report's long ranges). */
+    suspend fun range(from: LocalDate, to: LocalDate): List<WaterEntry>
     suspend fun add(date: LocalDate, ml: Double): String
     suspend fun delete(id: String)
     /**
@@ -32,7 +34,11 @@ class RoomWaterRepository @Inject constructor(
 ) : WaterRepository {
 
     override fun observeDay(date: LocalDate): Flow<List<WaterEntry>> =
-        dao.observeForDate(date).map { list -> list.map { WaterEntry(it.id, Instant.ofEpochMilli(it.timestamp), it.date, it.ml) } }
+        dao.observeForDate(date).map { list -> list.map { it.toModel() } }
+
+    override suspend fun range(from: LocalDate, to: LocalDate): List<WaterEntry> = dao.getRange(from, to).map { it.toModel() }
+
+    private fun WaterEntryEntity.toModel() = WaterEntry(id, Instant.ofEpochMilli(timestamp), date, ml)
 
     override suspend fun add(date: LocalDate, ml: Double): String {
         val now = clock.millis()

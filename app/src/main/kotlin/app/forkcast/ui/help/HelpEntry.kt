@@ -60,6 +60,7 @@ enum class HelpEntry(val topic: HelpTopic, @StringRes val question: Int, @String
     BACKUP_PASSWORD(HelpTopic.BACKUP, R.string.help_q_backup_password, R.string.help_a_backup_password),
     BACKUP_AUTO_FAILED(HelpTopic.BACKUP, R.string.help_q_backup_auto, R.string.help_a_backup_auto),
     BACKUP_SAVE_FAILED(HelpTopic.BACKUP, R.string.help_q_backup_save, R.string.help_a_backup_save),
+    BACKUP_REPORT(HelpTopic.BACKUP, R.string.help_q_report, R.string.help_a_report),
 
     UPDATE_HOW(HelpTopic.UPDATES, R.string.help_q_update_how, R.string.help_a_update_how),
     UPDATE_CHECK_FAILED(HelpTopic.UPDATES, R.string.help_q_update_check, R.string.help_a_update_check),
