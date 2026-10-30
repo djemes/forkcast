@@ -244,12 +244,12 @@
     </plurals>
     <string name="report_page_of">Page %1$d of %2$d</string>
     <plurals name="report_preview_days">
-        <item quantity="one">%1$d day, %2$d with something logged</item>
-        <item quantity="other">%1$d days, %2$d with something logged</item>
+        <item quantity="one">%1$s day, %2$s with something logged</item>
+        <item quantity="other">%1$s days, %2$s with something logged</item>
     </plurals>
     <plurals name="report_preview_entries">
-        <item quantity="one">%1$d food logged</item>
-        <item quantity="other">%1$d foods logged</item>
+        <item quantity="one">%1$s food logged</item>
+        <item quantity="other">%1$s foods logged</item>
     </plurals>
     <string name="report_sheet_contents">Two sheets: every food you logged, with its amount and nutrients, and each day\'s totals against your targets.</string>
     <string name="report_every_meal">Every meal</string>

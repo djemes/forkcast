@@ -57,6 +57,7 @@ import kotlinx.coroutines.withContext
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
+import java.text.NumberFormat
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
@@ -116,8 +117,12 @@ private fun ReportFacts(ready: ReportStep.Ready) {
     val locale = LocalLocale.current.platformLocale
     val dates = remember(locale) { DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale) }
     Text(stringResource(R.string.report_range, dates.format(ready.options.from), dates.format(ready.options.to)), style = MaterialTheme.typography.titleMedium)
-    Text(pluralStringResource(R.plurals.report_preview_days, ready.days, ready.days, ready.loggedDays), style = MaterialTheme.typography.bodyMedium)
-    Text(pluralStringResource(R.plurals.report_preview_entries, ready.entries, ready.entries), style = MaterialTheme.typography.bodyMedium)
+    val count = remember(locale) { NumberFormat.getIntegerInstance(locale) }
+    Text(
+        pluralStringResource(R.plurals.report_preview_days, ready.days, count.format(ready.days), count.format(ready.loggedDays)),
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    Text(pluralStringResource(R.plurals.report_preview_entries, ready.entries, count.format(ready.entries)), style = MaterialTheme.typography.bodyMedium)
 }
 
 @Composable

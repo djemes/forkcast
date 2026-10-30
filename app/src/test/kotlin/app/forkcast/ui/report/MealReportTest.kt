@@ -107,15 +107,15 @@ class MealReportTest {
 
     @Test fun theSpreadsheetPreviewSaysWhatsInItAndHasNoPrint() {
         val options = ReportOptions(day.minusDays(6), day, ReportFormat.SPREADSHEET, weight = true, water = true)
-        val ready = ReportStep.Ready("/nowhere/forkcast-report.xlsx", options, days = 7, loggedDays = 5, entries = 23)
+        val ready = ReportStep.Ready("/nowhere/forkcast-report.xlsx", options, days = 400, loggedDays = 5, entries = 3311)
         var saved = 0
         compose.setContent {
             ForkcastTheme {
                 ReportPreview(ready, SnackbarHostState(), onSave = { saved++ }, onShare = {}, onPrint = {}, onClose = {})
             }
         }
-        compose.onNodeWithText("7 days, 5 with something logged").assertExists()
-        compose.onNodeWithText("23 foods logged").assertExists()
+        compose.onNodeWithText("400 days, 5 with something logged").assertExists()
+        compose.onNodeWithText("3,311 foods logged").assertExists()
         compose.onNodeWithText("Print…").assertDoesNotExist()
         compose.onNodeWithText("Share…").assertExists()
         compose.onNodeWithText("Save…").performClick()

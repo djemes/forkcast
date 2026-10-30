@@ -20,6 +20,7 @@ import app.forkcast.core.model.NutrientUnit
 import app.forkcast.ui.format.UnitFormatter
 import app.forkcast.ui.today.nutrientNameRes
 import java.io.OutputStream
+import java.text.NumberFormat
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -63,6 +64,8 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
     private val shortDate = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale)
     private val monthFormat = DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, "yMMMM"), locale)
     private val timeFormat = ClockFormat.formatter(locale, is24Hour)
+    /** Weights in the summary keep their decimal ("173.0"), so a column lines up. */
+    private val oneDecimal = NumberFormat.getNumberInstance(locale).apply { minimumFractionDigits = 1; maximumFractionDigits = 1 }
 
     fun write(out: OutputStream, report: MealReport.Report, options: ReportOptions, onProgress: (Float) -> Unit = {}) = when (options.format) {
         ReportFormat.PDF -> pdf(out, report, options, onProgress)
@@ -147,8 +150,8 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
 
     private fun pdf(out: OutputStream, report: MealReport.Report, options: ReportOptions, onProgress: (Float) -> Unit) {
         val doc = PdfDocument()
+        val page = PdfPager(doc, res, locale)
         try {
-            val page = PdfPager(doc, res)
             val progress = Progress(report.days.size * ((if (options.summary) 1 else 0) + (if (options.meals) 1 else 0)), onProgress)
             page.text(res.getString(R.string.report_title), size = 20f, bold = true)
             page.text(res.getString(R.string.report_range, shortDate.format(report.from), shortDate.format(report.to)), size = 12f)
@@ -173,6 +176,8 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
             page.finish()
             doc.writeTo(out)
         } finally {
+            // Canceled midway: a page is still open, and PdfDocument won't close with one.
+            page.abandon()
             doc.close()
             out.close()
         }
@@ -220,7 +225,7 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
         if (options.weight && weights.size >= 2) {
             page.keepTogether(CHART_HEIGHT + 40f)
             page.text(withUnit(R.string.report_weight, f.weightUnitLabel), size = 12f, bold = true)
-            page.lineChart(weights, report.from, report.to, { f.number(it, 1) }, { shortDate.format(it) }, CHART_HEIGHT)
+            page.lineChart(weights, report.from, report.to, { oneDecimal.format(it) }, { shortDate.format(it) }, CHART_HEIGHT)
             page.space(12f)
         }
         val periodHeader = listOf(res.getString(R.string.report_col_days_logged)) + valueHeaders(options)
@@ -269,11 +274,11 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
         listOf(p.kcal?.let { f.energyNumber(it) }.orNone(), p.targetKcal?.let { f.energyNumber(it) }.orNone()) +
             SUMMARY_NUTRIENTS.map { k -> p.nutrients[k]?.let { f.number(it) }.orNone() } +
             (if (options.water) listOf(p.waterMl?.let { f.number(f.waterValue(it)) }.orNone()) else emptyList()) +
-            (if (options.weight) listOf(p.weightKg?.let { f.number(f.weightValue(it), 1) }.orNone()) else emptyList())
+            (if (options.weight) listOf(p.weightKg?.let { oneDecimal.format(f.weightValue(it)) }.orNone()) else emptyList())
 
     /** Column widths, relative: the first (date, week, month) wider; periods add "Days logged". */
     private fun columns(options: ReportOptions, periods: Boolean): List<Float> =
-        listOf(1.6f) + (if (periods) listOf(0.8f) else emptyList()) + List(2 + SUMMARY_NUTRIENTS.size) { 1f } +
+        listOf(1.6f) + (if (periods) listOf(1f) else emptyList()) + List(2 + SUMMARY_NUTRIENTS.size) { 1f } +
             (if (options.water) listOf(1f) else emptyList()) + (if (options.weight) listOf(1f) else emptyList())
 
     private fun String?.orNone() = this ?: "–"
@@ -306,7 +311,7 @@ class MealReportFiles(private val res: Resources, private val f: UnitFormatter, 
 
 /** Lays text down A4 pages (595 × 842 pt, 40 pt margins), starting a new page when one is full, with page numbers. */
 @Suppress("TooManyFunctions") // Small drawing steps: text, rules, tables, a chart.
-private class PdfPager(private val doc: PdfDocument, private val res: Resources) {
+private class PdfPager(private val doc: PdfDocument, private val res: Resources, private val locale: Locale) {
     private var number = 0
     private var page: PdfDocument.Page? = null
     private var y = 0f
@@ -351,8 +356,10 @@ private class PdfPager(private val doc: PdfDocument, private val res: Resources)
         typeface = if (bold) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
     }
 
-    private fun layout(text: String, paint: TextPaint, width: Int, alignment: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL) =
-        StaticLayout.Builder.obtain(text, 0, text.length, paint, width.coerceAtLeast(1)).setAlignment(alignment).build()
+    private fun layout(text: String, paint: TextPaint, width: Int, alignment: Layout.Alignment = Layout.Alignment.ALIGN_NORMAL, hyphenate: Boolean = false) =
+        StaticLayout.Builder.obtain(text, 0, text.length, paint, width.coerceAtLeast(1)).setAlignment(alignment)
+            .setHyphenationFrequency(if (hyphenate) Layout.HYPHENATION_FREQUENCY_FULL else Layout.HYPHENATION_FREQUENCY_NONE)
+            .build()
 
     fun text(text: String, size: Float, bold: Boolean = false, gray: Boolean = false, indent: Float = 0f) {
         val layout = layout(text, paint(size, bold, gray), (WIDTH - 2 * MARGIN - indent).toInt())
@@ -372,9 +379,10 @@ private class PdfPager(private val doc: PdfDocument, private val res: Resources)
     fun table(header: List<String>, weights: List<Float>, rows: List<List<String>>, onRow: () -> Unit = {}) {
         val total = weights.sum()
         val widths = weights.map { (WIDTH - 2 * MARGIN) * it / total }
-        val headerPaint = paint(TABLE_TEXT, bold = true)
+        // Narrow columns: long words ("Carboidratos", "registrados") are hyphenated in the report's language.
+        val headerPaint = paint(TABLE_TEXT, bold = true).apply { textLocale = locale }
         val headers = header.mapIndexed { i, h ->
-            layout(h, headerPaint, (widths[i] - CELL_PAD * 2).toInt(), if (i == 0) Layout.Alignment.ALIGN_NORMAL else Layout.Alignment.ALIGN_OPPOSITE)
+            layout(h, headerPaint, (widths[i] - CELL_PAD * 2).toInt(), if (i == 0) Layout.Alignment.ALIGN_NORMAL else Layout.Alignment.ALIGN_OPPOSITE, hyphenate = true)
         }
         val headerHeight = headers.maxOf { it.height } + CELL_PAD * 2
         fun drawHeader() {
@@ -454,6 +462,12 @@ private class PdfPager(private val doc: PdfDocument, private val res: Resources)
 
     fun finish() {
         page?.let { finishPage(it) } ?: run { newPage(); page?.let { finishPage(it) } }
+        page = null
+    }
+
+    /** Ends a page left open by a stop midway, so the document can close; a no-op after [finish]. */
+    fun abandon() {
+        page?.let { doc.finishPage(it) }
         page = null
     }
 
