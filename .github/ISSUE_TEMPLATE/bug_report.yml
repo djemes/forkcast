@@ -13,7 +13,7 @@ body:
     attributes:
       label: Forkcast version
       description: Settings › About shows it
-      placeholder: "1.9.0"
+      placeholder: "2.0.0"
     validations:
       required: true
   - type: input

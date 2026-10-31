@@ -86,17 +86,17 @@ class FolderBackupRepositoryTest {
 
     @Test fun simpleKeepsFiveAndNeverTouchesOtherFiles() = runTest {
         chosen()
-        repeat(10) { folder.put("forkcast-backup-2026-10-${"%02d".format(it + 1)}.forkcast", modified = it + 1L) }
+        repeat(10) { folder.put("2026-10-${"%02d".format(it + 1)}_0000_forkcast-backup.forkcast", modified = it + 1L) }
         folder.put("holiday.jpg", modified = 0)
         folder.put("forkcast-20261019-0300.json.gz", modified = 0)
         repo.updateSettings { it.copy(retention = RetentionPreset.SIMPLE) }
         assertThat(repo.backupNow()).isNull()
         assertThat(names()).containsExactly(
             NEW,
-            "forkcast-backup-2026-10-10.forkcast",
-            "forkcast-backup-2026-10-09.forkcast",
-            "forkcast-backup-2026-10-08.forkcast",
-            "forkcast-backup-2026-10-07.forkcast",
+            "2026-10-10_0000_forkcast-backup.forkcast",
+            "2026-10-09_0000_forkcast-backup.forkcast",
+            "2026-10-08_0000_forkcast-backup.forkcast",
+            "2026-10-07_0000_forkcast-backup.forkcast",
             "holiday.jpg",
             "forkcast-20261019-0300.json.gz",
         )
@@ -120,7 +120,7 @@ class FolderBackupRepositoryTest {
 
     @Test fun nothingIsPrunedWhenTheNewBackupDoesntReadBack() = runTest {
         chosen()
-        repeat(10) { folder.put("forkcast-backup-2026-10-${"%02d".format(it + 1)}.forkcast", modified = it + 1L) }
+        repeat(10) { folder.put("2026-10-${"%02d".format(it + 1)}_0000_forkcast-backup.forkcast", modified = it + 1L) }
         repo.updateSettings { it.copy(retention = RetentionPreset.SIMPLE) }
         exports.json = "not an export"
         assertThat(repo.backupNow()).isNull()
@@ -159,7 +159,7 @@ class FolderBackupRepositoryTest {
         assertThat(repo.status.first().hasPassword).isTrue()
         assertThat(repo.backupNow()).isNull()
         // The cleanup check opens it with the saved password.
-        folder.put("forkcast-backup-2026-10-01.forkcast", modified = 1)
+        folder.put("2026-10-01_0000_forkcast-backup.forkcast", modified = 1)
         assertThat(repo.cleanupPlan()).isInstanceOf(CleanupPlan.Ready::class.java)
     }
 
@@ -199,17 +199,17 @@ class FolderBackupRepositoryTest {
 
     @Test fun cleanupChecksTheNewestThenDeletesOnlyThePlannedBackups() = runTest {
         chosen()
-        repeat(3) { folder.put("forkcast-backup-2026-10-0${it + 1}.forkcast", modified = it + 1L) }
+        repeat(3) { folder.put("2026-10-0${it + 1}_0000_forkcast-backup.forkcast", modified = it + 1L) }
         assertThat(repo.backupNow()).isNull()
         val plan = repo.cleanupPlan() as CleanupPlan.Ready
         assertThat(plan.keep.name).isEqualTo(NEW)
         assertThat(plan.delete.map { it.name }).containsExactly(
-            "forkcast-backup-2026-10-03.forkcast",
-            "forkcast-backup-2026-10-02.forkcast",
-            "forkcast-backup-2026-10-01.forkcast",
+            "2026-10-03_0000_forkcast-backup.forkcast",
+            "2026-10-02_0000_forkcast-backup.forkcast",
+            "2026-10-01_0000_forkcast-backup.forkcast",
         ).inOrder()
         // One of them disappears before the user confirms; another file arrives.
-        folder.remove("forkcast-backup-2026-10-02.forkcast")
+        folder.remove("2026-10-02_0000_forkcast-backup.forkcast")
         folder.put("notes.txt", modified = 9)
         val result = repo.deleteOld(plan)
         assertThat(result.deleted).isEqualTo(2)
@@ -219,8 +219,8 @@ class FolderBackupRepositoryTest {
 
     @Test fun cleanupRefusesWhenTheNewestCantBeRestored() = runTest {
         chosen()
-        folder.put("forkcast-backup-2026-10-01.forkcast", modified = 1)
-        folder.put("forkcast-backup-2026-10-02.forkcast", modified = 2, bytes = "not a backup".toByteArray())
+        folder.put("2026-10-01_0000_forkcast-backup.forkcast", modified = 1)
+        folder.put("2026-10-02_0000_forkcast-backup.forkcast", modified = 2, bytes = "not a backup".toByteArray())
         val plan = repo.cleanupPlan() as CleanupPlan.LatestNotRestorable
         assertThat(plan.reason).isEqualTo(NotRestorable.UNREADABLE)
         // An older export format inside.

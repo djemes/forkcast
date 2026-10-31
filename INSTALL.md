@@ -8,7 +8,7 @@ You need an Android phone with Android 10 or newer. Forkcast is for adults (18+)
 
 1. On your phone, open this guide in your browser (Chrome, Samsung Internet or another one).
 2. Go to the **[latest release](https://github.com/djemes/forkcast/releases/latest)**.
-3. Under **Assets**, tap the file whose name starts with **Forkcast-** and ends with **.apk** (for example `Forkcast-v1.9.0.apk`). Ignore the other files; they're for people who want to check the download.
+3. Under **Assets**, tap the file whose name starts with **Forkcast-** and ends with **.apk** (for example `Forkcast-v2.0.0.apk`). Ignore the other files; they're for people who want to check the download.
 4. If the browser says the file might be harmful, tap **Download anyway**. Every Android app file gets this warning when it doesn't come from Google Play.
 
 ## 2. Install it
@@ -76,7 +76,7 @@ Uninstalling Forkcast deletes everything it stored on the phone. Make a backup f
 <details>
 <summary>Checking the download (optional, for technical users)</summary>
 
-Each release has a `SHA256SUMS` file with the APK's SHA-256 checksum. Compare it with the checksum of the file you downloaded, for example with `sha256sum Forkcast-v1.9.0.apk` on Linux or `Get-FileHash Forkcast-v1.9.0.apk` in PowerShell. The in-app updater does this check on its own before it installs anything.
+Each release has a `SHA256SUMS` file with the APK's SHA-256 checksum. Compare it with the checksum of the file you downloaded, for example with `sha256sum Forkcast-v2.0.0.apk` on Linux or `Get-FileHash Forkcast-v2.0.0.apk` in PowerShell. The in-app updater does this check on its own before it installs anything.
 
 Every release is signed with the same key. Android refuses an update signed with a different key, so an update can only come from the same publisher as the app you installed.
 </details>

@@ -31,12 +31,12 @@ data class BackupManifest(
     /** ISO-8601 instant. */
     val createdAt: String,
     val photos: Boolean,
-    /** 2 (1.8.2): how many saved keys `secrets.json` holds. */
+    /** How many saved keys `secrets.json` holds. */
     val keys: Int = 0,
 ) {
     companion object {
         const val FORMAT = "forkcast-backup"
-        /** 2 (1.8.2): keys inside, photos always, Argon2id when encrypted. 1 (1.5 to 1.8.1) still restores. */
+        /** Keys inside, photos always, Argon2id when encrypted. */
         const val FORMAT_VERSION = 2
     }
 }
@@ -45,7 +45,7 @@ data class BackupManifest(
 sealed interface OpenedBackupFile {
     /**
      * [json] still has to pass [BackupRepository.parse]; [photos] were staged by [PhotoArchive];
-     * [secrets] are the saved keys (1.8.2+ backups), applied by [BackupSecrets] after the import.
+     * [secrets] are the saved keys, applied by [BackupSecrets] after the import.
      */
     data class Ok(
         val json: String,
@@ -64,8 +64,7 @@ sealed interface OpenedBackupFile {
  * Forkcast's backup file (owner, 2026-10-29): `2026-10-29_0300_forkcast-backup.forkcast`, a zip
  * of [BackupManifest], the JSON export (current schema), the saved keys and the meal photos;
  * encrypted by [BackupCrypto] with the backup password, or `…_unencrypted.forkcast` when the user
- * asks for a copy without encryption. Opening also accepts what older versions made: 1.5 to
- * 1.8.1's `.forkcast` (no keys), the "Include photos" `.zip` and a plain `.json` export.
+ * asks for a copy without encryption.
  */
 @Singleton
 class BackupFile @Inject constructor(
@@ -101,7 +100,7 @@ class BackupFile @Inject constructor(
         counted.count
     }
 
-    /** Reads [input] (any backup format this version restores). Unreadable files throw [IOException]. */
+    /** Reads [input]. Unreadable files (not a backup zip) throw [IOException]. */
     suspend fun open(input: InputStream, password: CharArray?): OpenedBackupFile = withContext(Dispatchers.IO) {
         val buffered = input.buffered()
         val head = ByteArray(BackupCrypto.MAGIC.size)
@@ -122,17 +121,13 @@ class BackupFile @Inject constructor(
     }
 
     private suspend fun readPlain(input: BufferedInputStream, encrypted: Boolean): OpenedBackupFile {
-        if (archive.isZip(input)) {
-            val contents = archive.read(input)
-            val manifest = contents.manifest?.let { text ->
-                runCatching { BackupJson.decodeFromString(BackupManifest.serializer(), text) }.getOrNull()
-                    ?.takeIf { it.format == BackupManifest.FORMAT }
-            }
-            return OpenedBackupFile.Ok(contents.json, manifest, contents.photos, encrypted, BackupSecrets.decode(contents.secrets))
+        if (!archive.isZip(input)) throw IOException("not a backup file")
+        val contents = archive.read(input)
+        val manifest = contents.manifest?.let { text ->
+            runCatching { BackupJson.decodeFromString(BackupManifest.serializer(), text) }.getOrNull()
+                ?.takeIf { it.format == BackupManifest.FORMAT }
         }
-        if (encrypted) throw IOException("protected backup without a zip inside")
-        archive.discardStaged()
-        return OpenedBackupFile.Ok(input.readText(PhotoArchive.MAX_JSON_BYTES), null, 0, encrypted = false)
+        return OpenedBackupFile.Ok(contents.json, manifest, contents.photos, encrypted, BackupSecrets.decode(contents.secrets))
     }
 
     /**
@@ -163,21 +158,19 @@ class BackupFile @Inject constructor(
         const val MIME_TYPE = "application/octet-stream"
         private val STAMP: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd_HHmm")
 
-        /** 1.8.2: `2026-10-29_0300_forkcast-backup[_unencrypted][ (1)].forkcast`. */
-        private val CURRENT = Regex("""^(\d{4}-\d{2}-\d{2})_(\d{4})_forkcast-backup(_unencrypted)?( \(\d+\))?\.forkcast$""")
-        /** 1.5 to 1.8.1: `forkcast-backup-2026-10-24[-0300][ (1)].forkcast`. */
-        private val OLDER = Regex("""^forkcast-backup-(\d{4}-\d{2}-\d{2})(?:-(\d{4}))?( \(\d+\))?\.forkcast$""")
+        /** `2026-10-29_0300_forkcast-backup[_unencrypted][ (1)].forkcast`. */
+        private val NAME_PATTERN = Regex("""^(\d{4}-\d{2}-\d{2})_(\d{4})_forkcast-backup(_unencrypted)?( \(\d+\))?\.forkcast$""")
 
         /** Whether [name] looks like a backup Forkcast made (also "… (1).forkcast" from a picker). */
-        fun isBackupName(name: String): Boolean = CURRENT.matches(name) || OLDER.matches(name)
+        fun isBackupName(name: String): Boolean = NAME_PATTERN.matches(name)
 
-        /** An unencrypted copy (only 1.8.2+ names say so). */
-        fun isUnencryptedName(name: String): Boolean = CURRENT.matchEntire(name)?.groupValues?.get(3)?.isNotEmpty() == true
+        /** An unencrypted copy. */
+        fun isUnencryptedName(name: String): Boolean = NAME_PATTERN.matchEntire(name)?.groupValues?.get(3)?.isNotEmpty() == true
 
         /** When a backup was made, read from its name (local time in [zone]); null if the name doesn't say. */
         fun createdAt(name: String, zone: ZoneId): Instant? {
-            val m = CURRENT.matchEntire(name) ?: OLDER.matchEntire(name) ?: return null
-            val time = m.groupValues[2].ifEmpty { "0000" }
+            val m = NAME_PATTERN.matchEntire(name) ?: return null
+            val time = m.groupValues[2]
             return runCatching {
                 LocalDateTime.of(LocalDate.parse(m.groupValues[1]), LocalTime.of(time.take(2).toInt(), time.takeLast(2).toInt())).atZone(zone).toInstant()
             }.getOrNull()

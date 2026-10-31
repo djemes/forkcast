@@ -80,8 +80,6 @@ class FolderBackupScheduler @Inject constructor(
     fun start(scope: CoroutineScope) {
         // The no-backup reminder counts from the first run on this phone.
         if (device.state.value.firstSeenAt == null) device.update { it.copy(firstSeenAt = clock.millis()) }
-        // The 1.0–1.4 Drive backup's schedule goes with Drive.
-        WorkManager.getInstance(context).cancelUniqueWork(LEGACY_DRIVE)
         scope.launch {
             var first = true
             combine(settings.settings, device.state, secrets.present) { s, d, present ->
@@ -116,7 +114,6 @@ class FolderBackupScheduler @Inject constructor(
 
     companion object {
         const val NAME = "folder_backup"
-        private const val LEGACY_DRIVE = "drive_backup"
     }
 }
 

@@ -31,7 +31,7 @@ data class DeviceState(
     val backupFailures: Int = 0,
     /** The no-backup reminder on Today was dismissed at this time (epoch ms); it comes back after another 14 days. */
     val backupReminderDismissedAt: Long? = null,
-    /** When Forkcast (1.5+) first ran on this phone: the reminder counts from here before any backup. */
+    /** When Forkcast first ran on this phone: the reminder counts from here before any backup. */
     val firstSeenAt: Long? = null,
     /** The release tag the update check last notified about, so each version notifies once. */
     val notifiedUpdate: String? = null,
@@ -68,8 +68,6 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             putOrRemove(LAST_ERROR, next.lastBackupError)
             putInt(FAILURES, next.backupFailures)
             putOrRemove(REMINDER_DISMISSED, next.backupReminderDismissedAt)
-            // Google Drive backup (1.0–1.4) is gone; so is its per-phone state.
-            DRIVE_KEYS.forEach(::remove)
             putOrRemove(FIRST_SEEN, next.firstSeenAt)
             putOrRemove(NOTIFIED_UPDATE, next.notifiedUpdate)
             putOrRemove(AGREEMENT_VERSION, next.agreement?.version?.toLong())
@@ -78,8 +76,6 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
             putStringSet(AI_CONSENTS, next.aiConsents.map { (recipient, at) -> "$at$SEP$recipient" }.toSet())
             putOrRemove(SUPPORT_CARD_HIDDEN, next.supportCardHiddenAtMajor?.toLong())
             putOrRemove(SUPPORT_CARD_HIDDEN_AT, next.supportCardHiddenAt)
-            // The camera tips' open/closed state (1.3–1.4) is gone; drop it from phones that have it.
-            remove(CAMERA_WARNINGS)
         }
         _state.value = next
     }
@@ -140,8 +136,5 @@ class DevicePrefs @Inject constructor(@ApplicationContext context: Context) {
         private const val SUPPORT_CARD_HIDDEN_AT = "supportCardHiddenAt"
         /** Between the time and the recipient in [AI_CONSENTS] entries; recipients never contain it. */
         private const val SEP = "|"
-        // 1.0–1.4 Google Drive backup.
-        private val DRIVE_KEYS = listOf("driveAccount", "driveFolderId", "lastDriveBackupAt", "lastDriveError")
-        private const val CAMERA_WARNINGS = "cameraWarningsOpen"
     }
 }

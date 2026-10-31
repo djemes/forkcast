@@ -56,6 +56,10 @@ class BackupViewModelTest {
     private val store by lazy { app.forkcast.fakes.testSecretStore(tmp.root) }
     private val secrets by lazy { BackupSecrets(store) }
     private val file by lazy { BackupFile(backups, archive, secrets, "1.5.0", clock).apply { kdf = Kdf(8 * 1024, 1, 1) } }
+    /** A backup zip whose export JSON is [json] (the fake repository parses these tokens). */
+    private suspend fun backupOf(json: String): ByteArray =
+        java.io.ByteArrayOutputStream().also { archive.write(it, json, includePhotos = false) }.toByteArray()
+
     private fun vm() = BackupViewModel(backups, documents, archive, file, folder, secrets, BackupShares(context)).also { current = it }
     private var current: BackupViewModel? = null
 
@@ -179,7 +183,7 @@ class BackupViewModelTest {
     }
 
     @Test fun openShowsPreviewThenMerges() = runTest(dispatcher) {
-        documents.files[uri] = "good"
+        documents.fileBytes[uri] = backupOf("good")
         val vm = vm()
         vm.onEvent(BackupEvent.Open(uri))
         settle()
@@ -193,7 +197,7 @@ class BackupViewModelTest {
     }
 
     @Test fun replaceNeedsConfirmationAndOffersUndo() = runTest(dispatcher) {
-        documents.files[uri] = "good"
+        documents.fileBytes[uri] = backupOf("good")
         val vm = vm()
         settle()
         assertThat(vm.state.value.hasSafetyBackup).isFalse()
@@ -216,7 +220,7 @@ class BackupViewModelTest {
     }
 
     @Test fun cancelDropsThePendingFile() = runTest(dispatcher) {
-        documents.files[uri] = "good"
+        documents.fileBytes[uri] = backupOf("good")
         val vm = vm()
         vm.onEvent(BackupEvent.Open(uri))
         settle()
@@ -229,7 +233,7 @@ class BackupViewModelTest {
 
     @Test fun rejectionsAndFailuresBecomeDialogsAndChangeNothing() = runTest(dispatcher) {
         val vm = vm()
-        documents.files[uri] = "newer"
+        documents.fileBytes[uri] = backupOf("newer")
         vm.onEvent(BackupEvent.Open(uri))
         settle()
         assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.Rejected(RejectReason.NEWER_VERSION))
@@ -245,7 +249,7 @@ class BackupViewModelTest {
         settle()
         assertThat(vm.state.value.dialog).isEqualTo(BackupDialog.ReadFailed)
 
-        documents.files[uri] = "good"
+        documents.fileBytes[uri] = backupOf("good")
         backups.failImport = true
         vm.onEvent(BackupEvent.Open(uri))
         settle()

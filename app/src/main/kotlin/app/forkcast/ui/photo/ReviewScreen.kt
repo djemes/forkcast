@@ -802,7 +802,7 @@ private fun CorrectField(onSend: (String) -> Unit) {
     )
 }
 
-/** A validator warning ("<code>\t<item>") in words; text stored by 1.4 and earlier shows as it was. */
+/** A validator warning ("<code>\t<item>") in words; any other text shows as stored. */
 @Composable
 private fun warningText(w: String): String {
     val parts = w.split('\t', limit = 2)

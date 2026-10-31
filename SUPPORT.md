@@ -11,7 +11,7 @@ Forkcast is a free app made by one person in their spare time. Help is best effo
 Open an issue on GitHub: in the app, **Settings › About › Report a problem**, or **[New issue](https://github.com/djemes/forkcast/issues/new/choose)** on this page. You need a free GitHub account.
 
 A good report includes:
-- **Forkcast version:** Settings › About shows it (for example 1.9.0)
+- **Forkcast version:** Settings › About shows it (for example 2.0.0)
 - **Android version and phone model:** in your phone's settings, under About phone
 - **What you did, step by step,** what you expected, and what happened instead
 - A **screenshot**, if it helps. Check that it shows no personal health data or keys first

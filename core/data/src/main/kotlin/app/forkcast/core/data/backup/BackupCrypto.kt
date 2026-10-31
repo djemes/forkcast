@@ -12,9 +12,7 @@ import java.security.SecureRandom
 import org.bouncycastle.crypto.generators.Argon2BytesGenerator
 import org.bouncycastle.crypto.params.Argon2Parameters
 import javax.crypto.Cipher
-import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.PBEKeySpec
 import javax.crypto.spec.SecretKeySpec
 
 /** The backup's password is wrong, or the encrypted file was changed or cut short. */
@@ -34,16 +32,15 @@ data class Kdf(val memoryKiB: Int = ARGON2_MEMORY_KIB, val iterations: Int = ARG
  * Encrypted backups (owner, 2026-10-29: one backup password). The key is Argon2id of the
  * password with a random salt ([Kdf], Bouncy Castle), then AES-256-GCM in segments of [SEGMENT]
  * bytes, so a backup full of photos never has to fit in memory (Android's GCM buffers a whole
- * message on decrypt). Files from 1.5 to 1.8.1 (version 1: PBKDF2-HMAC-SHA256) still open.
+ * message on decrypt).
  *
- * File v2: [MAGIC], 2, memory KiB, iterations, parallelism, salt, nonce prefix, segment size;
- * v1: [MAGIC], 1, PBKDF2 iterations, salt, prefix, segment size. Then the segments. Segment i's
+ * File v2: [MAGIC], 2, memory KiB, iterations, parallelism, salt, nonce prefix, segment size.
+ * Then the segments. Segment i's
  * nonce is the prefix + i; its associated data is the header + i + "last segment?", so
  * reordered, dropped or cut-off segments and an edited header all fail to decrypt.
  */
 object BackupCrypto {
     const val SEGMENT = 1 shl 20
-    private const val VERSION_PBKDF2 = 1
     private const val VERSION = 2
     private const val KEY_BYTES = 32
     private const val SALT_BYTES = 16
@@ -66,15 +63,6 @@ object BackupCrypto {
         return EncryptingStream(out, argon2(password, salt, kdf), header, prefix, segment)
     }
 
-    /** Tests only: a file as 1.5 to 1.8.1 wrote it (version 1, PBKDF2), to check those still open. */
-    internal fun encryptPbkdf2(out: OutputStream, password: CharArray, iterations: Int, segment: Int = SEGMENT): OutputStream {
-        val salt = ByteArray(SALT_BYTES).also(random::nextBytes)
-        val prefix = ByteArray(PREFIX_BYTES).also(random::nextBytes)
-        val header = pbkdf2Header(iterations, salt, prefix, segment)
-        out.write(header)
-        return EncryptingStream(out, pbkdf2Key(password, salt, iterations), header, prefix, segment)
-    }
-
     /** Reads the header from [input] and returns the decrypted stream; reads throw [BackupDecryptException]. */
     fun decrypt(input: InputStream, password: CharArray): InputStream {
         val data = DataInputStream(input)
@@ -88,17 +76,11 @@ object BackupCrypto {
                 val (salt, prefix, segment) = rest(data)
                 DecryptingStream(input, argon2(password, salt, kdf), header(kdf, salt, prefix, segment), prefix, segment)
             }
-            VERSION_PBKDF2 -> {
-                val iterations = data.readInt()
-                if (iterations !in 100_000..10_000_000) throw BackupDecryptException()
-                val (salt, prefix, segment) = rest(data)
-                DecryptingStream(input, pbkdf2Key(password, salt, iterations), pbkdf2Header(iterations, salt, prefix, segment), prefix, segment)
-            }
             else -> throw BackupDecryptException()
         }
     }
 
-    /** Salt, nonce prefix and segment size, the same in both versions. */
+    /** Salt, nonce prefix and segment size. */
     private fun rest(data: DataInputStream): Triple<ByteArray, ByteArray, Int> {
         val salt = ByteArray(SALT_BYTES).also { data.readFully(it) }
         val prefix = ByteArray(PREFIX_BYTES).also { data.readFully(it) }
@@ -129,18 +111,6 @@ object BackupCrypto {
                 writeInt(kdf.memoryKiB)
                 writeInt(kdf.iterations)
                 writeByte(kdf.parallelism)
-                write(salt)
-                write(prefix)
-                writeInt(segment)
-            }
-        }.toByteArray()
-
-    private fun pbkdf2Header(iterations: Int, salt: ByteArray, prefix: ByteArray, segment: Int): ByteArray =
-        ByteArrayOutputStream().also { bytes ->
-            DataOutputStream(bytes).apply {
-                write(MAGIC)
-                writeByte(VERSION_PBKDF2)
-                writeInt(iterations)
                 write(salt)
                 write(prefix)
                 writeInt(segment)
@@ -259,15 +229,3 @@ object BackupCrypto {
         override fun close() = input.close()
     }
 }
-
-/** The key of PBKDF2 backups (made before Argon2), from the password. */
-private fun pbkdf2Key(password: CharArray, salt: ByteArray, iterations: Int): SecretKeySpec {
-    val spec = PBEKeySpec(password, salt, iterations, PBKDF2_KEY_BITS)
-    try {
-        return SecretKeySpec(SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256").generateSecret(spec).encoded, "AES")
-    } finally {
-        spec.clearPassword()
-    }
-}
-
-private const val PBKDF2_KEY_BITS = 256

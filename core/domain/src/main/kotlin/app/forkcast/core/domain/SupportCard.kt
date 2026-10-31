@@ -18,7 +18,7 @@ object SupportCard {
     /**
      * Shown unless it was hidden at [hiddenAtMajor] and [hiddenAt] (epoch ms), the installed
      * [versionName] has the same major version (or an older one), and [HIDDEN_FOR] hasn't passed by
-     * [now]. A card hidden without a time (1.8.6) shows again.
+     * [now].
      */
     fun isShown(hiddenAtMajor: Int?, hiddenAt: Long?, versionName: String, now: Long): Boolean =
         hiddenAtMajor == null || hiddenAt == null || major(versionName) > hiddenAtMajor ||

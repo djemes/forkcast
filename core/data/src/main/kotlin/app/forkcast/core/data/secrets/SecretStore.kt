@@ -68,17 +68,8 @@ class SecretStore(
         mutex.withLock { persist(values.filterValues { it.isNotBlank() }) }
     }
 
-    /**
-     * Loads presence at startup. Also deletes the GitHub token that 1.5–1.8 kept for updates from
-     * the then-private repository (roadmap 2.0, 5.5); it has no use now that the repository is public.
-     */
-    // VERIFY: the 2.0 clean start drops this one-time fix-up (the conversion release has run it).
-    suspend fun refresh() = withContext(io) {
-        mutex.withLock {
-            val all = readAll()
-            if (LEGACY_GITHUB_TOKEN in all) persist(all - LEGACY_GITHUB_TOKEN) else publish(all)
-        }
-    }
+    /** Loads presence at startup. */
+    suspend fun refresh() = withContext(io) { mutex.withLock { publish(readAll()) } }
 
     private suspend fun read(key: String): String? = withContext(io) { mutex.withLock { readAll()[key] } }
 
@@ -121,8 +112,6 @@ class SecretStore(
 
     companion object {
         private const val AI_PREFIX = "ai:"
-        /** What 1.5–1.8 stored the updates token under. */
-        internal const val LEGACY_GITHUB_TOKEN = "GITHUB_TOKEN"
         private val ASSOCIATED_DATA = "forkcast-secrets-v1".encodeToByteArray()
         private const val KEYSET_NAME = "forkcast_secrets_keyset"
         /** Must match the exclusion in data_extraction_rules.xml / backup_rules.xml. */

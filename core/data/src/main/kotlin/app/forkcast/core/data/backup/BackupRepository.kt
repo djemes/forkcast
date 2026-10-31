@@ -7,7 +7,6 @@ import app.forkcast.core.data.db.BackupDao
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.GoalEntity
 import app.forkcast.core.data.db.MealSlotEntity
-import app.forkcast.core.data.settings.LegacySettings
 import app.forkcast.core.model.AppSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -143,11 +142,8 @@ class RoomBackupRepository @Inject constructor(
             ?: return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         if (version > ForkcastExport.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
         if (version < ForkcastExport.OLDEST_IMPORTED) return ParsedBackup.Rejected(RejectReason.OLD_VERSION)
-        // v6 to v8 (1.2 to 1.9.0) settings: the backup schedule was a frequency and a weekday (LegacySettings).
-        val settings = root["settings"] as? JsonObject
-        val upgraded = if (version < SETTINGS_DAYS_SINCE && settings != null) JsonObject(root + ("settings" to LegacySettings.upgrade(settings))) else root
         val export = try {
-            BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), upgraded)
+            BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), root)
         } catch (e: IllegalArgumentException) {
             return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         } catch (e: DateTimeException) {
@@ -156,10 +152,6 @@ class RoomBackupRepository @Inject constructor(
         // Photo paths are file names inside the photo folder; anything else never enters the database (REVIEW-2 M1).
         val safe = export.copy(
             aiEstimates = export.aiEstimates.map { e -> e.copy(photoPaths = e.photoPaths.filter(app.forkcast.core.data.ai.PhotoStore::isValidPath)) },
-            // v7 (1.4–1.8.2) had no favorite default amounts: a favorite keeps its last amount, as the v9 migration does.
-            foods = if (version >= FAVORITE_DEFAULTS_SINCE) export.foods else export.foods.map { f ->
-                if (f.isFavorite && f.favoriteQuantity == null) f.copy(favoriteQuantity = f.lastQuantity, favoriteServingLabel = f.lastServingLabel) else f
-            },
         )
         return ParsedBackup.Ok(safe, preview(safe))
     }
@@ -313,10 +305,6 @@ class RoomBackupRepository @Inject constructor(
     companion object {
         /** App-private and excluded from Android Auto Backup (it duplicates the database). */
         const val SAFETY_DIR = "safety-backups"
-        /** The export version whose foods carry a favorite's default amount. */
-        private const val FAVORITE_DEFAULTS_SINCE = 8
-        /** The export version whose settings hold the backup days only. */
-        private const val SETTINGS_DAYS_SINCE = 9
         private const val KEEP_SAFETY_BACKUPS = 3
         private val FILE_STAMP = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
     }
