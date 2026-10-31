@@ -1,6 +1,5 @@
 package app.forkcast.core.domain
 
-import app.forkcast.core.model.BackupFrequency
 import app.forkcast.core.model.BackupSettings
 import app.forkcast.core.model.RetentionPreset
 import com.google.common.truth.Truth.assertThat
@@ -71,11 +70,5 @@ class BackupRetentionTest {
         assertThat(BackupRetention.isChosenDay(mondayAfterMidnight, setOf(1), 23 * 60 + 30)).isFalse()
         // Chosen: Monday at 3 am, run at 3:10 am Monday.
         assertThat(BackupRetention.isChosenDay(mondayAfterMidnight.withHour(3).withMinute(10), setOf(1), 180)).isTrue()
-    }
-
-    @Test fun `older daily and weekly settings map to days`() {
-        assertThat(BackupSettings(frequency = BackupFrequency.DAILY).scheduleDays).hasSize(7)
-        assertThat(BackupSettings(frequency = BackupFrequency.WEEKLY, weekday = 3).scheduleDays).containsExactly(3)
-        assertThat(BackupSettings(frequency = BackupFrequency.DAILY, days = setOf(2, 5)).scheduleDays).containsExactly(2, 5)
     }
 }

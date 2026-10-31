@@ -5,6 +5,7 @@ import androidx.datastore.core.Serializer
 import app.forkcast.core.model.AppSettings
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.jsonObject
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -14,6 +15,9 @@ import java.io.OutputStream
  * and missing keys fall back to defaults so older files open after an upgrade.
  */
 object AppSettingsSerializer : Serializer<AppSettings> {
+
+    /** The DataStore file, under the app's `datastore/` folder. */
+    const val FILE_NAME = "settings.json"
 
     private val json = Json {
         ignoreUnknownKeys = true
@@ -27,7 +31,7 @@ object AppSettingsSerializer : Serializer<AppSettings> {
         val text = input.readBytes().decodeToString()
         if (text.isBlank()) return defaultValue
         return try {
-            json.decodeFromString(AppSettings.serializer(), text)
+            decode(text)
         } catch (e: SerializationException) {
             throw CorruptionException("Settings file is not valid JSON", e)
         } catch (e: IllegalArgumentException) {
@@ -36,6 +40,12 @@ object AppSettingsSerializer : Serializer<AppSettings> {
     }
 
     override suspend fun writeTo(t: AppSettings, output: OutputStream) {
-        output.write(json.encodeToString(AppSettings.serializer(), t).encodeToByteArray())
+        output.write(encode(t).encodeToByteArray())
     }
+
+    /** Throws [SerializationException] or [IllegalArgumentException] for a file that isn't settings. */
+    internal fun decode(text: String): AppSettings =
+        json.decodeFromJsonElement(AppSettings.serializer(), LegacySettings.upgrade(json.parseToJsonElement(text).jsonObject))
+
+    internal fun encode(settings: AppSettings): String = json.encodeToString(AppSettings.serializer(), settings)
 }

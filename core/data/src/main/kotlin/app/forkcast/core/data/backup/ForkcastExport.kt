@@ -25,7 +25,7 @@ import app.forkcast.core.model.AppSettings
 import kotlinx.serialization.Serializable
 
 /**
- * Export file (SPEC §6.3; JSON Schema in core/data/schemas/export/export-schema-v8.json). Field names mirror the
+ * Export file (SPEC §6.3; JSON Schema in core/data/schemas/export/export-schema-v9.json). Field names mirror the
  * Room entities. Secrets are never included: API keys live in an encrypted file outside the
  * database and [AppSettings] holds no secrets (keys travel only in the separate,
  * passphrase-encrypted settings export).
@@ -67,8 +67,12 @@ data class ForkcastExport(
     val settings: AppSettings? = null,
 ) {
     companion object {
-        /** v8 (1.8.3): log entries carry `portion`, foods `favoriteQuantity` and `favoriteServingLabel`. */
-        const val SCHEMA_VERSION = 8
+        /**
+         * v8 (1.8.3): log entries carry `portion`, foods `favoriteQuantity` and `favoriteServingLabel`.
+         * v9 (1.9.1, the format 2.0 reads): the settings' backup schedule is only `days` (no
+         * `frequency` or `weekday`); older files get their days from those on import.
+         */
+        const val SCHEMA_VERSION = 9
         /** The oldest export this version imports: at least its own and the one before it (v6 still parses, kept). */
         const val OLDEST_IMPORTED = 6
     }

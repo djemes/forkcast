@@ -117,7 +117,7 @@ object DatabaseModule {
         DataStoreFactory.create(
             serializer = AppSettingsSerializer,
             corruptionHandler = ReplaceFileCorruptionHandler { AppSettings() },
-            produceFile = { context.dataStoreFile("settings.json") },
+            produceFile = { context.dataStoreFile(AppSettingsSerializer.FILE_NAME) },
         )
 }
 

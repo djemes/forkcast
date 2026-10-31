@@ -1,0 +1,1894 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/djemes/forkcast/docs/export-schema-v9.json",
+  "title": "Forkcast export, schema version 9",
+  "description": "Full data export (SPEC §4.11, §6.3). Field names mirror the Room entities. Times are epoch milliseconds UTC; dates are ISO yyyy-MM-dd local dates; amounts are grams, kcal, mg, µg, ml, kg. Rows with a non-null deletedAt are soft-deleted and are kept so merges respect deletions. Secrets are never included. Readers must ignore unknown fields. Health Connect write state is per phone and never exported. Kept in sync with the code by BackupRepositoryTest.schemaFileMatchesExport. v9 (1.9.1): the settings' backup schedule is only days (no frequency or weekday). Version 1.9.1 also imports v6 to v8 files (1.2 to 1.9.0): a backup schedule without days gets them from its frequency and weekday, portions are 1 and a favorite's default amount is its last used amount.",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "app",
+    "appVersion",
+    "exportedAt",
+    "timeZone"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "type": "integer",
+      "enum": [
+        6,
+        7,
+        8,
+        9
+      ]
+    },
+    "app": {
+      "const": "Forkcast"
+    },
+    "appVersion": {
+      "type": "string"
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "timeZone": {
+      "type": "string",
+      "description": "IANA zone id of the exporting device"
+    },
+    "profile": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/profile"
+        }
+      ]
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/goal"
+      }
+    },
+    "targetOverrides": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/targetOverride"
+      }
+    },
+    "tdeeEstimates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tdeeEstimate"
+      }
+    },
+    "mealSlots": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mealSlot"
+      }
+    },
+    "foods": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/food"
+      }
+    },
+    "recipes": {
+      "type": "array",
+      "description": "v5: recipes; each keeps a loggable food (source RECIPE) via foodId. Empty in older files",
+      "items": {
+        "$ref": "#/$defs/recipe"
+      }
+    },
+    "recipeIngredients": {
+      "type": "array",
+      "description": "v5: recipe ingredients, nutrients snapshotted for their grams",
+      "items": {
+        "$ref": "#/$defs/recipeIngredient"
+      }
+    },
+    "savedMeals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/savedMeal"
+      }
+    },
+    "savedMealItems": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/savedMealItem"
+      }
+    },
+    "logEntries": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/logEntry"
+      }
+    },
+    "aiEstimates": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/aiEstimate"
+      }
+    },
+    "aiComponents": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/aiComponent"
+      }
+    },
+    "aiProfiles": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/aiProfile"
+      }
+    },
+    "usageRecords": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/usageRecord"
+      }
+    },
+    "notificationLog": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/notificationLog"
+      }
+    },
+    "aiMatchCache": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/aiMatchCache"
+      }
+    },
+    "weights": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/weight"
+      }
+    },
+    "water": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/water"
+      }
+    },
+    "activityDays": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/activityDay"
+      }
+    },
+    "dayStatus": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/dayStatus"
+      }
+    },
+    "settings": {
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/settings"
+        }
+      ]
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "epochMs": {
+      "type": "integer"
+    },
+    "optionalEpochMs": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "optionalString": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "optionalNumber": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "foodSource": {
+      "enum": [
+        "USDA",
+        "OFF",
+        "LABEL",
+        "CUSTOM",
+        "QUICK_ADD",
+        "RECIPE",
+        "AI",
+        "AI_TEXT"
+      ]
+    },
+    "nutrients": {
+      "type": "object",
+      "description": "Amounts keyed by nutrient name, in the unit the name ends with. Unknown names are ignored on import.",
+      "propertyNames": {
+        "pattern": "^[A-Z0-9_]+$"
+      },
+      "additionalProperties": {
+        "type": "number"
+      }
+    },
+    "servingSize": {
+      "type": "object",
+      "required": [
+        "label",
+        "grams"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "grams": {
+          "type": "number"
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "required": [
+        "id",
+        "sex",
+        "birthDate",
+        "heightCm",
+        "activityLevel",
+        "exerciseMode",
+        "exerciseAddBackPct",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "sex": {
+          "enum": [
+            "MALE",
+            "FEMALE"
+          ]
+        },
+        "birthDate": {
+          "$ref": "#/$defs/date"
+        },
+        "heightCm": {
+          "type": "number"
+        },
+        "activityLevel": {
+          "enum": [
+            "SEDENTARY",
+            "LIGHT",
+            "MODERATE",
+            "VERY_ACTIVE",
+            "EXTRA_ACTIVE"
+          ]
+        },
+        "exerciseMode": {
+          "enum": [
+            "INCLUDED",
+            "ADDED_BACK"
+          ]
+        },
+        "exerciseAddBackPct": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "goal": {
+      "type": "object",
+      "required": [
+        "id",
+        "goalType",
+        "startDate",
+        "startWeightKg",
+        "targetWeightKg",
+        "isActive",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "goalType": {
+          "enum": [
+            "LOSE",
+            "MAINTAIN",
+            "GAIN"
+          ]
+        },
+        "startDate": {
+          "$ref": "#/$defs/date"
+        },
+        "startWeightKg": {
+          "type": "number"
+        },
+        "targetWeightKg": {
+          "type": "number"
+        },
+        "targetDate": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/date"
+            }
+          ]
+        },
+        "weeklyRateKg": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "isActive": {
+          "type": "boolean"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "targetOverride": {
+      "type": "object",
+      "required": [
+        "id",
+        "nutrientKey",
+        "amount",
+        "effectiveFrom",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "nutrientKey": {
+          "type": "string"
+        },
+        "amount": {
+          "type": "number"
+        },
+        "effectiveFrom": {
+          "$ref": "#/$defs/date"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "mealSlot": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "sortOrder",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "startMinute": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Minutes after local midnight"
+        },
+        "endMinute": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "food": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "source",
+        "servingSizes",
+        "nutrientsPer100g",
+        "isFavorite",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "brand": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "source": {
+          "$ref": "#/$defs/foodSource"
+        },
+        "sourceId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "barcode": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "GTIN-14"
+        },
+        "servingSizes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/servingSize"
+          }
+        },
+        "nutrientsPer100g": {
+          "$ref": "#/$defs/nutrients"
+        },
+        "isFavorite": {
+          "type": "boolean"
+        },
+        "lastUsedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "lastQuantity": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "lastServingLabel": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "countsAsWater": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "boolean"
+            }
+          ],
+          "description": "Counts toward the day's water when logged: true/false = the user's choice, null = automatic"
+        },
+        "describedAs": {
+          "$ref": "#/$defs/optionalString",
+          "description": "v6: what the user typed when this food was saved from Describe (AI_TEXT)"
+        },
+        "favoriteQuantity": {
+          "$ref": "#/$defs/optionalNumber",
+          "description": "v8: a favorite's default amount (quantity of favoriteServingLabel); null = the last used amount"
+        },
+        "favoriteServingLabel": {
+          "$ref": "#/$defs/optionalString",
+          "description": "v8: the serving of favoriteQuantity"
+        }
+      }
+    },
+    "savedMeal": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "savedMealItem": {
+      "type": "object",
+      "required": [
+        "id",
+        "savedMealId",
+        "sortOrder",
+        "displayName",
+        "quantity",
+        "servingLabel",
+        "nutrients",
+        "source",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "savedMealId": {
+          "$ref": "#/$defs/id"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "foodId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "brand": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "servingLabel": {
+          "type": "string"
+        },
+        "grams": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "nutrients": {
+          "$ref": "#/$defs/nutrients"
+        },
+        "source": {
+          "$ref": "#/$defs/foodSource"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "waterMl": {
+          "$ref": "#/$defs/optionalNumber"
+        }
+      }
+    },
+    "logEntry": {
+      "type": "object",
+      "description": "Nutrients are a snapshot for the logged amount and never follow later food edits.",
+      "required": [
+        "id",
+        "date",
+        "zoneId",
+        "mealSlotId",
+        "displayName",
+        "quantity",
+        "servingLabel",
+        "nutrients",
+        "source",
+        "loggedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "zoneId": {
+          "type": "string"
+        },
+        "mealSlotId": {
+          "$ref": "#/$defs/id"
+        },
+        "foodId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "brand": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "servingLabel": {
+          "type": "string"
+        },
+        "grams": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "nutrients": {
+          "$ref": "#/$defs/nutrients"
+        },
+        "source": {
+          "$ref": "#/$defs/foodSource"
+        },
+        "aiEstimateId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "healthConnectRecordId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "note": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "loggedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "waterMl": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "eatenMinute": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1439,
+          "description": "v6: when it was eaten, minutes after local midnight on date"
+        },
+        "portion": {
+          "type": "number",
+          "exclusiveMinimum": 0,
+          "default": 1,
+          "description": "v8: the portion slider's multiplier of the entry's 1x amount; quantity, grams and nutrients already include it"
+        }
+      }
+    },
+    "weight": {
+      "type": "object",
+      "required": [
+        "id",
+        "timestamp",
+        "kg",
+        "source",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "kg": {
+          "type": "number"
+        },
+        "bodyFatPct": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "source": {
+          "enum": [
+            "MANUAL",
+            "HEALTH_CONNECT"
+          ]
+        },
+        "hcRecordId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "water": {
+      "type": "object",
+      "required": [
+        "id",
+        "timestamp",
+        "date",
+        "zoneId",
+        "ml",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "timestamp": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "zoneId": {
+          "type": "string"
+        },
+        "ml": {
+          "type": "number"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "hcRecordId": {
+          "$ref": "#/$defs/optionalString"
+        }
+      }
+    },
+    "dayStatus": {
+      "type": "object",
+      "required": [
+        "id",
+        "date",
+        "markedComplete",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "markedComplete": {
+          "type": "boolean"
+        },
+        "note": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "settings": {
+      "type": "object",
+      "description": "Non-secret settings. Imported on Replace only; Merge keeps this phone's settings.",
+      "properties": {
+        "appearance": {
+          "type": "object",
+          "properties": {
+            "themeMode": {
+              "enum": [
+                "SYSTEM",
+                "LIGHT",
+                "DARK"
+              ]
+            },
+            "useWallpaperColors": {
+              "type": "boolean"
+            }
+          }
+        },
+        "units": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "properties": {
+                "weight": {
+                  "enum": [
+                    "KG",
+                    "LB"
+                  ]
+                },
+                "height": {
+                  "enum": [
+                    "CM",
+                    "FT_IN"
+                  ]
+                },
+                "energy": {
+                  "enum": [
+                    "KCAL",
+                    "KJ"
+                  ]
+                },
+                "water": {
+                  "enum": [
+                    "ML",
+                    "FL_OZ"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "waterTargetMl": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "waterGlassMl": {
+          "$ref": "#/$defs/optionalNumber",
+          "description": "The glass of Today's water drop in ml (null = 8 fl oz or 250 ml by units)"
+        },
+        "ai": {
+          "type": "object",
+          "description": "Settings › AI services (no keys): enabled, personalContext, autoAccept, photoRetentionDays, priceOverrides, lastChecks"
+        },
+        "notifications": {
+          "type": "object",
+          "description": "Settings › Notifications: toggles, times (minutes after midnight), thresholds, quiet hours"
+        },
+        "health": {
+          "type": "object",
+          "description": "Settings › Health Connect: connected, readWeight, readActivity, writeNutrition, writeHydration"
+        },
+        "adaptiveTdee": {
+          "type": "boolean",
+          "description": "Use the adaptive maintenance estimate (false = locked to the formula)"
+        },
+        "activityBonus": {
+          "type": "boolean",
+          "description": "Activity above a usual day adds part of it to that day's budget"
+        },
+        "waterContainers": {
+          "type": "object",
+          "description": "Today's water containers in ml (null = default): canMl, bottleMl, tumblerMl; lastUsed (GLASS, CAN, BOTTLE, TUMBLER)"
+        },
+        "backup": {
+          "type": "object",
+          "description": "Automatic backup to a folder chosen on the phone (the folder itself is not exported)",
+          "properties": {
+            "auto": {
+              "type": "boolean"
+            },
+            "days": {
+              "type": "array",
+              "items": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 7
+              },
+              "minItems": 1,
+              "uniqueItems": true,
+              "description": "Days of the week, 1 = Monday"
+            },
+            "minute": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1439,
+              "description": "Around this time, minutes after midnight"
+            },
+            "retention": {
+              "enum": [
+                "SIMPLE",
+                "BALANCED",
+                "LONG_TERM",
+                "CUSTOM"
+              ]
+            },
+            "customRecent": {
+              "type": "integer"
+            },
+            "customMonths": {
+              "type": "integer"
+            },
+            "customYears": {
+              "type": "integer"
+            },
+            "reminder": {
+              "type": "boolean",
+              "description": "Today reminds when there has been no backup for 14 days"
+            }
+          }
+        },
+        "keyNotes": {
+          "type": "object",
+          "description": "Which keys the user had saved (never the keys): foodDatabaseKeySaved"
+        },
+        "updates": {
+          "type": "object",
+          "description": "Settings › Updates: auto (daily check), beta (include pre-releases)"
+        }
+      }
+    },
+    "aiEstimate": {
+      "type": "object",
+      "required": [
+        "id",
+        "date",
+        "zoneId",
+        "mealSlotId",
+        "logEntryId",
+        "status",
+        "profileId",
+        "profileName",
+        "provider",
+        "model",
+        "tierLabel",
+        "description",
+        "personalContext",
+        "photoPaths",
+        "localTime",
+        "unitsHint",
+        "correction",
+        "promptVersion",
+        "rawJson",
+        "result",
+        "warnings",
+        "mealName",
+        "kcalLow",
+        "kcalExpected",
+        "kcalHigh",
+        "inputTokens",
+        "outputTokens",
+        "latencyMs",
+        "errorCode",
+        "errorDetail",
+        "attempts",
+        "retryAfter",
+        "notified",
+        "reviewedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "zoneId": {
+          "type": "string"
+        },
+        "mealSlotId": {
+          "type": "string"
+        },
+        "logEntryId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "status": {
+          "enum": [
+            "PENDING",
+            "RUNNING",
+            "DONE",
+            "NEEDS_INPUT",
+            "FAILED"
+          ]
+        },
+        "profileId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "profileName": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "provider": {
+          "oneOf": [
+            {
+              "enum": [
+                "CLAUDE",
+                "GEMINI",
+                "OPENAI_COMPAT"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "model": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "tierLabel": {
+          "oneOf": [
+            {
+              "enum": [
+                "FREE",
+                "PAID",
+                "UNKNOWN"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "description": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "personalContext": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "photoPaths": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Relative to the photos folder; files only in .zip exports"
+        },
+        "localTime": {
+          "type": "string"
+        },
+        "unitsHint": {
+          "type": "string"
+        },
+        "correction": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "promptVersion": {
+          "type": "string"
+        },
+        "rawJson": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "result": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "description": "The parsed model answer (AI_PROVIDERS.md §3)",
+          "properties": {
+            "meal_name": {
+              "type": "string"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "usda_query": {
+                    "type": "string"
+                  },
+                  "preparation": {
+                    "type": "string"
+                  },
+                  "grams": {
+                    "type": "number"
+                  },
+                  "grams_low": {
+                    "type": "number"
+                  },
+                  "grams_high": {
+                    "type": "number"
+                  },
+                  "confidence": {
+                    "type": "number"
+                  },
+                  "is_hidden_ingredient": {
+                    "type": "boolean"
+                  },
+                  "nutrients": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    }
+                  }
+                }
+              }
+            },
+            "overall_confidence": {
+              "type": "number"
+            },
+            "assumptions": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "clarifying_question": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        "warnings": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "mealName": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "kcalLow": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "kcalExpected": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "kcalHigh": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "inputTokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "outputTokens": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "latencyMs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "errorCode": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "errorDetail": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "attempts": {
+          "type": "integer"
+        },
+        "retryAfter": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "notified": {
+          "type": "boolean"
+        },
+        "reviewedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "kind": {
+          "enum": [
+            "PHOTO",
+            "TEXT"
+          ],
+          "description": "v6: TEXT = Describe (no photo)"
+        },
+        "portion": {
+          "type": "number",
+          "description": "v6: share of the estimated plate that was eaten (1 = all)"
+        },
+        "attemptLog": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/attemptRecord"
+          },
+          "description": "v6: newest 30 requests"
+        },
+        "tries": {
+          "type": "integer",
+          "description": "v6: passes through the profile chain since the last user action"
+        },
+        "runStartedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "eatenMinute": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "v6: meal time chosen when logging"
+        },
+        "phase": {
+          "oneOf": [
+            {
+              "enum": [
+                "SENDING",
+                "WAITING",
+                "MATCHING"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "activeProfileName": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "phaseSince": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "onlyProfileId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "ignoreCooldown": {
+          "type": "boolean"
+        }
+      }
+    },
+    "aiComponent": {
+      "type": "object",
+      "required": [
+        "id",
+        "estimateId",
+        "sortOrder",
+        "name",
+        "preparation",
+        "grams",
+        "gramsLow",
+        "gramsHigh",
+        "confidence",
+        "isHiddenIngredient",
+        "usdaQuery",
+        "matchedFoodId",
+        "matchedFdcId",
+        "matchedName",
+        "matchScore",
+        "aiPer100g",
+        "usdaPer100g",
+        "useSource",
+        "nutrientsUsed",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "estimateId": {
+          "type": "string"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "preparation": {
+          "type": "string"
+        },
+        "grams": {
+          "type": "number"
+        },
+        "gramsLow": {
+          "type": "number"
+        },
+        "gramsHigh": {
+          "type": "number"
+        },
+        "confidence": {
+          "type": "number"
+        },
+        "isHiddenIngredient": {
+          "type": "boolean"
+        },
+        "usdaQuery": {
+          "type": "string"
+        },
+        "matchedFoodId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "matchedFdcId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "matchedName": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "matchScore": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "aiPer100g": {
+          "$ref": "#/$defs/nutrients"
+        },
+        "usdaPer100g": {
+          "oneOf": [
+            {
+              "$ref": "#/$defs/nutrients"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "useSource": {
+          "enum": [
+            "USDA",
+            "AI"
+          ]
+        },
+        "nutrientsUsed": {
+          "$ref": "#/$defs/nutrients"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "aiProfile": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "provider",
+        "model",
+        "baseUrl",
+        "tierLabel",
+        "sortOrder",
+        "enabled",
+        "needsAttention",
+        "cooldownUntil",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "CLAUDE",
+            "GEMINI",
+            "OPENAI_COMPAT"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "baseUrl": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "tierLabel": {
+          "enum": [
+            "FREE",
+            "PAID",
+            "UNKNOWN"
+          ]
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "enabled": {
+          "type": "boolean"
+        },
+        "needsAttention": {
+          "type": "boolean"
+        },
+        "cooldownUntil": {
+          "$ref": "#/$defs/optionalEpochMs"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "usageRecord": {
+      "type": "object",
+      "required": [
+        "id",
+        "day",
+        "profileId",
+        "provider",
+        "model",
+        "requests",
+        "estimates",
+        "rateLimited",
+        "failures",
+        "inputTokens",
+        "outputTokens",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "day": {
+          "$ref": "#/$defs/date"
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "provider": {
+          "enum": [
+            "CLAUDE",
+            "GEMINI",
+            "OPENAI_COMPAT"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "requests": {
+          "type": "integer"
+        },
+        "estimates": {
+          "type": "integer"
+        },
+        "rateLimited": {
+          "type": "integer"
+        },
+        "failures": {
+          "type": "integer"
+        },
+        "inputTokens": {
+          "type": "integer"
+        },
+        "outputTokens": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "notificationLog": {
+      "type": "object",
+      "required": [
+        "id",
+        "date",
+        "type",
+        "threshold",
+        "firedAt",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "type": {
+          "type": "string"
+        },
+        "threshold": {
+          "type": "integer"
+        },
+        "firedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "aiMatchCache": {
+      "type": "object",
+      "required": [
+        "id",
+        "foodId",
+        "fdcId",
+        "score",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "foodId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "fdcId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "score": {
+          "type": "number"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "activityDay": {
+      "type": "object",
+      "description": "Daily cache of Health Connect activity; one row per date. Null = no data of that kind (not zero).",
+      "required": [
+        "id",
+        "date",
+        "sessions",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "steps": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "activeKcal": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "totalKcal": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "exerciseMinutes": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "sessions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "exerciseType",
+              "start",
+              "end"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Health Connect record id"
+              },
+              "title": {
+                "$ref": "#/$defs/optionalString"
+              },
+              "exerciseType": {
+                "type": "integer",
+                "description": "Health Connect ExerciseSessionRecord.EXERCISE_TYPE_* constant"
+              },
+              "start": {
+                "$ref": "#/$defs/epochMs"
+              },
+              "end": {
+                "$ref": "#/$defs/epochMs"
+              },
+              "activeKcal": {
+                "$ref": "#/$defs/optionalNumber"
+              }
+            }
+          }
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "tdeeEstimate": {
+      "type": "object",
+      "description": "Maintenance estimate (SPEC §5.6). kcal is all-in maintenance, exercise included.",
+      "required": [
+        "id",
+        "date",
+        "method",
+        "kcal",
+        "completeDays",
+        "weighIns",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "date": {
+          "$ref": "#/$defs/date"
+        },
+        "method": {
+          "enum": [
+            "FORMULA",
+            "ADAPTIVE"
+          ]
+        },
+        "kcal": {
+          "type": "number"
+        },
+        "observedKcal": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "confidence": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "LOW",
+                "MEDIUM",
+                "HIGH"
+              ]
+            }
+          ]
+        },
+        "completeDays": {
+          "type": "integer"
+        },
+        "weighIns": {
+          "type": "integer"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "recipe": {
+      "type": "object",
+      "required": [
+        "id",
+        "name",
+        "servings",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "name": {
+          "type": "string"
+        },
+        "servings": {
+          "type": "number"
+        },
+        "cookedWeightG": {
+          "$ref": "#/$defs/optionalNumber"
+        },
+        "foodId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "recipeIngredient": {
+      "type": "object",
+      "required": [
+        "id",
+        "recipeId",
+        "sortOrder",
+        "displayName",
+        "quantity",
+        "servingLabel",
+        "grams",
+        "nutrients",
+        "createdAt",
+        "updatedAt"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/id"
+        },
+        "recipeId": {
+          "$ref": "#/$defs/id"
+        },
+        "sortOrder": {
+          "type": "integer"
+        },
+        "foodId": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "displayName": {
+          "type": "string"
+        },
+        "brand": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "quantity": {
+          "type": "number"
+        },
+        "servingLabel": {
+          "type": "string"
+        },
+        "grams": {
+          "type": "number"
+        },
+        "nutrients": {
+          "$ref": "#/$defs/nutrients"
+        },
+        "createdAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "updatedAt": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "deletedAt": {
+          "$ref": "#/$defs/optionalEpochMs"
+        }
+      }
+    },
+    "attemptRecord": {
+      "type": "object",
+      "description": "One request to one profile: when, how long, what came back. Never the request or the key.",
+      "required": [
+        "atMs",
+        "profileId",
+        "profileName",
+        "model",
+        "durationMs",
+        "result"
+      ],
+      "properties": {
+        "atMs": {
+          "$ref": "#/$defs/epochMs"
+        },
+        "profileId": {
+          "type": "string"
+        },
+        "profileName": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "durationMs": {
+          "type": "integer"
+        },
+        "result": {
+          "type": "string",
+          "description": "OK, or Timeout, RateLimited, QuotaExhausted, Server, Network, InvalidKey, ModelNotFound, ContentRefused, BadResponse, InvalidRequest"
+        },
+        "httpStatus": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "providerCode": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "quota": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "message": {
+          "$ref": "#/$defs/optionalString"
+        },
+        "retryAfterMs": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      }
+    }
+  }
+}
