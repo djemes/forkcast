@@ -17,8 +17,6 @@ import app.forkcast.core.data.settings.DevicePrefs
 import app.forkcast.core.data.settings.DeviceState
 import app.forkcast.core.network.update.Release
 import com.google.common.truth.Truth.assertThat
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Before
 import org.junit.Test
@@ -38,9 +36,6 @@ class UpdateCheckWorkerTest {
 
     private class Fake(var answer: UpdateCheck) : UpdateRepository {
         var betasAsked: Boolean? = null
-        override val hasToken: Flow<Boolean> = flowOf(false)
-        override suspend fun savedToken(): String? = null
-        override suspend fun setToken(token: String?) = Unit
         override suspend fun check(currentVersionName: String, includeBetas: Boolean): UpdateCheck = answer.also { betasAsked = includeBetas }
         override suspend fun download(release: Release, progress: (Long, Long) -> Unit): Download = error("never downloads")
     }

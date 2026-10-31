@@ -2,39 +2,33 @@ package app.forkcast.core.data.update
 
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
-import app.forkcast.core.data.secrets.SecretName
-import app.forkcast.core.data.secrets.SecretStore
 import app.forkcast.core.network.update.GitHubReleases
 import app.forkcast.core.network.update.UpdateHttpClientFactory
 import com.google.common.truth.Truth.assertThat
-import com.google.crypto.tink.Aead
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
 import io.ktor.utils.io.ByteReadChannel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.runTest
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
 import java.security.MessageDigest
 
-/** The updater against a stand-in for GitHub's Releases API: public (no token) and private (token). */
+/** The updater against a stand-in for GitHub's Releases API (a public repository: no token). */
 @RunWith(AndroidJUnit4::class)
 class UpdateRepositoryTest {
 
     private val context = ApplicationProvider.getApplicationContext<android.content.Context>()
-    private val secrets = SecretStore(File(context.filesDir, "secrets-${System.nanoTime()}/store.bin"), { XorAead() }, Dispatchers.Unconfined)
 
     private val apkBytes = "not really an apk".toByteArray()
     private val apkHash = MessageDigest.getInstance("SHA-256").digest(apkBytes).joinToString("") { "%02x".format(it) }
     private val wrongHash = "0".repeat(64)
 
-    /** What the stand-in GitHub serves; [private] = 404 without a token, as GitHub does. */
+    /** What the stand-in GitHub serves. */
     private inner class FakeGitHub(
-        var private: Boolean = false,
         var sums: String? = "$apkHash  Forkcast-v1.6.0.apk\n",
         var digest: String? = "sha256:$apkHash",
         var withBeta: Boolean = true,
@@ -53,7 +47,6 @@ class UpdateRepositoryTest {
             val auth = req.headers[HttpHeaders.Authorization]
             auths += auth
             val json = headersOf(HttpHeaders.ContentType, "application/json")
-            if (private && auth == null) return@MockEngine respond("{}", HttpStatusCode.NotFound, json)
             val path = req.url.encodedPath
             when {
                 path.endsWith("/releases/latest") -> respond(release("v1.6.0", false), HttpStatusCode.OK, json)
@@ -68,7 +61,7 @@ class UpdateRepositoryTest {
             }
         }
 
-        fun repo() = GitHubUpdateRepository(context, GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast"), secrets)
+        fun repo() = GitHubUpdateRepository(context, GitHubReleases(UpdateHttpClientFactory.create("Forkcast/test", engine), "djemes/forkcast"))
     }
 
     @Test fun publicRepositoryNeedsNoToken() = runTest {
@@ -76,14 +69,6 @@ class UpdateRepositoryTest {
         val check = gh.repo().check("1.5.0", includeBetas = false)
         assertThat((check as UpdateCheck.Available).release.tag).isEqualTo("v1.6.0")
         assertThat(gh.auths).containsExactly(null)
-    }
-
-    @Test fun privateRepositoryAsksForATokenThenUsesIt() = runTest {
-        val gh = FakeGitHub(private = true)
-        assertThat(gh.repo().check("1.5.0", includeBetas = false)).isEqualTo(UpdateCheck.NeedsToken)
-        secrets.set(SecretName.GITHUB_TOKEN, "tok")
-        assertThat(gh.repo().check("1.5.0", includeBetas = false)).isInstanceOf(UpdateCheck.Available::class.java)
-        assertThat(gh.auths.last()).isEqualTo("Bearer tok")
     }
 
     @Test fun betasOnlyWhenAsked() = runTest {
@@ -116,10 +101,5 @@ class UpdateRepositoryTest {
         assertThat(downloadWith(FakeGitHub(sums = null))).isEqualTo(Download.Refused(ApkProblem.NOT_AN_APK))
         assertThat(downloadWith(FakeGitHub(digest = null))).isEqualTo(Download.Refused(ApkProblem.NOT_AN_APK))
         assertThat(downloadWith(FakeGitHub(sums = null, digest = null))).isEqualTo(Download.Refused(ApkProblem.NO_CHECKSUM))
-    }
-
-    private class XorAead : Aead {
-        override fun encrypt(plaintext: ByteArray, associatedData: ByteArray) = plaintext.map { (it.toInt() xor 0x5A).toByte() }.toByteArray()
-        override fun decrypt(ciphertext: ByteArray, associatedData: ByteArray) = encrypt(ciphertext, associatedData)
     }
 }

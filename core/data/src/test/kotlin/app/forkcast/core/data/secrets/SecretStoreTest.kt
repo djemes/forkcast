@@ -71,4 +71,15 @@ class SecretStoreTest {
         fresh.refresh()
         assertThat(fresh.present.value).containsExactly(SecretName.USDA_API_KEY)
     }
+
+    /** Roadmap 5.5: the GitHub token 1.5–1.8 kept for the private repository is gone after the update. */
+    @Test fun refreshDeletesTheOldGitHubToken() = runTest {
+        val file = File(tmp.root, "store.bin")
+        val old = store(file)
+        old.replaceAll(mapOf(SecretStore.LEGACY_GITHUB_TOKEN to "github_pat_old", SecretName.USDA_API_KEY.name to "abc"))
+        val updated = store(file)
+        updated.refresh()
+        assertThat(updated.exportAll()).containsExactly(SecretName.USDA_API_KEY.name, "abc")
+        assertThat(updated.present.value).containsExactly(SecretName.USDA_API_KEY)
+    }
 }
