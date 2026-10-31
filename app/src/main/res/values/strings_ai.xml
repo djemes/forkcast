@@ -151,7 +151,7 @@
     <string name="ai_err_rate_limited">%1$s is busy or at its limit. Try again in a minute.</string>
     <string name="ai_err_quota">%1$s has reached its limit. It resets later.</string>
     <string name="ai_err_model">%1$s doesn\'t have the model %2$s. Pick another with Edit in Settings › AI services.</string>
-    <string name="ai_err_refused">%1$s declined to estimate this photo.</string>
+    <string name="ai_err_refused">%1$s declined to estimate this meal.</string>
     <string name="ai_err_bad_response">%1$s sent an answer Forkcast couldn\'t read. Try again.</string>
     <string name="ai_err_request">%1$s rejected the request: %2$s</string>
     <string name="ai_err_network_test">No connection. Connect to the internet, then test again.</string>
