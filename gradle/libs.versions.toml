@@ -1,10 +1,10 @@
 [versions]
-# Checked against Google Maven / Maven Central on 2026-10-18; all re-checked 2026-10-25 (2.0 Phase 2)
+# Checked against Google Maven / Maven Central on 2026-10-18; all re-checked 2026-10-25 (2.0 Phase 2) and 2026-10-30 (2.0 Phase 6: KSP, Ktor patches; AGP 9.5.0 of 2026-10-28 held back)
 agp = "9.4.1"
 kotlin = "2.4.21"
 # Static analysis (REVIEW-2 S8). 2.0 is the line built for Kotlin 2.4; still an alpha. VERIFY: move to 2.0.0 when it ships.
 detekt = "2.0.0-alpha.6"
-ksp = "2.3.12"
+ksp = "2.3.13"
 composeBom = "2026.09.00"
 activityCompose = "1.13.0"
 coreKtx = "1.19.1"
@@ -23,7 +23,7 @@ turbine = "1.2.1"
 robolectric = "4.17"
 androidxTestExtJunit = "1.3.0"
 androidxTestCore = "1.7.0"
-ktor = "3.6.0"
+ktor = "3.6.1"
 javaxInject = "1"
 tink = "1.24.0"
 # Argon2id for backup passwords (owner, 2026-10-29); checked 2026-10-29 on Maven Central: 1.86 of 2026-09-11 is the newest
