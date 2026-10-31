@@ -1,15 +1,22 @@
 package app.forkcast.ui.settings
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -37,14 +44,15 @@ fun AboutRoute(
         onOpenTerms = onOpenTerms,
         onOpenPrivacy = onOpenPrivacy,
         onOpenLicenses = onOpenLicenses,
-        donationUrl = DONATION_URL.takeIf { Distribution.current.hasDonationLink && it.isNotBlank() },
+        donationUrl = DONATION_URL.takeIf { Distribution.current.hasDonationLink },
     )
 }
 
 /**
  * Settings › About (roadmap 2.0 task 4.7): version and Updates (github build), source, reporting a
- * problem, Support Forkcast (github build, once the link exists), the legal texts and licenses, the
- * privacy summary, and attributions.
+ * problem, Support Forkcast (github build; always there, even with the Settings card hidden), the
+ * legal texts and licenses, the privacy summary, and attributions. [donationUrl] is null in a build
+ * without the donation link, empty while the Ko-fi page doesn't exist ("Coming soon").
  */
 @Composable
 fun AboutScreen(
@@ -58,7 +66,9 @@ fun AboutScreen(
     donationUrl: String? = null,
 ) {
     val uri = LocalUriHandler.current
-    SettingsScaffold(title = stringResource(R.string.settings_about), onBack = onBack) {
+    val snackbar = remember { SnackbarHostState() }
+    val openDonation = rememberDonationOpener(donationUrl.orEmpty(), snackbar)
+    SettingsScaffold(title = stringResource(R.string.settings_about), onBack = onBack, snackbarHostState = snackbar) {
         Column(Modifier.padding(horizontal = 16.dp)) {
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.headlineSmall)
             Text(
@@ -84,12 +94,14 @@ fun AboutScreen(
                 Text(stringResource(R.string.about_report_open))
             }
 
-            // Voluntary tips (roadmap 2.0 task 4.6): only here, never a reminder or pop-up anywhere else.
+            // Voluntary tips (roadmap 2.0 task 4.6): here and the Settings card, never a reminder or pop-up anywhere else.
             if (donationUrl != null) {
                 AboutHeading(R.string.about_support_title)
                 Text(stringResource(R.string.about_support_body), style = MaterialTheme.typography.bodyLarge)
-                OutlinedButton(onClick = { uri.openUri(donationUrl) }, modifier = Modifier.padding(top = 8.dp).heightIn(min = 48.dp)) {
-                    Text(stringResource(R.string.about_support_open))
+                OutlinedButton(onClick = openDonation, modifier = Modifier.padding(top = 8.dp).heightIn(min = 48.dp)) {
+                    Image(painterResource(R.drawable.kofi_cup), contentDescription = null, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.support_kofi))
                 }
             }
 

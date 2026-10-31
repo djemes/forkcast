@@ -36,8 +36,8 @@ const val GITHUB_URL = "https://github.com/$GITHUB_REPO_NAME"
 const val GITHUB_ISSUES_URL = "$GITHUB_URL/issues/new/choose"
 
 /**
- * The donation page "Support Forkcast" opens (decision D2: Ko-fi). Empty hides the row; the owner
- * sets it once the page exists. Only the github distribution shows it ([app.forkcast.Distribution.hasDonationLink]).
+ * The Ko-fi page (decision D2) that the Settings card and About's "Support on Ko-fi" open. Empty
+ * would make them say "Coming soon". Only the github distribution shows them
+ * ([app.forkcast.Distribution.hasDonationLink]).
  */
-// VERIFY: the owner's Ko-fi page URL, e.g. "https://ko-fi.com/<name>"
-const val DONATION_URL = ""
+const val DONATION_URL = "https://ko-fi.com/gabemomp"

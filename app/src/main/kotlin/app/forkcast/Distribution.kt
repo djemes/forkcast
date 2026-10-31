@@ -15,7 +15,7 @@ enum class Distribution(val id: String) {
     /** The in-app updater (Settings › Updates) and its background check. */
     val hasUpdater: Boolean get() = this == GITHUB
 
-    /** "Support Forkcast" in About (roadmap Phase 4). */
+    /** The Ko-fi card at the top of Settings and "Support Forkcast" in About (roadmap Phase 4; owner, 2026-10-30). */
     val hasDonationLink: Boolean get() = this == GITHUB
 
     companion object {

@@ -20,6 +20,7 @@ import app.forkcast.core.data.notify.Notifier
 import app.forkcast.core.data.repository.MaintenanceRepository
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.navigation.ForkcastNavHost
+import app.forkcast.ui.common.ProvideLinkOpener
 import app.forkcast.ui.legal.Agreement
 import app.forkcast.ui.legal.AgreementScreen
 import app.forkcast.ui.theme.ForkcastTheme
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
                 onDispose {}
             }
 
-            ForkcastTheme(darkTheme = darkTheme, useWallpaperColors = appearance.useWallpaperColors) {
+            ForkcastTheme(darkTheme = darkTheme, useWallpaperColors = appearance.useWallpaperColors) { ProvideLinkOpener(darkTheme) {
                 // The terms come before anything else, onboarding included (roadmap 2.0, task 4.1).
                 if (current.needsAgreement) {
                     AgreementScreen(
@@ -92,7 +93,7 @@ class MainActivity : ComponentActivity() {
                         onOpenHandled = { openRequest.value = null },
                     )
                 }
-            }
+            } }
         }
     }
 

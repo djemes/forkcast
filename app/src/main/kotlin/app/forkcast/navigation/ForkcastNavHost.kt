@@ -354,10 +354,18 @@ fun ForkcastNavHost(
                 val multilingual = androidx.compose.runtime.remember { app.forkcast.AppLanguage.available(context).size > 1 }
                 val debug: DebugToolsViewModel = hiltViewModel()
                 val debugState by debug.state.collectAsStateWithLifecycle()
+                val support: app.forkcast.ui.settings.SupportCardViewModel = hiltViewModel()
+                val supportShown by support.shown.collectAsStateWithLifecycle()
                 SettingsScreen(
                     onBack = back,
                     message = debugState.message,
                     onMessageShown = { debug.onEvent(DebugToolsEvent.MessageShown) },
+                    supportCard = app.forkcast.ui.settings.SupportCardState(
+                        shown = supportShown,
+                        url = app.forkcast.di.DONATION_URL,
+                        onHide = support::hide,
+                        onUndoHide = support::undoHide,
+                    ).takeIf { app.forkcast.Distribution.current.hasDonationLink },
                     actions = SettingsActions(
                         profile = { navController.navigate(ProfileDestination) },
                         goalBudget = { navController.navigate(ProfileGoalsDestination) },
