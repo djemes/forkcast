@@ -17,15 +17,14 @@ import java.util.zip.ZipOutputStream
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** What a backup zip held: the export JSON, its manifest (`.forkcast` files only) and how many photos were staged. */
-/** [secrets]: the saved keys (1.8.2+ backups), as written by [BackupSecrets]. */
+/** What a backup zip held: the export JSON, its manifest, how many photos were staged, and the saved keys ([BackupSecrets]). */
 data class ArchiveContents(val json: String, val manifest: String?, val photos: Int, val secrets: String? = null)
 
 /**
- * The zip inside a backup (SPEC §4.11): `manifest.json` (`.forkcast` files, 1.5+), `forkcast.json`,
- * `secrets.json` (the saved keys, 1.8.2+) and optionally `photos/<estimate>/<n>.jpg`, the same relative paths the JSON references. 1.0–1.4's
- * "Include photos" `.zip` is the same without the manifest. Photos from an imported zip are
- * staged first and only moved into place once the import is confirmed.
+ * The zip inside a backup (SPEC §4.11): `manifest.json`, `forkcast.json`, `secrets.json` (the
+ * saved keys) and `photos/<estimate>/<n>.jpg`, the same relative paths the JSON references.
+ * Photos from an imported zip are staged first and only moved into place once the import is
+ * confirmed.
  */
 @Singleton
 class PhotoArchive @Inject constructor(

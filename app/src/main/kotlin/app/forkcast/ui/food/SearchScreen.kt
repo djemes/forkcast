@@ -337,7 +337,9 @@ private fun LazyListScope.resultsSection(state: SearchUiState, f: UnitFormatter,
     }
     if (state.usingDemoKey && state.usda is RemoteResults.Done) item(key = "demo") { Hint(stringResource(R.string.search_demo_key)) }
     remoteProblem(R.string.search_usda, state.usda)
-    remoteProblem(R.string.search_off, state.off)
+    // No connection is one message, not one per database.
+    val offline = listOf(state.usda, state.off).all { it is RemoteResults.Failed && it.error is FoodApiError.Offline }
+    if (!offline) remoteProblem(R.string.search_off, state.off)
     val bothDone = state.usda is RemoteResults.Done && state.off is RemoteResults.Done
     if (state.results.isEmpty() && bothDone) item(key = "none") { Hint(stringResource(R.string.search_no_results)) }
 }

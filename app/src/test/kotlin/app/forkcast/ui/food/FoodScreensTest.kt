@@ -1,5 +1,6 @@
 package app.forkcast.ui.food
 
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.hasScrollToNodeAction
@@ -60,6 +61,16 @@ class FoodScreensTest {
         compose.onNode(hasScrollToNodeAction()).performScrollToNode(hasText("Rice, white, cooked"))
         compose.onNodeWithText("Rice, white, cooked").performClick()
         assertThat(opened).isEqualTo("Rice, white, cooked")
+    }
+
+    @Test fun noConnectionIsSaidOnceForBothDatabases() {
+        val state = SearchUiState(
+            query = "banana",
+            usda = RemoteResults.Failed(FoodApiError.Offline()),
+            off = RemoteResults.Failed(FoodApiError.Offline()),
+        )
+        compose.setContent { ForkcastTheme { SearchScreen(state, {}, {}, {}, {}) } }
+        compose.onAllNodesWithText("No connection. Showing your own foods only.").assertCountEquals(1)
     }
 
     @Test fun detailNamesTheMealAndAdds() {

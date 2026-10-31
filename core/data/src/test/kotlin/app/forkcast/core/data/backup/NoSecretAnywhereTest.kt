@@ -45,7 +45,6 @@ class NoSecretAnywhereTest {
     private val aiKey = "sk-FAKE-ai-key-for-the-no-secret-test-1234"
     private val usdaKey = "FAKEUSDAKEY0000000000000000000000000000"
     private val backupPassword = "the-backup-password-itself-0000"
-    private val githubToken = "github_pat_FAKE0000000000000000"
 
     @After fun tearDown() {
         db.close()
@@ -57,8 +56,6 @@ class NoSecretAnywhereTest {
         secrets.setAiKey("p1", aiKey)
         secrets.set(SecretName.USDA_API_KEY, usdaKey)
         secrets.set(SecretName.BACKUP_PASSWORD, backupPassword)
-        // The updates token 1.5–1.8 kept: if a phone still had it, it never went into a backup.
-        secrets.replaceAll(secrets.exportAll() + (SecretStore.LEGACY_GITHUB_TOKEN to githubToken))
 
         val files = mutableMapOf(
             "export.json" to repo.exportJson(),
@@ -80,9 +77,8 @@ class NoSecretAnywhereTest {
         assertWithMessage("secrets.json").that(secretsEntry).contains(aiKey)
         assertWithMessage("secrets.json").that(secretsEntry).contains(usdaKey)
         assertWithMessage("secrets.json").that(secretsEntry).doesNotContain(backupPassword)
-        assertWithMessage("secrets.json").that(secretsEntry).doesNotContain(githubToken)
         for ((name, text) in files) {
-            for (key in listOf(aiKey, usdaKey, backupPassword, githubToken)) assertWithMessage(name).that(text).doesNotContain(key)
+            for (key in listOf(aiKey, usdaKey, backupPassword)) assertWithMessage(name).that(text).doesNotContain(key)
         }
     }
 }

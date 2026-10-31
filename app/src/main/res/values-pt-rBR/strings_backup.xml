@@ -36,7 +36,7 @@
 
     <string name="backup_rejected_title">Não dá para importar este arquivo</string>
     <string name="backup_rejected_newer">Este backup foi feito por uma versão mais nova do Forkcast. Atualize o app e tente de novo.</string>
-    <string name="backup_rejected_older">Este backup foi feito por uma versão do Forkcast anterior à 1.2, que esta versão não consegue importar.</string>
+    <string name="backup_rejected_older">Este backup foi feito por uma versão antiga do Forkcast que esta versão não consegue importar.</string>
     <string name="backup_rejected_other">Este arquivo não é um backup do Forkcast.</string>
     <string name="backup_rejected_unreadable">Não foi possível ler este arquivo. Ele pode estar danificado ou não ser um backup do Forkcast.</string>
     <string name="backup_read_failed">Não foi possível abrir o arquivo.</string>

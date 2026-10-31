@@ -153,7 +153,7 @@
     <string name="ai_err_rate_limited">%1$s está ocupado ou no limite. Tente de novo em um minuto.</string>
     <string name="ai_err_quota">%1$s atingiu o limite. Ele renova mais tarde.</string>
     <string name="ai_err_model">%1$s não tem o modelo %2$s. Escolha outro em Editar, em Configurações › Serviços de IA.</string>
-    <string name="ai_err_refused">%1$s preferiu não estimar esta foto.</string>
+    <string name="ai_err_refused">%1$s preferiu não estimar esta refeição.</string>
     <string name="ai_err_bad_response">%1$s mandou uma resposta que o Forkcast não conseguiu ler. Tente de novo.</string>
     <string name="ai_err_request">%1$s recusou a requisição: %2$s</string>
     <string name="ai_err_network_test">Sem conexão. Conecte-se à internet e teste de novo.</string>

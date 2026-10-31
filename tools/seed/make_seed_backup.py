@@ -5,9 +5,8 @@
 --demo makes the README's demo data (tools/screenshots): no brand names, a steady loss of about
 0.45 kg a week on meals near the budget, and no photos. Without it, the upgrade-test data as before.
 
-The result is a zip with forkcast.json (export schema v7) and meal photos, which every version
-from 1.4 on restores (1.4 reads it as its "Include photos" zip; 1.5+ as a .forkcast without a
-manifest). Deterministic (fixed seed), so two runs give the same data.
+The result is a zip with forkcast.json (export schema v9) and meal photos, a .forkcast without
+encryption that Forkcast restores. Deterministic (fixed seed), so two runs give the same data.
 """
 import argparse
 import datetime as dt
@@ -151,7 +150,7 @@ for name, servings, idxs in [("Chili", 6, [17, 18, 16]), ("Overnight oats", 2, [
                                   "quantity": 2.0, "servingLabel": foods[idx]["servingSizes"][0]["label"], "grams": g, "nutrients": n}, START))
 
 export = {
-    "schemaVersion": 7, "app": "Forkcast", "appVersion": "seed", "exportedAt": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"), "timeZone": ZONE,
+    "schemaVersion": 9, "app": "Forkcast", "appVersion": "seed", "exportedAt": dt.datetime.now(dt.timezone.utc).isoformat().replace("+00:00", "Z"), "timeZone": ZONE,
     "profile": stamp({"id": "profile", "sex": "MALE", "birthDate": "1988-04-12", "heightCm": 180.3, "activityLevel": "LIGHT", "exerciseMode": "INCLUDED", "exerciseAddBackPct": 50}, START),
     "goals": [stamp({"id": uid(), "goalType": "LOSE", "startDate": START.isoformat(), "startWeightKg": weights[0]["kg"] if args.demo else 92.0, "targetWeightKg": 75.0 if args.demo else 82.0, "targetDate": None, "weeklyRateKg": 0.45, "isActive": True}, START)],
     "targetOverrides": [], "tdeeEstimates": [], "mealSlots": slots, "foods": foods, "recipes": recipes, "recipeIngredients": ingredients,

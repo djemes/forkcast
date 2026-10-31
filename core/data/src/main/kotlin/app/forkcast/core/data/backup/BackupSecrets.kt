@@ -34,8 +34,7 @@ class BackupSecrets @Inject constructor(private val store: SecretStore) {
     }
 
     companion object {
-        // The legacy updates token (1.5–1.8) never left the phone either; SecretStore.refresh() deletes it.
-        private val perPhone = setOf(SecretName.BACKUP_PASSWORD.name, SecretStore.LEGACY_GITHUB_TOKEN)
+        private val perPhone = setOf(SecretName.BACKUP_PASSWORD.name)
         private val serializer = MapSerializer(String.serializer(), String.serializer())
 
         fun encode(keys: Map<String, String>): String = BackupJson.encodeToString(serializer, keys)

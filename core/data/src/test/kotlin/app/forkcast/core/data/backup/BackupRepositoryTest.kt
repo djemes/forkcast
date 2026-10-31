@@ -191,14 +191,14 @@ class BackupRepositoryTest {
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
         assertThat(repo.parse("not json")).isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":7,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":9,"appVersion":"x","exportedAt":"x","timeZone":"UTC","logEntries":[{"id":1}]}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.UNREADABLE))
     }
 
-    /** Files from before 1.2 (export v1–v5) are refused as too old (owner, 2026-10-24). */
-    @Test fun rejectsExportsOlderThanTheVersionBefore() {
-        for (v in 1..5) {
-            assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":$v,"appVersion":"1.1.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC"}"""))
+    /** Exports older than 2.0's (v1–v8) are refused as too old. */
+    @Test fun rejectsExportsOlderThanTheBaseline() {
+        for (v in 1..8) {
+            assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":$v,"appVersion":"1.9.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC"}"""))
                 .isEqualTo(ParsedBackup.Rejected(RejectReason.OLD_VERSION))
         }
     }
@@ -220,54 +220,9 @@ class BackupRepositoryTest {
         assertThat(dao.activityDays().map { it.id to it.steps }).containsExactly("theirs" to 9000L)
     }
 
-    /**
-     * A 1.4–1.8.2 file (v7) imports in 1.8.3: entries come in at 1×, and a favorite food's default
-     * amount is the amount it was last logged with (as the v9 database migration does).
-     */
-    @Test fun importsV7WithoutPortionsOrFavoriteDefaults() = runTest {
-        seedEveryTable()
-        dao.upsertFoods(dao.foods().map { it.copy(isFavorite = true, lastQuantity = 2.0, lastServingLabel = "cup", favoriteQuantity = null, favoriteServingLabel = null) })
-        val v8 = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        fun kotlinx.serialization.json.JsonArray.without(vararg keys: String) =
-            kotlinx.serialization.json.JsonArray(map { r -> kotlinx.serialization.json.JsonObject(r.jsonObject - keys.toSet()) })
-        val v7 = kotlinx.serialization.json.JsonObject(
-            v8 + mapOf(
-                "schemaVersion" to kotlinx.serialization.json.JsonPrimitive(7),
-                "logEntries" to v8.getValue("logEntries").jsonArray.without("portion"),
-                "foods" to v8.getValue("foods").jsonArray.without("favoriteQuantity", "favoriteServingLabel"),
-            ),
-        )
-        val parsed = repo.parse(v7.toString()) as ParsedBackup.Ok
-        val before = dao.logEntries()
-        dao.clearAll()
-        repo.import(parsed.export, ImportMode.REPLACE)
-        assertThat(dao.logEntries().map { it.id to it.quantity }).containsExactlyElementsIn(before.map { it.id to it.quantity })
-        assertThat(dao.logEntries().map { it.portion }.toSet()).containsExactly(1.0)
-        assertThat(dao.foods().map { it.favoriteQuantity to it.favoriteServingLabel }.toSet()).containsExactly(2.0 to "cup")
-    }
-
-    /** A 1.2–1.9.0 file (v6–v8) gets its backup days from the daily or weekly setting (1.9.1, LegacySettings). */
-    @Test fun importsOlderBackupScheduleAsDays() = runTest {
-        fun v8(backup: String) = repo.parse(
-            """{"app":"Forkcast","schemaVersion":8,"appVersion":"1.9.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC",""" +
-                """"settings":{"backup":$backup}}""",
-        ) as ParsedBackup.Ok
-        assertThat(v8("""{"auto":true,"frequency":"DAILY","weekday":1,"days":null}""").export.settings!!.backup.days).containsExactly(1, 2, 3, 4, 5, 6, 7)
-        assertThat(v8("""{"frequency":"WEEKLY","weekday":4}""").export.settings!!.backup.days).containsExactly(4)
-        assertThat(v8("""{"frequency":"DAILY","weekday":1,"days":[2,6],"minute":90}""").export.settings!!.backup).isEqualTo(
-            app.forkcast.core.model.BackupSettings(days = setOf(2, 6), minute = 90),
-        )
-        // The settings round-trip in v9 as they are.
-        settings.updateData { it.copy(backup = it.backup.copy(days = setOf(3, 5))) }
-        val v9 = repo.parse(repo.exportJson()) as ParsedBackup.Ok
-        assertThat(v9.export.schemaVersion).isEqualTo(9)
-        assertThat(v9.export.settings!!.backup.days).containsExactly(3, 5)
-    }
-
-    @Test fun acceptsMinimalV7AndV6AndUnknownFields() {
-        val minimal = """{"app":"Forkcast","schemaVersion":7,"appVersion":"1.8.2","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC","futureField":true}"""
+    @Test fun acceptsMinimalFileAndUnknownFields() {
+        val minimal = """{"app":"Forkcast","schemaVersion":9,"appVersion":"2.0.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC","futureField":true}"""
         assertThat(repo.parse(minimal)).isInstanceOf(ParsedBackup.Ok::class.java)
-        assertThat(repo.parse(minimal.replace("\"schemaVersion\":7", "\"schemaVersion\":6"))).isInstanceOf(ParsedBackup.Ok::class.java)
     }
 
     @Test fun mergeNewerWinsAndDeletionsTravel() = runTest {

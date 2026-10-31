@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://github.com/djemes/forkcast/docs/export-schema-v9.json",
   "title": "Forkcast export, schema version 9",
-  "description": "Full data export (SPEC §4.11, §6.3). Field names mirror the Room entities. Times are epoch milliseconds UTC; dates are ISO yyyy-MM-dd local dates; amounts are grams, kcal, mg, µg, ml, kg. Rows with a non-null deletedAt are soft-deleted and are kept so merges respect deletions. Secrets are never included. Readers must ignore unknown fields. Health Connect write state is per phone and never exported. Kept in sync with the code by BackupRepositoryTest.schemaFileMatchesExport. v9 (1.9.1): the settings' backup schedule is only days (no frequency or weekday). Version 1.9.1 also imports v6 to v8 files (1.2 to 1.9.0): a backup schedule without days gets them from its frequency and weekday, portions are 1 and a favorite's default amount is its last used amount.",
+  "description": "Full data export (SPEC §4.11, §6.3). Field names mirror the Room entities. Times are epoch milliseconds UTC; dates are ISO yyyy-MM-dd local dates; amounts are grams, kcal, mg, µg, ml, kg. Rows with a non-null deletedAt are soft-deleted and are kept so merges respect deletions. Secrets are never included. Readers must ignore unknown fields. Health Connect write state is per phone and never exported. Kept in sync with the code by BackupRepositoryTest.schemaFileMatchesExport.",
   "type": "object",
   "required": [
     "schemaVersion",
@@ -15,9 +15,6 @@
     "schemaVersion": {
       "type": "integer",
       "enum": [
-        6,
-        7,
-        8,
         9
       ]
     },
@@ -77,14 +74,14 @@
     },
     "recipes": {
       "type": "array",
-      "description": "v5: recipes; each keeps a loggable food (source RECIPE) via foodId. Empty in older files",
+      "description": "recipes; each keeps a loggable food (source RECIPE) via foodId. Empty in older files",
       "items": {
         "$ref": "#/$defs/recipe"
       }
     },
     "recipeIngredients": {
       "type": "array",
-      "description": "v5: recipe ingredients, nutrients snapshotted for their grams",
+      "description": "recipe ingredients, nutrients snapshotted for their grams",
       "items": {
         "$ref": "#/$defs/recipeIngredient"
       }
@@ -517,15 +514,15 @@
         },
         "describedAs": {
           "$ref": "#/$defs/optionalString",
-          "description": "v6: what the user typed when this food was saved from Describe (AI_TEXT)"
+          "description": "what the user typed when this food was saved from Describe (AI_TEXT)"
         },
         "favoriteQuantity": {
           "$ref": "#/$defs/optionalNumber",
-          "description": "v8: a favorite's default amount (quantity of favoriteServingLabel); null = the last used amount"
+          "description": "a favorite's default amount (quantity of favoriteServingLabel); null = the last used amount"
         },
         "favoriteServingLabel": {
           "$ref": "#/$defs/optionalString",
-          "description": "v8: the serving of favoriteQuantity"
+          "description": "the serving of favoriteQuantity"
         }
       }
     },
@@ -702,13 +699,13 @@
           ],
           "minimum": 0,
           "maximum": 1439,
-          "description": "v6: when it was eaten, minutes after local midnight on date"
+          "description": "when it was eaten, minutes after local midnight on date"
         },
         "portion": {
           "type": "number",
           "exclusiveMinimum": 0,
           "default": 1,
-          "description": "v8: the portion slider's multiplier of the entry's 1x amount; quantity, grams and nutrients already include it"
+          "description": "the portion slider's multiplier of the entry's 1x amount; quantity, grams and nutrients already include it"
         }
       }
     },
@@ -1238,22 +1235,22 @@
             "PHOTO",
             "TEXT"
           ],
-          "description": "v6: TEXT = Describe (no photo)"
+          "description": "TEXT = Describe (no photo)"
         },
         "portion": {
           "type": "number",
-          "description": "v6: share of the estimated plate that was eaten (1 = all)"
+          "description": "share of the estimated plate that was eaten (1 = all)"
         },
         "attemptLog": {
           "type": "array",
           "items": {
             "$ref": "#/$defs/attemptRecord"
           },
-          "description": "v6: newest 30 requests"
+          "description": "newest 30 requests"
         },
         "tries": {
           "type": "integer",
-          "description": "v6: passes through the profile chain since the last user action"
+          "description": "passes through the profile chain since the last user action"
         },
         "runStartedAt": {
           "$ref": "#/$defs/optionalEpochMs"
@@ -1263,7 +1260,7 @@
             "integer",
             "null"
           ],
-          "description": "v6: meal time chosen when logging"
+          "description": "meal time chosen when logging"
         },
         "phase": {
           "oneOf": [

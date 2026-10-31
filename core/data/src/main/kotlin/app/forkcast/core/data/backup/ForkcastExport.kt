@@ -27,12 +27,8 @@ import kotlinx.serialization.Serializable
 /**
  * Export file (SPEC §6.3; JSON Schema in core/data/schemas/export/export-schema-v9.json). Field names mirror the
  * Room entities. Secrets are never included: API keys live in an encrypted file outside the
- * database and [AppSettings] holds no secrets (keys travel only in the separate,
- * passphrase-encrypted settings export).
- *
- * v7 (1.4): log entries no longer carry `timeEstimated`. Each version imports its own format and
- * the one before it (owner, 2026-10-24): v6 files (1.2, 1.3) import as they are, their
- * `timeEstimated` ignored (unknown fields are). Files older than v6 are refused as too old.
+ * database and [AppSettings] holds no secrets (a backup carries the keys in its own `secrets.json`).
+ * Readers ignore unknown fields.
  */
 @Serializable
 data class ForkcastExport(
@@ -48,7 +44,6 @@ data class ForkcastExport(
     val tdeeEstimates: List<TdeeEstimateEntity> = emptyList(),
     val mealSlots: List<MealSlotEntity> = emptyList(),
     val foods: List<FoodEntity> = emptyList(),
-    /** v5 (Phase 4). */
     val recipes: List<RecipeEntity> = emptyList(),
     val recipeIngredients: List<RecipeIngredientEntity> = emptyList(),
     val savedMeals: List<SavedMealEntity> = emptyList(),
@@ -67,13 +62,9 @@ data class ForkcastExport(
     val settings: AppSettings? = null,
 ) {
     companion object {
-        /**
-         * v8 (1.8.3): log entries carry `portion`, foods `favoriteQuantity` and `favoriteServingLabel`.
-         * v9 (1.9.1, the format 2.0 reads): the settings' backup schedule is only `days` (no
-         * `frequency` or `weekday`); older files get their days from those on import.
-         */
+        /** v9 is 2.0's baseline (roadmap 2.0, "2.0 is a clean start"). */
         const val SCHEMA_VERSION = 9
-        /** The oldest export this version imports: at least its own and the one before it (v6 still parses, kept). */
-        const val OLDEST_IMPORTED = 6
+        /** The oldest export this version imports: its own and the one before it, once there is one. */
+        const val OLDEST_IMPORTED = 9
     }
 }

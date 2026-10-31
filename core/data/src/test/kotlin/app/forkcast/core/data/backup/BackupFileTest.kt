@@ -9,6 +9,9 @@ import app.forkcast.core.data.secrets.SecretName
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
+import java.io.IOException
+import kotlinx.coroutines.runBlocking
+import org.junit.Assert.assertThrows
 import org.junit.runner.RunWith
 import org.robolectric.annotation.ConscryptMode
 import java.io.ByteArrayOutputStream
@@ -71,16 +74,8 @@ class BackupFileTest {
         assertThat(opened.encrypted).isTrue()
     }
 
-    @Test fun olderFormatsStillOpen() = runTest {
-        // 1.0–1.4 "Include photos" zip: no manifest.
-        val zip = ByteArrayOutputStream().also { archive.write(it, FixedExport.JSON) }.toByteArray()
-        val fromZip = file.open(zip.inputStream(), null) as OpenedBackupFile.Ok
-        assertThat(fromZip.manifest).isNull()
-        assertThat(fromZip.photos).isEqualTo(1)
-        // A plain JSON export.
-        val fromJson = file.open(FixedExport.JSON.byteInputStream(), null) as OpenedBackupFile.Ok
-        assertThat(fromJson.json).isEqualTo(FixedExport.JSON)
-        assertThat(fromJson.photos).isEqualTo(0)
+    @Test fun aPlainJsonFileIsNotABackup() = runTest {
+        assertThrows(IOException::class.java) { runBlocking { file.open(FixedExport.JSON.byteInputStream(), null) } }
     }
 
     @Test fun names() {
@@ -89,20 +84,14 @@ class BackupFileTest {
         assertThat(BackupFile.isBackupName("2026-10-24_0600_forkcast-backup (1).forkcast")).isTrue()
         assertThat(BackupFile.isUnencryptedName("2026-10-24_0600_forkcast-backup_unencrypted.forkcast")).isTrue()
         assertThat(BackupFile.isUnencryptedName("2026-10-24_0600_forkcast-backup.forkcast")).isFalse()
-        // 1.5 to 1.8.1 names are still Forkcast's.
-        assertThat(BackupFile.isBackupName("forkcast-backup-2026-10-24.forkcast")).isTrue()
-        assertThat(BackupFile.isBackupName("forkcast-backup-2026-10-24-0300.forkcast")).isTrue()
-        assertThat(BackupFile.isBackupName("forkcast-backup-2026-10-24 (1).forkcast")).isTrue()
         val zone = ZoneId.of("America/New_York")
         assertThat(BackupFile.createdAt("2026-10-24_0600_forkcast-backup.forkcast", zone)).isEqualTo(Instant.parse("2026-10-24T10:00:00Z"))
-        assertThat(BackupFile.createdAt("forkcast-backup-2026-10-24-0300.forkcast", zone)).isEqualTo(Instant.parse("2026-10-24T07:00:00Z"))
-        assertThat(BackupFile.createdAt("forkcast-backup-2026-10-24.forkcast", zone)).isEqualTo(Instant.parse("2026-10-24T04:00:00Z"))
         assertThat(BackupFile.isBackupName("forkcast-20261024-0300.json")).isFalse()
         assertThat(BackupFile.isBackupName("holiday.jpg")).isFalse()
     }
 
     private object FixedExport : BackupRepository {
-        const val JSON = """{"app":"Forkcast","schemaVersion":7}"""
+        const val JSON = """{"app":"Forkcast","schemaVersion":9}"""
         override suspend fun exportJson() = JSON
         override fun parse(text: String): ParsedBackup = error("unused")
         override suspend fun import(export: ForkcastExport, mode: ImportMode): ImportSummary = error("unused")

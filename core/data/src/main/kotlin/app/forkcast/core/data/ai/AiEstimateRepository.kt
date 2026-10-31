@@ -85,7 +85,7 @@ interface EstimateScheduler {
 object AiErrorCodes {
     const val NO_PROFILE = "NoProfile"
     const val DISABLED = "Disabled"
-    /** Stuck in a version before 1.2 and stopped by the update: Retry starts it again. */
+    /** Ran past its time limit and was stopped at start-up ([AiEstimateRepository.recover]): Retry starts it again. */
     const val STOPPED = "Stopped"
     const val OK = "OK"
     /** No AI service that could be tried has the user's permission to receive meals (roadmap 2.0 task 4.2). */
@@ -152,8 +152,8 @@ interface AiEstimateRepository {
     suspend fun cleanUpPhotos()
     suspend fun markNotified(id: String)
     /**
-     * At start-up: estimates left pending or running with no live job (the app was killed, an
-     * older version got stuck, Doze held a retry) are queued again, or marked Failed when past
+     * At start-up: estimates left pending or running with no live job (the app was killed, Doze
+     * held a retry) are queued again, or marked Failed when past
      * their cap, so every one has a status and a Retry button.
      */
     suspend fun recover()

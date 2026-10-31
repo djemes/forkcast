@@ -96,21 +96,12 @@ class BackupCryptoTest {
         assertThrows(BackupDecryptException::class.java) { decrypt(bytes) }
     }
 
-    @Test fun filesFromOlderVersionsStillOpen() {
-        val plain = Random(8).nextBytes(SEGMENT + 7)
-        val out = ByteArrayOutputStream()
-        BackupCrypto.encryptPbkdf2(out, password, ITERATIONS, SEGMENT).use { it.write(plain) }
-        assertThat(decrypt(out.toByteArray())).isEqualTo(plain)
-        assertThrows(BackupDecryptException::class.java) { decrypt(out.toByteArray(), "wrong password".toCharArray()) }
-    }
-
     @Test fun plainFilesAreNotTakenForEncryptedOnes() {
         assertThat(BackupCrypto.isEncrypted("""{"app":"Forkcast"}""".encodeToByteArray())).isFalse()
         assertThat(BackupCrypto.isEncrypted(byteArrayOf(0x50, 0x4b, 3, 4))).isFalse()
     }
 
     private companion object {
-        const val ITERATIONS = 100_000
         /** The smallest Argon2id settings a file may ask for, so the tests stay quick. */
         val FAST = Kdf(memoryKiB = 8 * 1024, iterations = 1, parallelism = 1)
         const val SEGMENT = 4_096

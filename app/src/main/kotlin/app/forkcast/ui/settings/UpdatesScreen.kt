@@ -157,7 +157,7 @@ data class UpdatesActions(
 /**
  * Settings › Updates (roadmap 2.0, task 1.5; GitHub build only): the version, Check now, the
  * release notes before installing, automatic checks and betas. The repository is public, so
- * there's nothing to sign in with (the token field went in 1.9.0, roadmap 5.5).
+ * requests are anonymous.
  */
 @Composable
 fun UpdatesScreen(versionName: String, onBack: () -> Unit, state: UpdatesState, actions: UpdatesActions) {
