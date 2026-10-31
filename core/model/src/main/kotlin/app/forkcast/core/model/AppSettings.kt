@@ -64,19 +64,14 @@ data class WaterContainers(
  * Backups (owner, 2026-10-29): automatic backup to a folder the user picks, on chosen days around
  * a time, kept by a retention preset. Every backup is encrypted with the backup password (a
  * secret, so not here) and holds everything, photos included. The folder itself is per phone
- * (DevicePrefs). Settings files from older versions still read: unknown keys are ignored, and
- * [frequency]/[weekday] stand in for [days] until the days are first chosen.
+ * (DevicePrefs).
  */
 @Serializable
 data class BackupSettings(
     /** Back up automatically to the chosen folder; runs only while a backup password is set. */
     val auto: Boolean = true,
-    /** 1.5 to 1.8.1: daily or weekly. Read through [scheduleDays] only. */
-    val frequency: BackupFrequency = BackupFrequency.WEEKLY,
-    /** 1.5 to 1.8.1: the weekly backup's day, ISO (1 = Monday). Read through [scheduleDays] only. */
-    val weekday: Int = 1,
-    /** Days of the week, ISO (1 = Monday); null until chosen in 1.8.2. Never empty: no day turns [auto] off instead. */
-    val days: Set<Int>? = null,
+    /** Days of the week, ISO (1 = Monday). Never empty: no day turns [auto] off instead. */
+    val days: Set<Int> = setOf(1),
     /** Around this time, minutes after midnight. */
     val minute: Int = DEFAULT_MINUTE,
     val retention: RetentionPreset = RetentionPreset.BALANCED,
@@ -87,10 +82,6 @@ data class BackupSettings(
     /** Today reminds when there's been no backup for [REMINDER_DAYS] days. */
     val reminder: Boolean = true,
 ) {
-    /** The chosen days, or what 1.5 to 1.8.1's daily/weekly setting meant. */
-    val scheduleDays: Set<Int>
-        get() = days?.takeIf { it.isNotEmpty() } ?: if (frequency == BackupFrequency.DAILY) (1..7).toSet() else setOf(weekday.coerceIn(1, 7))
-
     companion object {
         /** 3 am. */
         const val DEFAULT_MINUTE = 3 * 60
@@ -101,9 +92,6 @@ data class BackupSettings(
 /** How many old backups the folder keeps (owner, 2026-10-29); the rules are in BackupRetention. */
 @Serializable
 enum class RetentionPreset { SIMPLE, BALANCED, LONG_TERM, CUSTOM }
-
-@Serializable
-enum class BackupFrequency(val days: Int) { DAILY(1), WEEKLY(7) }
 
 /** Never the keys themselves: only that a food-database key was saved (dismissed prompts are per phone, in DevicePrefs). */
 @Serializable

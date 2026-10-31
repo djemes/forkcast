@@ -42,6 +42,15 @@ class AppSettingsSerializerTest {
             .isEqualTo(ThemeMode.SYSTEM)
     }
 
+    /** 1.5 to 1.8.1 had a daily or weekly backup until days were chosen (1.9.1 reads it as days). */
+    @Test fun olderBackupScheduleReadsAsDays() = runTest {
+        assertThat(read("""{"backup":{"frequency":"DAILY","weekday":3,"days":null}}""").backup.days).containsExactly(1, 2, 3, 4, 5, 6, 7)
+        assertThat(read("""{"backup":{"frequency":"WEEKLY","weekday":3}}""").backup.days).containsExactly(3)
+        assertThat(read("""{"backup":{"frequency":"WEEKLY","weekday":3,"days":[]}}""").backup.days).containsExactly(3)
+        assertThat(read("""{"backup":{"frequency":"DAILY","days":[2,4]}}""").backup.days).containsExactly(2, 4)
+        assertThat(read("""{}""").backup.days).containsExactly(1)
+    }
+
     @Test fun garbageIsReportedAsCorruption() {
         assertThrows(CorruptionException::class.java) {
             runBlocking { read("not json") }

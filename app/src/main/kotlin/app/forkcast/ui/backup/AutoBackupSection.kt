@@ -157,19 +157,19 @@ class AutoBackupViewModel @Inject constructor(
         else -> { local.update { it.copy(cleanup = p) }; null }
     }
 
-    fun setAuto(on: Boolean) = update { it.copy(auto = on, days = it.scheduleDays) }
+    fun setAuto(on: Boolean) = update { it.copy(auto = on) }
 
     /** A day circle: deselecting the last day turns automatic backup off and keeps that day for next time. */
     fun toggleDay(day: Int) = update { s ->
-        val days = s.scheduleDays
+        val days = s.days
         when {
             day !in days -> s.copy(days = days + day)
-            days.size == 1 -> s.copy(auto = false, days = days)
+            days.size == 1 -> s.copy(auto = false)
             else -> s.copy(days = days - day)
         }
     }
 
-    fun setMinute(minute: Int) = update { it.copy(minute = minute, days = it.scheduleDays) }
+    fun setMinute(minute: Int) = update { it.copy(minute = minute) }
     fun setRetention(preset: RetentionPreset) = update { it.copy(retention = preset) }
     fun setCustom(recent: Int?, months: Int?, years: Int?) = update {
         it.copy(customRecent = recent ?: it.customRecent, customMonths = months ?: it.customMonths, customYears = years ?: it.customYears)
@@ -178,7 +178,7 @@ class AutoBackupViewModel @Inject constructor(
     /** The first backup password; [thenAuto] when it was asked for by the automatic-backup switch. */
     fun setPassword(password: String, thenAuto: Boolean = false) = viewModelScope.launch {
         backups.setPassword(password)
-        if (thenAuto) backups.updateSettings { it.copy(auto = true, days = it.scheduleDays) }
+        if (thenAuto) backups.updateSettings { it.copy(auto = true) }
     }
 
     /** After the unlock. */
@@ -296,7 +296,7 @@ fun AutoBackupSection(state: AutoBackupUiState, actions: AutoBackupActions) {
             )
             if (on) {
                 Text(stringResource(R.string.backup_auto_days), style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(top = 4.dp))
-                DayCircles(s.settings.scheduleDays, actions.toggleDay)
+                DayCircles(s.settings.days, actions.toggleDay)
                 MealTimeField(s.settings.minute, actions.setMinute, label = stringResource(R.string.backup_auto_time))
                 Text(
                     stringResource(R.string.backup_auto_around, mealTimeText(s.settings.minute)),

@@ -7,6 +7,7 @@ import app.forkcast.core.data.db.BackupDao
 import app.forkcast.core.data.db.ForkcastDatabase
 import app.forkcast.core.data.db.GoalEntity
 import app.forkcast.core.data.db.MealSlotEntity
+import app.forkcast.core.data.settings.LegacySettings
 import app.forkcast.core.model.AppSettings
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
@@ -142,8 +143,11 @@ class RoomBackupRepository @Inject constructor(
             ?: return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         if (version > ForkcastExport.SCHEMA_VERSION) return ParsedBackup.Rejected(RejectReason.NEWER_VERSION)
         if (version < ForkcastExport.OLDEST_IMPORTED) return ParsedBackup.Rejected(RejectReason.OLD_VERSION)
+        // v6 to v8 (1.2 to 1.9.0) settings: the backup schedule was a frequency and a weekday (LegacySettings).
+        val settings = root["settings"] as? JsonObject
+        val upgraded = if (version < SETTINGS_DAYS_SINCE && settings != null) JsonObject(root + ("settings" to LegacySettings.upgrade(settings))) else root
         val export = try {
-            BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), root)
+            BackupJson.decodeFromJsonElement(ForkcastExport.serializer(), upgraded)
         } catch (e: IllegalArgumentException) {
             return ParsedBackup.Rejected(RejectReason.UNREADABLE)
         } catch (e: DateTimeException) {
@@ -311,6 +315,8 @@ class RoomBackupRepository @Inject constructor(
         const val SAFETY_DIR = "safety-backups"
         /** The export version whose foods carry a favorite's default amount. */
         private const val FAVORITE_DEFAULTS_SINCE = 8
+        /** The export version whose settings hold the backup days only. */
+        private const val SETTINGS_DAYS_SINCE = 9
         private const val KEEP_SAFETY_BACKUPS = 3
         private val FILE_STAMP = java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss")
     }

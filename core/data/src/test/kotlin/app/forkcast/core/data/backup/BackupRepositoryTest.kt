@@ -124,11 +124,11 @@ class BackupRepositoryTest {
         assertThat(json.lowercase()).doesNotContain("api_key")
     }
 
-    /** core/data/schemas/export/export-schema-v8.json must list exactly the fields the app writes, and the same enum values. */
+    /** core/data/schemas/export/export-schema-v9.json must list exactly the fields the app writes, and the same enum values. */
     @Test fun schemaFileMatchesExport() = runTest {
         seedEveryTable()
         val export = BackupJson.parseToJsonElement(repo.exportJson()).jsonObject
-        val schema = BackupJson.parseToJsonElement(exportSchema("export-schema-v8.json").readText()).jsonObject
+        val schema = BackupJson.parseToJsonElement(exportSchema("export-schema-v9.json").readText()).jsonObject
         val defs = schema.getValue("\$defs").jsonObject
 
         assertThat(schema.getValue("properties").jsonObject.keys).containsExactlyElementsIn(export.keys)
@@ -148,6 +148,11 @@ class BackupRepositoryTest {
         }
         assertThat(defs.getValue("profile").jsonObject.getValue("properties").jsonObject.keys)
             .containsExactlyElementsIn(export.getValue("profile").jsonObject.keys)
+        val settingsDef = defs.getValue("settings").jsonObject.getValue("properties").jsonObject
+        val exportedSettings = export.getValue("settings").jsonObject
+        assertThat(settingsDef.keys).containsExactlyElementsIn(exportedSettings.keys)
+        assertThat(settingsDef.getValue("backup").jsonObject.getValue("properties").jsonObject.keys)
+            .containsExactlyElementsIn(exportedSettings.getValue("backup").jsonObject.keys)
 
         fun enumOf(vararg path: String): List<String> {
             var node: JsonObject = defs
@@ -158,6 +163,8 @@ class BackupRepositoryTest {
         assertThat(enumOf("profile", "properties", "activityLevel")).containsExactlyElementsIn(ActivityLevel.entries.map { it.name })
         assertThat(enumOf("goal", "properties", "goalType")).containsExactlyElementsIn(GoalType.entries.map { it.name })
         assertThat(enumOf("weight", "properties", "source")).containsExactlyElementsIn(WeightSource.entries.map { it.name })
+        assertThat(enumOf("settings", "properties", "backup", "properties", "retention"))
+            .containsExactlyElementsIn(app.forkcast.core.model.RetentionPreset.entries.map { it.name })
     }
 
     /** The JSON Schema files next to Room's schemas; tests run from the module or the project folder. */
@@ -179,7 +186,7 @@ class BackupRepositoryTest {
     }
 
     @Test fun rejectsNewerSchemaOtherAppsAndGarbage() {
-        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":9}"""))
+        assertThat(repo.parse("""{"app":"Forkcast","schemaVersion":10}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NEWER_VERSION))
         assertThat(repo.parse("""{"app":"Other","schemaVersion":1}"""))
             .isEqualTo(ParsedBackup.Rejected(RejectReason.NOT_FORKCAST))
@@ -237,6 +244,24 @@ class BackupRepositoryTest {
         assertThat(dao.logEntries().map { it.id to it.quantity }).containsExactlyElementsIn(before.map { it.id to it.quantity })
         assertThat(dao.logEntries().map { it.portion }.toSet()).containsExactly(1.0)
         assertThat(dao.foods().map { it.favoriteQuantity to it.favoriteServingLabel }.toSet()).containsExactly(2.0 to "cup")
+    }
+
+    /** A 1.2–1.9.0 file (v6–v8) gets its backup days from the daily or weekly setting (1.9.1, LegacySettings). */
+    @Test fun importsOlderBackupScheduleAsDays() = runTest {
+        fun v8(backup: String) = repo.parse(
+            """{"app":"Forkcast","schemaVersion":8,"appVersion":"1.9.0","exportedAt":"2026-10-18T16:00:00Z","timeZone":"UTC",""" +
+                """"settings":{"backup":$backup}}""",
+        ) as ParsedBackup.Ok
+        assertThat(v8("""{"auto":true,"frequency":"DAILY","weekday":1,"days":null}""").export.settings!!.backup.days).containsExactly(1, 2, 3, 4, 5, 6, 7)
+        assertThat(v8("""{"frequency":"WEEKLY","weekday":4}""").export.settings!!.backup.days).containsExactly(4)
+        assertThat(v8("""{"frequency":"DAILY","weekday":1,"days":[2,6],"minute":90}""").export.settings!!.backup).isEqualTo(
+            app.forkcast.core.model.BackupSettings(days = setOf(2, 6), minute = 90),
+        )
+        // The settings round-trip in v9 as they are.
+        settings.updateData { it.copy(backup = it.backup.copy(days = setOf(3, 5))) }
+        val v9 = repo.parse(repo.exportJson()) as ParsedBackup.Ok
+        assertThat(v9.export.schemaVersion).isEqualTo(9)
+        assertThat(v9.export.settings!!.backup.days).containsExactly(3, 5)
     }
 
     @Test fun acceptsMinimalV7AndV6AndUnknownFields() {

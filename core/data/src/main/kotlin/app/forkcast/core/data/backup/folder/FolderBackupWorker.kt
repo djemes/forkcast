@@ -47,7 +47,7 @@ class FolderBackupWorker @AssistedInject constructor(
 ) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
         val s = settings.settings.first().backup
-        if (!BackupRetention.isChosenDay(ZonedDateTime.now(clock), s.scheduleDays, s.minute)) return Result.success()
+        if (!BackupRetention.isChosenDay(ZonedDateTime.now(clock), s.days, s.minute)) return Result.success()
         val problem = backups.backupNow() ?: return Result.success().also { problems.clear() }
         return when (problem) {
             FolderProblem.NO_FOLDER -> Result.success()
@@ -85,7 +85,7 @@ class FolderBackupScheduler @Inject constructor(
         scope.launch {
             var first = true
             combine(settings.settings, device.state, secrets.present) { s, d, present ->
-                Plan(s.backup.auto && d.backupFolder != null && SecretName.BACKUP_PASSWORD in present, s.backup.scheduleDays, s.backup.minute)
+                Plan(s.backup.auto && d.backupFolder != null && SecretName.BACKUP_PASSWORD in present, s.backup.days, s.backup.minute)
             }
                 .distinctUntilChanged()
                 .collect { plan ->
