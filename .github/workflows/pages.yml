@@ -1,7 +1,5 @@
 # Publishes site/ (homepage, install guide, privacy policy, terms) to GitHub Pages at
-# https://djemes.github.io/forkcast/. Manual only: Pages needs a public repo on the
-# free plan, and this repo is private until Phase 5. To publish: make this repo public,
-# set Settings › Pages › Source to "GitHub Actions", then run this workflow.
+# https://djemes.github.io/forkcast/. Manual: run this workflow when INSTALL.md or site/ changes.
 name: Pages
 
 on:

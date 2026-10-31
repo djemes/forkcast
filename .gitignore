@@ -44,10 +44,9 @@ desktop.ini
 *.hprof
 
 # AI and working files: local only, never committed (owner, 2026-10-24).
-# Specs, plans, progress logs, decisions, reviews, roadmap, legal drafts, setup runbook, agent settings.
+# Specs, plans, progress logs, decisions, reviews, runbooks, agent settings.
 /CLAUDE.md
 /CLAUDE.local.md
-/SETUP.md
 /docs/
 /.claude/
 
