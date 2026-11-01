@@ -2,6 +2,7 @@
 <resources>
     <!-- Settings › Notifications (SPEC §4.8) -->
     <string name="nset_permission_off">Notifications are off for Forkcast in Android settings.</string>
+    <string name="nset_permission_ask">Forkcast can\'t send notifications until you allow them.</string>
     <string name="nset_open_system">Open Android settings</string>
     <string name="nset_budget">Budget thresholds</string>
     <string name="nset_budget_body">When the day reaches a share of your budget. Each fires once a day.</string>

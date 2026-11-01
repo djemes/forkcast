@@ -2,6 +2,7 @@
 <resources>
     <!-- Settings › Notifications (SPEC §4.8) -->
     <string name="nset_permission_off">As notificações do Forkcast estão desligadas nas configurações do Android.</string>
+    <string name="nset_permission_ask">O Forkcast não pode enviar notificações até você permitir.</string>
     <string name="nset_open_system">Abrir configurações do Android</string>
     <string name="nset_budget">Limites do orçamento</string>
     <string name="nset_budget_body">Quando o dia chega a uma parte do seu orçamento. Cada um avisa uma vez por dia.</string>

@@ -1,5 +1,7 @@
 package app.forkcast.ui.settings
 
+import android.app.NotificationManager
+import android.content.Context
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.test.assertIsDisplayed
@@ -11,8 +13,14 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.LifecycleRegistry
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import app.forkcast.core.model.AppearanceSettings
+import app.forkcast.core.model.NotificationSettings
 import app.forkcast.core.model.ThemeMode
 import app.forkcast.core.data.update.UpdateCheck
 import app.forkcast.core.network.update.Release
@@ -24,6 +32,8 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.robolectric.Shadows.shadowOf
+import org.robolectric.annotation.Config
 
 @RunWith(AndroidJUnit4::class)
 class SettingsScreensTest {
@@ -138,6 +148,77 @@ class SettingsScreensTest {
         // Moved here from Backup & data (owner, 2026-10-29); on by default.
         compose.onNodeWithText("Remind me to back up").performScrollTo().performClick()
         assertThat(backupReminder).isFalse()
+    }
+
+    private fun androidNotifications(on: Boolean) {
+        val manager = ApplicationProvider.getApplicationContext<Context>().getSystemService(NotificationManager::class.java)
+        shadowOf(manager).setNotificationsEnabled(on)
+    }
+
+    private fun notificationsPage(settings: NotificationSettings, lifecycle: LifecycleOwner? = null) {
+        compose.setContent {
+            CompositionLocalProvider(LocalLifecycleOwner provides (lifecycle ?: LocalLifecycleOwner.current)) {
+                ForkcastTheme {
+                    NotificationsScreen(
+                        state = NotificationsUiState(settings, app.forkcast.fakes.FakeMealSlotRepository.DEFAULT),
+                        onUpdate = {},
+                        onMealTime = { _, _ -> },
+                        onMeal = { _, _ -> },
+                        onMealCategory = {},
+                        onBack = {},
+                    )
+                }
+            }
+        }
+    }
+
+    private val offInAndroid = "Notifications are off for Forkcast in Android settings."
+
+    @Test fun notificationsPageRechecksAndroidOnReturn() {
+        androidNotifications(on = false)
+        val owner = object : LifecycleOwner {
+            override val lifecycle = LifecycleRegistry.createUnsafe(this).apply { currentState = Lifecycle.State.RESUMED }
+        }
+        notificationsPage(NotificationSettings(permissionAsked = true), owner)
+        compose.onNodeWithText(offInAndroid).assertIsDisplayed()
+        compose.onNodeWithText("Open Android settings").assertIsDisplayed()
+
+        // Off to Android's settings, notifications turned on there, and back.
+        compose.runOnIdle { owner.lifecycle.currentState = Lifecycle.State.STARTED }
+        androidNotifications(on = true)
+        compose.runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
+        compose.onNodeWithText(offInAndroid).assertDoesNotExist()
+
+        // And the other way round.
+        compose.runOnIdle { owner.lifecycle.currentState = Lifecycle.State.STARTED }
+        androidNotifications(on = false)
+        compose.runOnIdle { owner.lifecycle.currentState = Lifecycle.State.RESUMED }
+        compose.onNodeWithText(offInAndroid).assertIsDisplayed()
+    }
+
+    @Test fun neverAskedOffersAndroidsDialogNotAnError() {
+        androidNotifications(on = false)
+        notificationsPage(NotificationSettings(permissionAsked = false))
+        compose.onNodeWithText("Forkcast can't send notifications until you allow them.").assertIsDisplayed()
+        compose.onNodeWithText("Turn on").assertIsDisplayed()
+        compose.onNodeWithText(offInAndroid).assertDoesNotExist()
+    }
+
+    /** Before Android 13 there's no dialog, so nothing ever sets permissionAsked. */
+    @Config(sdk = [32])
+    @Test fun androidTwelveSaysSoEvenThoughNothingWasAsked() {
+        androidNotifications(on = false)
+        notificationsPage(NotificationSettings(permissionAsked = false))
+        compose.onNodeWithText(offInAndroid).assertIsDisplayed()
+        compose.onNodeWithText("Open Android settings").assertIsDisplayed()
+        compose.onNodeWithText("Turn on").assertDoesNotExist()
+    }
+
+    @Test fun notificationsOnInAndroidShowsNoNotice() {
+        androidNotifications(on = true)
+        notificationsPage(NotificationSettings(permissionAsked = false))
+        compose.onNodeWithText(offInAndroid).assertDoesNotExist()
+        compose.onNodeWithText("Turn on").assertDoesNotExist()
     }
 
     @Test fun aboutShowsVersion() {

@@ -48,6 +48,7 @@ import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import app.forkcast.R
@@ -145,28 +146,41 @@ fun NotificationsScreen(
     val context = LocalContext.current
     val s = state.settings
     var systemEnabled by remember { mutableStateOf(NotificationManagerCompat.from(context).areNotificationsEnabled()) }
+    // Back from Android's settings: what the page says follows what was changed there.
+    LifecycleResumeEffect(Unit) {
+        systemEnabled = NotificationManagerCompat.from(context).areNotificationsEnabled()
+        onPauseOrDispose { }
+    }
     val permission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         systemEnabled = granted || NotificationManagerCompat.from(context).areNotificationsEnabled()
         onUpdate { it.copy(permissionAsked = true) }
     }
+    /** Android 13 and up, never asked: Android's dialog can still answer this. */
+    fun canAsk() = Build.VERSION.SDK_INT >= 33 && !s.permissionAsked &&
+        ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+
     /** Turning a notification on asks for the permission in context, once (SPEC §4.8). */
     fun enable(on: Boolean, change: (NotificationSettings) -> NotificationSettings) {
         onUpdate(change)
-        if (on && Build.VERSION.SDK_INT >= 33 && !s.permissionAsked &&
-            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
-        ) {
-            permission.launch(Manifest.permission.POST_NOTIFICATIONS)
-        }
+        if (on && canAsk()) permission.launch(Manifest.permission.POST_NOTIFICATIONS)
     }
     var editing by remember { mutableStateOf<TimeEdit?>(null) }
 
     SettingsScaffold(title = stringResource(R.string.settings_notifications), onBack = onBack) {
-        if (!systemEnabled && s.permissionAsked) {
+        if (!systemEnabled) {
             Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text(stringResource(R.string.nset_permission_off), color = MaterialTheme.colorScheme.error)
-                OutlinedButton(onClick = {
-                    context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
-                }) { Text(stringResource(R.string.nset_open_system)) }
+                if (canAsk()) {
+                    // Nothing was refused yet, so this isn't an error.
+                    Text(stringResource(R.string.nset_permission_ask))
+                    OutlinedButton(onClick = { permission.launch(Manifest.permission.POST_NOTIFICATIONS) }) {
+                        Text(stringResource(R.string.onb_extra_turn_on))
+                    }
+                } else {
+                    Text(stringResource(R.string.nset_permission_off), color = MaterialTheme.colorScheme.error)
+                    OutlinedButton(onClick = {
+                        context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName))
+                    }) { Text(stringResource(R.string.nset_open_system)) }
+                }
             }
         }
 

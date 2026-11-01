@@ -3,7 +3,6 @@
   <ManuallySuppressedIssues/>
   <CurrentIssues>
     <ID>ComplexCondition:ForkcastNavHost.kt:saved.wasNew &amp;&amp; meal != null &amp;&amp; date != null &amp;&amp; saved.foodId.isNotEmpty()</ID>
-    <ID>ComplexCondition:NotificationsScreen.kt:on &amp;&amp; Build.VERSION.SDK_INT &gt;= 33 &amp;&amp; !s.permissionAsked &amp;&amp; ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED</ID>
     <ID>ComplexCondition:ReviewScreen.kt:offer != null &amp;&amp; (stage is EstimateStage.Failed || stage is EstimateStage.QuotaWaiting || stage is EstimateStage.RetryWaiting)</ID>
     <ID>CyclomaticComplexMethod:AiProfileEditViewModel.kt:AiProfileEditViewModel$fun onEvent</ID>
     <ID>CyclomaticComplexMethod:AiSettingsViewModel.kt:AiSettingsViewModel$fun onEvent</ID>
