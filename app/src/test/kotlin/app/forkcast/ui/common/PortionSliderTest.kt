@@ -7,6 +7,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertHasClickAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -43,10 +44,10 @@ class PortionSliderTest {
     @Test fun headlineBalloonAndTalkBackFollowThePortion() {
         portion = 0.5
         show()
-        compose.onNodeWithText("½ portion · 320 kcal").assertExists()
+        compose.onNodeWithText("½ portion · 320\u202Fkcal").assertExists()
         compose.onNodeWithContentDescription("Portion").assert(spoken("Half portion, 320 kilocalories"))
         portion = 1.5
-        compose.onNodeWithText("1½× · 960 kcal").assertExists()
+        compose.onNodeWithText("1½× · 960\u202Fkcal").assertExists()
         compose.onNodeWithContentDescription("Portion").assert(spoken("One and a half portions, 960 kilocalories"))
     }
 
@@ -64,13 +65,25 @@ class PortionSliderTest {
         assertThat(portion).isEqualTo(1.0)
     }
 
+    @Test fun customSitsInTheHeadlineRowWithItsOwnLabel() {
+        portion = 0.5
+        show()
+        val headline = compose.onNodeWithText("½ portion · 320\u202Fkcal", useUnmergedTree = true).fetchSemanticsNode().boundsInRoot
+        val custom = compose.onNodeWithContentDescription("Custom amount").assertHasClickAction().fetchSemanticsNode().boundsInRoot
+        // Same row: the button is to the right of the headline and overlaps it vertically.
+        assertThat(custom.left).isAtLeast(headline.right)
+        assertThat(custom.top).isLessThan(headline.bottom)
+        assertThat(custom.bottom).isGreaterThan(headline.top)
+        assertThat(custom.height).isAtLeast(48f * compose.density.density - 0.5f)
+    }
+
     @Test fun customTakesAMultiplierOrGrams() {
         show(gramsAtOne = 200.0)
-        compose.onNodeWithText("Custom…").performClick()
+        compose.onNodeWithContentDescription("Custom amount").performClick()
         compose.onNodeWithText("Times the portion").performTextReplacement("1.75")
         compose.onNodeWithText("OK").performClick()
         assertThat(portion).isEqualTo(1.75)
-        compose.onNodeWithText("1.75× · 1,120 kcal").assertExists()
+        compose.onNodeWithText("1.75× · 1,120\u202Fkcal").assertExists()
 
         compose.onNodeWithText("Custom…").performClick()
         compose.onNodeWithText("Enter grams instead").performClick()

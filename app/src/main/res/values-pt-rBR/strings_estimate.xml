@@ -23,6 +23,7 @@
     <!-- Quanto você comeu? -->
     <string name="portion_title">Quanto você comeu?</string>
     <string name="portion_custom">Outro…</string>
+    <string name="portion_custom_label">Outra quantidade</string>
     <string name="portion_headline_fraction">%1$s porção · %2$s</string>
     <string name="portion_headline">%1$s · %2$s</string>
     <string name="portion_slider_label">Porção</string>

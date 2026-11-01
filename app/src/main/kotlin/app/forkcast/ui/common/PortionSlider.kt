@@ -10,6 +10,7 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -74,8 +75,8 @@ private val THUMB = 12.dp
  * to the left and multipliers to the right ([PortionScale]), a tick at every snap, "¼", "1×" and
  * "3×" as labels (tap one to jump there), and the value in a balloon under the thumb. Double-tap
  * goes back to 1×; a haptic tick marks each snap. The fill runs from 1× to the thumb in pine either
- * way: more or less food isn't good or bad (DESIGN §9). Custom… takes a multiplier, or grams when
- * [gramsAtOne] (the 1× weight) is known. TalkBack hears "Half portion, 320 kilocalories" and can
+ * way: more or less food isn't good or bad (DESIGN §9). Custom… (beside the headline) takes a
+ * multiplier, or grams when [gramsAtOne] (the 1× weight) is known. TalkBack hears "Half portion, 320 kilocalories" and can
  * step with the usual adjust gestures.
  */
 @Composable
@@ -99,7 +100,8 @@ fun PortionSlider(
     }
     var custom by rememberSaveable { mutableStateOf(false) }
     val label = portionLabel(portion, locale)
-    val energy = f.energy(kcalAtOne * portion)
+    // Number and unit stay together when the headline wraps beside Custom… (narrow no-break space).
+    val energy = f.energy(kcalAtOne * portion).replace('\u2009', '\u202F')
     val snap = PortionScale.indexOf(portion)
     val headline = if (snap != null && snap < PortionScale.ONE) {
         stringResource(R.string.portion_headline_fraction, label, energy)
@@ -109,6 +111,7 @@ fun PortionSlider(
     val spoken = stringResource(R.string.portion_spoken_state, spokenPortion(portion, locale), spokenEnergy(f, kcalAtOne * portion))
     val sliderName = stringResource(R.string.portion_slider_label)
     val resetName = stringResource(R.string.portion_reset)
+    val customName = stringResource(R.string.portion_custom_label)
     val position = PortionScale.positionOf(portion).toFloat()
     val pine = ForkcastTheme.colors.pine
     val track = MaterialTheme.colorScheme.outlineVariant
@@ -116,8 +119,27 @@ fun PortionSlider(
     val onPine = MaterialTheme.colorScheme.surface
 
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        // The headline repeats what the slider says; TalkBack reads the slider instead.
-        Text(headline, style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { hideFromAccessibility() })
+        // Headline on the left, Custom… on the right of the same row (owner, 2026-11-01). The headline
+        // takes what's left and wraps; both align on the first line's baseline, so the button stays
+        // on the top row at 200 % font. The headline repeats what the slider says; TalkBack reads
+        // the slider instead.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                headline,
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier
+                    .weight(1f)
+                    .alignByBaseline()
+                    .semantics { hideFromAccessibility() },
+            )
+            TextButton(
+                onClick = { custom = true },
+                modifier = Modifier
+                    .alignByBaseline()
+                    .heightIn(min = 48.dp)
+                    .semantics { contentDescription = customName },
+            ) { Text(stringResource(R.string.portion_custom)) }
+        }
         // A few labels, enough to show what each way does (owner): tap one to jump there.
         AtFractions(
             fractions = listOf(0f, 0.5f, 1f),
@@ -183,9 +205,6 @@ fun PortionSlider(
             drawCircle(pine, THUMB.toPx() - 6.dp.toPx(), Offset(thumbX, y))
         }
         ValueBalloon(label, position, Modifier.semantics { hideFromAccessibility() })
-        TextButton(onClick = { custom = true }, modifier = Modifier.align(Alignment.End).heightIn(min = 48.dp)) {
-            Text(stringResource(R.string.portion_custom))
-        }
     }
     if (custom) {
         CustomPortionDialog(portion, gramsAtOne, locale, onDismiss = { custom = false }) { p -> custom = false; pick(p) }
